@@ -89,6 +89,16 @@ import Testing
         #expect(try store.load(p.id) == p)
     }
 
+    @Test func importingATemporaryFileMovesItSoALongVideoIsNotWrittenTwice() async throws {
+        let store = store()
+        let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
+        try await SampleVideo.write(to: clip)
+        let p = try await store.importVideo(from: clip, title: "moved", style: try Repo.defaultStyle(), move: true)
+        #expect(!FileManager.default.fileExists(atPath: clip.path), "taken, not copied")
+        #expect(FileManager.default.fileExists(atPath: try #require(store.sourceURL(for: p.id)).path))
+        #expect(p.videoWidth == 64)
+    }
+
     @Test func aFailedImportLeavesNothingBehind() async throws {
         let store = store()
         let notVideo = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).txt")

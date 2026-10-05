@@ -197,6 +197,11 @@ public final class EditorModel {
         }
     }
 
+    /// Clears a failure once the user has seen it.
+    public func dismissTranscriptionFailure() {
+        if case .failed = transcription { transcription = .idle }
+    }
+
     public func cancelTranscription() {
         transcriptionTask?.cancel()
         transcription = .idle

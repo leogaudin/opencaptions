@@ -86,15 +86,22 @@ public struct ProjectStore: Sendable {
     }
 
     /// Copies a video into a new project and reads its size, rate and duration. On any
-    /// failure nothing is left behind.
-    public func importVideo(from source: URL, title: String, style: StyleConfig) async throws -> Project {
+    /// failure nothing is left behind. `move` takes the file instead of copying it, for a
+    /// temporary one the caller owns: a long video is not written twice.
+    public func importVideo(
+        from source: URL, title: String, style: StyleConfig, move: Bool = false
+    ) async throws -> Project {
         let id = UUID()
         let dir = directory(for: id)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         do {
             let ext = source.pathExtension.isEmpty ? "mov" : source.pathExtension.lowercased()
             let copy = dir.appendingPathComponent("source.\(ext)")
-            try FileManager.default.copyItem(at: source, to: copy)
+            if move {
+                try FileManager.default.moveItem(at: source, to: copy)
+            } else {
+                try FileManager.default.copyItem(at: source, to: copy)
+            }
             let info = try await VideoProbe.probe(copy)
             return try save(
                 Project(

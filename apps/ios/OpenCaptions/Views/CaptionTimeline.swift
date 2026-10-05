@@ -2,10 +2,12 @@ import OpenCaptionsKit
 import SwiftUI
 
 /// The editing timeline: a ruler over a video track and a caption track, on a time axis
-/// that scrolls and zooms (pinch), with the playhead across them. Tap a caption to select
-/// it and seek, drag its edges to retime it; drag the ruler or the video track to scrub.
+/// that scrolls and zooms (pinch), with the playhead across them. Dragging anywhere on the
+/// timeline scrolls it, and a tap on the ruler or a track seeks; the playhead's handle is
+/// what moves the playhead by hand. Tap a caption to select it and seek, drag its edges to
+/// retime it.
 /// Words are edited on the preview. The edits are the engine's; this is only the UI.
-struct TimelineView: View {
+struct CaptionTimeline: View {
     let model: EditorModel
     let playback: Playback
 
@@ -66,7 +68,7 @@ struct TimelineView: View {
                     videoTrack
                     captionTrack
                 }
-                Playhead(playback: playback, px: px, follow: follow)
+                Playhead(playback: playback, px: px, follow: follow, drag: dragPlayhead)
                     .frame(height: Self.rulerHeight + Self.videoHeight + Self.captionHeight)
             }
             .frame(width: contentWidth, alignment: .topLeading)
@@ -89,9 +91,22 @@ struct TimelineView: View {
                 .onEnded { _ in pinch = nil })
     }
 
-    private var scrub: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .named("track")).onChanged { drag in
-            playback.seek(to: min(span, max(0, drag.location.x / px)))
+    /// A tap seeks. A drag is left to the scroll view, so the timeline can always be moved by
+    /// a finger anywhere on it; the playhead's handle is the way to scrub.
+    private var tapToSeek: some Gesture {
+        SpatialTapGesture(coordinateSpace: .named("track")).onEnded { tap in
+            playback.seek(to: min(span, max(0, tap.location.x / px)))
+        }
+    }
+
+    /// The handle moved to content position `x`: seek there, and when it nears the edge of
+    /// the view scroll on, so a long timeline can be crossed in one drag.
+    private func dragPlayhead(toContentX x: Double) {
+        playback.seek(to: min(span, max(0, x / px)))
+        if x < scrollX + 28 {
+            scrollPosition.scrollTo(x: max(0, scrollX - 24))
+        } else if x > scrollX + viewport - 28 {
+            scrollPosition.scrollTo(x: scrollX + 24)
         }
     }
 
@@ -114,7 +129,7 @@ struct TimelineView: View {
         .frame(width: contentWidth, height: Self.rulerHeight)
         .overlay(alignment: .bottom) { Divider() }
         .contentShape(.rect)
-        .gesture(scrub)
+        .gesture(tapToSeek)
         .accessibilityLabel("Timeline ruler")
     }
 
@@ -131,7 +146,7 @@ struct TimelineView: View {
         }
         .frame(width: contentWidth, height: Self.videoHeight)
         .contentShape(.rect)
-        .gesture(scrub)
+        .gesture(tapToSeek)
     }
 
     private var captionTrack: some View {
@@ -185,19 +200,35 @@ struct TimelineView: View {
     }
 }
 
-/// The playhead: the only part of the timeline that moves with the playing time.
+/// The playhead: the only part of the timeline that moves with the playing time. The round
+/// handle at the top is what is dragged to move it, with a touch target well past its size.
 private struct Playhead: View {
     let playback: Playback
     let px: Double
     let follow: (Double) -> Void
+    let drag: (Double) -> Void
 
     var body: some View {
-        Rectangle()
-            .fill(Color.accentColor)
-            .frame(width: 2)
-            .offset(x: playback.time * px - 1)
-            .allowsHitTesting(false)
-            .onChange(of: playback.time) { _, time in follow(time) }
+        ZStack(alignment: .top) {
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(width: 2)
+                .allowsHitTesting(false)
+            Circle()
+                .fill(Color.accentColor)
+                .overlay(Circle().stroke(.white, lineWidth: 2))
+                .frame(width: 16, height: 16)
+                .padding(14)
+                .contentShape(.rect)
+                .gesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .named("track")).onChanged { drag($0.location.x) }
+                )
+                .accessibilityLabel("Playhead")
+                .accessibilityHint("Drag to move through the video")
+        }
+        .frame(width: 44)
+        .offset(x: playback.time * px - 22)
+        .onChange(of: playback.time) { _, time in follow(time) }
     }
 }
 

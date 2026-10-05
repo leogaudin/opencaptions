@@ -199,8 +199,11 @@ frame on a layer above it, redrawn on the player's clock; a tap plays or pauses,
 while paused a drag moves the caption (snapping to the video's centre lines with a
 guide and a haptic tick, by the engine's rule) and a double-tap edits one word. The timeline
 has a ruler over a video track and a caption track, a playhead, pinch zoom around the
-pinch, and edge handles that retime through the engine; on a wide screen it spans the
-bottom, on a phone upright the preview sits over a Timeline/Style panel. Style
+pinch, and edge handles that retime through the engine. A finger dragging anywhere on it
+scrolls it, a tap seeks, and the playhead's round handle is what moves the playhead by
+hand. The video takes the screen, with only the compact timeline under it; on a wide
+screen the style controls sit beside the video, on a phone they come up over it as a
+sheet that rests low enough to keep the caption in view. Style
 controls and presets are the web's, from the same `presets.json`; the caption offset
 is the engine's. Edits autosave after a quiet moment and when the app leaves the
 foreground; there is no Save button.
@@ -235,6 +238,9 @@ the tests read the output's luma to check they land at reference white.
 **Long jobs.** The app asks the user to keep it in the foreground and keeps the
 screen awake during a download, a transcription or a save. There is no background
 processing.
+Editor models belong to the app, not to a screen, so a transcription or an autosave in
+progress carries on when the user goes back to the project list, where the project's row
+shows its progress.
 
 ## Licence
 

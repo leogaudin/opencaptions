@@ -4,18 +4,18 @@ import SwiftUI
 struct EditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase
-    @State private var model: EditorModel
+    /// Owned by the app, not this screen: leaving for the project list must not end a
+    /// transcription or drop an unsaved edit.
+    let model: EditorModel
     @State private var playback = Playback()
     @State private var showTranscribe = false
+    @State private var showStyle = false
     @State private var edit: WordEdit?
-    @State private var panel = Panel.timeline
     @State private var exporter: ExportController?
     @State private var showExport = false
 
-    private enum Panel: String, CaseIterable {
-        case timeline = "Timeline"
-        case style = "Style"
-    }
+    /// What the style sheet rests at: low enough to leave the caption (low in the frame) in view.
+    private static let styleDetent = PresentationDetent.fraction(0.3)
 
     private struct WordEdit: Identifiable {
         let index: Int
@@ -23,14 +23,11 @@ struct EditorView: View {
         var id: Int { index }
     }
 
-    init(project: Project, store: ProjectStore) {
-        _model = State(initialValue: EditorModel(project: project, store: store))
-    }
-
     var body: some View {
         GeometryReader { geo in
-            // A tablet or a phone on its side: the timeline spans the whole width at the
-            // bottom, as on the web. A phone upright stacks preview, then a tabbed panel.
+            // A tablet or a phone on its side keeps the style controls beside the video. A
+            // phone upright gives the video the screen, with only the timeline under it;
+            // the style controls come up over it as a sheet.
             let wide = geo.size.width > 700 || geo.size.width > geo.size.height
             VStack(spacing: 0) {
                 if wide {
@@ -42,14 +39,9 @@ struct EditorView: View {
                     Divider()
                     timeline.frame(height: min(260, geo.size.height * 0.4))
                 } else {
-                    preview.frame(height: geo.size.height * 0.46)
+                    preview.frame(maxHeight: .infinity)
                     Divider()
-                    Picker("Panel", selection: $panel) {
-                        ForEach(Panel.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(8)
-                    if panel == .timeline { timeline } else { style }
+                    timeline.frame(height: 178)
                 }
             }
         }
@@ -57,6 +49,10 @@ struct EditorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .status) { SaveLabel(state: model.saveState) }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Style", systemImage: "paintbrush") { showStyle = true }
+                    .disabled(model.transcript == nil)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button("Save video", systemImage: "square.and.arrow.down") { Task { await saveVideo() } }
@@ -72,6 +68,17 @@ struct EditorView: View {
         }
         .overlay(alignment: .top) { progress }
         .sheet(isPresented: $showTranscribe) { TranscribeSheet(model: model) }
+        .sheet(isPresented: $showStyle) {
+            NavigationStack {
+                style
+                    .navigationTitle("Style")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showStyle = false } } }
+            }
+            // The video stays live behind it at the low detent, to see a change as it is made.
+            .presentationDetents([Self.styleDetent, .large])
+            .presentationBackgroundInteraction(.enabled(upThrough: Self.styleDetent))
+        }
         .sheet(isPresented: $showExport) { if let exporter { ExportSheet(controller: exporter) } }
         .alert(
             "Edit word", isPresented: Binding(get: { edit != nil }, set: { if !$0 { edit = nil } }),
@@ -85,6 +92,17 @@ struct EditorView: View {
         } message: { _ in
             Text("One word at a time. Clear it to delete the word.")
         }
+        // A failure is shown until it is read, not for a moment in a banner.
+        .alert(
+            "Transcription failed",
+            isPresented: Binding(
+                get: { if case .failed = model.transcription { true } else { false } },
+                set: { if !$0 { model.dismissTranscriptionFailure() } })
+        ) {
+            Button("OK") {}
+        } message: {
+            if case .failed(let reason) = model.transcription { Text(reason) }
+        }
         .task {
             if let source = app.store.sourceURL(for: model.project.id) { playback.load(source) }
             #if DEBUG
@@ -93,7 +111,10 @@ struct EditorView: View {
                     playback.seek(to: at)
                 }
             #endif
-            if model.transcript == nil { showTranscribe = true }
+            #if DEBUG
+                if ProcessInfo.processInfo.environment["OC_SHOW_STYLE"] != nil { showStyle = true }
+            #endif
+            if model.transcript == nil && !model.isTranscribing { showTranscribe = true }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { Task { await model.flush() } }
@@ -107,7 +128,8 @@ struct EditorView: View {
         }
         .onDisappear {
             playback.pause()
-            UIApplication.shared.isIdleTimerDisabled = false
+            // A transcription carries on after the user leaves, and still needs the screen on.
+            UIApplication.shared.isIdleTimerDisabled = model.isTranscribing
             Task { await model.flush() }
         }
     }
@@ -151,14 +173,20 @@ struct EditorView: View {
         }
     }
 
-    private var timeline: some View { TimelineView(model: model, playback: playback) }
+    private var timeline: some View { CaptionTimeline(model: model, playback: playback) }
     private var style: some View { StylePanel(model: model, presets: app.presets) }
 
     @ViewBuilder
     private var progress: some View {
         if case .running(let fraction, let message) = model.transcription {
             VStack(spacing: 6) {
-                ProgressView(value: fraction) { Text(message).font(.footnote) }
+                // A short clip is a single step, so there is no fraction to show until it ends:
+                // a spinner, with the words as they are decoded, is more honest than a stuck 0%.
+                if fraction > 0 {
+                    ProgressView(value: fraction) { Text(message).font(.footnote).lineLimit(2) }
+                } else {
+                    ProgressView { Text(message).font(.footnote).lineLimit(2) }
+                }
                 HStack {
                     Text("Keep OpenCaptions open until this finishes.").font(.caption2).foregroundStyle(.secondary)
                     Spacer()
@@ -168,9 +196,6 @@ struct EditorView: View {
             .padding(12)
             .background(.regularMaterial, in: .rect(cornerRadius: 12))
             .padding()
-        } else if case .failed(let reason) = model.transcription {
-            Text(reason).font(.footnote).foregroundStyle(.red).padding(12)
-                .background(.regularMaterial, in: .rect(cornerRadius: 12)).padding()
         }
     }
 }

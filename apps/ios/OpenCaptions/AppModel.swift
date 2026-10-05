@@ -13,6 +13,9 @@ final class AppModel {
     private(set) var presets: [Preset] = []
     private(set) var projects: [Project] = []
     var errorMessage: String?
+    /// One model per open project, kept for the life of the app: a transcription or an
+    /// autosave in progress must not end because the user went back to the list.
+    @ObservationIgnored private var editors: [UUID: EditorModel] = [:]
 
     init() {
         let fm = FileManager.default
@@ -42,13 +45,23 @@ final class AppModel {
         #endif
     }
 
+    func editor(for project: Project) -> EditorModel {
+        if let existing = editors[project.id] { return existing }
+        let model = EditorModel(project: project, store: store)
+        editors[project.id] = model
+        return model
+    }
+
+    /// The model of a project already opened this session, for the list to show its progress.
+    func openEditor(for id: UUID) -> EditorModel? { editors[id] }
+
     func reload() {
         projects = store.list()
     }
 
-    func importVideo(from url: URL, title: String) async -> Project? {
+    func importVideo(from url: URL, title: String, move: Bool = false) async -> Project? {
         do {
-            let project = try await store.importVideo(from: url, title: title, style: defaultStyle)
+            let project = try await store.importVideo(from: url, title: title, style: defaultStyle, move: move)
             reload()
             return project
         } catch {
@@ -58,6 +71,8 @@ final class AppModel {
     }
 
     func delete(_ project: Project) {
+        editors[project.id]?.cancelTranscription()
+        editors[project.id] = nil
         do {
             try store.delete(project.id)
         } catch {

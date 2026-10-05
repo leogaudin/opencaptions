@@ -16,6 +16,8 @@ public final class ExportController {
     ) async throws -> URL
 
     public private(set) var state: ExportState = .idle
+    /// When the running export began, for an estimate of how long it has left.
+    public private(set) var startedAt: Date?
     @ObservationIgnored private let run: Run
     @ObservationIgnored private var task: Task<Void, Never>?
 
@@ -31,6 +33,7 @@ public final class ExportController {
     public func start(project: Project, source: URL) {
         guard !isRunning else { return }
         state = .running(fraction: 0)
+        startedAt = Date()
         let run = run
         let report: @Sendable (Double) -> Void = { [weak self] fraction in
             Task { @MainActor in

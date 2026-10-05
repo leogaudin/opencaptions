@@ -56,7 +56,7 @@ struct ProjectsView: View {
             .overlay { if importing { ProgressView("Importing…").padding().background(.regularMaterial, in: .rect(cornerRadius: 12)) } }
             .navigationDestination(for: UUID.self) { id in
                 if let project = app.projects.first(where: { $0.id == id }) {
-                    EditorView(project: project, store: app.store)
+                    EditorView(model: app.editor(for: project))
                 }
             }
             .alert("Something went wrong", isPresented: .constant(app.errorMessage != nil)) {
@@ -85,7 +85,9 @@ struct ProjectsView: View {
     }
 
     private var picker: some View {
-        PhotosPicker(selection: $picked, matching: .videos) {
+        // `.current` hands over the video as it is stored; the default may transcode it first,
+        // which is slow for a long clip.
+        PhotosPicker(selection: $picked, matching: .videos, preferredItemEncoding: .current) {
             Label("Import video", systemImage: "plus")
         }
         .buttonStyle(.borderedProminent)
@@ -101,15 +103,15 @@ struct ProjectsView: View {
             app.errorMessage = "That video could not be read."
             return
         }
-        defer { try? FileManager.default.removeItem(at: movie.url) }
+        defer { try? FileManager.default.removeItem(at: movie.url) }  // a no-op once it has been moved in
         let title = "Video " + Date().formatted(date: .abbreviated, time: .shortened)
-        if let project = await app.importVideo(from: movie.url, title: title) {
+        if let project = await app.importVideo(from: movie.url, title: title, move: true) {
             path.append(project.id)
         }
     }
 }
 
-private struct ProjectRow: View {
+struct ProjectRow: View {
     @Environment(AppModel.self) private var app
     let project: Project
 
@@ -122,9 +124,25 @@ private struct ProjectRow: View {
                 Text(project.title).font(.headline)
                 Text(project.createdAt.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption).foregroundStyle(.secondary)
-                Text(project.transcript == nil ? "Not transcribed" : "\(project.transcript?.words.count ?? 0) words")
+                status
                     .font(.caption).foregroundStyle(.secondary)
             }
+        }
+    }
+}
+
+extension ProjectRow {
+    /// What is happening to the project: a transcription in progress, else its size.
+    @ViewBuilder var status: some View {
+        if let model = app.openEditor(for: project.id), case .running(let fraction, _) = model.transcription {
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.mini)
+                Text(fraction > 0 ? "Transcribing… \(Int(fraction * 100))%" : "Transcribing…")
+            }
+        } else if let transcript = (app.openEditor(for: project.id)?.project ?? project).transcript {
+            Text("\(transcript.words.count) words")
+        } else {
+            Text("Not transcribed")
         }
     }
 }
