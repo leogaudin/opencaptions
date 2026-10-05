@@ -27,6 +27,7 @@ interface Exports {
   oc_active_index(): number;
   oc_active_bounds(): number;
   oc_active_word_rects(): number;
+  oc_snap_position(x: number, y: number, width: number, height: number, threshold: number): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
   oc_retime_word(
     ptr: number,
@@ -80,7 +81,26 @@ export interface CaptionLine {
  * function of a transcript; words are addressed by their flat index across
  * segments, as captions are cut.
  */
+/** A caption position after magnetism toward the video's centre lines. */
+export interface SnappedPosition {
+  x: number;
+  y: number;
+  /** Whether x was pulled to the vertical centre line, and y to the horizontal one. */
+  onX: boolean;
+  onY: boolean;
+}
+
 export interface CaptionEditor {
+  /**
+   * Magnetism for dragging the caption block: each axis snaps to the video's centre
+   * when the block's centre is within `threshold` of it. `size` is the preview's size
+   * in the unit of `threshold` (screen pixels), so the pull feels the same at any size.
+   */
+  snapPosition(
+    position: { x: number; y: number },
+    size: { width: number; height: number },
+    threshold: number,
+  ): SnappedPosition;
   /**
    * The captions, cut every `wordsPerLine` words as the export cuts them, with
    * times as shown (the caption offset applied).
@@ -259,6 +279,11 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       setWord: (t, index, text) =>
         parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
+      snapPosition: (p, size, threshold) => {
+        x.oc_snap_position(p.x, p.y, size.width, size.height, threshold);
+        const [sx, sy, onX, onY] = resultFloats(x);
+        return { x: sx!, y: sy!, onX: onX === 1, onY: onY === 1 };
+      },
     };
   });
   editor.catch(() => {

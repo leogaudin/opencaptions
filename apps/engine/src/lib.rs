@@ -181,6 +181,33 @@ mod abi {
         }
     }
 
+    /// Magnetism for dragging the caption block toward the video's centre lines. The
+    /// block's normalised centre (`x`, `y`) is pulled to 0.5 on an axis when it is
+    /// within `threshold` of it, with `width` and `height` the preview's size in the
+    /// unit of `threshold` (pixels). Leaves four little-endian f32 in the result
+    /// buffer: the snapped x and y, then 1.0 or 0.0 for whether each axis snapped.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_snap_position(
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        threshold: f32,
+    ) -> u32 {
+        let s = edit::snap_to_centre(x, y, width, height, threshold);
+        let mut out = Vec::with_capacity(16);
+        for v in [
+            s.x,
+            s.y,
+            f32::from(u8::from(s.on_x)),
+            f32::from(u8::from(s.on_y)),
+        ] {
+            out.extend_from_slice(&v.to_le_bytes());
+        }
+        set_result(out);
+        1
+    }
+
     /// Index of the active line, or -1 when no caption shows.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_index() -> i32 {
@@ -375,7 +402,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 17);
+        assert_eq!(exported.len(), 18);
         assert_eq!(exported, declared);
     }
 }

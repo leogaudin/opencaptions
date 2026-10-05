@@ -29,6 +29,31 @@ pub enum Edge {
     End,
 }
 
+/// A caption position after magnetism toward the video's centre lines.
+#[derive(Debug, PartialEq)]
+pub struct Snapped {
+    pub x: f32,
+    pub y: f32,
+    /// Whether `x` was pulled to the vertical centre line (0.5), and `y` to the horizontal.
+    pub on_x: bool,
+    pub on_y: bool,
+}
+
+/// Magnetism for dragging the caption block: each axis snaps to the video's centre
+/// (0.5) when the block's centre is within `threshold` of it, measured in the same
+/// unit as `width` and `height` (the pixels the editor shows the video at), so the
+/// pull feels the same at any zoom. The two axes snap independently.
+pub fn snap_to_centre(x: f32, y: f32, width: f32, height: f32, threshold: f32) -> Snapped {
+    let near = |v: f32, extent: f32| (v - 0.5).abs() * extent <= threshold;
+    let (on_x, on_y) = (near(x, width), near(y, height));
+    Snapped {
+        x: if on_x { 0.5 } else { x },
+        y: if on_y { 0.5 } else { y },
+        on_x,
+        on_y,
+    }
+}
+
 /// The captions as shown: times carry the caption offset, as the scene's do.
 pub fn lines(t: &Transcript, words_per_line: u32, offset_ms: i32) -> Vec<Line> {
     let words: Vec<_> = t.words().collect();
@@ -156,6 +181,36 @@ mod tests {
         t.words()
             .map(|w| (w.text.clone(), w.start, w.end))
             .collect()
+    }
+
+    #[test]
+    fn the_caption_snaps_to_each_centre_line_within_the_threshold() {
+        // A 400 x 800 px preview, 8 px of pull: 0.02 across, 0.01 down.
+        let s = snap_to_centre(0.51, 0.84, 400.0, 800.0, 8.0);
+        assert_eq!(
+            s,
+            Snapped {
+                x: 0.5,
+                y: 0.84,
+                on_x: true,
+                on_y: false
+            }
+        );
+        let both = snap_to_centre(0.49, 0.505, 400.0, 800.0, 8.0);
+        assert_eq!(
+            (both.x, both.y, both.on_x, both.on_y),
+            (0.5, 0.5, true, true)
+        );
+        let outside = snap_to_centre(0.53, 0.52, 400.0, 800.0, 8.0);
+        assert_eq!((outside.x, outside.y), (0.53, 0.52));
+        assert!(!outside.on_x && !outside.on_y);
+        // The threshold is in pixels, so a bigger preview pulls over less of the range.
+        assert!(snap_to_centre(0.51, 0.1, 400.0, 800.0, 8.0).on_x);
+        assert!(!snap_to_centre(0.51, 0.1, 2000.0, 800.0, 8.0).on_x);
+        // Exactly at the edge of the threshold still snaps; a zero threshold only snaps on the line.
+        assert!(snap_to_centre(0.52, 0.1, 400.0, 800.0, 8.0).on_x);
+        assert!(snap_to_centre(0.5, 0.5, 400.0, 800.0, 0.0).on_x);
+        assert!(!snap_to_centre(0.5001, 0.5, 400.0, 800.0, 0.0).on_x);
     }
 
     #[test]

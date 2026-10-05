@@ -29,6 +29,9 @@ const EMPTY: Transcript = {
   segments: [],
 };
 
+/** How close the caption's centre comes to a centre line of the video before it snaps, in screen pixels. */
+const SNAP_PX = 8;
+
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
 function sameCaption(a: ActiveCaption | null, b: ActiveCaption | null): boolean {
@@ -161,6 +164,8 @@ function CaptionCanvas({
   // Belongs to the gesture, not the scene: every move of a drag changes the style,
   // which rebuilds the scene and re-runs the drawing effect mid-drag.
   const dragFrom = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  // The centre guides shown while the caption is snapped to them.
+  const [guides, setGuides] = useState({ x: false, y: false });
 
   function onPointerDown(e: React.PointerEvent): void {
     if (editing) return;
@@ -177,13 +182,25 @@ function CaptionCanvas({
     // No capture means a drag we never started (e.g. the overlay remounted under
     // the pointer after the caption reappeared); ignore it.
     if (!from || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    setStyleThrottled({
-      position_x: clamp01(from.px + (e.clientX - from.x) / displayWidth),
-      position_y: clamp01(from.py + (e.clientY - from.y) / displayHeight),
-    });
+    const raw = {
+      x: clamp01(from.px + (e.clientX - from.x) / displayWidth),
+      y: clamp01(from.py + (e.clientY - from.y) / displayHeight),
+    };
+    // The pull is the engine's, measured against the unsnapped pointer position, so the
+    // caption lets go as soon as the pointer does.
+    const snapped = editor?.snapPosition(
+      raw,
+      { width: displayWidth, height: displayHeight },
+      SNAP_PX,
+    ) ?? { ...raw, onX: false, onY: false };
+    setStyleThrottled({ position_x: snapped.x, position_y: snapped.y });
+    setGuides((g) =>
+      g.x === snapped.onX && g.y === snapped.onY ? g : { x: snapped.onX, y: snapped.onY },
+    );
   }
   function endDrag(e: React.PointerEvent): void {
     dragFrom.current = null;
+    setGuides({ x: false, y: false });
     e.currentTarget.releasePointerCapture(e.pointerId);
   }
 
@@ -233,6 +250,18 @@ function CaptionCanvas({
   return (
     <>
       <canvas ref={canvas} className="pointer-events-none absolute inset-0 h-full w-full" />
+      {guides.x && (
+        <div
+          data-testid="caption-guide-x"
+          className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+        />
+      )}
+      {guides.y && (
+        <div
+          data-testid="caption-guide-y"
+          className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+        />
+      )}
       {bounds && !editing && paused && (
         // Shown only while paused, over the caption alone, so a tap anywhere on the
         // playing video still pauses it.

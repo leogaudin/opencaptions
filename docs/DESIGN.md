@@ -73,6 +73,10 @@ build produces byte-identical frames. Nothing else may draw captions.
 - **Position.** `position_x`/`position_y` are the normalized centre of the
   caption block, clamped so it stays in frame. The editor drags the block and
   hit-tests words using the geometry the engine reports (`active_*`).
+  Dragging is magnetic toward the video's centre lines: the engine's `snap_to_centre`
+  pulls an axis to 0.5 when the block's centre is within a few screen pixels of it (the
+  editor passes the preview's size and the threshold in pixels, then draws a guide line
+  while snapped), so every editor snaps the same way.
 - **Edits.** Cutting captions, retiming a word edge and editing a word also live
   in the engine (`edit.rs`). A word is edited one at a time (renamed, or deleted
   by clearing it): text of several words is refused, because splitting a word

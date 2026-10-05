@@ -50,6 +50,11 @@ int32_t oc_active_index(void);      /* line index, or -1 */
 uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
 uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
 
+/* Dragging the caption: pulls the block's normalised centre (x, y) to 0.5 on an axis when it
+ * is within threshold of it; width and height are the preview's size in threshold's unit
+ * (pixels). Leaves four f32: snapped x, snapped y, then 1.0/0.0 for whether each snapped. */
+uint32_t oc_snap_position(float x, float y, float width, float height, float threshold);
+
 /* Editing: pure functions of a transcript (JSON); 0 on failure with the reason. */
 /* Leaves a JSON array of {from, count, start, end, text}; times are as shown, with
  * offset_ms (the caption offset) applied. */
