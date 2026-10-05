@@ -1,7 +1,7 @@
 # OpenCaptions engine — the render server.
 # Builder: a static release binary. Runtime: Debian with FFmpeg, nothing else.
 
-FROM rust:1.94-slim-bookworm AS builder
+FROM rust:1.99-slim-bookworm AS builder
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY src src
