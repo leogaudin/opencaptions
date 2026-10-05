@@ -65,6 +65,16 @@ struct ProjectsView: View {
                 Text(app.errorMessage ?? "")
             }
         }
+        #if DEBUG
+            // Screenshots on a simulator: open the first project straight away.
+            .task(id: app.projects.first?.id) {
+                if ProcessInfo.processInfo.environment["OC_OPEN_FIRST"] != nil, path.isEmpty,
+                    let first = app.projects.first
+                {
+                    path.append(first.id)
+                }
+            }
+        #endif
         .onChange(of: picked) { _, item in
             guard let item else { return }
             Task { await load(item) }

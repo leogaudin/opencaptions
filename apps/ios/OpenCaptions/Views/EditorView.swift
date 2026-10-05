@@ -87,6 +87,12 @@ struct EditorView: View {
         }
         .task {
             if let source = app.store.sourceURL(for: model.project.id) { playback.load(source) }
+            #if DEBUG
+                if let at = ProcessInfo.processInfo.environment["OC_SEEK"].flatMap(Double.init) {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    playback.seek(to: at)
+                }
+            #endif
             if model.transcript == nil { showTranscribe = true }
         }
         .onChange(of: scenePhase) { _, phase in
