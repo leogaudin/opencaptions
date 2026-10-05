@@ -1,11 +1,10 @@
 /**
  * The editor preview: the source video with the caption engine drawing over it.
  *
- * Sized from the container width and capped by viewport height, since a 9:16
- * video would otherwise overflow a short window.
+ * Sized to fit its container, in width and height, keeping the video's aspect
+ * ratio: a 9:16 video fills the height of its panel, a 16:9 one its width.
  */
 import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { Timeline } from "@/components/Timeline";
 import {
   type ActiveCaption,
   type CaptionRenderer,
@@ -14,13 +13,13 @@ import {
   useCaptionEditor,
 } from "@/lib/engine";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
+import { useVideoRef } from "@/lib/playback";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { StyleConfig, Transcript } from "@/types";
 
 const FALLBACK_WIDTH = 1080;
 const FALLBACK_HEIGHT = 1920;
-const MAX_VIEWPORT_FRACTION = 0.7;
 
 const EMPTY: Transcript = {
   schema_version: 1,
@@ -282,13 +281,12 @@ export function CaptionPreview() {
   const transcript = useEditorStore((s) => s.transcript);
   const style = useEditorStore((s) => s.style);
   const captionOffsetMs = useEditorStore((s) => s.captionOffsetMs);
-  const editTranscript = useEditorStore((s) => s.editTranscript);
 
   // Keyed on the id so unrelated store writes keep the same src and the <video>
   // is never reloaded.
   const projectId = project?.id;
   const videoSrc = projectId ? `/api/v1/projects/${projectId}/source` : "";
-  const video = useRef<HTMLVideoElement>(null);
+  const video = useVideoRef();
 
   // Fallback for when the server-side probe failed at upload.
   const [clientDims, setClientDims] = useState<{ width: number; height: number } | null>(null);
@@ -311,27 +309,23 @@ export function CaptionPreview() {
     };
   }, [sourceKey]);
 
+  // The room the preview may fill. The container always renders, so this observer
+  // is attached whatever the preview shows, and follows the panel as it is resized.
   const container = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  // State, not a ref: a viewport-height-only change must re-render the cap.
-  const [viewportHeight, setViewportHeight] = useState(
-    typeof window === "undefined" ? 720 : window.innerHeight,
-  );
+  const [room, setRoom] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const el = container.current;
     if (!el) return;
-    const update = (): void => {
-      setContainerWidth(el.clientWidth);
-      setViewportHeight(window.innerHeight);
-    };
+    const update = (): void =>
+      setRoom((r) =>
+        r.width === el.clientWidth && r.height === el.clientHeight
+          ? r
+          : { width: el.clientWidth, height: el.clientHeight },
+      );
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
+    return () => ro.disconnect();
   }, []);
 
   const shown = transcript ?? EMPTY;
@@ -339,9 +333,7 @@ export function CaptionPreview() {
   const naturalWidth = project?.video_width ?? clientDims?.width ?? FALLBACK_WIDTH;
   const naturalHeight = project?.video_height ?? clientDims?.height ?? FALLBACK_HEIGHT;
   const ratio = naturalWidth / naturalHeight;
-  const heightBoundedWidth = viewportHeight * MAX_VIEWPORT_FRACTION * ratio;
-  const displayWidth =
-    containerWidth > 0 ? Math.min(containerWidth, heightBoundedWidth) : heightBoundedWidth;
+  const displayWidth = Math.min(room.width, room.height * ratio);
   const displayHeight = displayWidth / ratio;
 
   // Drawn at the resolution it is shown at, never above the export's: layout is
@@ -364,17 +356,17 @@ export function CaptionPreview() {
   const note = (body: ReactNode, testId?: string) => (
     <div
       data-testid={testId}
-      className="rounded-md border border-border bg-card p-6 text-sm text-muted-foreground"
+      className="max-w-md rounded-md border border-border bg-card p-6 text-sm text-muted-foreground"
     >
       {body}
     </div>
   );
 
-  if (!project.video_storage_key) return note("No video uploaded yet.");
-
   return (
-    <div ref={container} className="w-full">
-      {shown.segments.length === 0 ? (
+    <div ref={container} className="flex h-full min-h-0 w-full items-center justify-center">
+      {!project.video_storage_key ? (
+        note("No video uploaded yet.")
+      ) : shown.segments.length === 0 ? (
         note("Waiting for transcription to complete to show the preview…")
       ) : previewBlocked ? (
         note(
@@ -388,49 +380,37 @@ export function CaptionPreview() {
           "preview-unsupported",
         )
       ) : displayWidth > 0 ? (
-        <div className="mx-auto" style={{ width: displayWidth }}>
-          <div
-            data-testid="caption-preview"
-            className="relative overflow-hidden rounded-md border border-border bg-black"
-            style={{ width: displayWidth, height: displayHeight }}
+        <div
+          data-testid="caption-preview"
+          className="relative shrink-0 overflow-hidden rounded-md border border-border bg-black"
+          style={{ width: displayWidth, height: displayHeight }}
+        >
+          <video
+            ref={video}
+            src={videoSrc}
+            controls
+            loop
+            playsInline
+            preload="metadata"
+            className="h-full w-full"
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              if (v.videoWidth && v.videoHeight) {
+                setClientDims({ width: v.videoWidth, height: v.videoHeight });
+              }
+            }}
+            onError={() => setPreviewBlocked(true)}
           >
-            <video
-              ref={video}
-              src={videoSrc}
-              controls
-              loop
-              playsInline
-              preload="metadata"
-              className="h-full w-full"
-              onLoadedMetadata={(e) => {
-                const v = e.currentTarget;
-                if (v.videoWidth && v.videoHeight) {
-                  setClientDims({ width: v.videoWidth, height: v.videoHeight });
-                }
-              }}
-              onError={() => setPreviewBlocked(true)}
-            >
-              <track kind="captions" />
-            </video>
-            <CaptionCanvas
-              video={video}
-              scene={scene}
-              displayWidth={displayWidth}
-              displayHeight={displayHeight}
-            />
-          </div>
-          <Timeline
+            <track kind="captions" />
+          </video>
+          <CaptionCanvas
             video={video}
-            transcript={shown}
-            offsetMs={captionOffsetMs}
-            wordsPerLine={style.words_per_line}
-            duration={Math.max(1, shown.duration)}
-            onEdit={editTranscript}
+            scene={scene}
+            displayWidth={displayWidth}
+            displayHeight={displayHeight}
           />
         </div>
-      ) : (
-        <div className="h-32 rounded-md border border-border bg-card" />
-      )}
+      ) : null}
     </div>
   );
 }

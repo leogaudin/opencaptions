@@ -40,8 +40,7 @@ test.describe("Editor stays mounted across background reloads", () => {
     await page.goto(`/projects/${projectId}`);
 
     // The preview renders once the transcript has segments and dimensions resolve.
-    // Target the visible (desktop) instance; the mobile duplicate is md:hidden here.
-    const preview = page.getByTestId("caption-preview").filter({ visible: true });
+    const preview = page.getByTestId("caption-preview");
     await expect(preview).toBeVisible({ timeout: 15000 });
 
     const video = preview.locator("video").first();

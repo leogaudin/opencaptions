@@ -57,11 +57,9 @@ test.describe("Hosted mode", () => {
 
     await page.goto(`/projects/${PROJECT_ID}`);
     // The timing offset lives inside the collapsed Customize panel.
-    await page.getByRole("button", { name: "Customize" }).filter({ visible: true }).first().click();
-    await expect(
-      page.getByTestId("caption-offset-control").filter({ visible: true }).first(),
-    ).toBeVisible();
-    await page.getByTestId("retranscribe").filter({ visible: true }).first().click();
+    await page.getByRole("button", { name: "Customize" }).click();
+    await expect(page.getByTestId("caption-offset-control")).toBeVisible();
+    await page.getByTestId("retranscribe").click();
     await expect(page.getByTestId("retranscribe-dialog")).toBeVisible();
     await expect(page.getByTestId("retranscribe-model-select")).toHaveCount(0);
   });

@@ -30,8 +30,8 @@ test.describe("Caption on the preview", () => {
   });
 
   test("dragging the caption moves it by the whole drag, not one frame of it", async ({ page }) => {
-    const preview = page.getByTestId("caption-preview").filter({ visible: true });
-    const handle = page.getByTestId("caption-handle").filter({ visible: true });
+    const preview = page.getByTestId("caption-preview");
+    const handle = page.getByTestId("caption-handle");
     await expect(handle).toBeVisible();
     const frame = await preview.boundingBox();
     const box = await handle.boundingBox();

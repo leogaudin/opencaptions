@@ -56,7 +56,7 @@ test.describe("Timeline", () => {
   test.beforeEach(async ({ page }) => {
     saved = await mockTranscribedProject(page, "Timeline test", { transcript: TRANSCRIPT });
     await page.goto(`/projects/${MOCK_PROJECT_ID}`);
-    timeline = page.getByTestId("timeline").filter({ visible: true });
+    timeline = page.getByTestId("timeline");
     await expect(timeline.getByTestId("timeline-line")).toHaveCount(2);
   });
 

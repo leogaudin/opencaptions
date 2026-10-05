@@ -39,9 +39,7 @@ test.describe("CaptionPreview resize", () => {
     // Wait for the preview to render.
     await page.waitForTimeout(1000);
 
-    // Locator: targets the visible caption-preview element (the desktop instance;
-    // the mobile duplicate is hidden via `md:hidden` at this viewport width).
-    const preview = page.getByTestId("caption-preview").filter({ visible: true });
+    const preview = page.getByTestId("caption-preview");
 
     // Helper: measure the visible preview's bounding box after layout settles.
     async function measurePreview() {

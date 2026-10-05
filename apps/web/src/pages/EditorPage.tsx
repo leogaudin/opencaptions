@@ -1,9 +1,11 @@
 /**
- * EditorPage: toolbar above a two-pane layout — preview left, transcript and
- * style right on desktop, stacked on mobile.
+ * EditorPage: the toolbar on top, then the preview beside the style panel, and the
+ * timeline docked full-width underneath, on desktop. On a narrow screen the same
+ * pieces stack: preview, timeline, style.
  *
- * The shell provides a full-viewport flex column, so panes need min-h-0 to
- * scroll independently instead of overflowing.
+ * Exactly one of the two layouts is mounted, so there is one <video> and one
+ * engine whichever the width. The shell provides a full-viewport flex column, so
+ * panes need min-h-0 to scroll independently instead of overflowing.
  */
 import { useEffect } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
@@ -11,7 +13,10 @@ import { useParams } from "react-router-dom";
 import { CaptionPreview } from "@/components/CaptionPreview";
 import { EditorToolbar } from "@/components/EditorToolbar";
 import { StyleControls } from "@/components/StyleControls";
+import { TimelineDock } from "@/components/TimelineDock";
 import { TranscriptEditor } from "@/components/TranscriptEditor";
+import { PlaybackProvider } from "@/lib/playback";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
 import { useEditorStore } from "@/store/editorStore";
 
@@ -23,10 +28,14 @@ export function EditorPage() {
   const upsertJob = useEditorStore((s) => s.upsertJob);
   const error = useEditorStore((s) => s.error);
 
-  // Remembers the split between transcript and preview across page loads. v4
-  // replaced v3's `autoSaveId` prop with this hook, which spreads defaultLayout
-  // and onLayoutChanged onto the Group.
-  const layout = useDefaultLayout({ id: "opencaptions:editor:layout" });
+  const desktop = useMediaQuery("(min-width: 768px)");
+
+  // Remember the splits across page loads. v4 replaced v3's `autoSaveId` prop with
+  // this hook, which spreads defaultLayout and onLayoutChanged onto the Group.
+  // Two groups, two ids: the rows (work area over timeline) and the columns
+  // (preview beside the style panel).
+  const rows = useDefaultLayout({ id: "opencaptions:editor:rows" });
+  const columns = useDefaultLayout({ id: "opencaptions:editor:columns" });
 
   // Load + cleanup
   useEffect(() => {
@@ -90,53 +99,63 @@ export function EditorPage() {
     );
   }
 
-  const leftPane = (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-      <CaptionPreview />
-    </div>
-  );
-
-  const rightPane = (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+  const stack = (
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-6">
+      <div className="h-[45vh] shrink-0">
+        <CaptionPreview />
+      </div>
+      <div className="h-56 shrink-0 rounded-md border border-border bg-card">
+        <TimelineDock />
+      </div>
       <TranscriptEditor />
       <StyleControls />
     </div>
   );
 
+  // Resize handles: a hairline at rest, a generous invisible hit area (~10px), a
+  // grip pill on hover and while dragging, a focus ring for keyboard resizing.
+  const handleClasses =
+    "group relative flex items-center justify-center bg-border transition-colors hover:bg-primary/50 data-[separator-dragging]:bg-primary/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+  const panels = (
+    <Group orientation="vertical" {...rows}>
+      <Panel id="work" defaultSize="68%" minSize="30%" className="bg-background">
+        <Group orientation="horizontal" {...columns}>
+          <Panel id="preview" defaultSize="60%" minSize="30%" className="bg-background">
+            <div className="h-full p-4">
+              <CaptionPreview />
+            </div>
+          </Panel>
+          <Separator className={`${handleClasses} w-px cursor-col-resize`}>
+            <div className="absolute inset-y-0 left-[-5px] right-[-5px]" />
+            <div className="pointer-events-none absolute h-8 w-1 rounded-full bg-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100 group-data-[separator-dragging]:opacity-100" />
+          </Separator>
+          <Panel id="style" defaultSize="40%" minSize="25%" className="bg-background">
+            <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+              <TranscriptEditor />
+              <StyleControls />
+            </div>
+          </Panel>
+        </Group>
+      </Panel>
+      <Separator className={`${handleClasses} h-px cursor-row-resize`}>
+        <div className="absolute inset-x-0 top-[-5px] bottom-[-5px]" />
+        <div className="pointer-events-none absolute h-1 w-8 rounded-full bg-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100 group-data-[separator-dragging]:opacity-100" />
+      </Separator>
+      <Panel id="dock" defaultSize="32%" minSize={140} className="bg-card">
+        <TimelineDock />
+      </Panel>
+    </Group>
+  );
+
   return (
     /* flex-1 + min-h-0: take remaining vertical space from the app shell's
        flex column without overflowing. No magic viewport arithmetic. */
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Toolbar spans full width directly under the app header */}
-      <EditorToolbar />
-
-      {/* Mobile / narrow viewports: stack vertically */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-6 md:hidden">
-        <CaptionPreview />
-        <TranscriptEditor />
-        <StyleControls />
+    <PlaybackProvider>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Toolbar spans full width directly under the app header */}
+        <EditorToolbar />
+        {desktop ? <div className="min-h-0 flex-1">{panels}</div> : stack}
       </div>
-
-      {/* Desktop: resizable panels filling all remaining space below toolbar.
-          min-h-0 lets children scroll instead of overflowing. */}
-      <div className="hidden min-h-0 flex-1 md:block">
-        <Group orientation="horizontal" {...layout}>
-          <Panel id="transcript" defaultSize="55%" minSize="30%" className="bg-background">
-            {leftPane}
-          </Panel>
-          {/* Resize handle: hairline at rest, generous invisible hit area (~10px),
-              grip pill on hover/drag, focus-visible ring for keyboard resizing. */}
-          <Separator className="group relative flex w-px items-center justify-center bg-border transition-colors hover:bg-primary/50 data-[separator-dragging]:bg-primary/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-col-resize">
-            {/* Invisible hit area — wider than the visual line for easy grabbing */}
-            <div className="absolute inset-y-0 left-[-5px] right-[-5px]" />
-            {/* Grip pill: visible on hover and while dragging */}
-            <div className="pointer-events-none absolute h-8 w-1 rounded-full bg-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100 group-data-[separator-dragging]:opacity-100" />
-          </Separator>
-          <Panel id="preview" defaultSize="45%" minSize="25%" className="bg-background">
-            {rightPane}
-          </Panel>
-        </Group>
-      </div>
-    </div>
+    </PlaybackProvider>
   );
 }

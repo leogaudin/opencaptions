@@ -88,7 +88,7 @@ test.describe("Local Whisper model selection", () => {
     });
 
     await page.goto(`/projects/${PROJECT_ID}`);
-    await page.getByTestId("retranscribe").filter({ visible: true }).first().click();
+    await page.getByTestId("retranscribe").click();
     await page.getByTestId("retranscribe-confirm").click();
     await expect.poll(() => bodies.length).toBe(1);
     expect(bodies[0]).toEqual({});
@@ -99,7 +99,7 @@ test.describe("Local Whisper model selection", () => {
     // change: selecting the already-selected option fires no change event.
     const settings = await (await page.request.get("/api/v1/settings")).json();
     const changedModel = settings.transcription.model === "small" ? "base" : "small";
-    await page.getByTestId("retranscribe").filter({ visible: true }).first().click();
+    await page.getByTestId("retranscribe").click();
     await page.getByTestId("retranscribe-model-select").selectOption(changedModel);
     await page.getByTestId("retranscribe-confirm").click();
     await expect.poll(() => bodies.length).toBe(2);
