@@ -6,7 +6,7 @@
  * plays or pauses, the arrows step a frame.
  */
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useVideo, useVideoClock } from "@/lib/playback";
 import { formatTimecode } from "@/lib/time";
 
@@ -21,7 +21,16 @@ function typing(target: EventTarget | null): boolean {
   );
 }
 
-export function Transport({ duration, fps }: { duration: number; fps: number }) {
+export function Transport({
+  duration,
+  fps,
+  children,
+}: {
+  duration: number;
+  fps: number;
+  /** Controls kept at the right end of the bar (the timeline's zoom). */
+  children?: ReactNode;
+}) {
   const video = useVideo();
   const time = useRef<HTMLSpanElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -118,6 +127,7 @@ export function Transport({ duration, fps }: { duration: number; fps: number }) 
           <Volume2 className="h-4 w-4" aria-hidden />
         )}
       </button>
+      {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
     </div>
   );
 }
