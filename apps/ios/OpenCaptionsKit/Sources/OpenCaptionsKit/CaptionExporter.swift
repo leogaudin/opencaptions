@@ -170,7 +170,7 @@ public struct CaptionExporter: Sendable {
             while let sample = videoOut.copyNextSampleBuffer() {
                 try Task.checkCancellation()
                 let time = CMSampleBufferGetPresentationTimeStamp(sample)
-                try await ready(videoIn, writer: writer, audio: audio, before: time.seconds)
+                try await ready(videoIn, writer: writer, audio: audio)
                 guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { continue }
                 // Unchanged since the last frame: the same overlay, no redraw.
                 if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }
@@ -207,7 +207,6 @@ public struct CaptionExporter: Sendable {
     private final class AudioPipeline {
         let output: AVAssetReaderTrackOutput
         let input: AVAssetWriterInput
-        var waiting: CMSampleBuffer?
         var done = false
 
         init(output: AVAssetReaderTrackOutput, input: AVAssetWriterInput) {
@@ -235,32 +234,31 @@ public struct CaptionExporter: Sendable {
         return AudioPipeline(output: output, input: input)
     }
 
-    /// Waits until the video input takes a frame, feeding audio up to `time` meanwhile:
-    /// the writer holds back one input until the other keeps up, so they go together.
+    /// Waits until the video input takes a frame, feeding audio meanwhile. The writer holds
+    /// back each input until the other keeps up with it, so audio must be given whenever it
+    /// will take it, never rationed to a point just ahead of the video: it waits for audio
+    /// further ahead than that before it accepts another frame, and each would wait for the
+    /// other forever. It pushes back on its own when audio gets too far ahead.
     private func ready(
-        _ videoIn: AVAssetWriterInput, writer: AVAssetWriter, audio: AudioPipeline?, before time: Double
+        _ videoIn: AVAssetWriterInput, writer: AVAssetWriter, audio: AudioPipeline?
     ) async throws {
         while true {
             try Task.checkCancellation()
             if writer.status == .failed { throw ExportError.failed(writer.error?.localizedDescription ?? "cannot write") }
-            if let audio { feed(audio, upTo: time + 0.5) }
+            if let audio { feed(audio) }
             if videoIn.isReadyForMoreMediaData { return }
             try await Task.sleep(for: .milliseconds(2))
         }
     }
 
-    private func feed(_ audio: AudioPipeline, upTo time: Double) {
+    /// Gives the writer audio for as long as it takes it.
+    private func feed(_ audio: AudioPipeline) {
         while !audio.done, audio.input.isReadyForMoreMediaData {
-            guard let next = audio.waiting ?? audio.output.copyNextSampleBuffer() else {
+            guard let next = audio.output.copyNextSampleBuffer() else {
                 audio.input.markAsFinished()
                 audio.done = true
                 return
             }
-            if CMSampleBufferGetPresentationTimeStamp(next).seconds > time {
-                audio.waiting = next
-                return
-            }
-            audio.waiting = nil
             audio.input.append(next)
         }
     }
@@ -270,12 +268,11 @@ public struct CaptionExporter: Sendable {
         while !audio.done {
             try Task.checkCancellation()
             if writer.status == .failed { throw ExportError.failed(writer.error?.localizedDescription ?? "cannot write") }
-            feed(audio, upTo: .infinity)
+            feed(audio)
             if !audio.done { try await Task.sleep(for: .milliseconds(2)) }
         }
     }
 }
-
 
 private extension CIImage {
     /// Premultiplied colour scaled by `gain` (alpha unchanged), in the context's linear working space.

@@ -31,10 +31,12 @@ extension EngineSuites {
             ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("oc-\(UUID().uuidString)"))
         }
 
-        func clip(width: Int = 270, height: Int = 480, rotation: CGFloat = 0, audio: Bool = false) async throws -> URL {
+        func clip(
+            width: Int = 270, height: Int = 480, rotation: CGFloat = 0, audio: Bool = false, seconds: Int = 2
+        ) async throws -> URL {
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
-            try await SampleVideo.write(to: url, width: width, height: height, seconds: 2, fps: 10, rotation: rotation)
-            return audio ? try await SampleVideo.addingAudio(to: url, seconds: 2) : url
+            try await SampleVideo.write(to: url, width: width, height: height, seconds: seconds, fps: 10, rotation: rotation)
+            return audio ? try await SampleVideo.addingAudio(to: url, seconds: Double(seconds)) : url
         }
 
         /// The pixel at (`x`, `y`) of the frame at `seconds`, as RGB 0...255.
@@ -141,6 +143,27 @@ extension EngineSuites {
             }
         }
 
+        /// The writer holds each input back until the other keeps up, so audio rationed to a point
+        /// just ahead of the video left both waiting forever. A short clip fits the writer's
+        /// buffers and never showed it; a real one (here half a minute with sound) does.
+        @Test func aLongClipWithAudioFinishesInsteadOfStalling() async throws {
+            let store = store()
+            let source = try await clip(width: 270, height: 480, audio: true, seconds: 30)
+            let p = try await project(for: source, in: store)
+            let src = store.sourceURL(for: p.id)!
+            let out = directory()
+            let task = Task { try await CaptionExporter(fonts: fonts).export(project: p, source: src, in: out, progress: { _ in }) }
+            let watchdog = Task {
+                try await Task.sleep(for: .seconds(60))
+                task.cancel()
+            }
+            let url = try await task.value
+            watchdog.cancel()
+            let info = try await VideoProbe.probe(url)
+            #expect(abs(info.duration - 30) < 0.5)
+            #expect(try await AVURLAsset(url: url).loadTracks(withMediaType: .audio).count == 1)
+        }
+
         @Test func cancellingLeavesNoFileBehind() async throws {
             let store = store()
             let source = try await clip()
@@ -173,6 +196,34 @@ extension EngineSuites {
         #expect(controller.state == .done(url))
         controller.dismiss()
         #expect(controller.state == .idle)
+    }
+
+    @Test func anExportThatStopsMakingProgressIsStoppedAndSaysSo() async throws {
+        // Never reports, never finishes: what a stall looks like from here.
+        let stuck = ExportController(stallLimit: .milliseconds(150)) { _, _, _ in
+            try await Task.sleep(for: .seconds(60))
+            return URL(fileURLWithPath: "/never")
+        }
+        stuck.start(project: try project(), source: URL(fileURLWithPath: "/x"))
+        try await Task.sleep(for: .milliseconds(900))
+        #expect(!stuck.isRunning)
+        guard case .failed(let reason) = stuck.state else {
+            Issue.record("expected a failure, got \(stuck.state)")
+            return
+        }
+        #expect(reason.contains("stopped making progress"))
+
+        // One that keeps reporting is left alone, however long it takes.
+        let slow = ExportController(stallLimit: .milliseconds(300)) { _, _, progress in
+            for step in 1...8 {
+                try await Task.sleep(for: .milliseconds(100))
+                progress(Double(step) / 8)
+            }
+            return URL(fileURLWithPath: "/done")
+        }
+        slow.start(project: try project(), source: URL(fileURLWithPath: "/x"))
+        while slow.isRunning { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(slow.state == .done(URL(fileURLWithPath: "/done")))
     }
 
     @Test func aFailureIsReportedAndCancelGoesBackToIdle() async throws {
