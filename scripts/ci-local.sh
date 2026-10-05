@@ -122,7 +122,7 @@ step "Workflow lint (actionlint)"
 # Explicit path: actionlint's repository auto-discovery does not apply to the
 # snapshot, and the workflow file is the only thing being checked.
 docker run --rm -v "$WORKTREE":/repo:ro -w /repo "$ACTIONLINT_IMAGE" -no-color \
-  .github/workflows/ci.yml \
+  .github/workflows/ci.yml .github/workflows/ios.yml \
   || fail "actionlint found workflow errors"
 
 # --- Repository guards -----------------------------------------------------

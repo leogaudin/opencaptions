@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Fail when `make ci` and .github/workflows/ci.yml drift apart.
 #
+# .github/workflows/ios.yml is deliberately outside this check: it builds the iOS app on
+# macOS, which the local gate (Linux containers) cannot run. ci-local.sh only lints it.
+#
 # The gate only means "CI will pass" while it checks what CI checks, and these
 # diverged once already. Patterns are matched per side with comments stripped, so
 # a check merely mentioned cannot vouch for one, and the workflow's job list is

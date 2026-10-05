@@ -1,0 +1,36 @@
+# The iOS app, built and tested on macOS.
+#
+# A separate workflow on purpose. `ci.yml` is mirrored by `make ci` (see
+# scripts/check-ci-parity.sh), which runs in Linux containers and cannot run Xcode, so
+# this is the one validation the local gate does not repeat. It only runs when iOS or the
+# engine changes, and nobody without a Mac is blocked: `make ci` still covers
+# everything else. `scripts/ci-local.sh` does lint this file with actionlint.
+name: iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/ios/**'
+      - 'apps/engine/**'
+      - 'apps/web/src/lib/presets.json'
+      - '.github/workflows/ios.yml'
+
+jobs:
+  ios:
+    name: Build and test the iOS app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Rust targets
+        run: rustup update stable && rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin
+      - name: XcodeGen
+        run: brew install xcodegen
+      - name: Engine xcframework
+        run: make ios-engine
+      - name: Tests
+        run: make ios-test
+      - name: Build the app for the simulator
+        run: make ios-build
