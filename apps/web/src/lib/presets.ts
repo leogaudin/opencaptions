@@ -1,5 +1,6 @@
 /**
- * Built-in style presets shown in the Editor's preset picker.
+ * Built-in style presets shown in the Editor's preset picker. They are data, in
+ * `presets.json`, so the iOS app offers the same ones.
  *
  *   1. Soft Pill    — the application default: subtle, pill behind the line
  *   2. Purple Punch — white words, the spoken one boxed in violet
@@ -8,7 +9,8 @@
  * The last two use `highlight_box`, which marks the active word with a filled box
  * instead of recolouring it, so every word stays legible at full contrast.
  */
-import { defaultStyle, type StyleConfig } from "@/types";
+import presets from "@/lib/presets.json";
+import type { StyleConfig } from "@/types";
 
 export interface BuiltinPreset {
   id: string;
@@ -16,57 +18,9 @@ export interface BuiltinPreset {
   config: StyleConfig;
 }
 
-export const BUILTIN_PRESETS: BuiltinPreset[] = [
-  {
-    id: "builtin:soft-pill",
-    name: "Soft Pill",
-    config: defaultStyle,
-  },
-  {
-    id: "builtin:purple-punch",
-    name: "Purple Punch",
-    config: {
-      font: "Poppins",
-      font_size: 64,
-      text_color: "#FFFFFF",
-      highlight_color: "#7C3AED",
-      background: "none",
-      background_color: "#000000",
-      background_opacity: 0.0,
-      position_x: 0.5,
-      position_y: 0.84,
-      animation: "highlight_box",
-      words_per_line: 3,
-      word_spacing: 0,
-      stroke_width: 0,
-      stroke_color: "#000000",
-      shadow_blur: 10,
-      shadow_color: "#000000A0",
-    },
-  },
-  {
-    id: "builtin:hot-take",
-    name: "Hot Take",
-    config: {
-      font: "Anton",
-      font_size: 104,
-      text_color: "#FFFFFF",
-      highlight_color: "#FF1F6B",
-      background: "none",
-      background_color: "#000000",
-      background_opacity: 0.0,
-      position_x: 0.5,
-      position_y: 0.5,
-      animation: "highlight_box",
-      words_per_line: 2,
-      word_spacing: 0,
-      stroke_width: 6,
-      stroke_color: "#000000",
-      shadow_blur: 16,
-      shadow_color: "#000000C0",
-    },
-  },
-];
+// The data is shared with the iOS app and checked against the API's `StyleConfig`
+// by apps/api/tests/test_presets.py; JSON widens the literal unions to `string`.
+export const BUILTIN_PRESETS = presets as BuiltinPreset[];
 
 /**
  * Whether a preset's config is the style currently applied, so the picker can

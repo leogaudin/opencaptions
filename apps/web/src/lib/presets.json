@@ -1,0 +1,68 @@
+[
+  {
+    "id": "builtin:soft-pill",
+    "name": "Soft Pill",
+    "config": {
+      "font": "Inter",
+      "font_size": 48,
+      "text_color": "#FFFFFF",
+      "highlight_color": "#FFDD00",
+      "background": "pill",
+      "background_color": "#000000",
+      "background_opacity": 0.5,
+      "position_x": 0.5,
+      "position_y": 0.84,
+      "animation": "word_highlight",
+      "words_per_line": 3,
+      "word_spacing": 0,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 0,
+      "shadow_color": "#00000080"
+    }
+  },
+  {
+    "id": "builtin:purple-punch",
+    "name": "Purple Punch",
+    "config": {
+      "font": "Poppins",
+      "font_size": 64,
+      "text_color": "#FFFFFF",
+      "highlight_color": "#7C3AED",
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.84,
+      "animation": "highlight_box",
+      "words_per_line": 3,
+      "word_spacing": 0,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 10,
+      "shadow_color": "#000000A0"
+    }
+  },
+  {
+    "id": "builtin:hot-take",
+    "name": "Hot Take",
+    "config": {
+      "font": "Anton",
+      "font_size": 104,
+      "text_color": "#FFFFFF",
+      "highlight_color": "#FF1F6B",
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.5,
+      "animation": "highlight_box",
+      "words_per_line": 2,
+      "word_spacing": 0,
+      "stroke_width": 6,
+      "stroke_color": "#000000",
+      "shadow_blur": 16,
+      "shadow_color": "#000000C0"
+    }
+  }
+]

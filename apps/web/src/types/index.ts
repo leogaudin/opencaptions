@@ -3,6 +3,7 @@
  * the compiler catches backend drift; run `npm run generate-types` after schema
  * changes. Hand-written types below are UI-only.
  */
+import presets from "@/lib/presets.json";
 import type { components } from "./api.generated";
 
 // Codegen emits nullable fields as optional, but the API always sends them as
@@ -87,24 +88,8 @@ export type Animation = "word_highlight" | "highlight_box" | "word_pop" | "word_
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";
 
-export const defaultStyle: StyleConfig = {
-  font: "Inter",
-  font_size: 48,
-  text_color: "#FFFFFF",
-  highlight_color: "#FFDD00",
-  background: "pill",
-  background_color: "#000000",
-  background_opacity: 0.5,
-  position_x: 0.5,
-  position_y: 0.84,
-  animation: "word_highlight",
-  words_per_line: 3,
-  word_spacing: 0,
-  stroke_width: 0,
-  stroke_color: "#000000",
-  shadow_blur: 0,
-  shadow_color: "#00000080",
-};
+/** The application default: the first preset (Soft Pill), which matches the API's defaults. */
+export const defaultStyle = presets[0]!.config as StyleConfig;
 
 /** WebSocket message envelope. Not part of the OpenAPI spec. */
 export interface WSMessage {

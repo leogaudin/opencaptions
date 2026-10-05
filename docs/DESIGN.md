@@ -116,6 +116,9 @@ words with timings fits behind it.
 - **Types:** Pydantic models in `apps/api` are the single source of truth.
   `api.generated.ts` is generated from the OpenAPI schema and committed, and CI
   fails if it drifts.
+  The built-in style presets are data (`apps/web/src/lib/presets.json`), read by
+  the web and bundled by the iOS app; a test keeps them valid `StyleConfig`s and
+  the first one equal to the API's default.
 
 ## Accounts and security
 
