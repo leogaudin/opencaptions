@@ -37,6 +37,15 @@ public struct CaptionLine: Codable, Equatable, Sendable {
     public var text: String
 }
 
+/// A caption position after magnetism toward the video's centre lines.
+public struct SnappedPosition: Equatable, Sendable {
+    public var x: Double
+    public var y: Double
+    /// Whether x was pulled to the vertical centre line, and y to the horizontal one.
+    public var onX: Bool
+    public var onY: Bool
+}
+
 public enum CaptionEdge: Int32, Sendable {
     case start = 0
     case end = 1
@@ -176,6 +185,19 @@ public actor CaptionEngine {
             bounds: FrameRect(x: box[0], y: box[1], width: box[2], height: box[3]),
             index: Int(index), words: words
         )
+    }
+
+    /// Magnetism for dragging the caption block: each axis snaps to the video's centre
+    /// when the block's centre is within `threshold` of it. `width` and `height` are the
+    /// preview's size in the unit of `threshold` (points), so the pull feels the same at
+    /// any size. The rule is the engine's, so the web editor snaps identically.
+    public func snapPosition(
+        x: Double, y: Double, width: Double, height: Double, threshold: Double
+    ) -> SnappedPosition {
+        _ = oc_snap_position(Float(x), Float(y), Float(width), Float(height), Float(threshold))
+        let v = floats(result())
+        guard v.count == 4 else { return SnappedPosition(x: x, y: y, onX: false, onY: false) }
+        return SnappedPosition(x: v[0], y: v[1], onX: v[2] == 1, onY: v[3] == 1)
     }
 
     // MARK: Edits

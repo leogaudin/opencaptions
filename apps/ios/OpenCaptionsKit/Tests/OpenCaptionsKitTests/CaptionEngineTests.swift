@@ -66,6 +66,16 @@ import Testing
         }
     }
 
+    @Test func theCaptionSnapsToTheCentreLinesWithinThePull() async throws {
+        // A 400 x 800 pt preview with 8 pt of pull: 0.02 across, 0.01 down.
+        let near = await engine.snapPosition(x: 0.51, y: 0.84, width: 400, height: 800, threshold: 8)
+        #expect(near == SnappedPosition(x: 0.5, y: Double(Float(0.84)), onX: true, onY: false))
+        let both = await engine.snapPosition(x: 0.49, y: 0.505, width: 400, height: 800, threshold: 8)
+        #expect(both == SnappedPosition(x: 0.5, y: 0.5, onX: true, onY: true))
+        let free = await engine.snapPosition(x: 0.53, y: 0.52, width: 400, height: 800, threshold: 8)
+        #expect(!free.onX && !free.onY && abs(free.x - 0.53) < 1e-6)
+    }
+
     @Test func linesAreCutLikeTheExportAndShowShiftedTimes() async throws {
         let t = try Repo.transcript()
         let lines = try await engine.lines(t, wordsPerLine: 3, offsetMs: 0)

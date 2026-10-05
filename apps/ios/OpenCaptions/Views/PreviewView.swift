@@ -65,6 +65,12 @@ final class PreviewUIView: UIView {
     private var drawing = false
     private var pendingTime: Double?
     private var dragStart: (x: Double, y: Double)?
+    private var dragSerial = 0
+    private let verticalGuide = CALayer()
+    private let horizontalGuide = CALayer()
+    private let haptic = UISelectionFeedbackGenerator()
+    /// How close the caption's centre comes to a centre line of the video before it snaps, in points.
+    private static let snapPull = 8.0
 
     init(player: AVPlayer) {
         self.player = player
@@ -76,6 +82,15 @@ final class PreviewUIView: UIView {
         overlay.contentsGravity = .resize
         overlay.magnificationFilter = .trilinear
         layer.addSublayer(overlay)
+        for guide in [verticalGuide, horizontalGuide] {
+            guide.backgroundColor = UIColor.white.withAlphaComponent(0.9).cgColor
+            guide.shadowColor = UIColor.black.cgColor
+            guide.shadowOpacity = 0.35
+            guide.shadowRadius = 0.5
+            guide.shadowOffset = .zero
+            guide.isHidden = true
+            layer.addSublayer(guide)
+        }
 
         // The player's own clock: every frame while playing, and on a seek.
         timeObserver = player.addPeriodicTimeObserver(
@@ -103,6 +118,8 @@ final class PreviewUIView: UIView {
         super.layoutSubviews()
         playerLayer.frame = bounds
         overlay.frame = bounds
+        verticalGuide.frame = CGRect(x: bounds.midX - 0.5, y: 0, width: 1, height: bounds.height)
+        horizontalGuide.frame = CGRect(x: 0, y: bounds.midY - 0.5, width: bounds.width, height: 1)
         // The scene is sized to the view, so a new size lays it out again.
         if let lastProject, let lastFonts {
             configure(project: lastProject, fonts: lastFonts, suspended: suspended, isPlaying: isPlaying)
@@ -207,11 +224,29 @@ final class PreviewUIView: UIView {
             dragStart = (style.positionX, style.positionY)
         case .changed:
             guard let start = dragStart else { return }
-            let moved = CaptionGestures.draggedPosition(
+            let raw = CaptionGestures.draggedPosition(
                 from: start, translation: g.translation(in: self).asSize, size: bounds.size)
-            onMove(moved.x, moved.y)
+            // The pull is the engine's, measured against the unsnapped finger position, so
+            // the caption lets go as soon as the finger does. Only the newest answer is used.
+            dragSerial += 1
+            let serial = dragSerial
+            let size = bounds.size
+            Task { [engine] in
+                let snapped = await engine.snapPosition(
+                    x: raw.x, y: raw.y, width: size.width, height: size.height, threshold: Self.snapPull)
+                guard serial == dragSerial, dragStart != nil else { return }
+                if (snapped.onX && verticalGuide.isHidden) || (snapped.onY && horizontalGuide.isHidden) {
+                    haptic.selectionChanged()
+                }
+                verticalGuide.isHidden = !snapped.onX
+                horizontalGuide.isHidden = !snapped.onY
+                onMove(snapped.x, snapped.y)
+            }
         default:
             dragStart = nil
+            dragSerial += 1
+            verticalGuide.isHidden = true
+            horizontalGuide.isHidden = true
         }
     }
 }

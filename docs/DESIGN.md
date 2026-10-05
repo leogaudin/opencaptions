@@ -196,7 +196,8 @@ part of `make ci`: it has its own macOS workflow, and nobody without a Mac is bl
 
 **The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
 frame on a layer above it, redrawn on the player's clock; a tap plays or pauses, and
-while paused a drag moves the caption and a double-tap edits one word. The timeline
+while paused a drag moves the caption (snapping to the video's centre lines with a
+guide and a haptic tick, by the engine's rule) and a double-tap edits one word. The timeline
 has a ruler over a video track and a caption track, a playhead, pinch zoom around the
 pinch, and edge handles that retime through the engine; on a wide screen it spans the
 bottom, on a phone upright the preview sits over a Timeline/Style panel. Style
