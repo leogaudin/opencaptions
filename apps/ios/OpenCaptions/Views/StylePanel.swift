@@ -65,7 +65,7 @@ struct StylePanel: View {
             .padding(16)
         }
         .background(Theme.background)
-        .tint(Theme.accent)
+        .tint(Theme.accentInk)
     }
 
     // MARK: Layout

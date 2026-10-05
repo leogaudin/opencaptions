@@ -82,12 +82,13 @@ build produces byte-identical frames. Nothing else may draw captions.
   by clearing it): text of several words is refused, because splitting a word
   would invent timings. The web calls them through WebAssembly, and the phone
   will call the same code natively.
-- **Look.** One dark, immersive look, whatever the system setting, in the manner of Edits and
-Instagram and in the desktop's spirit: the wordmark is the desktop's solid "burned-in subtitle"
-block, and the caption highlight yellow is the only accent. It is plain SwiftUI with no UI
-library: `Theme` holds the handful of colours, the button styles, the card and the wordmark,
-and the screens draw their own top bars instead of the system navigation bar (the edge swipe
-back is put back by hand). Sheets (style, transcribe, save) use the same surfaces.
+- **Look.** An immersive look in the manner of Edits and Instagram and in the desktop's spirit, in
+light or dark (it follows the system, or is chosen from the home screen): the wordmark is the
+desktop's solid "burned-in subtitle" block, inverted with the interface, and the caption
+highlight yellow is the only accent. It is plain SwiftUI with no UI library: `Theme` holds the
+handful of colours (each a light and a dark value), the button styles, the card and the
+wordmark, and the screens draw their own top bars instead of the system navigation bar (the
+edge swipe back is put back by hand). Sheets (style, transcribe, save) use the same surfaces.
 
 **Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
   offline install still draws. Any Google Fonts family can be chosen: the API
@@ -204,7 +205,7 @@ part of `make ci`: it has its own macOS workflow, and nobody without a Mac is bl
 **The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
 frame on a layer above it, redrawn on the player's clock; a tap plays or pauses, and
 while paused a drag moves the caption (snapping to the video's centre lines with a
-guide and a haptic tick, by the engine's rule) and a double-tap edits one word. The timeline
+guide and a haptic tick, by the engine's rule) and a double-tap opens a card to edit one word (its field takes no spaces: a word is one word). The timeline
 has a ruler over a video track and a caption track, a playhead, pinch zoom around the
 pinch, and edge handles that retime through the engine. A finger dragging anywhere on it
 scrolls it, a tap seeks, and the playhead's round handle is what moves the playhead by

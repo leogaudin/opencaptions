@@ -47,6 +47,7 @@ struct EditorView: View {
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .overlay(alignment: .top) { progress }
+        .overlay { wordEditor }
         .sheet(isPresented: $showTranscribe) {
             TranscribeSheet(model: model).presentationBackground(Theme.background).presentationCornerRadius(24)
         }
@@ -73,18 +74,6 @@ struct EditorView: View {
                 ExportSheet(controller: exporter).presentationBackground(Theme.surface).presentationCornerRadius(24)
             }
         }
-        .alert(
-            "Edit word", isPresented: Binding(get: { edit != nil }, set: { if !$0 { edit = nil } }),
-            presenting: edit
-        ) { target in
-            TextField("Word", text: Binding(
-                get: { edit?.text ?? target.text },
-                set: { edit?.text = CaptionGestures.sanitizedWord($0) }))
-            Button("Save") { model.setWord(index: target.index, text: edit?.text ?? target.text) }
-            Button("Cancel", role: .cancel) {}
-        } message: { _ in
-            Text("One word at a time. Clear it to delete the word.")
-        }
         // A failure is shown until it is read, not for a moment in a banner.
         .alert(
             "Transcription failed",
@@ -107,6 +96,9 @@ struct EditorView: View {
             #if DEBUG
                 if ProcessInfo.processInfo.environment["OC_SHOW_STYLE"] != nil { showStyle = true }
                 if ProcessInfo.processInfo.environment["OC_SHOW_TRANSCRIBE"] != nil { showTranscribe = true }
+                if ProcessInfo.processInfo.environment["OC_EDIT_WORD"] != nil {
+                    edit = WordEdit(index: 1, text: model.transcript?.words[safe: 1]?.text ?? "")
+                }
             #endif
             if model.transcript == nil && !model.isTranscribing { showTranscribe = true }
         }
@@ -217,6 +209,22 @@ struct EditorView: View {
     }
     private var style: some View { StylePanel(model: model, presets: app.presets) }
 
+    /// Editing a word: a card with a field that takes no spaces (a word is one word), over the
+    /// preview. Saving an empty field deletes the word.
+    @ViewBuilder
+    private var wordEditor: some View {
+        if let target = edit {
+            WordEditCard(
+                text: Binding(get: { edit?.text ?? target.text }, set: { edit?.text = $0 }),
+                save: {
+                    model.setWord(index: target.index, text: edit?.text ?? target.text)
+                    edit = nil
+                },
+                cancel: { edit = nil })
+            .transition(.opacity)
+        }
+    }
+
     @ViewBuilder
     private var progress: some View {
         if case .running(let fraction, let message) = model.transcription {
@@ -226,7 +234,7 @@ struct EditorView: View {
                     // ends: a spinner, with the words as they are decoded, beats a stuck 0%.
                     if fraction > 0 {
                         Text("\(Int(fraction * 100))%").font(.system(size: 20, weight: .heavy).monospacedDigit())
-                            .foregroundStyle(Theme.accent)
+                            .foregroundStyle(Theme.accentInk)
                     } else {
                         ProgressView().tint(Theme.accent)
                     }
@@ -249,6 +257,47 @@ struct EditorView: View {
             .padding(.horizontal, 14)
             .padding(.top, 62)
         }
+    }
+}
+
+private struct WordEditCard: View {
+    @Binding var text: String
+    let save: () -> Void
+    let cancel: () -> Void
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.opacity(0.5).ignoresSafeArea().onTapGesture(perform: cancel)
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Edit word").font(.system(size: 18, weight: .heavy))
+                TextField("Word", text: $text)
+                    .focused($focused)
+                    .submitLabel(.done)
+                    .onSubmit(save)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.system(size: 22, weight: .bold))
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+                    .background(Theme.raised, in: .rect(cornerRadius: 12))
+                    // A word is one word: a space is dropped the moment it is typed or pasted,
+                    // not accepted and then removed on save.
+                    .onChange(of: text) { _, new in
+                        let clean = CaptionGestures.sanitizedWord(new)
+                        if clean != new { text = clean }
+                    }
+                Text("One word at a time. Clear it to delete the word.")
+                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                HStack(spacing: 10) {
+                    Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
+                    Button(text.isEmpty ? "Delete" : "Save", action: save).buttonStyle(PrimaryButtonStyle())
+                }
+            }
+            .card()
+            .padding(.horizontal, 18)
+            .padding(.top, 76)
+        }
+        .onAppear { focused = true }
     }
 }
 

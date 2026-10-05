@@ -5,18 +5,23 @@ import SwiftUI
 /// the desktop's monochrome "burned-in subtitle" spirit, with the highlight yellow as the
 /// one accent. Plain SwiftUI, no UI library: a handful of colours, a few styles, one wordmark.
 enum Theme {
-    static let background = Color(hex: "#0A0A0B")
+    static let background = Color(light: "#FFFFFF", dark: "#0A0A0B")
     /// Cards and grouped controls.
-    static let surface = Color(hex: "#17171A")
+    static let surface = Color(light: "#F4F4F6", dark: "#17171A")
     /// Controls sitting on a surface: buttons, tracks, fields.
-    static let raised = Color(hex: "#242429")
-    static let stroke = Color.white.opacity(0.08)
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: "#8E8E96")
+    static let raised = Color(light: "#E7E7EB", dark: "#242429")
+    static let textPrimary = Color(light: "#0A0A0B", dark: "#FFFFFF")
+    static let textSecondary = Color(light: "#6B6B75", dark: "#8E8E96")
+    static let stroke = textPrimary.opacity(0.09)
     /// The caption highlight yellow, as the desktop's favicon and style presets.
     static let accent = Color(hex: "#FFDD00")
     static let onAccent = Color.black
-    static let danger = Color(hex: "#FF5C5C")
+    /// The accent where it is text or a thin line: yellow on dark, a deeper gold on light, where
+    /// pure yellow would not be legible.
+    static let accentInk = Color(light: "#9A7400", dark: "#FFDD00")
+    static let danger = Color(light: "#E5393B", dark: "#FF5C5C")
+    /// The playhead and other marks that must stand out from the surface under them.
+    static let mark = textPrimary
 
     static let radius: CGFloat = 16
     static let smallRadius: CGFloat = 10
@@ -26,14 +31,55 @@ extension Color {
     init(hex: String) {
         self = ColorHex.color(hex)
     }
+
+    /// One colour for light and one for dark, following the interface style it is drawn in.
+    init(light: String, dark: String) {
+        self = Color(
+            uiColor: UIColor { traits in
+                UIColor(ColorHex.color(traits.userInterfaceStyle == .dark ? dark : light))
+            })
+    }
+}
+
+/// The user's choice of light, dark or following the system.
+enum Appearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+
+    var id: String { rawValue }
+
+    var scheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max.fill"
+        case .dark: "moon.fill"
+        }
+    }
+
+    static let storageKey = "appearance"
 }
 
 // MARK: Wordmark
 
 /// "OpenCaptions." as on the desktop: a solid block with square corners and bold type, like
-/// a subtitle burned into a video (white on dark here, as the desktop's dark mode has it).
+/// a subtitle burned into a video, inverted with the interface (white on dark, black on light).
 struct Wordmark: View {
-    var size: CGFloat = 17
+    var size: CGFloat = 16
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 1) {
@@ -42,10 +88,10 @@ struct Wordmark: View {
         }
         .font(.system(size: size, weight: .heavy))
         .tracking(-0.3)
-        .foregroundStyle(.black)
+        .foregroundStyle(Theme.background)
         .padding(.horizontal, size * 0.5)
-        .padding(.vertical, size * 0.2)
-        .background(.white)
+        .padding(.vertical, size * 0.125)
+        .background(Theme.textPrimary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("OpenCaptions")
     }
@@ -94,9 +140,7 @@ struct CircleButtonStyle: ButtonStyle {
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(prominent ? Theme.onAccent : Theme.textPrimary.opacity(enabled ? 1 : 0.35))
             .frame(width: 38, height: 38)
-            .background(
-                prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Color.black.opacity(0.55)), in: .circle
-            )
+            .background(prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.raised), in: .circle)
             .overlay(Circle().stroke(Theme.stroke, lineWidth: 1))
             .opacity(configuration.isPressed ? 0.8 : 1)
     }
@@ -112,7 +156,7 @@ struct PillButtonStyle: ButtonStyle {
             .foregroundStyle(prominent ? Theme.onAccent : Theme.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Color.black.opacity(0.55)), in: .capsule)
+            .background(prominent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.raised), in: .capsule)
             .overlay(Capsule().stroke(Theme.stroke, lineWidth: 1))
             .opacity(configuration.isPressed ? 0.8 : 1)
     }

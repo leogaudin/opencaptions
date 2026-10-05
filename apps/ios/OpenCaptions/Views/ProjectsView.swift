@@ -27,6 +27,7 @@ struct ProjectsView: View {
     @State private var importing = false
     @State private var path: [UUID] = []
     @State private var deleting: Project?
+    @AppStorage(Appearance.storageKey) private var appearance = Appearance.system
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 240), spacing: 14)]
 
@@ -97,13 +98,25 @@ struct ProjectsView: View {
     // MARK: Pieces
 
     private var header: some View {
-        HStack {
-            Wordmark(size: 19)
+        HStack(spacing: 10) {
+            Wordmark()
             Spacer()
-            if !app.projects.isEmpty { picker { Image(systemName: "plus") }.buttonStyle(CircleButtonStyle(prominent: true)) }
+            Menu {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(Appearance.allCases) { Label($0.label, systemImage: $0.symbol).tag($0) }
+                }
+            } label: {
+                Image(systemName: appearance.symbol)
+            }
+            .buttonStyle(CircleButtonStyle())
+            .accessibilityLabel("Appearance")
+            if !app.projects.isEmpty {
+                picker { Image(systemName: "plus") }.buttonStyle(CircleButtonStyle(prominent: true))
+            }
         }
         .padding(.horizontal, 18)
-        .padding(.vertical, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 
     /// `.current` hands over the video as it is stored; the default may transcode it first,
@@ -188,16 +201,6 @@ struct ProjectCard: View {
                             .padding(8)
                     }
                 }
-                .overlay(alignment: .bottom) {
-                    // The caption pill a transcribed project will wear.
-                    if project.transcript != nil {
-                        Text("Aa")
-                            .font(.system(size: 13, weight: .heavy)).foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 9).padding(.vertical, 3)
-                            .background(.black.opacity(0.7), in: .capsule)
-                            .padding(.bottom, 10)
-                    }
-                }
                 .clipShape(.rect(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.stroke, lineWidth: 1))
             VStack(alignment: .leading, spacing: 2) {
@@ -219,7 +222,7 @@ struct ProjectCard: View {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.mini).tint(Theme.accent)
                 Text(fraction > 0 ? "Transcribing… \(Int(fraction * 100))%" : "Transcribing…")
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.accentInk)
             }
         } else if let transcript = (app.openEditor(for: project.id)?.project ?? project).transcript {
             Text("\(transcript.words.count) words · " + project.createdAt.formatted(date: .abbreviated, time: .omitted))

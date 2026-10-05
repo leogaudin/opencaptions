@@ -32,7 +32,7 @@ struct ExportSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .presentationDetents([.height(250)])
         .presentationDragIndicator(.visible)
-        .tint(Theme.accent)
+        .tint(Theme.accentInk)
         .interactiveDismissDisabled(controller.isRunning)
     }
 
@@ -59,7 +59,7 @@ struct ExportSheet: View {
     private func done(_ url: URL) -> some View {
         VStack(spacing: 16) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
-                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.accent)
+                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.accentInk)
             HStack(spacing: 12) {
                 ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
                     .buttonStyle(PrimaryButtonStyle())

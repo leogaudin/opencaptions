@@ -212,14 +212,14 @@ private struct Playhead: View {
     var body: some View {
         ZStack(alignment: .top) {
             Rectangle()
-                .fill(.white)
+                .fill(Theme.mark)
                 .frame(width: 2)
-                .shadow(color: .black.opacity(0.5), radius: 1.5)
+                .shadow(color: Theme.background.opacity(0.6), radius: 1.5)
                 .allowsHitTesting(false)
             Circle()
-                .fill(.white)
-                .overlay(Circle().stroke(.black.opacity(0.25), lineWidth: 1))
-                .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
+                .fill(Theme.mark)
+                .overlay(Circle().stroke(Theme.background, lineWidth: 2))
+                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
                 .frame(width: 16, height: 16)
                 .padding(14)
                 .contentShape(.rect)
@@ -247,9 +247,9 @@ private struct CaptionBlock: View {
     var body: some View {
         let width = max((line.end - line.start) * px, 4)
         RoundedRectangle(cornerRadius: 9)
-            .fill(selected ? Theme.accent : Color.white.opacity(0.13))
+            .fill(selected ? Theme.accent : Theme.textPrimary.opacity(0.10))
             .overlay {
-                RoundedRectangle(cornerRadius: 9).stroke(selected ? Theme.accent : Color.white.opacity(0.22), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 9).stroke(selected ? Theme.accent : Theme.textPrimary.opacity(0.2), lineWidth: 1)
             }
             .overlay(alignment: .leading) {
                 Text(line.text).font(.system(size: 12, weight: .bold)).lineLimit(1).padding(.horizontal, 9)
@@ -273,8 +273,8 @@ private struct CaptionBlock: View {
     /// A narrow bar with a wider touch target, dragged along the track.
     private func handle(_ edge: CaptionEdge) -> some View {
         Capsule()
-            .fill(.white)
-            .overlay(Capsule().stroke(.black.opacity(0.3), lineWidth: 1))
+            .fill(Theme.mark)
+            .overlay(Capsule().stroke(Theme.background, lineWidth: 1.5))
             .frame(width: 6, height: 28)
             .padding(.horizontal, 12)
             .contentShape(.rect)

@@ -16,9 +16,9 @@ struct TransportBar: View {
             Button { playback.toggle() } label: {
                 Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(Theme.background)
                     .frame(width: 36, height: 36)
-                    .background(.white, in: .circle)
+                    .background(Theme.textPrimary, in: .circle)
             }
             .accessibilityLabel(playback.isPlaying ? "Pause" : "Play")
             Timecode(playback: playback, duration: duration)
