@@ -7,7 +7,9 @@
  * Buffers: copy each input into memory from oc_alloc; the call it is passed to
  * takes ownership. Calls that produce bytes leave them in the result buffer
  * (oc_result_ptr / oc_result_len), valid until the next call. State (fonts, the
- * scene) is per thread: make every call from one thread.
+ * scene) is per process and each call is atomic, so calls may come from any thread
+ * (a Swift actor hops between them) but must be serialized: never two at once, and
+ * read a result or frame before making the next call.
  *
  * JSON is UTF-8 in the API's shapes: SceneInput is {transcript, style, width,
  * height, caption_offset_ms} with Transcript and StyleConfig as in

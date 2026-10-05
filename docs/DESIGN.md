@@ -86,7 +86,8 @@ build produces byte-identical frames. Nothing else may draw captions.
 - **ABI.** One C ABI for every caller, prefixed `oc_` and declared in
   `include/opencaptions_engine.h`. A test keeps the header and the exports in
   step. Inputs are byte buffers from `oc_alloc`; outputs land in a result buffer.
-  State is per thread.
+  State is per process, so calls may come from any thread (a Swift actor hops
+  between them) but the caller serializes them.
 - **Render server.** `POST /render` takes a presigned read URL for the source and
   a presigned write URL for the output, valid for that render only, so the
   engine holds no storage credentials. It posts progress back with a per-job
@@ -150,7 +151,7 @@ things it does not reimplement.
 
 | Piece | iOS |
 |---|---|
-| Caption drawing and edits | The same engine crate, linked as a static library (`cargo rustc --release --lib --crate-type staticlib --target aarch64-apple-ios`; CI lints that target). Swift imports the C header directly. One Swift actor owns the buffer protocol, because engine state is per thread. |
+| Caption drawing and edits | The same engine crate, linked as a static library (`cargo rustc --release --lib --crate-type staticlib --target aarch64-apple-ios`; CI lints that target). Swift imports the C header directly. One Swift actor owns the buffer protocol and serializes the calls, which the engine allows from any thread. |
 | Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Core ML, Neural Engine), mapped once to the same `Transcript` shape, so its transcripts and the server's are interchangeable. |
 | Decode, composite, encode | AVFoundation: each engine frame is composited onto the decoded `CVPixelBuffer` with Core Image, then written by `AVAssetWriter`. HDR stays HDR (HEVC 10-bit, captions at reference white). |
 

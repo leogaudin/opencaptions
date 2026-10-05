@@ -21,9 +21,12 @@ pub use scene::{Renderer, Scene};
 /// Inputs are copied into buffers from `oc_alloc` and owned by the call they are
 /// passed to. Calls that produce bytes leave them in a result buffer, read
 /// through `oc_result_ptr`/`oc_result_len` and valid until the next call. State
-/// (fonts, the scene) is per thread: call from one thread.
+/// (fonts, the scene) is per process, behind locks that make each call atomic:
+/// calls may come from any thread, but a caller must serialize them, because the
+/// result and frame buffers belong to the last call. (A Swift actor is the iOS
+/// caller; actors do not stay on one thread.)
 mod abi {
-    use std::cell::RefCell;
+    use std::sync::{Mutex, MutexGuard};
 
     use serde::Serialize;
 
@@ -31,14 +34,18 @@ mod abi {
     use crate::model::Transcript;
     use crate::{FontBook, Renderer, Scene, SceneInput};
 
-    thread_local! {
-        static BOOK: RefCell<FontBook<'static>> = const { RefCell::new(FontBook::new()) };
-        static RENDERER: RefCell<Option<Renderer>> = const { RefCell::new(None) };
-        static RESULT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    static BOOK: Mutex<FontBook<'static>> = Mutex::new(FontBook::new());
+    static RENDERER: Mutex<Option<Renderer>> = Mutex::new(None);
+    static RESULT: Mutex<Vec<u8>> = Mutex::new(Vec::new());
+
+    /// No call holds two locks at once, so they cannot deadlock. A poisoned lock
+    /// means an earlier call panicked; the state is still usable.
+    fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
+        m.lock().unwrap_or_else(|e| e.into_inner())
     }
 
     fn set_result(bytes: Vec<u8>) {
-        RESULT.with(|r| *r.borrow_mut() = bytes);
+        *lock(&RESULT) = bytes;
     }
 
     /// # Safety
@@ -55,12 +62,12 @@ mod abi {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_result_ptr() -> *const u8 {
-        RESULT.with(|r| r.borrow().as_ptr())
+        lock(&RESULT).as_ptr()
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_result_len() -> usize {
-        RESULT.with(|r| r.borrow().len())
+        lock(&RESULT).len()
     }
 
     /// Fonts live as long as the page, or natively the process: each is added
@@ -77,7 +84,8 @@ mod abi {
     #[unsafe(no_mangle)]
     pub unsafe extern "C" fn oc_add_font(ptr: *mut u8, len: usize) -> u32 {
         let data = keep(unsafe { take(ptr, len) });
-        match BOOK.with(|b| b.borrow_mut().add(data)) {
+        let family = lock(&BOOK).add(data);
+        match family {
             Some(family) => {
                 set_result(family.into_bytes());
                 1
@@ -94,7 +102,7 @@ mod abi {
     pub unsafe extern "C" fn oc_has_font(ptr: *mut u8, len: usize) -> u32 {
         let name = unsafe { take(ptr, len) };
         let name = String::from_utf8_lossy(&name);
-        u32::from(BOOK.with(|b| b.borrow().has(&name)))
+        u32::from(lock(&BOOK).has(&name))
     }
 
     /// Register a font a style asked for, under the family named by the UTF-8 at
@@ -112,7 +120,7 @@ mod abi {
         let name = unsafe { take(name_ptr, name_len) };
         let data = keep(unsafe { take(ptr, len) });
         let name = String::from_utf8_lossy(&name);
-        u32::from(BOOK.with(|b| b.borrow_mut().add_requested(&name, data)))
+        u32::from(lock(&BOOK).add_requested(&name, data))
     }
 
     /// Lay out a scene from JSON. Returns 0 on failure with the reason in the result buffer.
@@ -123,9 +131,9 @@ mod abi {
     pub unsafe extern "C" fn oc_set_scene(ptr: *mut u8, len: usize) -> u32 {
         let json = unsafe { take(ptr, len) };
         match serde_json::from_slice::<SceneInput>(&json) {
-            Ok(input) if !BOOK.with(|b| b.borrow().is_empty()) => {
-                let scene = BOOK.with(|b| Scene::new(&b.borrow(), input));
-                RENDERER.with(|r| *r.borrow_mut() = Some(Renderer::new(scene)));
+            Ok(input) if !lock(&BOOK).is_empty() => {
+                let scene = Scene::new(&lock(&BOOK), input);
+                *lock(&RENDERER) = Some(Renderer::new(scene));
                 1
             }
             Ok(_) => {
@@ -142,82 +150,72 @@ mod abi {
     /// Draw the frame at `t` seconds. Returns 1 if it changed since the last call.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_render(t: f32) -> u32 {
-        RENDERER.with(|r| {
-            r.borrow_mut()
-                .as_mut()
-                .map_or(0, |r| u32::from(r.render(t)))
-        })
+        lock(&RENDERER)
+            .as_mut()
+            .map_or(0, |r| u32::from(r.render(t)))
     }
 
     /// The current frame: width × height × 4 bytes of straight-alpha RGBA.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_frame_ptr() -> *const u8 {
-        RENDERER.with(|r| {
-            r.borrow()
-                .as_ref()
-                .map_or(std::ptr::null(), |r| r.rgba().as_ptr())
-        })
+        lock(&RENDERER)
+            .as_ref()
+            .map_or(std::ptr::null(), |r| r.rgba().as_ptr())
     }
 
     /// The active caption block as four little-endian f32 (x, y, w, h) in frame
     /// pixels, left in the result buffer. Returns 0 when no caption shows.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_bounds() -> u32 {
-        RENDERER.with(
-            |r| match r.borrow().as_ref().and_then(|r| r.active_bounds()) {
-                Some((x, y, w, h)) => {
-                    let mut out = Vec::with_capacity(16);
-                    for v in [x, y, w, h] {
-                        out.extend_from_slice(&v.to_le_bytes());
-                    }
-                    set_result(out);
-                    1
+        let bounds = lock(&RENDERER).as_ref().and_then(|r| r.active_bounds());
+        match bounds {
+            Some((x, y, w, h)) => {
+                let mut out = Vec::with_capacity(16);
+                for v in [x, y, w, h] {
+                    out.extend_from_slice(&v.to_le_bytes());
                 }
-                None => 0,
-            },
-        )
+                set_result(out);
+                1
+            }
+            None => 0,
+        }
     }
 
     /// Index of the active line, or -1 when no caption shows.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_index() -> i32 {
-        RENDERER.with(|r| {
-            r.borrow()
-                .as_ref()
-                .and_then(|r| r.active_index())
-                .map_or(-1, |i| i as i32)
-        })
+        lock(&RENDERER)
+            .as_ref()
+            .and_then(|r| r.active_index())
+            .map_or(-1, |i| i as i32)
     }
 
     /// Each active word's slot as four little-endian f32 (x, y, w, h), left in the
     /// result buffer in line order. Returns the word count.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_word_rects() -> u32 {
-        RENDERER.with(|r| {
-            let rects = r
-                .borrow()
-                .as_ref()
-                .map(|r| r.active_word_rects())
-                .unwrap_or_default();
-            let mut out = Vec::with_capacity(rects.len() * 16);
-            for (x, y, w, h) in &rects {
-                for v in [x, y, w, h] {
-                    out.extend_from_slice(&v.to_le_bytes());
-                }
+        let rects = lock(&RENDERER)
+            .as_ref()
+            .map(|r| r.active_word_rects())
+            .unwrap_or_default();
+        let mut out = Vec::with_capacity(rects.len() * 16);
+        for (x, y, w, h) in &rects {
+            for v in [x, y, w, h] {
+                out.extend_from_slice(&v.to_le_bytes());
             }
-            set_result(out);
-            rects.len() as u32
-        })
+        }
+        set_result(out);
+        rects.len() as u32
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_frame_width() -> u32 {
-        RENDERER.with(|r| r.borrow().as_ref().map_or(0, |r| r.scene().width()))
+        lock(&RENDERER).as_ref().map_or(0, |r| r.scene().width())
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_frame_height() -> u32 {
-        RENDERER.with(|r| r.borrow().as_ref().map_or(0, |r| r.scene().height()))
+        lock(&RENDERER).as_ref().map_or(0, |r| r.scene().height())
     }
 
     /// # Safety
@@ -319,6 +317,50 @@ mod tests {
                     .all(|c| c.is_ascii_alphanumeric() || c == '_')
             })
             .collect()
+    }
+
+    /// Copies `bytes` into engine memory, as a caller does before each call.
+    fn put(bytes: &[u8]) -> (*mut u8, usize) {
+        let ptr = super::abi::oc_alloc(bytes.len());
+        // SAFETY: `ptr` is a fresh allocation of `bytes.len()` bytes.
+        unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), ptr, bytes.len()) };
+        (ptr, bytes.len())
+    }
+
+    /// The contract callers rely on (a Swift actor hops between threads): state
+    /// set by one call is there for the next, whichever thread makes it.
+    #[test]
+    fn state_set_on_one_thread_is_used_from_another() {
+        use super::abi::*;
+        let scene = br##"{
+            "width": 270, "height": 480,
+            "transcript": { "duration": 2.0, "segments": [{ "words": [
+                { "text": "hello", "start": 0.0, "end": 1.0 }] }] },
+            "style": {
+                "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
+                "highlight_color": "#7C3AED", "background": "none",
+                "background_color": "#000000", "background_opacity": 0.0,
+                "position_x": 0.5, "position_y": 0.84, "animation": "word_highlight",
+                "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
+                "shadow_blur": 0, "shadow_color": "#00000080"
+            }
+        }"##;
+        std::thread::spawn(move || {
+            let (p, n) = put(include_bytes!("../fonts/Inter.ttf"));
+            assert_eq!(unsafe { oc_add_font(p, n) }, 1);
+            let (p, n) = put(scene);
+            assert_eq!(unsafe { oc_set_scene(p, n) }, 1);
+        })
+        .join()
+        .unwrap();
+        std::thread::spawn(|| {
+            assert_eq!(oc_render(0.5), 1, "the scene is there");
+            assert_eq!((oc_frame_width(), oc_frame_height()), (270, 480));
+            assert_eq!(oc_active_index(), 0);
+            assert!(!oc_frame_ptr().is_null());
+        })
+        .join()
+        .unwrap();
     }
 
     /// The markers are escaped, so this test's own source never matches them; the
