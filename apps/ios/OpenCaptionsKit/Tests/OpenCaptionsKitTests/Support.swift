@@ -1,4 +1,5 @@
 import Foundation
+import Testing
 @testable import OpenCaptionsKit
 
 enum Repo {
@@ -21,3 +22,8 @@ enum Repo {
         try Presets.load(from: presets)[0].config
     }
 }
+
+/// The engine holds one scene for the whole process, so every suite that sets a scene or
+/// exports must run one at a time, against the others too (a serialized suite only orders
+/// its own tests). The app never has two at once; the tests are what must be told.
+@Suite(.serialized) enum EngineSuites {}
