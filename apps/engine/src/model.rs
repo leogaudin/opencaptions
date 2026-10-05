@@ -100,6 +100,14 @@ impl Transcript {
     }
 }
 
+/// A transcript time as it is shown: moved by the caption offset (positive means
+/// later) and never before the start. The one rule for the offset, so the scene,
+/// the timeline and an export agree; `duration` is the video's length, not a
+/// caption time, and is never shifted.
+pub fn shifted(t: f32, offset_ms: i32) -> f32 {
+    (t + offset_ms as f32 / 1000.0).max(0.0)
+}
+
 /// Everything that decides what a frame looks like.
 #[derive(Clone, Debug, Deserialize)]
 pub struct SceneInput {
@@ -107,4 +115,7 @@ pub struct SceneInput {
     pub style: Style,
     pub width: u32,
     pub height: u32,
+    /// Global caption timing offset in milliseconds; positive shows captions later.
+    #[serde(default)]
+    pub caption_offset_ms: i32,
 }

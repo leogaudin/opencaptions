@@ -59,6 +59,7 @@ class TestFormatRegistry:
 _BASE_INPUTS = {
     "transcript": {"schema_version": 1, "language": "fr", "duration": 10.5, "segments": []},
     "style_config": {"font": "Inter", "font_size": 48},
+    "caption_offset_ms": 0,
     "format_id": "mp4",
     "width": 1920,
     "height": 1080,
@@ -115,6 +116,11 @@ class TestRenderHash:
     def test_changing_fps_changes_hash(self) -> None:
         h1 = compute_render_hash(**_BASE_INPUTS)
         h2 = compute_render_hash(**{**_BASE_INPUTS, "fps": 60})
+        assert h1 != h2
+
+    def test_changing_the_caption_offset_changes_hash(self) -> None:
+        h1 = compute_render_hash(**_BASE_INPUTS)
+        h2 = compute_render_hash(**{**_BASE_INPUTS, "caption_offset_ms": 250})
         assert h1 != h2
 
 

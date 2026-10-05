@@ -10,7 +10,9 @@
  * scene) is per thread: make every call from one thread.
  *
  * JSON is UTF-8 in the API's shapes: SceneInput is {transcript, style, width,
- * height} with Transcript and StyleConfig as in apps/api/app/models/schemas.py.
+ * height, caption_offset_ms} with Transcript and StyleConfig as in
+ * apps/api/app/models/schemas.py. caption_offset_ms (default 0) shifts every
+ * caption time, positive later, clamped at 0.
  * Geometry is little-endian f32 quads (x, y, w, h) in frame pixels.
  */
 #ifndef OPENCAPTIONS_ENGINE_H
@@ -47,11 +49,14 @@ uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
 uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
 
 /* Editing: pure functions of a transcript (JSON); 0 on failure with the reason. */
-/* Leaves a JSON array of {from, count, start, end, text}. */
-uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per_line);
-/* edge 0 = start, 1 = end. Leaves the edited transcript. */
+/* Leaves a JSON array of {from, count, start, end, text}; times are as shown, with
+ * offset_ms (the caption offset) applied. */
+uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per_line,
+                          int32_t offset_ms);
+/* edge 0 = start, 1 = end. time is as shown (with offset_ms); the edited transcript
+ * is left with unshifted times. */
 uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint32_t edge,
-                        float time);
+                        float time, int32_t offset_ms);
 /* Leaves the edited transcript. */
 uint32_t oc_replace_words(uint8_t *json_ptr, size_t json_len, uint32_t from, uint32_t count,
                           uint8_t *text_ptr, size_t text_len);

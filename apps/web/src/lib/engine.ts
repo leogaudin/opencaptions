@@ -27,8 +27,15 @@ interface Exports {
   oc_active_index(): number;
   oc_active_bounds(): number;
   oc_active_word_rects(): number;
-  oc_caption_lines(ptr: number, len: number, wordsPerLine: number): number;
-  oc_retime_word(ptr: number, len: number, index: number, edge: number, time: number): number;
+  oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
+  oc_retime_word(
+    ptr: number,
+    len: number,
+    index: number,
+    edge: number,
+    time: number,
+    offsetMs: number,
+  ): number;
   oc_replace_words(
     ptr: number,
     len: number,
@@ -44,6 +51,8 @@ export interface SceneInput {
   style: StyleConfig;
   width: number;
   height: number;
+  /** The global caption timing offset in ms (positive = later); the engine applies it. */
+  caption_offset_ms: number;
 }
 
 /** A rectangle in frame pixels (the engine's own coordinates). */
@@ -79,10 +88,22 @@ export interface CaptionLine {
  * segments, as captions are cut.
  */
 export interface CaptionEditor {
-  /** The captions, cut every `wordsPerLine` words as the export cuts them. */
-  lines(t: Transcript, wordsPerLine: number): CaptionLine[];
-  /** Moves one edge of a word, stopping at its neighbours. */
-  retimeWord(t: Transcript, index: number, edge: "start" | "end", time: number): Transcript;
+  /**
+   * The captions, cut every `wordsPerLine` words as the export cuts them, with
+   * times as shown (the caption offset applied).
+   */
+  lines(t: Transcript, wordsPerLine: number, offsetMs: number): CaptionLine[];
+  /**
+   * Moves one edge of a word to `time` as shown, stopping at its neighbours. The
+   * returned transcript has unshifted times.
+   */
+  retimeWord(
+    t: Transcript,
+    index: number,
+    edge: "start" | "end",
+    time: number,
+    offsetMs: number,
+  ): Transcript;
   /**
    * Replaces `count` words from `from` with the words of `text`: the same count
    * keeps timings, another shares the span by word length, empty removes them.
@@ -239,9 +260,10 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
       return JSON.parse(result(x)) as T;
     };
     return {
-      lines: (t, wordsPerLine) => parse(x.oc_caption_lines(...json(t), wordsPerLine)),
-      retimeWord: (t, index, edge, time) =>
-        parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time)),
+      lines: (t, wordsPerLine, offsetMs) =>
+        parse(x.oc_caption_lines(...json(t), wordsPerLine, offsetMs)),
+      retimeWord: (t, index, edge, time, offsetMs) =>
+        parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       replaceWords: (t, from, count, text) =>
         parse(x.oc_replace_words(...json(t), from, count, ...copyIn(x, encoder.encode(text)))),
     };

@@ -1,8 +1,10 @@
-"""Global caption timing offset.
+"""Global caption timing offset, for the subtitle files.
 
-One alignment nudge applied to every caption timing, positive to delay. Applied
-to a COPY, and an offset of 0 returns the SAME object — the render hash depends
-on transcript bytes, so a no-op offset must not invalidate a cached render.
+One alignment nudge applied to every caption timing, positive to delay. The
+caption engine owns this rule for everything it draws (the preview and the
+export: see `shifted` in apps/engine/src/model.rs); this is its mirror for SRT
+and VTT, which only this product exports. Both clamp at zero and leave the
+duration alone. Applied to a COPY, and an offset of 0 returns the SAME object.
 """
 
 from __future__ import annotations

@@ -6,7 +6,7 @@
 use serde::Serialize;
 use serde_json::{Map, Value, json};
 
-use crate::model::{Transcript, Word};
+use crate::model::{Transcript, Word, shifted};
 
 /// The shortest a word may be made by retiming, in seconds.
 pub const MIN_WORD_S: f32 = 0.05;
@@ -28,7 +28,8 @@ pub enum Edge {
     End,
 }
 
-pub fn lines(t: &Transcript, words_per_line: u32) -> Vec<Line> {
+/// The captions as shown: times carry the caption offset, as the scene's do.
+pub fn lines(t: &Transcript, words_per_line: u32, offset_ms: i32) -> Vec<Line> {
     let words: Vec<_> = t.words().collect();
     let size = words_per_line.max(1) as usize;
     words
@@ -37,17 +38,19 @@ pub fn lines(t: &Transcript, words_per_line: u32) -> Vec<Line> {
         .map(|(n, chunk)| Line {
             from: n * size,
             count: chunk.len(),
-            start: chunk[0].start,
-            end: chunk[chunk.len() - 1].end,
+            start: shifted(chunk[0].start, offset_ms),
+            end: shifted(chunk[chunk.len() - 1].end, offset_ms),
             text: join(chunk.iter().copied()),
         })
         .collect()
 }
 
-/// Moves one edge of word `index` to `time`, kept between its neighbours and,
-/// where there is room, no shorter than MIN_WORD_S. The neighbour wins over the
-/// minimum, so words stay ordered and never overlap.
-pub fn retime(t: &Transcript, index: usize, edge: Edge, time: f32) -> Transcript {
+/// Moves one edge of word `index` to `time` as shown (with the caption offset),
+/// kept between its neighbours and, where there is room, no shorter than
+/// MIN_WORD_S. The neighbour wins over the minimum, so words stay ordered and
+/// never overlap. The transcript keeps unshifted times, so the edit converts back.
+pub fn retime(t: &Transcript, index: usize, edge: Edge, time: f32, offset_ms: i32) -> Transcript {
+    let time = time - offset_ms as f32 / 1000.0;
     let mut entries = flatten(t);
     let prev_end = index
         .checked_sub(1)
@@ -197,7 +200,7 @@ mod tests {
 
     #[test]
     fn lines_cut_across_segments_like_the_scene() {
-        let ls = lines(&transcript(), 3);
+        let ls = lines(&transcript(), 3, 0);
         assert_eq!(
             ls,
             [
@@ -221,7 +224,7 @@ mod tests {
 
     #[test]
     fn edits_keep_every_field_they_do_not_change() {
-        let t = retime(&transcript(), 1, Edge::End, 1.2);
+        let t = retime(&transcript(), 1, Edge::End, 1.2, 0);
         let v = serde_json::to_value(&t).unwrap();
         assert_eq!(v["schema_version"], 1);
         assert_eq!(v["segments"][0]["id"], "a");
@@ -233,29 +236,39 @@ mod tests {
     fn retime_moves_one_edge_and_stops_at_the_neighbours() {
         let t = transcript();
         assert_eq!(
-            words(&retime(&t, 0, Edge::Start, 0.2))[0],
+            words(&retime(&t, 0, Edge::Start, 0.2, 0))[0],
             ("one".into(), 0.2, 0.9)
         );
         assert_eq!(
-            words(&retime(&t, 2, Edge::End, 3.5))[2].2,
+            words(&retime(&t, 2, Edge::End, 3.5, 0))[2].2,
             2.6,
             "stops at four"
         );
         assert_eq!(
-            words(&retime(&t, 1, Edge::Start, 0.1))[1].1,
+            words(&retime(&t, 1, Edge::Start, 0.1, 0))[1].1,
             0.9,
             "stops at one"
         );
         assert_eq!(
-            words(&retime(&t, 3, Edge::End, 9.0))[3].2,
+            words(&retime(&t, 3, Edge::End, 9.0, 0))[3].2,
             4.0,
             "stops at the end"
         );
-        let short = retime(&t, 1, Edge::End, 0.0);
+        let short = retime(&t, 1, Edge::End, 0.0, 0);
         assert!(
             (words(&short)[1].2 - (0.9 + MIN_WORD_S)).abs() < 1e-6,
             "keeps a minimum"
         );
+    }
+
+    #[test]
+    fn the_caption_offset_is_shown_in_lines_and_removed_from_edits() {
+        let ls = lines(&transcript(), 3, 500);
+        assert_eq!((ls[0].start, ls[0].end), (1.0, 2.2));
+        assert_eq!(lines(&transcript(), 3, -2000)[0].start, 0.0, "clamped");
+        // Dragging word three's end to 2.1 as shown at +500 ms writes 1.6.
+        let t = retime(&transcript(), 2, Edge::End, 2.1, 500);
+        assert!((words(&t)[2].2 - 1.6).abs() < 1e-5, "unshifted on write");
     }
 
     #[test]
@@ -268,7 +281,7 @@ mod tests {
         );
         let ws = words(&t);
         // Each new word is shorter than MIN_WORD_S; its start cannot pass the previous end.
-        let moved = words(&retime(&t, 4, Edge::Start, 0.0));
+        let moved = words(&retime(&t, 4, Edge::Start, 0.0, 0));
         assert_eq!(moved[4].1, ws[3].2);
         assert!(moved.windows(2).all(|p| p[0].2 <= p[1].1 + 1e-6));
     }

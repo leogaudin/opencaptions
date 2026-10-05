@@ -1,9 +1,11 @@
 """Tests for the global caption timing offset.
 
-Covers the three things the offset must guarantee:
-  1. The pure transform shifts/clamps correctly and is byte-identical at 0.
+Covers the things the offset must guarantee:
+  1. The pure transform (used for the subtitle files) shifts/clamps correctly
+     and is byte-identical at 0. The engine applies the same rule to what it
+     draws, so a render sends the transcript as stored plus the offset.
   2. The content-addressed render cache key changes with the offset (so a
-     changed offset never serves a stale render) and is unchanged at 0.
+     changed offset never serves a stale render).
   3. The offset reaches the actual engine request body + output key, and the
      API round-trips + range-validates the field.
 """
@@ -100,26 +102,18 @@ class TestOffsetChangesRenderHash:
 
     def _hash(self, offset_ms: int) -> str:
         return compute_render_hash(
-            transcript=apply_caption_offset(_TRANSCRIPT, offset_ms),
+            transcript=_TRANSCRIPT,
             style_config=self._STYLE,
+            caption_offset_ms=offset_ms,
             format_id="mp4",
             width=1080,
             height=1920,
             fps=30,
         )
 
-    def test_zero_offset_matches_unshifted_hash(self) -> None:
-        """offset 0 must produce the SAME hash as no offset at all, so existing
-        cached renders stay valid and 'reset to 0' serves the original."""
-        baseline = compute_render_hash(
-            transcript=_TRANSCRIPT,
-            style_config=self._STYLE,
-            format_id="mp4",
-            width=1080,
-            height=1920,
-            fps=30,
-        )
-        assert self._hash(0) == baseline
+    def test_the_same_offset_gives_the_same_hash(self) -> None:
+        """'Reset to 0' serves the render made at 0 again."""
+        assert self._hash(0) == self._hash(0)
 
     def test_nonzero_offset_changes_hash(self) -> None:
         assert self._hash(1000) != self._hash(0)
@@ -194,48 +188,37 @@ def _run_render_video(monkeypatch: pytest.MonkeyPatch, offset_ms: int) -> dict[s
     return captured["body"]
 
 
-def test_render_request_carries_shifted_transcript(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_render_request_carries_the_stored_transcript_and_the_offset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     body = _run_render_video(monkeypatch, 1000)
+    # The engine applies the offset; the transcript goes as stored.
     w0 = body["transcript"]["segments"][0]["words"][0]
-    assert (w0["start"], w0["end"]) == (2.0, 2.5)
-    assert body["transcript"]["duration"] == 5.0  # video length unchanged
+    assert (w0["start"], w0["end"]) == (1.0, 1.5)
+    assert body["caption_offset_ms"] == 1000
+    assert body["transcript"]["duration"] == 5.0
 
-    style = StyleConfig().model_dump()
-    expected = compute_render_hash(
-        transcript=apply_caption_offset(_TRANSCRIPT, 1000),
-        style_config=style,
-        format_id="mp4",
-        width=1080,
-        height=1920,
-        fps=30,
-    )
-    baseline = compute_render_hash(
-        transcript=_TRANSCRIPT,
-        style_config=style,
-        format_id="mp4",
-        width=1080,
-        height=1920,
-        fps=30,
-    )
+    expected = _expected_hash(1000)
     assert body["output_key"].endswith(f"{expected}.mp4")
-    assert expected != baseline
+    assert expected != _expected_hash(0)
 
 
-def test_render_request_zero_offset_is_original(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_render_request_zero_offset(monkeypatch: pytest.MonkeyPatch) -> None:
     body = _run_render_video(monkeypatch, 0)
-    w0 = body["transcript"]["segments"][0]["words"][0]
-    assert (w0["start"], w0["end"]) == (1.0, 1.5)  # untouched
+    assert body["caption_offset_ms"] == 0
+    assert body["output_key"].endswith(f"{_expected_hash(0)}.mp4")
 
-    style = StyleConfig().model_dump()
-    baseline = compute_render_hash(
+
+def _expected_hash(offset_ms: int) -> str:
+    return compute_render_hash(
         transcript=_TRANSCRIPT,
-        style_config=style,
+        style_config=StyleConfig().model_dump(),
+        caption_offset_ms=offset_ms,
         format_id="mp4",
         width=1080,
         height=1920,
         fps=30,
     )
-    assert body["output_key"].endswith(f"{baseline}.mp4")
 
 
 # 3b. API round-trip + validation + readiness key

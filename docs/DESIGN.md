@@ -39,8 +39,8 @@ the two scale on different hardware.
 3. **Edit.** The SPA edits the transcript and the style and autosaves them with
    `PATCH /projects/{id}`. The preview is drawn by the engine in the browser.
 4. **Render.** `POST /projects/{id}/download {format}` computes a hash of
-   everything that decides the output (transcript after the timing offset, style,
-   format, size, fps). If `projects/{id}/renders/{hash}.<ext>` exists, it is
+   everything that decides the output (transcript, timing offset, style, format,
+   size, fps). If `projects/{id}/renders/{hash}.<ext>` exists, it is
    ready at once; otherwise a render job is queued and the SPA polls the job.
    The cache needs no database state: readiness is an existence check.
 5. **Download.** `GET /projects/{id}/download/{format}`. Subtitles (SRT, VTT,
@@ -63,6 +63,10 @@ build produces byte-identical frames. Nothing else may draw captions.
   size. `render(t)` then draws one frame, redrawing only the area that changed.
   Lines are the transcript's words in reading order, cut every `words_per_line`
   words. A line holds through short gaps and clears in long ones.
+- **Timing offset.** One global nudge of every caption against the audio
+  (`caption_offset_ms`, positive is later, times clamp at zero) is part of the
+  scene, so the preview and the export shift identically. The edit calls take it
+  too: they report times as shown and write them back unshifted.
 - **Position.** `position_x`/`position_y` are the normalized centre of the
   caption block, clamped so it stays in frame. The editor drags the block and
   hit-tests words using the geometry the engine reports (`active_*`).

@@ -81,7 +81,7 @@ def render_video(  # noqa: C901
                 raise RuntimeError("Project has no transcript")
             video_key = project.video_storage_key
             # Resolved once, in the same place the API resolves it: geometry,
-            # style fallback and the offset-applied transcript all feed the
+            # style fallback, transcript and offset all feed the
             # content-addressed hash, so any disagreement between the two would
             # present as a permanent cache miss.
             inputs = resolve_render_inputs(project)
@@ -113,6 +113,7 @@ def render_video(  # noqa: C901
             "font_url": font_url,
             "transcript": inputs.transcript,
             "style": inputs.style_config,
+            "caption_offset_ms": inputs.caption_offset_ms,
             "output_key": output_key,
             "fps": inputs.fps,
             "width": inputs.width,

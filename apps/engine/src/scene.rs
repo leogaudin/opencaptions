@@ -13,7 +13,7 @@ use tiny_skia::{
 };
 
 use crate::fonts::FontBook;
-use crate::model::{Animation, Background, Rgba, SceneInput, Style};
+use crate::model::{Animation, Background, Rgba, SceneInput, Style, shifted};
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
 const REF_HEIGHT: f32 = 1920.0;
@@ -347,6 +347,7 @@ impl Scene {
         let max_row = MAX_WIDTH * width as f32 - 2.0 * pad_bx;
         let margin = style.shadow_blur * 3.0 + style.stroke_width + 2.0;
 
+        let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
         let lines = words
             .chunks(style.words_per_line.max(1) as usize)
@@ -387,8 +388,8 @@ impl Scene {
                         let slot_w = adv + 2.0 * pad_wx;
                         let at = Transform::from_translate(x + pad_wx, top + baseline_in_row);
                         placed[i] = Some(Placed {
-                            start: chunk[i].start,
-                            end: chunk[i].end,
+                            start: shifted(chunk[i].start, offset),
+                            end: shifted(chunk[i].end, offset),
                             glyphs: glyphs.clone().and_then(|p| p.transform(at)),
                             slot: Rect::from_xywh(x, top, slot_w.max(1.0), row_h).unwrap(),
                         });
@@ -399,8 +400,8 @@ impl Scene {
                 // Room for the pop to grow a word past its slot.
                 let grow = inner_w.max(row_h) * POP;
                 Line {
-                    start: chunk.first().map_or(0.0, |w| w.start),
-                    end: chunk.last().map_or(0.0, |w| w.end),
+                    start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
+                    end: shifted(chunk.last().map_or(0.0, |w| w.end), offset),
                     words: placed.into_iter().flatten().collect(),
                     block: (style.background != Background::None).then_some(block),
                     anchor: block,
@@ -769,6 +770,31 @@ mod tests {
         assert_eq!(scene.active_line(1.7), Some(0), "short gap keeps the line");
         assert_eq!(scene.active_line(2.5), None, "long gap clears");
         assert_eq!(scene.active_line(3.2), Some(1));
+    }
+
+    #[test]
+    fn the_caption_offset_moves_every_line_and_clamps_at_the_start() {
+        let at = |offset_ms: i32| {
+            let mut i = input("word_highlight", WORDS, 3);
+            i.caption_offset_ms = offset_ms;
+            Scene::new(&book(), i)
+        };
+        let later = at(500);
+        assert_eq!(later.active_line(0.2), None, "first line not yet showing");
+        assert_eq!(later.active_line(0.7), Some(0));
+        assert_eq!(later.active_line(3.7), Some(1));
+        let earlier = at(-2000);
+        assert_eq!(
+            earlier.lines[0].start, 0.0,
+            "clamped at the start, never negative"
+        );
+        assert_eq!(earlier.active_line(1.2), Some(1), "line two is at 1.0");
+        let none = at(0);
+        assert_eq!(
+            (none.lines[0].start, none.lines[1].start),
+            (0.0, 3.0),
+            "zero changes nothing"
+        );
     }
 
     #[test]

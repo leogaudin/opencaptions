@@ -21,16 +21,16 @@ type Edit = (f: (t: Transcript) => Transcript) => void;
 export function Timeline({
   video,
   transcript,
-  offset,
+  offsetMs,
   wordsPerLine,
   duration,
   onEdit,
 }: {
   video: RefObject<HTMLVideoElement | null>;
-  /** Unshifted transcript; edits are written back in its time base. */
+  /** Transcript as stored; the engine shows it shifted and writes edits back unshifted. */
   transcript: Transcript;
-  /** Caption offset in seconds, added to every time shown. */
-  offset: number;
+  /** Caption offset in ms, applied by the engine to every time shown. */
+  offsetMs: number;
   wordsPerLine: number;
   duration: number;
   onEdit: Edit;
@@ -42,13 +42,12 @@ export function Timeline({
   const [editing, setEditing] = useState<{ line: CaptionLine; text: string } | null>(null);
   const resolved = useRef(false);
   // A positive offset shows the last captions past the video's end; keep them reachable.
-  const span = Math.max(duration + Math.max(0, offset), 0.001);
+  const span = Math.max(duration + Math.max(0, offsetMs / 1000), 0.001);
   const editor = useCaptionEditor();
   const lines = useMemo(
-    () => editor?.lines(transcript, wordsPerLine) ?? [],
-    [editor, transcript, wordsPerLine],
+    () => editor?.lines(transcript, wordsPerLine, offsetMs) ?? [],
+    [editor, transcript, wordsPerLine, offsetMs],
   );
-  const shown = (s: number): number => Math.max(0, s + offset);
   const pct = (s: number): string => `${(s / span) * 100}%`;
 
   // The playhead follows the video every frame while it plays, without a React
@@ -102,7 +101,7 @@ export function Timeline({
     commitFrame.current = requestAnimationFrame(() => {
       commitFrame.current = 0;
       const p = pending.current;
-      if (p && editor) onEdit((t) => editor.retimeWord(t, p.index, p.edge, p.time - offset));
+      if (p && editor) onEdit((t) => editor.retimeWord(t, p.index, p.edge, p.time, offsetMs));
     });
   };
   useEffect(() => () => cancelAnimationFrame(commitFrame.current), []);
@@ -141,12 +140,12 @@ export function Timeline({
       >
         {lines.map((line) => {
           const isSelected = selected === line.from;
-          const left = shown(line.start);
+          const left = line.start;
           return (
             <div
               key={line.from}
               className="absolute top-1.5 bottom-1.5"
-              style={{ left: pct(left), width: pct(Math.max(shown(line.end) - left, 0)) }}
+              style={{ left: pct(left), width: pct(Math.max(line.end - left, 0)) }}
             >
               <button
                 type="button"
@@ -193,7 +192,7 @@ export function Timeline({
                       const step = { ArrowLeft: -NUDGE_S, ArrowRight: NUDGE_S }[e.key];
                       if (!step) return;
                       e.preventDefault();
-                      const at = shown(edge === "start" ? line.start : line.end) + step;
+                      const at = (edge === "start" ? line.start : line.end) + step;
                       seek(at);
                       retime(edgeWord(line, edge), edge, at);
                     }}

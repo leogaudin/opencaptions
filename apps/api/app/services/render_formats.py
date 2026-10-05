@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.models.schemas import StyleConfig
-from app.services.caption_offset import apply_caption_offset
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +108,7 @@ def compute_render_hash(
     *,
     transcript: dict[str, object],
     style_config: dict[str, object],
+    caption_offset_ms: int,
     format_id: str,
     width: int,
     height: int,
@@ -123,6 +123,7 @@ def compute_render_hash(
         {
             "transcript": transcript,
             "style_config": style_config,
+            "caption_offset_ms": caption_offset_ms,
             "format_id": format_id,
             "width": width,
             "height": height,
@@ -179,6 +180,7 @@ class RenderInputs:
 
     transcript: dict[str, Any]
     style_config: dict[str, Any]
+    caption_offset_ms: int
     width: int
     height: int
     fps: int
@@ -187,6 +189,7 @@ class RenderInputs:
         return compute_render_hash(
             transcript=self.transcript,
             style_config=self.style_config,
+            caption_offset_ms=self.caption_offset_ms,
             format_id=format_id,
             width=self.width,
             height=self.height,
@@ -198,10 +201,10 @@ class RenderInputs:
 
 
 def resolve_render_inputs(project: RenderableProject) -> RenderInputs:
-    """Hash inputs for a project, with the caption offset applied.
+    """Hash inputs for a project.
 
-    The offset is applied to a copy, so changing it invalidates the cache while
-    an offset of 0 leaves the transcript — and the hash — byte-identical.
+    The transcript stays as stored and the caption offset travels beside it: the
+    engine applies the offset, so its draw and the hash see the same two inputs.
     """
     fps = float(project.video_fps) if project.video_fps else float(DEFAULT_FPS)
     fps = max(_MIN_FPS, min(_MAX_FPS, fps))
@@ -211,10 +214,9 @@ def resolve_render_inputs(project: RenderableProject) -> RenderInputs:
     )
 
     return RenderInputs(
-        transcript=apply_caption_offset(
-            dict(project.transcript), int(project.caption_offset_ms or 0)
-        ),
+        transcript=dict(project.transcript),
         style_config=style_config,
+        caption_offset_ms=int(project.caption_offset_ms or 0),
         width=int(project.video_width) if project.video_width else DEFAULT_WIDTH,
         height=int(project.video_height) if project.video_height else DEFAULT_HEIGHT,
         fps=int(round(fps)),

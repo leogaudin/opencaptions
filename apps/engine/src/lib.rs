@@ -241,7 +241,8 @@ mod abi {
     }
 
     /// The captions of a transcript (JSON) as a JSON array of
-    /// `{from, count, start, end, text}`. Returns 0 on failure with the reason.
+    /// `{from, count, start, end, text}`, times shown with `offset_ms` (the caption
+    /// offset). Returns 0 on failure with the reason.
     ///
     /// # Safety
     /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
@@ -250,12 +251,17 @@ mod abi {
         ptr: *mut u8,
         len: usize,
         words_per_line: u32,
+        offset_ms: i32,
     ) -> u32 {
-        respond(unsafe { read_transcript(ptr, len) }.map(|t| edit::lines(&t, words_per_line)))
+        respond(
+            unsafe { read_transcript(ptr, len) }
+                .map(|t| edit::lines(&t, words_per_line, offset_ms)),
+        )
     }
 
-    /// Moves the start (`edge` 0) or end (1) of word `index` to `time`; the edited
-    /// transcript is left as JSON. Returns 0 on failure with the reason.
+    /// Moves the start (`edge` 0) or end (1) of word `index` to `time` as shown
+    /// with `offset_ms`; the edited transcript, in unshifted times, is left as
+    /// JSON. Returns 0 on failure with the reason.
     ///
     /// # Safety
     /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
@@ -266,11 +272,12 @@ mod abi {
         index: u32,
         edge: u32,
         time: f32,
+        offset_ms: i32,
     ) -> u32 {
         let edge = if edge == 0 { Edge::Start } else { Edge::End };
         respond(
             unsafe { read_transcript(ptr, len) }
-                .map(|t| edit::retime(&t, index as usize, edge, time)),
+                .map(|t| edit::retime(&t, index as usize, edge, time, offset_ms)),
         )
     }
 

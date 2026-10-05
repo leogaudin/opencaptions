@@ -6,7 +6,6 @@
  */
 import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Timeline } from "@/components/Timeline";
-import { applyCaptionOffset } from "@/lib/captionOffset";
 import {
   type ActiveCaption,
   type CaptionRenderer,
@@ -332,11 +331,7 @@ export function CaptionPreview() {
     };
   }, []);
 
-  // Same shift the render pipeline applies server-side.
-  const shifted = useMemo(
-    () => applyCaptionOffset(transcript ?? EMPTY, captionOffsetMs),
-    [transcript, captionOffsetMs],
-  );
+  const shown = transcript ?? EMPTY;
 
   const naturalWidth = project?.video_width ?? clientDims?.width ?? FALLBACK_WIDTH;
   const naturalHeight = project?.video_height ?? clientDims?.height ?? FALLBACK_HEIGHT;
@@ -352,12 +347,13 @@ export function CaptionPreview() {
   const sceneHeight = Math.max(2, Math.round(Math.min(naturalHeight, displayHeight * dpr)));
   const scene = useMemo<SceneInput>(
     () => ({
-      transcript: shifted,
+      transcript: shown,
       style,
       width: Math.max(2, Math.round(sceneHeight * ratio)),
       height: sceneHeight,
+      caption_offset_ms: captionOffsetMs,
     }),
-    [shifted, style, sceneHeight, ratio],
+    [shown, style, sceneHeight, ratio, captionOffsetMs],
   );
 
   if (!project) return null;
@@ -375,7 +371,7 @@ export function CaptionPreview() {
 
   return (
     <div ref={container} className="w-full">
-      {shifted.segments.length === 0 ? (
+      {shown.segments.length === 0 ? (
         note("Waiting for transcription to complete to show the preview…")
       ) : previewBlocked ? (
         note(
@@ -422,10 +418,10 @@ export function CaptionPreview() {
           </div>
           <Timeline
             video={video}
-            transcript={transcript ?? EMPTY}
-            offset={captionOffsetMs / 1000}
+            transcript={shown}
+            offsetMs={captionOffsetMs}
             wordsPerLine={style.words_per_line}
-            duration={Math.max(1, shifted.duration)}
+            duration={Math.max(1, shown.duration)}
             onEdit={editTranscript}
           />
         </div>
