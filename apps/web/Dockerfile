@@ -23,7 +23,7 @@ RUN cargo build --release --locked --lib --target wasm32-unknown-unknown \
 FROM scratch AS preview-assets
 COPY --from=wasm /out /
 
-FROM node:24-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
