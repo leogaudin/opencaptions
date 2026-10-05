@@ -22,9 +22,19 @@ public enum ExportKey {
         }
     }
 
+    /// The file format an export of this project is: HDR sources stay HDR.
+    public static func format(for project: Project) -> String {
+        switch project.hdrTransfer {
+        case .pq?: "mp4-hevc10-pq"
+        case .hlg?: "mp4-hevc10-hlg"
+        case nil: "mp4-h264"
+        }
+    }
+
     /// 16 hex characters; nil for a project that has nothing to export yet.
-    public static func hash(for project: Project, format: String = "mp4-h264") -> String? {
+    public static func hash(for project: Project, format: String? = nil) -> String? {
         guard let transcript = project.transcript else { return nil }
+        let format = format ?? Self.format(for: project)
         let inputs = Inputs(
             transcript: transcript, style: project.styleConfig, captionOffsetMs: project.captionOffsetMs,
             format: format, width: project.videoWidth ?? 0, height: project.videoHeight ?? 0,

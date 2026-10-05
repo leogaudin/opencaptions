@@ -1,6 +1,7 @@
 import AVFoundation
 import CoreImage
 import Foundation
+import VideoToolbox
 
 public enum ExportError: Error, Equatable, Sendable, LocalizedError {
     case nothingToExport
@@ -58,6 +59,60 @@ public struct CaptionExporter: Sendable {
         }
     }
 
+    /// How frames are decoded, composited and encoded. SDR is 8-bit H.264. An HDR source
+    /// stays HDR: decoded to 10 bits so nothing is clipped, and written as 10-bit HEVC
+    /// with the source's BT.2020 primaries and transfer function. Core Image works in
+    /// light relative to reference white, so the sRGB captions land at reference white
+    /// in the HDR signal rather than at peak brightness.
+    private struct Encoding {
+        var pixelFormat: OSType
+        var settings: [String: Any]
+        var compression: [String: Any]
+        var colorSpace: CGColorSpace?
+        var attachments: [CFString: CFString] = [:]
+        /// How much the captions are scaled (in linear light) on the way into this
+        /// encoding. Core Image places sRGB white well above reference white in an HDR
+        /// signal, so a measured factor brings it down to reference white (203 nits in PQ,
+        /// 75% signal in HLG). `HDRExportTests` measures the result, so a change in how
+        /// the system maps sRGB into HDR fails there.
+        var overlayGain = 1.0
+
+        static func make(for transfer: HDRTransfer?, width: Int, height: Int, bitrate: Int, fps: Double) -> Encoding {
+            var compression: [String: Any] = [
+                AVVideoAverageBitRateKey: bitrate, AVVideoExpectedSourceFrameRateKey: fps,
+            ]
+            guard let transfer else {
+                compression[AVVideoProfileLevelKey] = AVVideoProfileLevelH264HighAutoLevel
+                return Encoding(
+                    pixelFormat: kCVPixelFormatType_32BGRA,
+                    settings: [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: width, AVVideoHeightKey: height],
+                    compression: compression, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+            }
+            let pq = transfer == .pq
+            let avTransfer = pq ? AVVideoTransferFunction_SMPTE_ST_2084_PQ : AVVideoTransferFunction_ITU_R_2100_HLG
+            compression[AVVideoProfileLevelKey] = kVTProfileLevel_HEVC_Main10_AutoLevel as String
+            var encoding = Encoding(
+                pixelFormat: kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange,
+                settings: [
+                    AVVideoCodecKey: AVVideoCodecType.hevc, AVVideoWidthKey: width, AVVideoHeightKey: height,
+                    AVVideoColorPropertiesKey: [
+                        AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_2020,
+                        AVVideoTransferFunctionKey: avTransfer,
+                        AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_2020,
+                    ],
+                ],
+                compression: compression,
+                colorSpace: CGColorSpace(name: pq ? CGColorSpace.itur_2100_PQ : CGColorSpace.itur_2100_HLG),
+                attachments: [
+                    kCVImageBufferColorPrimariesKey: kCVImageBufferColorPrimaries_ITU_R_2020,
+                    kCVImageBufferTransferFunctionKey: pq ? kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ : kCVImageBufferTransferFunction_ITU_R_2100_HLG,
+                    kCVImageBufferYCbCrMatrixKey: kCVImageBufferYCbCrMatrix_ITU_R_2020,
+                ])
+            encoding.overlayGain = pq ? 0.277 : 0.282
+            return encoding
+        }
+    }
+
     // MARK: The pipeline
 
     private func write(
@@ -80,29 +135,24 @@ public struct CaptionExporter: Sendable {
             transcript: transcript, style: project.styleConfig, width: width, height: height,
             captionOffsetMs: project.captionOffsetMs)
 
+        let bitrate = min(50_000_000, max(2_000_000, Int(Double(width * height) * fps * 0.15)))
+        let encoding = Encoding.make(for: project.hdrTransfer, width: width, height: height, bitrate: bitrate, fps: fps)
+
         let reader = try AVAssetReader(asset: asset)
         let videoOut = AVAssetReaderTrackOutput(
-            track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+            track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: encoding.pixelFormat])
         reader.add(videoOut)
         let audio = try await audioPipeline(asset: asset, reader: reader)
 
         let writer = try AVAssetWriter(outputURL: output, fileType: .mp4)
-        let bitrate = min(50_000_000, max(2_000_000, Int(Double(width * height) * fps * 0.15)))
-        let videoIn = AVAssetWriterInput(
-            mediaType: .video,
-            outputSettings: [
-                AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: width, AVVideoHeightKey: height,
-                AVVideoCompressionPropertiesKey: [
-                    AVVideoAverageBitRateKey: bitrate,
-                    AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
-                    AVVideoExpectedSourceFrameRateKey: fps,
-                ],
-            ])
+        var settings = encoding.settings
+        settings[AVVideoCompressionPropertiesKey] = encoding.compression
+        let videoIn = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         videoIn.expectsMediaDataInRealTime = false
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(
             assetWriterInput: videoIn,
             sourcePixelBufferAttributes: [
-                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+                kCVPixelBufferPixelFormatTypeKey as String: encoding.pixelFormat,
                 kCVPixelBufferWidthKey as String: width, kCVPixelBufferHeightKey as String: height,
             ])
         writer.add(videoIn)
@@ -112,9 +162,9 @@ public struct CaptionExporter: Sendable {
         guard writer.startWriting() else { throw ExportError.failed(writer.error?.localizedDescription ?? "cannot write") }
         writer.startSession(atSourceTime: .zero)
 
-        let context = CIContext()
+        // Half-float working precision, so HDR values above reference white survive.
+        let context = CIContext(options: [.workingFormat: CIFormat.RGBAh])
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
-        let sRGB = CGColorSpace(name: CGColorSpace.sRGB)
         var overlay: CIImage?
         do {
             while let sample = videoOut.copyNextSampleBuffer() {
@@ -123,12 +173,15 @@ public struct CaptionExporter: Sendable {
                 try await ready(videoIn, writer: writer, audio: audio, before: time.seconds)
                 guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { continue }
                 // Unchanged since the last frame: the same overlay, no redraw.
-                if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage }
+                if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }
                 let picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
                 var buffer: CVPixelBuffer?
                 CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
                 guard let buffer else { throw ExportError.failed("out of memory") }
-                context.render(overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds, colorSpace: sRGB)
+                for (key, value) in encoding.attachments { CVBufferSetAttachment(buffer, key, value, .shouldPropagate) }
+                context.render(
+                    overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds,
+                    colorSpace: encoding.colorSpace)
                 guard adaptor.append(buffer, withPresentationTime: time) else {
                     throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
                 }
@@ -220,5 +273,21 @@ public struct CaptionExporter: Sendable {
             feed(audio, upTo: .infinity)
             if !audio.done { try await Task.sleep(for: .milliseconds(2)) }
         }
+    }
+}
+
+
+private extension CIImage {
+    /// Premultiplied colour scaled by `gain` (alpha unchanged), in the context's linear working space.
+    func scaled(by gain: Double) -> CIImage {
+        guard gain != 1 else { return self }
+        return applyingFilter(
+            "CIColorMatrix",
+            parameters: [
+                "inputRVector": CIVector(x: gain, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: gain, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: gain, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+            ])
     }
 }
