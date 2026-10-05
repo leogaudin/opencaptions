@@ -34,6 +34,8 @@ targets:
         buildPhase: resources
     dependencies:
       - package: OpenCaptionsKit
+      - package: OpenCaptionsKit
+        product: OpenCaptionsTranscription
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.leogaudin.opencaptions
