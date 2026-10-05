@@ -32,9 +32,7 @@ interface EditorState {
   setStyle: (s: Partial<StyleConfig>) => void;
   /** Clamped and autosaved. */
   setCaptionOffset: (ms: number) => void;
-  updateWord: (segId: string, wordIdx: number, text: string) => void;
-  removeWord: (segId: string, wordIdx: number) => void;
-  /** Applies a pure edit to the transcript, as the timeline's edits are. */
+  /** Applies a pure edit to the transcript: the engine's edits, the only way it changes. */
   editTranscript: (f: (t: Transcript) => Transcript) => void;
   startTranscription: (body?: {
     provider?: "local" | "openai";
@@ -158,40 +156,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
     setCaptionOffset: (ms) => {
       const clamped = clampCaptionOffsetMs(Math.round(ms));
       if (clamped !== get().captionOffsetMs) edit({ captionOffsetMs: clamped });
-    },
-
-    updateWord: (segId, wordIdx, text) => {
-      const t = get().transcript;
-      if (!t) return;
-      const segments = t.segments.map((seg) => {
-        if (seg.id !== segId) return seg;
-        const words = seg.words.map((w, i) => (i === wordIdx ? { ...w, text } : w));
-        return { ...seg, words, text: words.map((w) => w.text).join(" ") };
-      });
-      edit({ transcript: { ...t, segments } });
-    },
-
-    removeWord: (segId, wordIdx) => {
-      const t = get().transcript;
-      if (!t) return;
-      const segments = t.segments.flatMap((seg) => {
-        if (seg.id !== segId) return [seg];
-        const words = seg.words.filter((_, i) => i !== wordIdx);
-        const first = words[0];
-        const last = words[words.length - 1];
-        // A segment with no words left has nothing to show, so it goes with them.
-        if (!first || !last) return [];
-        return [
-          {
-            ...seg,
-            words,
-            start: first.start,
-            end: last.end,
-            text: words.map((w) => w.text).join(" "),
-          },
-        ];
-      });
-      edit({ transcript: { ...t, segments } });
     },
 
     editTranscript: (f) => {

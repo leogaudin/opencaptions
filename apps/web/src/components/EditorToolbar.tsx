@@ -2,7 +2,8 @@
  * EditorToolbar: horizontal bar above the editor panes with all meta actions.
  *
  * Left section: transcription progress / Cancel (real-time feedback).
- * Right section: Download video (primary + format dropdown), Download subtitles.
+ * Right section: the transcript's language, the autosave status, Re-transcribe,
+ * Download video (primary + format dropdown), Download subtitles.
  *
  * Video download logic (multi-format, content-addressed cache):
  *   - Primary button always downloads MP4 (H.264).
@@ -21,6 +22,8 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Download, FileText, Loader2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
+import { AutosaveIndicator } from "@/components/AutosaveIndicator";
+import { RetranscribeDialog } from "@/components/RetranscribeDialog";
 import * as api from "@/lib/api";
 import { usePendingDownload } from "@/lib/downloads";
 import { useEditorStore } from "@/store/editorStore";
@@ -97,7 +100,7 @@ export function EditorToolbar() {
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-border bg-card/60 px-4 py-2">
+    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card/60 px-4 py-2">
       {/* ----- Left: transcription progress (real-time feedback) ----- */}
       <div className="flex items-center gap-3">
         {transcribing && (
@@ -145,7 +148,20 @@ export function EditorToolbar() {
        * border, high-contrast foreground, accent on hover) matching the header's
        * Info and theme-toggle buttons.
        */}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        {transcript && (
+          <>
+            <span
+              data-testid="transcript-language"
+              className="hidden text-[11px] text-muted-foreground sm:inline"
+            >
+              <span className="uppercase">{transcript.language}</span>
+              {transcript.language_detection === "auto" ? " (auto-detected)" : ""}
+            </span>
+            <AutosaveIndicator />
+            <RetranscribeDialog current={transcript.language} />
+          </>
+        )}
         {/* Download video: primary filled accent button + format dropdown */}
         <div className="flex items-center">
           <button

@@ -14,7 +14,6 @@ import { CaptionPreview } from "@/components/CaptionPreview";
 import { EditorToolbar } from "@/components/EditorToolbar";
 import { StyleControls } from "@/components/StyleControls";
 import { TimelineDock } from "@/components/TimelineDock";
-import { TranscriptEditor } from "@/components/TranscriptEditor";
 import { PlaybackProvider } from "@/lib/playback";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
@@ -107,7 +106,6 @@ export function EditorPage() {
       <div className="h-56 shrink-0 rounded-md border border-border bg-card">
         <TimelineDock />
       </div>
-      <TranscriptEditor />
       <StyleControls />
     </div>
   );
@@ -131,7 +129,6 @@ export function EditorPage() {
           </Separator>
           <Panel id="style" defaultSize="40%" minSize="25%" className="bg-background">
             <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-              <TranscriptEditor />
               <StyleControls />
             </div>
           </Panel>
