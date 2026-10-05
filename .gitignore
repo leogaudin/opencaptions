@@ -30,6 +30,12 @@ apps/web/dist/
 apps/web/public/engine/
 apps/engine/target/
 
+# iOS: the engine xcframework and DerivedData are built, the Xcode project is generated
+apps/ios/Build/
+apps/ios/*.xcodeproj/
+apps/ios/OpenCaptionsKit/.build/
+DerivedData/
+
 # Env files
 .env
 .env.local

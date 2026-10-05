@@ -6,6 +6,7 @@
 #   - apps/api      → pyproject.toml, read via importlib.metadata
 #   - apps/web      → package.json, bundled by Vite
 #   - apps/engine   → Cargo.toml, compiled in
+#   - apps/ios      → project.yml (MARKETING_VERSION), read by XcodeGen
 # So those manifests are the only places a version number lives. Nothing
 # forces them to agree with each other, so this guard is the safety net: run it
 # before cutting a release (and ideally in CI) to catch a manifest that was
@@ -29,17 +30,19 @@ extract_json_version() {
 api_version="$(extract_toml_version "$REPO_ROOT/apps/api/pyproject.toml")"
 web_version="$(extract_json_version "$REPO_ROOT/apps/web/package.json")"
 engine_version="$(extract_toml_version "$REPO_ROOT/apps/engine/Cargo.toml")"
+ios_version="$(sed -n 's/^ *MARKETING_VERSION: *\([0-9][^ ]*\).*/\1/p' "$REPO_ROOT/apps/ios/project.yml" | head -n1)"
 
 echo "api      (pyproject.toml): ${api_version:-<none>}"
 echo "web      (package.json):   ${web_version:-<none>}"
 echo "engine   (Cargo.toml):     ${engine_version:-<none>}"
+echo "ios      (project.yml):    ${ios_version:-<none>}"
 
-if [ -z "$api_version" ] || [ -z "$web_version" ] || [ -z "$engine_version" ]; then
+if [ -z "$api_version" ] || [ -z "$web_version" ] || [ -z "$engine_version" ] || [ -z "$ios_version" ]; then
   echo "ERROR: could not extract a version from one or more manifests" >&2
   exit 1
 fi
 
-if [ "$api_version" != "$web_version" ] || [ "$api_version" != "$engine_version" ]; then
+if [ "$api_version" != "$web_version" ] || [ "$api_version" != "$engine_version" ] || [ "$api_version" != "$ios_version" ]; then
   echo "ERROR: manifest versions disagree — bump them all to the same value" >&2
   exit 1
 fi

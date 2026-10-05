@@ -92,6 +92,28 @@ check-versions:      ## Verify the manifests agree on the version
 check-compose:       ## Verify docker-compose.yml's fallbacks agree with each other and the code
 	@./scripts/check-compose.sh
 
+# --- iOS (macOS + Xcode only; not part of `make ci`, see apps/ios/README.md) ----
+
+IOS_ONLY := @test "$$(uname)" = Darwin || { echo "needs macOS + Xcode, see apps/ios/README.md"; exit 1; }
+
+ios-engine:          ## Build the engine into apps/ios/Build/OpenCaptionsEngine.xcframework
+	$(IOS_ONLY)
+	@apps/engine/scripts/build-apple.sh
+
+ios-project:         ## Generate the Xcode project (XcodeGen)
+	$(IOS_ONLY)
+	@cd apps/ios && xcodegen generate
+
+ios-test:            ## Run the iOS logic tests on the Mac (no simulator)
+	$(IOS_ONLY)
+	@cd apps/ios/OpenCaptionsKit && swift test
+
+ios-build: ios-project ## Build the iOS app for the simulator
+	$(IOS_ONLY)
+	@cd apps/ios && xcodebuild build -project OpenCaptions.xcodeproj -scheme OpenCaptions \
+	 -destination 'generic/platform=iOS Simulator' -derivedDataPath Build/DerivedData \
+	 CODE_SIGNING_ALLOWED=NO -quiet
+
 # --- Operations -----------------------------------------------------------
 
 migration:           ## New migration. Usage: make migration MSG="add foo"

@@ -13,6 +13,8 @@ respective owners. This file summarises the significant ones.
 | Google Fonts families | Caption fonts chosen in the editor | Predominantly SIL OFL 1.1 | Fetched from Google on first use and kept in object storage, not shipped |
 | Anton (subset) | Engine test fixture | SIL OFL 1.1 | `apps/engine/testdata`, not in any image |
 | rustybuzz, tiny-skia | Text shaping and drawing in the engine | MIT / BSD-3-Clause | Rust dependencies |
+| [WhisperKit](https://github.com/argmaxinc/WhisperKit) | On-device transcription in the iOS app | MIT | Swift package dependency of `apps/ios` |
+| Whisper Core ML weights | Speech-to-text model on iOS | MIT | Downloaded at runtime, not shipped |
 | FFmpeg (`ffmpeg`) | Decoding and encoding in the engine | GPLv2+ (Debian build) | Debian package in the engine image |
 
 Nothing in this file is legal advice.
