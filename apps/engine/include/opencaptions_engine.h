@@ -57,9 +57,10 @@ uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per
  * is left with unshifted times. */
 uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint32_t edge,
                         float time, int32_t offset_ms);
-/* Leaves the edited transcript. */
-uint32_t oc_replace_words(uint8_t *json_ptr, size_t json_len, uint32_t from, uint32_t count,
-                          uint8_t *text_ptr, size_t text_len);
+/* Sets the text of one word, keeping its timing; empty text removes the word, text
+ * of several words fails ("one word at a time"). Leaves the edited transcript. */
+uint32_t oc_set_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint8_t *text_ptr,
+                     size_t text_len);
 
 #ifdef __cplusplus
 }

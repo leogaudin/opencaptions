@@ -281,17 +281,17 @@ mod abi {
         )
     }
 
-    /// Replaces `count` words from `from` with the words of the UTF-8 at
-    /// `text_ptr`; the edited transcript is left as JSON. Returns 0 on failure.
+    /// Sets the text of word `index` to the UTF-8 at `text_ptr` (empty removes
+    /// the word, several words are refused); the edited transcript is left as
+    /// JSON. Returns 0 on failure with the reason.
     ///
     /// # Safety
     /// Both pointers must come from `oc_alloc` with their lengths, filled as described.
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn oc_replace_words(
+    pub unsafe extern "C" fn oc_set_word(
         ptr: *mut u8,
         len: usize,
-        from: u32,
-        count: u32,
+        index: u32,
         text_ptr: *mut u8,
         text_len: usize,
     ) -> u32 {
@@ -299,7 +299,7 @@ mod abi {
         let text = String::from_utf8_lossy(&text);
         respond(
             unsafe { read_transcript(ptr, len) }
-                .map(|t| edit::replace(&t, from as usize, count as usize, &text)),
+                .and_then(|t| edit::set_word(&t, index as usize, &text)),
         )
     }
 }

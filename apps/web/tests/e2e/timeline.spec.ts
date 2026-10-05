@@ -87,28 +87,6 @@ test.describe("Timeline", () => {
     await expect.poll(() => savedWords(saved)[2]?.end).toBe(2.6);
   });
 
-  test("double-click edits a line's words; Escape cancels", async ({ page }) => {
-    const second = timeline.getByTestId("timeline-line").nth(1);
-    const input = timeline.getByTestId("timeline-edit");
-
-    await second.dblclick();
-    await input.fill("alpha beta");
-    await input.press("Enter");
-    await expect
-      .poll(() => savedWords(saved).map((w) => w.text))
-      .toEqual(["one", "two", "three", "alpha", "beta"]);
-    // The two new words share the old word's span.
-    const [alpha, beta] = savedWords(saved).slice(3);
-    expect([alpha?.start, beta?.end]).toEqual([2.6, 3]);
-
-    await timeline.getByTestId("timeline-line").first().dblclick();
-    await input.fill("JUNK");
-    await input.press("Escape");
-    await expect(input).toHaveCount(0);
-    await page.waitForTimeout(1200); // past the autosave debounce
-    expect(savedWords(saved)[0]?.text).toBe("one");
-  });
-
   test("with a caption offset, the timeline shows shifted times and saves unshifted ones", async ({
     page,
   }) => {

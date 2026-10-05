@@ -1,12 +1,13 @@
 //! Caption edits, shared by every editor: the web through WebAssembly, the phone
 //! natively. Captions are the transcript's words in reading order, cut every
 //! `words_per_line` words exactly as the scene cuts them; edits address words by
-//! that flat index and rebuild the segments around them.
+//! that flat index and rebuild the segments around them. Text edits are one word
+//! at a time, so no edit ever has to invent a timing.
 
 use serde::Serialize;
-use serde_json::{Map, Value, json};
+use serde_json::json;
 
-use crate::model::{Transcript, Word, shifted};
+use crate::model::{Segment, Transcript, Word, shifted};
 
 /// The shortest a word may be made by retiming, in seconds.
 pub const MIN_WORD_S: f32 = 0.05;
@@ -70,42 +71,23 @@ pub fn retime(t: &Transcript, index: usize, edge: Edge, time: f32, offset_ms: i3
     rebuild(t, entries)
 }
 
-/// Replaces `count` words from `from` with the words of `text`. The same number
-/// of words keeps every timing; a different number shares the run's time span by
-/// word length. Empty text removes the run. New words join the run's first segment.
-pub fn replace(t: &Transcript, from: usize, count: usize, text: &str) -> Transcript {
-    let entries = flatten(t);
-    let Some(run) = from
-        .checked_add(count)
-        .and_then(|end| entries.get(from..end))
-        .filter(|r| !r.is_empty())
-    else {
-        return t.clone();
-    };
-    let tokens: Vec<_> = text.split_whitespace().collect();
-    let replaced: Vec<_> = if tokens.len() == run.len() {
-        run.iter()
-            .zip(&tokens)
-            .map(|((seg, w), &text)| {
-                (
-                    *seg,
-                    Word {
-                        text: text.into(),
-                        ..w.clone()
-                    },
-                )
-            })
-            .collect()
+/// Sets the text of word `index`, keeping its timing and every other field.
+/// Empty text removes the word (and a segment left with none). Text with more
+/// than one word is refused: splitting a word would invent timings.
+pub fn set_word(t: &Transcript, index: usize, text: &str) -> Result<Transcript, String> {
+    let mut entries = flatten(t);
+    if index >= entries.len() {
+        return Err(format!("no word at index {index}"));
+    }
+    let text = text.trim();
+    if text.is_empty() {
+        entries.remove(index);
+    } else if text.split_whitespace().count() > 1 {
+        return Err("one word at a time".into());
     } else {
-        let seg = run[0].0;
-        spread(&tokens, run[0].1.start, run[run.len() - 1].1.end)
-            .map(|w| (seg, w))
-            .collect()
-    };
-    let mut out = entries[..from].to_vec();
-    out.extend(replaced);
-    out.extend_from_slice(&entries[from + count..]);
-    rebuild(t, out)
+        entries[index].1.text = text.into();
+    }
+    Ok(rebuild(t, entries))
 }
 
 /// Each word paired with the index of the segment it belongs to.
@@ -135,7 +117,7 @@ fn rebuild(t: &Transcript, entries: Vec<(usize, Word)>) -> Transcript {
             rest.insert("start".into(), json!(first.start));
             rest.insert("end".into(), json!(last.end));
             rest.insert("text".into(), json!(join(words.iter())));
-            Some(crate::model::Segment { words, rest })
+            Some(Segment { words, rest })
         })
         .collect();
     Transcript {
@@ -146,28 +128,6 @@ fn rebuild(t: &Transcript, entries: Vec<(usize, Word)>) -> Transcript {
 
 fn join<'a>(words: impl Iterator<Item = &'a Word>) -> String {
     words.map(|w| w.text.as_str()).collect::<Vec<_>>().join(" ")
-}
-
-/// New words over `start..end`, each taking a share proportional to its length.
-fn spread<'a>(tokens: &'a [&str], start: f32, end: f32) -> impl Iterator<Item = Word> + 'a {
-    let len = |s: &str| s.chars().count() as f32;
-    let total: f32 = tokens.iter().map(|s| len(s)).sum();
-    let mut done = 0.0;
-    tokens.iter().enumerate().map(move |(i, &text)| {
-        let begin = start + (end - start) * done / total;
-        done += len(text);
-        Word {
-            text: text.into(),
-            start: begin,
-            // The last word ends exactly where the run did, free of rounding.
-            end: if i + 1 == tokens.len() {
-                end
-            } else {
-                start + (end - start) * done / total
-            },
-            rest: Map::from_iter([("confidence".into(), Value::from(1))]),
-        }
-    })
 }
 
 #[cfg(test)]
@@ -273,54 +233,52 @@ mod tests {
 
     #[test]
     fn retime_never_crosses_a_neighbour_even_below_the_minimum() {
-        let t = replace(
-            &transcript(),
-            3,
-            1,
-            "a b c d e f g h i j k l m n o p q r s t u v w x y z",
-        );
-        let ws = words(&t);
-        // Each new word is shorter than MIN_WORD_S; its start cannot pass the previous end.
-        let moved = words(&retime(&t, 4, Edge::Start, 0.0, 0));
-        assert_eq!(moved[4].1, ws[3].2);
+        // Words shorter than MIN_WORD_S, back to back.
+        let t: Transcript = serde_json::from_value(json!({
+            "duration": 1.0,
+            "segments": [{ "id": "a", "start": 0.0, "end": 0.06, "text": "a b c", "words": [
+                { "text": "a", "start": 0.0, "end": 0.02 },
+                { "text": "b", "start": 0.02, "end": 0.04 },
+                { "text": "c", "start": 0.04, "end": 0.06 }] }]
+        }))
+        .unwrap();
+        let moved = words(&retime(&t, 1, Edge::Start, 0.0, 0));
+        assert_eq!(moved[1].1, 0.02, "start cannot pass the previous end");
+        let moved = words(&retime(&t, 1, Edge::End, 0.5, 0));
+        assert_eq!(moved[1].2, 0.04, "end cannot pass the next start");
         assert!(moved.windows(2).all(|p| p[0].2 <= p[1].1 + 1e-6));
     }
 
     #[test]
-    fn replace_keeps_timings_for_the_same_count_and_spreads_otherwise() {
-        let t = transcript();
-        let same = replace(&t, 0, 3, "uno dos tres");
+    fn set_word_renames_one_word_and_keeps_everything_else() {
+        let t = set_word(&transcript(), 2, "  tres ").unwrap();
+        assert_eq!(words(&t)[2], ("tres".into(), 1.3, 1.7), "timing kept");
+        assert_eq!(t.segments[1].rest["text"], "tres four");
         assert_eq!(
-            words(&same)[2],
-            ("tres".into(), 1.3, 1.7),
-            "word in the second segment"
+            t.segments[0].rest["text"], "one two",
+            "other segments untouched"
         );
-        assert_eq!(same.segments[0].rest["text"], "uno dos");
-
-        let more = replace(&t, 3, 1, "ab abcdef");
-        let ws = words(&more);
-        assert_eq!((ws[3].0.as_str(), ws[3].1), ("ab", 2.6));
-        assert!(
-            (ws[3].2 - 2.7).abs() < 1e-5 && ws[4].1 == ws[3].2,
-            "shared by length"
-        );
-        assert_eq!(
-            (ws[4].0.as_str(), ws[4].2),
-            ("abcdef", 3.0),
-            "ends where the run did"
-        );
-        assert_eq!(more.segments[1].words[1].rest["confidence"], 1);
-
-        let merged = replace(&t, 1, 2, "x");
-        assert_eq!(merged.segments[0].rest["text"], "one x");
-        assert_eq!(merged.segments[1].rest["text"], "four");
+        let v = serde_json::to_value(&t).unwrap();
+        assert_eq!(v["segments"][0]["words"][0]["confidence"], 0.9f32);
+        assert_eq!(v["segments"][1]["id"], "b");
     }
 
     #[test]
-    fn replace_with_nothing_removes_words_and_empty_segments() {
-        let t = replace(&transcript(), 3, 1, "  ");
-        assert_eq!(t.segments.len(), 2);
-        let gone = replace(&replace(&transcript(), 2, 2, ""), 0, 2, "");
+    fn set_word_refuses_several_words_and_missing_indexes() {
+        assert_eq!(
+            set_word(&transcript(), 0, "uno dos").unwrap_err(),
+            "one word at a time"
+        );
+        assert!(set_word(&transcript(), 4, "x").is_err());
+    }
+
+    #[test]
+    fn set_word_with_nothing_removes_the_word_and_empty_segments() {
+        let t = set_word(&transcript(), 1, "  ").unwrap();
+        assert_eq!(words(&t).len(), 3);
+        assert_eq!(t.segments[0].rest["text"], "one");
+        assert_eq!(t.segments[0].rest["end"], 0.9f32, "span follows the words");
+        let gone = (0..4).fold(transcript(), |t, _| set_word(&t, 0, "").unwrap());
         assert!(gone.segments.is_empty());
     }
 }

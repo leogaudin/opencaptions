@@ -36,14 +36,7 @@ interface Exports {
     time: number,
     offsetMs: number,
   ): number;
-  oc_replace_words(
-    ptr: number,
-    len: number,
-    from: number,
-    count: number,
-    textPtr: number,
-    textLen: number,
-  ): number;
+  oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
 }
 
 export interface SceneInput {
@@ -105,10 +98,10 @@ export interface CaptionEditor {
     offsetMs: number,
   ): Transcript;
   /**
-   * Replaces `count` words from `from` with the words of `text`: the same count
-   * keeps timings, another shares the span by word length, empty removes them.
+   * Sets the text of one word, keeping its timing. Empty text removes the word;
+   * text of several words is refused, since splitting a word would invent timings.
    */
-  replaceWords(t: Transcript, from: number, count: number, text: string): Transcript;
+  setWord(t: Transcript, index: number, text: string): Transcript;
 }
 
 export interface CaptionRenderer {
@@ -264,8 +257,8 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
         parse(x.oc_caption_lines(...json(t), wordsPerLine, offsetMs)),
       retimeWord: (t, index, edge, time, offsetMs) =>
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
-      replaceWords: (t, from, count, text) =>
-        parse(x.oc_replace_words(...json(t), from, count, ...copyIn(x, encoder.encode(text)))),
+      setWord: (t, index, text) =>
+        parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
     };
   });
   editor.catch(() => {

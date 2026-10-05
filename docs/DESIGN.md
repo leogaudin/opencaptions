@@ -70,9 +70,11 @@ build produces byte-identical frames. Nothing else may draw captions.
 - **Position.** `position_x`/`position_y` are the normalized centre of the
   caption block, clamped so it stays in frame. The editor drags the block and
   hit-tests words using the geometry the engine reports (`active_*`).
-- **Edits.** Cutting captions, retiming a word edge and replacing words also live
-  in the engine (`edit.rs`). The web timeline calls them through WebAssembly,
-  and the phone will call the same code natively.
+- **Edits.** Cutting captions, retiming a word edge and editing a word also live
+  in the engine (`edit.rs`). A word is edited one at a time (renamed, or deleted
+  by clearing it): text of several words is refused, because splitting a word
+  would invent timings. The web calls them through WebAssembly, and the phone
+  will call the same code natively.
 - **Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
   offline install still draws. Any Google Fonts family can be chosen: the API
   fetches it once, keeps it in the store (`fonts/`), and gives the preview and
