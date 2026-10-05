@@ -13,10 +13,8 @@
 export const shellX = "px-4 sm:px-6 lg:px-8";
 
 /**
- * Non-accent icon button per the owner's hierarchy: transparent background,
- * outlined, high-contrast foreground (black in light / white in dark), with the
- * accent-on-hover effect shared by the header's Info and dark-mode buttons.
- * Only the primary action keeps a filled accent — never these.
+ * Non-accent icon button: a round control on the muted surface, as in the iOS app. Only the
+ * primary action keeps the filled yellow accent.
  */
 export const iconButtonClass =
-  "inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50";
+  "inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:opacity-50";

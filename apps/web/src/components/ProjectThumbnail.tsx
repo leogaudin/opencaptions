@@ -18,8 +18,7 @@ interface ProjectThumbnailProps {
  */
 export function ProjectThumbnail({ projectId, className }: ProjectThumbnailProps) {
   const [failed, setFailed] = useState(false);
-  const base =
-    "aspect-video w-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted";
+  const base = "aspect-video w-24 shrink-0 overflow-hidden rounded-xl bg-muted";
 
   if (failed) {
     return (

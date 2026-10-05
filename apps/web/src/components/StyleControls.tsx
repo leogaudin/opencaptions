@@ -37,7 +37,9 @@ export function StyleControls() {
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Caption style</h2>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Caption style
+        </h2>
       </div>
 
       <div className="mb-3 grid grid-cols-3 gap-2">

@@ -26,7 +26,7 @@ const WHEEL_ZOOM = 0.0025;
 /** One press of a zoom button. */
 const ZOOM_STEP = 1.5;
 const BUTTON =
-  "inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-foreground hover:bg-accent disabled:opacity-50";
+  "inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:opacity-40";
 
 export function Timeline({
   video,
@@ -198,7 +198,7 @@ export function Timeline({
   };
   useEffect(() => () => cancelAnimationFrame(commitFrame.current), []);
 
-  const rowLabel = "flex items-center px-2 text-[11px] font-medium text-muted-foreground";
+  const rowLabel = "flex items-center px-3 text-[11px] font-semibold text-muted-foreground";
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Transport duration={duration} fps={fps}>
@@ -233,8 +233,8 @@ export function Timeline({
           <Maximize2 className="h-4 w-4" aria-hidden />
         </button>
       </Transport>
-      <div className="flex min-h-0 flex-1 overflow-y-auto border-t border-border">
-        <div className="w-20 shrink-0 border-r border-border">
+      <div className="flex min-h-0 flex-1 overflow-y-auto">
+        <div className="w-20 shrink-0">
           <div className="h-6" />
           <div className={`${rowLabel} h-9`}>Video</div>
           <div className={`${rowLabel} h-12`}>Captions</div>
@@ -243,7 +243,7 @@ export function Timeline({
           <div ref={content} className="relative" style={{ width }}>
             <div
               data-testid="timeline-ruler"
-              className="relative h-6 cursor-pointer touch-none border-b border-border"
+              className="relative h-6 cursor-pointer touch-none"
               {...scrub}
             >
               <Ruler pxPerSecond={px} span={span} from={view.left} to={view.left + view.width} />
@@ -254,7 +254,7 @@ export function Timeline({
               {...scrub}
             >
               <div
-                className="h-full overflow-hidden rounded-sm bg-muted px-2 text-[11px] leading-7 text-muted-foreground ring-1 ring-border"
+                className="h-full overflow-hidden rounded-lg bg-muted px-2.5 text-[11px] font-semibold leading-7 text-muted-foreground"
                 style={{ width: duration * px }}
               >
                 <span className="pointer-events-none whitespace-nowrap">{title}</span>
@@ -282,7 +282,7 @@ export function Timeline({
             <div
               ref={playhead}
               data-testid="timeline-playhead"
-              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-0.5 -translate-x-1/2 bg-primary will-change-transform"
+              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-0.5 -translate-x-1/2 bg-foreground will-change-transform"
             />
           </div>
         </div>

@@ -11,7 +11,9 @@
       (function () {
         try {
           var t = localStorage.getItem("opencaptions:theme");
-          if (t === "dark") document.documentElement.classList.add("dark");
+          // No choice yet: follow the system, as the iOS app does.
+          var dark = t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
         } catch (e) { /* localStorage may be blocked */ }
       })();
     </script>

@@ -65,11 +65,11 @@ export function HomePage() {
   return (
     <div className={`w-full ${shellX} py-10`}>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Your projects</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">Your projects</h1>
         {/* The single primary "New project" action lives in the header (global,
             reachable from every screen). No duplicate here. */}
       </div>
-      <ul className="space-y-2">
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((p) => (
           <ProjectRow key={p.id} item={p} onDeleted={handleDeleted} />
         ))}
@@ -89,9 +89,16 @@ const FLOW_STEPS = [
 function EmptyState() {
   return (
     <div className={`mx-auto w-full max-w-3xl ${shellX} py-16 text-center`}>
-      <h1 className="mb-3 text-4xl font-bold tracking-tight">Transcribe and caption your video</h1>
+      <h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
+        Add captions that move
+      </h1>
+      {/* A caption as the app draws one: the spoken word in yellow. */}
+      <p className="mx-auto mb-4 inline-block max-w-md rounded-2xl bg-black px-5 py-3 text-lg font-semibold text-white">
+        Transcribe, restyle and <span className="text-primary">save</span> a video, all on your
+        machine.
+      </p>
       <p className="mx-auto mb-8 max-w-md text-sm text-muted-foreground">
-        Turn a video into styled, burned-in captions — transcribed locally on your machine.
+        Nothing leaves your machine unless you choose a hosted transcription provider.
       </p>
 
       {/* One unmistakable next action: a large, labelled button that says exactly
@@ -104,7 +111,7 @@ function EmptyState() {
       <Link
         to="/upload"
         data-testid="empty-new-project"
-        className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-base font-medium text-primary-foreground transition-opacity hover:opacity-90"
+        className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90"
       >
         New project
       </Link>
@@ -119,7 +126,7 @@ function EmptyState() {
           <li key={step.label} className="flex flex-1 items-start gap-3">
             <span
               aria-hidden
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-sm font-semibold text-muted-foreground"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground"
             >
               {i + 1}
             </span>
@@ -159,70 +166,68 @@ function ProjectRow({
   }, [item.id, onDeleted]);
 
   return (
-    <li className="relative flex items-center gap-3 rounded-md border border-border bg-card px-4 py-3 text-sm hover:bg-accent">
-      <ProjectThumbnail projectId={item.id} />
-      <div className="min-w-0 flex-1">
-        {/* Stretched link: the whole row is one click target for opening the
-            project, without nesting the delete button inside an anchor. */}
+    <li className="group relative text-sm">
+      <div className="relative">
+        <ProjectThumbnail projectId={item.id} className="aspect-[9/16] w-full rounded-2xl" />
+        {/* Stretched link: the whole card is one click target for opening the project,
+            without nesting the delete button inside an anchor. */}
         <Link
           to={`/projects/${item.id}`}
-          className="font-medium after:absolute after:inset-0 focus:outline-hidden focus-visible:underline"
-        >
-          {item.title}
-        </Link>
-        <div
-          className="text-xs text-muted-foreground"
-          title={new Date(item.updated_at).toLocaleString()}
-        >
-          Updated {formatRelativeTime(item.updated_at)}
+          aria-label={item.title}
+          className="absolute inset-0 rounded-2xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        {/* Controls sit above the link (z-10) and take clicks without opening the project. */}
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+          {confirming ? (
+            <span className="flex items-center gap-1 rounded-full bg-black/70 p-1 text-white backdrop-blur">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                data-testid="delete-confirm"
+                className="rounded-full bg-destructive px-2.5 py-1 text-xs font-bold text-destructive-foreground disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                disabled={deleting}
+                className="rounded-full px-2.5 py-1 text-xs font-semibold hover:bg-white/15 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              aria-label={`Delete ${item.title}`}
+              title="Delete project"
+              data-testid="delete-project"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Trailing controls sit above the stretched link (z-10) so they take
-          clicks without triggering navigation. */}
-      <div className="relative z-10 flex items-center gap-2">
-        {item.status === "transcribing" ? (
-          <LiveProgress projectId={item.id} />
-        ) : (
-          <StatusBadge status={item.status} />
-        )}
-
-        {confirming ? (
-          <span className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              data-testid="delete-confirm"
-              className="rounded-md border border-destructive/40 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
-            >
-              {deleting ? "Deleting…" : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              disabled={deleting}
-              className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            aria-label={`Delete ${item.title}`}
-            title="Delete project"
-            data-testid="delete-project"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-          </button>
-        )}
+      <div className="mt-2 min-w-0">
+        <div className="truncate font-semibold">{item.title}</div>
+        <div
+          className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
+          title={new Date(item.updated_at).toLocaleString()}
+        >
+          {item.status === "transcribing" ? (
+            <LiveProgress projectId={item.id} />
+          ) : (
+            <StatusBadge status={item.status} />
+          )}
+          <span>{formatRelativeTime(item.updated_at)}</span>
+        </div>
       </div>
-
       {error && (
-        <span role="alert" className="absolute -bottom-4 right-0 z-10 text-[11px] text-destructive">
+        <span role="alert" className="mt-1 block text-[11px] text-destructive">
           {error}
         </span>
       )}
@@ -275,5 +280,7 @@ function StatusBadge({ status }: { status: string }) {
     }[status] ?? "bg-muted text-muted-foreground";
   // User-facing labels: avoid exposing internal "rendering" state.
   const label = status === "rendering" ? "preparing" : status;
-  return <span className={`rounded-full px-2 py-0.5 text-xs ${cls}`}>{label}</span>;
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{label}</span>
+  );
 }

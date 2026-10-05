@@ -1,5 +1,5 @@
 /**
- * Theme: 'light' (default) | 'dark', persisted in localStorage.
+ * Theme: 'light' | 'dark', persisted in localStorage; until chosen it follows the system.
  *
  * The initial theme is applied synchronously by an inline script in
  * apps/web/index.html so there is no flash of the wrong palette on load.
@@ -11,14 +11,16 @@ export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "opencaptions:theme";
 
+/** The saved choice, else whatever the system prefers. */
 function readPersisted(): Theme {
   if (typeof window === "undefined") return "light";
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "dark" ? "dark" : "light";
+    if (v === "dark" || v === "light") return v;
   } catch {
-    return "light";
+    /* fall through to the system's preference */
   }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function useTheme(): { theme: Theme; toggle: () => void; setTheme: (t: Theme) => void } {

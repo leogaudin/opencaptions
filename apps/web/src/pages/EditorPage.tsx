@@ -138,7 +138,12 @@ export function EditorPage() {
         <div className="absolute inset-x-0 top-[-5px] bottom-[-5px]" />
         <div className="pointer-events-none absolute h-1 w-8 rounded-full bg-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100 group-data-[separator-dragging]:opacity-100" />
       </Separator>
-      <Panel id="dock" defaultSize="32%" minSize={140} className="bg-card">
+      <Panel
+        id="dock"
+        defaultSize="32%"
+        minSize={140}
+        className="overflow-hidden rounded-t-3xl border-t border-border bg-card"
+      >
         <TimelineDock />
       </Panel>
     </Group>

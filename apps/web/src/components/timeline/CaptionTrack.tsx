@@ -59,10 +59,10 @@ export function CaptionTrack({
                 seek(e.detail ? timeAt(e.clientX) : line.start);
               }}
               className={cn(
-                "h-full w-full min-w-1 overflow-hidden rounded-sm px-1.5 text-left text-[11px] text-foreground",
+                "h-full w-full min-w-1 overflow-hidden rounded-lg px-2 text-left text-[11px] font-bold",
                 isSelected
-                  ? "bg-primary/45 ring-2 ring-primary"
-                  : "bg-primary/20 ring-1 ring-primary/40 hover:bg-primary/30",
+                  ? "bg-primary text-primary-foreground ring-1 ring-primary"
+                  : "bg-foreground/10 text-foreground ring-1 ring-foreground/20 hover:bg-foreground/15",
               )}
             >
               <span className="pointer-events-none whitespace-nowrap">{line.text}</span>
@@ -93,7 +93,7 @@ export function CaptionTrack({
                     onRetime(edgeWord(line, edge), edge, at);
                   }}
                   className={cn(
-                    "absolute inset-y-0 w-2 cursor-ew-resize rounded-sm bg-primary",
+                    "absolute inset-y-0.5 w-1.5 cursor-ew-resize rounded-full bg-foreground ring-1 ring-background",
                     edge === "start" ? "left-0" : "right-0",
                   )}
                 />

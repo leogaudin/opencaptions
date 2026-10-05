@@ -11,7 +11,10 @@ import { useVideo, useVideoClock } from "@/lib/playback";
 import { formatTimecode } from "@/lib/time";
 
 const BUTTON =
-  "inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-foreground hover:bg-accent disabled:opacity-50";
+  "inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:opacity-40";
+/** Play is the one filled control: a solid disc, as in the iOS app. */
+const PLAY =
+  "inline-flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:opacity-50";
 
 /** Whether a key press belongs to the field or control that has focus. */
 function typing(target: EventTarget | null): boolean {
@@ -87,14 +90,14 @@ export function Transport({
   }, [video, fps, duration]);
 
   return (
-    <div data-testid="transport" className="flex items-center gap-2 px-3 py-1.5">
+    <div data-testid="transport" className="flex items-center gap-3 px-4 py-2">
       <button
         type="button"
         data-testid="transport-play"
         aria-label={playing ? "Pause" : "Play"}
         disabled={!video}
         onClick={toggle}
-        className={BUTTON}
+        className={PLAY}
       >
         {playing ? (
           <Pause className="h-4 w-4" aria-hidden />

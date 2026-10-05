@@ -153,6 +153,13 @@ mounted at a time, so there is one `<video>` and one engine whatever the width.
   element each frame and write to the DOM directly.
 - **Autosave.** Edits are saved 800 ms after the last one; there is no Save button.
 
+**Look.** The web app and the iOS app share one look (`apps/web/src/index.css` holds the web's
+tokens, `Theme` the iOS app's): a white or near-black page, a surface for cards, a stronger one for
+controls, the caption highlight yellow as the single accent (a deeper gold where it is text on
+white), rounded corners, and the desktop's "burned-in subtitle" wordmark. It is light or dark and
+follows the system until the user chooses. Projects are a grid of poster cards; in the timeline the
+selected caption is yellow and the playhead is the page's ink colour.
+
 ## Transcription
 
 A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:

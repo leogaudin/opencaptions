@@ -163,7 +163,7 @@ function Header() {
   const hostedMode = useAuthStore((s) => s.status?.hosted_mode ?? false);
 
   return (
-    <header className="border-b border-border bg-card/40 backdrop-blur-sm supports-backdrop-filter:bg-card/60">
+    <header className="bg-background">
       {/* Full-bleed row (no centred max-width cap): the wordmark hugs the left
           and the nav cluster hugs the right at a deliberate, constant inset at
           every width. This wrapper's padding is identical to each page's outer
@@ -190,7 +190,7 @@ function Header() {
           </Link>
           <Link
             to="/upload"
-            className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90"
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             New project
           </Link>

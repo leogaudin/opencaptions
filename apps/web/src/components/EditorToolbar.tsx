@@ -35,7 +35,7 @@ import { useEditorStore } from "@/store/editorStore";
  * All four non-accent icon buttons use this so they cannot drift apart.
  */
 const ICON_BUTTON_CLASSES =
-  "inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50";
+  "inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:opacity-50";
 
 export function EditorToolbar() {
   const project = useEditorStore((s) => s.project);
@@ -100,7 +100,7 @@ export function EditorToolbar() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card/60 px-4 py-2">
+    <div className="flex flex-wrap items-center gap-2 bg-background px-4 py-2">
       {/* ----- Left: transcription progress (real-time feedback) ----- */}
       <div className="flex items-center gap-3">
         {transcribing && (
@@ -131,7 +131,7 @@ export function EditorToolbar() {
         {/* Download preparation progress (shown inline when a format is being prepared) */}
         {preparingNow && (
           <div className="flex items-center gap-1.5">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" aria-hidden />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-ink" aria-hidden />
             <span className="text-[11px] text-muted-foreground">
               Preparing {preparingFormatLabel}
               {preparePct > 0 ? ` ${preparePct}%` : "…"}
@@ -171,7 +171,7 @@ export function EditorToolbar() {
             data-testid="dl-mp4"
             title="Download MP4 (H.264)"
             aria-label="Download MP4"
-            className="relative inline-flex h-7 items-center justify-center rounded-l-md bg-primary px-2.5 text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="relative inline-flex h-7 items-center justify-center rounded-l-xl bg-primary px-3 text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             {preparingNow ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -190,7 +190,7 @@ export function EditorToolbar() {
                 disabled={preparingNow || saving || !transcript}
                 aria-label="Choose video format"
                 title="Choose video format"
-                className="inline-flex h-7 w-6 items-center justify-center rounded-r-md border-l border-primary-foreground/20 bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                className="inline-flex h-7 w-6 items-center justify-center rounded-r-xl border-l border-primary-foreground/20 bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
                 <ChevronDown className="h-3 w-3" aria-hidden />
               </button>

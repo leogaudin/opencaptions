@@ -47,7 +47,7 @@ export function RetranscribeDialog({ current }: { current: string }) {
           type="button"
           disabled={disabled}
           data-testid="retranscribe"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/70 disabled:opacity-50"
         >
           <RefreshCw className="h-3.5 w-3.5" aria-hidden />
           Re-transcribe
@@ -116,7 +116,7 @@ export function RetranscribeDialog({ current }: { current: string }) {
               onClick={confirm}
               disabled={disabled}
               data-testid="retranscribe-confirm"
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               Re-transcribe
             </button>
