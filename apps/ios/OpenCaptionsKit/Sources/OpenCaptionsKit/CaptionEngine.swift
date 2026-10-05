@@ -212,3 +212,14 @@ public actor CaptionEngine {
         return try decoded(oc_set_word(ptr, len, UInt32(index), tp, tl), as: Transcript.self)
     }
 }
+
+extension CaptionEngine {
+    /// Makes `family` drawable: nothing to do for a bundled face, otherwise the font is
+    /// fetched (once) and registered, the rule the server applies to an export, so both
+    /// draw with the same file. Offline and uncached, the engine draws the default face.
+    public func ensureFont(_ family: String, cache: FontCache) async {
+        guard !hasFont(family) else { return }
+        guard let data = await cache.data(for: family) else { return }
+        if !hasFont(family) { _ = addRequestedFont(family: family, data: data) }
+    }
+}

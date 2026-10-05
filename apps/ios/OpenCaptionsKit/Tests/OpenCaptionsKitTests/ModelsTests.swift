@@ -37,6 +37,17 @@ import Testing
         #expect(again == presets)
     }
 
+    @Test func aPresetIsRecognisedByItsIdentityFieldsOnly() throws {
+        let presets = try Presets.load(from: Repo.presets)
+        var style = presets[1].config
+        #expect(style.matches(presets[1]) && !style.matches(presets[0]))
+        style.strokeWidth += 3
+        style.shadowBlur += 5
+        #expect(style.matches(presets[1]), "stroke and shadow are tweakable within a preset")
+        style.fontSize += 1
+        #expect(!style.matches(presets[1]))
+    }
+
     @Test func aProjectIsInTheAPIsShapeAndRoundTrips() throws {
         let project = Project(
             title: "clip", transcript: try Repo.transcript(), styleConfig: try Repo.defaultStyle(),

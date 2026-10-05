@@ -37,3 +37,11 @@ public enum TimelineScale {
         min(span, max(0, (x + scrollOffset) / pointsPerSecond))
     }
 }
+
+extension TimelineScale {
+    /// A position in a video as `m:ss.cc`, the hundredths a caption edit is judged by.
+    public static func timecode(_ seconds: Double) -> String {
+        let cs = Int((seconds.isFinite ? max(0, seconds) : 0) * 100)
+        return String(format: "%d:%02d.%02d", cs / 6000, (cs % 6000) / 100, cs % 100)
+    }
+}

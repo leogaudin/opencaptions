@@ -60,6 +60,14 @@ final class Counter { var value = 0 }
         #expect(TimelineScale.time(atX: 5000, scrollOffset: 0, pointsPerSecond: 10, span: 4) == 4, "clamped to the end")
     }
 
+    @Test func theTimecodeIsMinutesSecondsAndHundredths() {
+        #expect(TimelineScale.timecode(0) == "0:00.00")
+        #expect(TimelineScale.timecode(4) == "0:04.00")
+        #expect(TimelineScale.timecode(65.257) == "1:05.25")
+        #expect(TimelineScale.timecode(-3) == "0:00.00")
+        #expect(TimelineScale.timecode(.nan) == "0:00.00")
+    }
+
     // MARK: Gestures
 
     @Test func aDragMovesTheCaptionByTheFractionOfThePreviewAndStaysInFrame() {

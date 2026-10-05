@@ -82,7 +82,7 @@ public struct Transcript: Codable, Equatable, Sendable {
     public var words: [Word] { segments.flatMap(\.words) }
 }
 
-public enum Animation: String, Codable, CaseIterable, Sendable {
+public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case wordHighlight = "word_highlight"
     case highlightBox = "highlight_box"
     case wordPop = "word_pop"
@@ -108,7 +108,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     /// Normalised centre of the caption block, 0...1 across the frame.
     public var positionX: Double
     public var positionY: Double
-    public var animation: Animation
+    public var animation: CaptionAnimation
     public var wordsPerLine: Int
     public var wordSpacing: Double
     public var strokeWidth: Double
@@ -119,7 +119,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public init(
         font: String, fontSize: Int, textColor: String, highlightColor: String,
         background: Background, backgroundColor: String, backgroundOpacity: Double,
-        positionX: Double, positionY: Double, animation: Animation, wordsPerLine: Int,
+        positionX: Double, positionY: Double, animation: CaptionAnimation, wordsPerLine: Int,
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String
     ) {

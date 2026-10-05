@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 public enum SaveState: Equatable, Sendable {
     case idle
@@ -141,6 +142,13 @@ public final class EditorModel {
         guard style != project.styleConfig else { return }
         project.styleConfig = style
         changed()
+    }
+
+    /// A binding to one style field, for a control.
+    public func binding<T>(_ keyPath: WritableKeyPath<StyleConfig, T>) -> Binding<T> {
+        Binding(
+            get: { self.project.styleConfig[keyPath: keyPath] },
+            set: { value in self.updateStyle { $0[keyPath: keyPath] = value } })
     }
 
     public func apply(_ preset: Preset) {

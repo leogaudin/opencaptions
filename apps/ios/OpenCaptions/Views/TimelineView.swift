@@ -1,0 +1,253 @@
+import OpenCaptionsKit
+import SwiftUI
+
+/// The editing timeline: a ruler over a video track and a caption track, on a time axis
+/// that scrolls and zooms (pinch), with the playhead across them. Tap a caption to select
+/// it and seek, drag its edges to retime it; drag the ruler or the video track to scrub.
+/// Words are edited on the preview. The edits are the engine's; this is only the UI.
+struct TimelineView: View {
+    let model: EditorModel
+    let playback: Playback
+
+    private static let rulerHeight = 26.0
+    private static let videoHeight = 38.0
+    private static let captionHeight = 54.0
+    private static let labelWidth = 64.0
+
+    @State private var zoom: Double?  // points per second; nil is "fit"
+    @State private var scrollPosition = ScrollPosition(x: 0)
+    @State private var scrollX = 0.0
+    @State private var viewport = 0.0
+    @State private var pinch: (base: Double, anchorTime: Double)?
+
+    private var duration: Double { max(1, model.project.videoDuration ?? model.transcript?.duration ?? 1) }
+    /// A positive offset shows the last captions past the video's end; keep them reachable.
+    private var span: Double { duration + max(0, Double(model.project.captionOffsetMs) / 1000) }
+    private var fit: Double { viewport > 0 ? viewport / span : 1 }
+    private var px: Double { zoom.map { TimelineScale.clampZoom($0, fit: fit) } ?? fit }
+    private var contentWidth: Double { zoom == nil ? viewport : span * px }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TransportBar(
+                playback: playback, duration: duration, canZoomOut: zoom != nil,
+                canZoomIn: px < max(fit, TimelineScale.maxPointsPerSecond) - 1e-6,
+                zoomOut: { zoomButton(1 / 1.5) }, zoomIn: { zoomButton(1.5) }, fit: { zoom = nil })
+            Divider()
+            HStack(alignment: .top, spacing: 0) {
+                labels
+                Divider()
+                scroller
+            }
+        }
+    }
+
+    private var labels: some View {
+        VStack(spacing: 0) {
+            Color.clear.frame(height: Self.rulerHeight)
+            label("Video", height: Self.videoHeight)
+            label("Captions", height: Self.captionHeight)
+            Spacer(minLength: 0)
+        }
+        .frame(width: Self.labelWidth)
+    }
+
+    private func label(_ text: String, height: Double) -> some View {
+        Text(text).font(.caption2).foregroundStyle(.secondary).frame(height: height)
+    }
+
+    // MARK: Tracks
+
+    private var scroller: some View {
+        ScrollView(.horizontal) {
+            ZStack(alignment: .topLeading) {
+                VStack(spacing: 0) {
+                    ruler
+                    videoTrack
+                    captionTrack
+                }
+                Playhead(playback: playback, px: px, follow: follow)
+                    .frame(height: Self.rulerHeight + Self.videoHeight + Self.captionHeight)
+            }
+            .frame(width: contentWidth, alignment: .topLeading)
+            .coordinateSpace(.named("track"))
+        }
+        .scrollPosition($scrollPosition)
+        .onScrollGeometryChange(for: Double.self) { $0.contentOffset.x } action: { _, x in scrollX = x }
+        .onScrollGeometryChange(for: Double.self) { $0.containerSize.width } action: { _, w in viewport = w }
+        .simultaneousGesture(
+            MagnifyGesture()
+                .onChanged { value in
+                    if pinch == nil {
+                        let anchor = TimelineScale.time(
+                            atX: value.startLocation.x, scrollOffset: scrollX, pointsPerSecond: px, span: span)
+                        pinch = (px, anchor)
+                    }
+                    guard let pinch else { return }
+                    apply(zoom: pinch.base * value.magnification, keeping: pinch.anchorTime, at: value.startLocation.x)
+                }
+                .onEnded { _ in pinch = nil })
+    }
+
+    private var scrub: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .named("track")).onChanged { drag in
+            playback.seek(to: min(span, max(0, drag.location.x / px)))
+        }
+    }
+
+    private var ruler: some View {
+        Canvas { context, size in
+            let step = TimelineScale.tickStep(pointsPerSecond: px)
+            let first = max(0, Int(((scrollX - 80) / px / step).rounded(.down)))
+            let last = min(Int(span / step), Int(((scrollX + viewport + 80) / px / step).rounded(.up)))
+            guard first <= last else { return }
+            for i in first...last {
+                let t = Double(i) * step
+                let x = t * px
+                context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)), with: .color(.secondary.opacity(0.4)))
+                context.draw(
+                    Text(TimelineScale.tickLabel(t, step: step)).font(.system(size: 10).monospacedDigit())
+                        .foregroundStyle(.secondary),
+                    at: CGPoint(x: x + 4, y: size.height / 2), anchor: .leading)
+            }
+        }
+        .frame(width: contentWidth, height: Self.rulerHeight)
+        .overlay(alignment: .bottom) { Divider() }
+        .contentShape(.rect)
+        .gesture(scrub)
+        .accessibilityLabel("Timeline ruler")
+    }
+
+    private var videoTrack: some View {
+        ZStack(alignment: .leading) {
+            Color.clear
+            RoundedRectangle(cornerRadius: 4)
+                .fill(.quaternary)
+                .overlay(alignment: .leading) {
+                    Text(model.project.title).font(.caption2).foregroundStyle(.secondary)
+                        .lineLimit(1).padding(.horizontal, 8)
+                }
+                .frame(width: duration * px, height: Self.videoHeight - 8)
+        }
+        .frame(width: contentWidth, height: Self.videoHeight)
+        .contentShape(.rect)
+        .gesture(scrub)
+    }
+
+    private var captionTrack: some View {
+        ZStack(alignment: .topLeading) {
+            Color.clear
+                .contentShape(.rect)
+                .gesture(
+                    SpatialTapGesture(coordinateSpace: .named("track")).onEnded { tap in
+                        model.selectedLine = nil
+                        playback.seek(to: min(span, max(0, tap.location.x / px)))
+                    })
+            ForEach(model.lines, id: \.from) { line in
+                CaptionBlock(
+                    line: line, px: px, selected: model.selectedLine == line.from,
+                    select: {
+                        model.selectedLine = line.from
+                        playback.seek(to: $0)
+                    },
+                    retime: { edge, time in
+                        playback.seek(to: time)
+                        model.retime(index: edge == .start ? line.from : line.from + line.count - 1, edge: edge, time: time)
+                    },
+                    span: span)
+            }
+        }
+        .frame(width: contentWidth, height: Self.captionHeight, alignment: .topLeading)
+    }
+
+    // MARK: Zoom
+
+    private func apply(zoom target: Double, keeping time: Double, at anchorX: Double) {
+        let clamped = TimelineScale.clampZoom(target, fit: fit)
+        zoom = clamped <= fit * 1.001 ? nil : clamped
+        scrollPosition.scrollTo(
+            x: TimelineScale.scrollOffset(keeping: time, at: anchorX, pointsPerSecond: clamped))
+    }
+
+    /// The buttons zoom around the playhead, or the middle of the view if it is out of sight.
+    private func zoomButton(_ factor: Double) {
+        let head = playback.time * px - scrollX
+        let anchorX = (0...viewport).contains(head) ? head : viewport / 2
+        let time = TimelineScale.time(atX: anchorX, scrollOffset: scrollX, pointsPerSecond: px, span: span)
+        apply(zoom: px * factor, keeping: time, at: anchorX)
+    }
+
+    /// While playing, keep the playhead in view.
+    private func follow(_ time: Double) {
+        let x = time * px
+        guard playback.isPlaying, x < scrollX || x > scrollX + viewport else { return }
+        scrollPosition.scrollTo(x: max(0, x - viewport / 4))
+    }
+}
+
+/// The playhead: the only part of the timeline that moves with the playing time.
+private struct Playhead: View {
+    let playback: Playback
+    let px: Double
+    let follow: (Double) -> Void
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.accentColor)
+            .frame(width: 2)
+            .offset(x: playback.time * px - 1)
+            .allowsHitTesting(false)
+            .onChange(of: playback.time) { _, time in follow(time) }
+    }
+}
+
+/// One caption line. A selected one has a handle on each edge that retimes it.
+private struct CaptionBlock: View {
+    let line: CaptionLine
+    let px: Double
+    let selected: Bool
+    let select: (_ time: Double) -> Void
+    let retime: (_ edge: CaptionEdge, _ time: Double) -> Void
+    let span: Double
+
+    var body: some View {
+        let width = max((line.end - line.start) * px, 4)
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Color.accentColor.opacity(selected ? 0.5 : 0.22))
+            .overlay {
+                RoundedRectangle(cornerRadius: 4).stroke(Color.accentColor, lineWidth: selected ? 2 : 1)
+            }
+            .overlay(alignment: .leading) {
+                Text(line.text).font(.caption2).lineLimit(1).padding(.horizontal, 6)
+                    .allowsHitTesting(false)
+            }
+            .frame(width: width, height: 40)
+            .contentShape(.rect)
+            .gesture(
+                SpatialTapGesture(coordinateSpace: .named("track")).onEnded { tap in
+                    select(min(span, max(0, tap.location.x / px)))
+                }
+            )
+            .overlay(alignment: .leading) { if selected { handle(.start) } }
+            .overlay(alignment: .trailing) { if selected { handle(.end) } }
+            .offset(x: line.start * px, y: 7)
+            .accessibilityLabel(line.text)
+            .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    /// A narrow bar with a wider touch target, dragged along the track.
+    private func handle(_ edge: CaptionEdge) -> some View {
+        Capsule()
+            .fill(Color.accentColor)
+            .frame(width: 6, height: 40)
+            .padding(.horizontal, 12)
+            .contentShape(.rect)
+            .offset(x: edge == .start ? -12 : 12)
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .named("track")).onChanged { drag in
+                    retime(edge, min(span, max(0, drag.location.x / px)))
+                }
+            )
+            .accessibilityLabel(edge == .start ? "Caption start" : "Caption end")
+    }
+}

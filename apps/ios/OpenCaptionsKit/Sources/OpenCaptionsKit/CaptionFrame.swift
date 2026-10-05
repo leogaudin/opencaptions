@@ -22,3 +22,10 @@ public struct CaptionFrame: Equatable, Sendable {
         ).premultiplyingAlpha()
     }
 }
+
+extension CaptionFrame {
+    /// The overlay as a CGImage, premultiplied, for a layer to show.
+    public func cgImage(using context: CIContext) -> CGImage? {
+        context.createCGImage(ciImage, from: CGRect(x: 0, y: 0, width: width, height: height))
+    }
+}
