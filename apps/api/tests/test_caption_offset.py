@@ -289,3 +289,22 @@ async def test_offset_changes_export_readiness_key(
 
     assert keys_at_zero and keys_at_offset
     assert keys_at_zero.isdisjoint(keys_at_offset)
+
+
+@pytest.mark.asyncio
+async def test_subtitle_files_carry_the_offset_and_the_json_export_does_not(
+    user_a: tuple[AsyncClient, Any],
+    seed_project: Any,
+) -> None:
+    """The video shows captions shifted, so SRT and VTT must too; the JSON export
+    is the transcript as stored."""
+    client, owner = user_a
+    pid = await seed_project(owner)  # one word, "hi", 0.0 to 0.5 s
+    await client.patch(f"/api/v1/projects/{pid}", json={"caption_offset_ms": 1000})
+
+    srt = await client.get(f"/api/v1/projects/{pid}/export.srt")
+    assert "00:00:01,000 --> 00:00:01,500" in srt.text
+    vtt = await client.get(f"/api/v1/projects/{pid}/export.vtt")
+    assert "00:00:01.000 --> 00:00:01.500" in vtt.text
+    raw = await client.get(f"/api/v1/projects/{pid}/export.json")
+    assert raw.json()["segments"][0]["words"][0]["start"] == 0.0

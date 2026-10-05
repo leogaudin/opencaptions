@@ -58,6 +58,7 @@ from app.models.schemas import (
     VideoExportOption,
 )
 from app.services import captions_export
+from app.services.caption_offset import apply_caption_offset
 from app.services.languages import is_valid_language
 from app.storage import s3
 
@@ -765,7 +766,7 @@ async def export_srt(
     proj: Annotated[Project, Depends(get_owned_project)],
 ) -> Response:
     """Download the transcript as an SRT subtitle file."""
-    transcript = _require_transcript(proj)
+    transcript = _require_transcript(proj, with_offset=True)
     body = captions_export.to_srt(transcript)
     return Response(
         content=body,
@@ -784,7 +785,7 @@ async def export_vtt(
     proj: Annotated[Project, Depends(get_owned_project)],
 ) -> Response:
     """Download the transcript as a WebVTT subtitle file."""
-    transcript = _require_transcript(proj)
+    transcript = _require_transcript(proj, with_offset=True)
     body = captions_export.to_vtt(transcript)
     return Response(
         content=body,
@@ -811,10 +812,18 @@ async def export_json(
     )
 
 
-def _require_transcript(proj: Project) -> Transcript:
+def _require_transcript(proj: Project, *, with_offset: bool = False) -> Transcript:
+    """The project's transcript; `with_offset` shifts every time by the caption offset.
+
+    Timed files (SRT, VTT) take the offset so they line up with the video, which
+    the engine shifts the same way. The JSON export is the data and stays as stored.
+    """
     if proj.transcript is None:
         raise http_error(400, "no_transcript", "Project has no transcript yet")
-    return Transcript.model_validate(proj.transcript)
+    stored = dict(proj.transcript)
+    if with_offset:
+        stored = apply_caption_offset(stored, proj.caption_offset_ms)
+    return Transcript.model_validate(stored)
 
 
 def _stream_s3_object(key: str, range_header: str | None) -> StreamingResponse:
