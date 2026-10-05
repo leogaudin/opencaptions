@@ -3,11 +3,12 @@
  * panel: the main surface for working with the captions over time.
  */
 import { Timeline } from "@/components/Timeline";
-import { useVideoRef } from "@/lib/playback";
+import { Transport } from "@/components/Transport";
+import { useVideo } from "@/lib/playback";
 import { useEditorStore } from "@/store/editorStore";
 
 export function TimelineDock() {
-  const video = useVideoRef();
+  const video = useVideo();
   const project = useEditorStore((s) => s.project);
   const transcript = useEditorStore((s) => s.transcript);
   const wordsPerLine = useEditorStore((s) => s.style.words_per_line);
@@ -21,16 +22,20 @@ export function TimelineDock() {
       </div>
     );
   }
+  const duration = Math.max(1, project.video_duration ?? transcript.duration);
   return (
-    <div className="h-full overflow-y-auto p-3">
-      <Timeline
-        video={video}
-        transcript={transcript}
-        offsetMs={offsetMs}
-        wordsPerLine={wordsPerLine}
-        duration={Math.max(1, transcript.duration)}
-        onEdit={editTranscript}
-      />
+    <div className="flex h-full flex-col">
+      <Transport duration={duration} fps={project.video_fps || 30} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+        <Timeline
+          video={video}
+          transcript={transcript}
+          offsetMs={offsetMs}
+          wordsPerLine={wordsPerLine}
+          duration={Math.max(1, transcript.duration)}
+          onEdit={editTranscript}
+        />
+      </div>
     </div>
   );
 }

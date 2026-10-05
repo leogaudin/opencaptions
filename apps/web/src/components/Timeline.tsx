@@ -5,8 +5,9 @@
  * Words are edited on the preview, not here. The edits themselves are the engine's
  * (`CaptionEditor`), the same code the phone app calls; this is only the UI.
  */
-import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { type CaptionLine, useCaptionEditor } from "@/lib/engine";
+import { useVideoClock } from "@/lib/playback";
 import { cn } from "@/lib/utils";
 import type { Transcript } from "@/types";
 
@@ -26,7 +27,7 @@ export function Timeline({
   duration,
   onEdit,
 }: {
-  video: RefObject<HTMLVideoElement | null>;
+  video: HTMLVideoElement | null;
   /** Transcript as stored; the engine shows it shifted and writes edits back unshifted. */
   transcript: Transcript;
   /** Caption offset in ms, applied by the engine to every time shown. */
@@ -50,36 +51,17 @@ export function Timeline({
 
   // The playhead follows the video every frame while it plays, without a React
   // render per frame, and scrolls the track to stay in view.
-  useEffect(() => {
-    const v = video.current;
+  useVideoClock(video, (time) => {
     const head = playhead.current;
     const box = scroller.current;
-    if (!v || !head || !box) return;
-    let frame = 0;
-    const place = (): void => {
-      const fraction = Math.min(1, v.currentTime / span);
-      head.style.left = `${fraction * 100}%`;
-      const x = fraction * box.scrollWidth;
-      if (!v.paused && (x < box.scrollLeft || x > box.scrollLeft + box.clientWidth)) {
-        box.scrollLeft = x - box.clientWidth / 4;
-      }
-    };
-    const loop = (): void => {
-      place();
-      frame = v.paused ? 0 : requestAnimationFrame(loop);
-    };
-    const start = (): void => {
-      if (!frame) loop();
-    };
-    place();
-    const events = ["play", "seeked", "seeking", "pause", "timeupdate"] as const;
-    for (const e of events) v.addEventListener(e, start);
-    if (!v.paused) start();
-    return () => {
-      cancelAnimationFrame(frame);
-      for (const e of events) v.removeEventListener(e, start);
-    };
-  }, [video, span]);
+    if (!head || !box) return;
+    const fraction = Math.min(1, time / span);
+    head.style.left = `${fraction * 100}%`;
+    const x = fraction * box.scrollWidth;
+    if (!video?.paused && (x < box.scrollLeft || x > box.scrollLeft + box.clientWidth)) {
+      box.scrollLeft = x - box.clientWidth / 4;
+    }
+  });
 
   const timeAt = (clientX: number): number => {
     const box = track.current?.getBoundingClientRect();
@@ -87,7 +69,7 @@ export function Timeline({
     return Math.min(1, Math.max(0, (clientX - box.left) / box.width)) * span;
   };
   const seek = (time: number): void => {
-    if (video.current) video.current.currentTime = time;
+    if (video) video.currentTime = time;
   };
 
   // Edge drags commit at most once per frame: each commit re-lays-out the scene.

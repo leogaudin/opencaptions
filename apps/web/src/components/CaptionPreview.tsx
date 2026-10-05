@@ -4,7 +4,7 @@
  * Sized to fit its container, in width and height, keeping the video's aspect
  * ratio: a 9:16 video fills the height of its panel, a 16:9 one its width.
  */
-import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   type ActiveCaption,
   type CaptionRenderer,
@@ -13,7 +13,7 @@ import {
   useCaptionEditor,
 } from "@/lib/engine";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
-import { useVideoRef } from "@/lib/playback";
+import { useAttachVideo, useVideo } from "@/lib/playback";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { StyleConfig, Transcript } from "@/types";
@@ -67,7 +67,7 @@ function CaptionCanvas({
   displayWidth,
   displayHeight,
 }: {
-  video: RefObject<HTMLVideoElement | null>;
+  video: HTMLVideoElement | null;
   scene: SceneInput;
   displayWidth: number;
   displayHeight: number;
@@ -105,7 +105,7 @@ function CaptionCanvas({
 
   useEffect(() => {
     const ctx = canvas.current?.getContext("2d");
-    const v = video.current;
+    const v = video;
     if (!renderer || !ctx || !v) return;
     let live = true;
     let ready = false;
@@ -189,7 +189,7 @@ function CaptionCanvas({
 
   function onDoubleClick(e: React.MouseEvent): void {
     if (!active || !transcript) return;
-    video.current?.pause();
+    video?.pause();
     const box = e.currentTarget.getBoundingClientRect();
     // Pointer → frame pixels (the overlay sits exactly on the caption block).
     const fx = active.bounds.x + (e.clientX - box.left) / k;
@@ -234,8 +234,8 @@ function CaptionCanvas({
     <>
       <canvas ref={canvas} className="pointer-events-none absolute inset-0 h-full w-full" />
       {bounds && !editing && paused && (
-        // Shown only while paused, over the caption alone, so playback leaves the
-        // video and its native controls fully clickable.
+        // Shown only while paused, over the caption alone, so a tap anywhere on the
+        // playing video still pauses it.
         <button
           type="button"
           data-testid="caption-handle"
@@ -286,7 +286,8 @@ export function CaptionPreview() {
   // is never reloaded.
   const projectId = project?.id;
   const videoSrc = projectId ? `/api/v1/projects/${projectId}/source` : "";
-  const video = useVideoRef();
+  const video = useVideo();
+  const attachVideo = useAttachVideo();
 
   // Fallback for when the server-side probe failed at upload.
   const [clientDims, setClientDims] = useState<{ width: number; height: number } | null>(null);
@@ -386,13 +387,18 @@ export function CaptionPreview() {
           style={{ width: displayWidth, height: displayHeight }}
         >
           <video
-            ref={video}
+            ref={attachVideo}
             src={videoSrc}
-            controls
             loop
             playsInline
             preload="metadata"
-            className="h-full w-full"
+            className="h-full w-full cursor-pointer"
+            // A tap on the picture plays or pauses, as on a phone.
+            onClick={(e) => {
+              const v = e.currentTarget;
+              if (v.paused) v.play().catch(() => undefined);
+              else v.pause();
+            }}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               if (v.videoWidth && v.videoHeight) {

@@ -1,6 +1,6 @@
 /**
- * Relative time formatting for list timestamps ("2 days ago", "just now"),
- * replacing raw locale strings like "8/28/2026, 4:00:42 PM". Uses the platform
+ * Time formatting. Relative times for list timestamps ("2 days ago", "just now"),
+ * replacing raw locale strings like "8/28/2026, 4:00:42 PM", use the platform
  * Intl.RelativeTimeFormat so output is locale-aware with no dependencies.
  */
 const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
@@ -32,4 +32,12 @@ export function formatRelativeTime(iso: string): string {
     duration /= division.amount;
   }
   return "";
+}
+
+/** A position in a video as `m:ss.cc`, the hundredths a caption edit is judged by. */
+export function formatTimecode(seconds: number): string {
+  const total = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  const cs = Math.floor(total * 100);
+  const [m, s, c] = [Math.floor(cs / 6000), Math.floor((cs % 6000) / 100), cs % 100];
+  return `${m}:${String(s).padStart(2, "0")}.${String(c).padStart(2, "0")}`;
 }

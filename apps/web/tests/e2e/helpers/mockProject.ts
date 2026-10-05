@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { Page } from "@playwright/test";
 
@@ -74,10 +75,25 @@ export async function mockTranscribedProject(
     await route.fulfill({ json: project });
   });
   // A real (VP9, which Playwright's Chromium decodes) video, so the preview and
-  // its timeline mount instead of the "cannot preview" note.
-  await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/source`, (route) =>
-    route.fulfill({ path: SOURCE_VIDEO, contentType: "video/webm" }),
-  );
+  // its timeline mount instead of the "cannot preview" note. Served with byte
+  // ranges, as the API does: without them the browser cannot seek.
+  const video = readFileSync(SOURCE_VIDEO);
+  await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/source`, (route) => {
+    const range = route
+      .request()
+      .headers()
+      .range?.match(/bytes=(\d+)-(\d*)/);
+    const headers = { "accept-ranges": "bytes" };
+    if (!range) return route.fulfill({ body: video, contentType: "video/webm", headers });
+    const start = Number(range[1]);
+    const end = range[2] ? Number(range[2]) : video.length - 1;
+    return route.fulfill({
+      status: 206,
+      body: video.subarray(start, end + 1),
+      contentType: "video/webm",
+      headers: { ...headers, "content-range": `bytes ${start}-${end}/${video.length}` },
+    });
+  });
   await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/exports`, (route) =>
     route.fulfill({
       status: 200,
