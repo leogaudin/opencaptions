@@ -10,7 +10,7 @@ OpenCaptions generates word-level transcriptions of local video files using Whis
 
 ⚠️ **Status:** Pre-v0.1, under active construction. APIs and schemas may change without notice until the first tagged release.
 
-![OpenCaptions editor — a video preview with word-level animated captions next to the transcript and style panel](docs/screenshot.png)
+![OpenCaptions editor — a video preview with word-level animated captions next to the style panel, over the caption timeline](docs/screenshot.png)
 
 ## Why OpenCaptions
 
@@ -20,7 +20,7 @@ No existing OSS tool combines automatic transcription with **animated styled cap
 
 - 🎙 **Word-level transcription** via faster-whisper (local) or OpenAI Whisper API (BYOA)
 - 🎨 **Animated styled captions** with 3 built-in presets + full custom panel
-- ✏️ **Built-in editor** — fix misheard words, tweak segments, customize style with live preview
+- ✏️ **Built-in editor** — a timeline to retime captions, fix a misheard word right on the video, customize style with live preview
 - 📤 **Multi-format export** — burned-in MP4, SRT, VTT, JSON
 - 🐳 **Docker Compose first** — one command to run the whole stack
 - 🔒 **Privacy by design** — no telemetry, no tracking, no phone-home; accounts are local to your instance

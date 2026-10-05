@@ -1,6 +1,6 @@
 # OpenCaptions web
 
-Vite + React 18 + TypeScript + Tailwind CSS 3 frontend, with Radix primitives for accessible overlays.
+Vite + React 19 + TypeScript + Tailwind CSS 4 frontend, with Radix primitives for accessible overlays.
 
 ## Local dev
 
@@ -41,12 +41,22 @@ src/
 ├── App.tsx                    # app shell, routing, header
 ├── main.tsx                   # entrypoint
 ├── index.css                  # Tailwind theme tokens
-├── lib/engine.ts              # the caption engine's WebAssembly build, drawing the preview
-├── types/                     # generated types (.gitignore'd)
+├── pages/                     # routes; EditorPage lays out the preview, style panel and timeline dock
+├── components/
+│   ├── CaptionPreview.tsx     # the video with the engine's frame over it; drag and word edit
+│   ├── TimelineDock.tsx       # the dock: the timeline, or a note until there are captions
+│   ├── timeline/              # Timeline (zoom, playhead, seeking), Ruler, CaptionTrack
+│   └── Transport.tsx          # play/pause, timecode, mute, and the keys
+├── lib/
+│   ├── engine.ts              # the caption engine's WebAssembly build: drawing and edits
+│   ├── playback.tsx           # the one <video>, shared by the preview, timeline and transport
+│   ├── presets.json           # built-in style presets, shared with the iOS app
+│   └── timelineScale.ts       # ruler ticks and the zoom limits
+├── types/                     # api.generated.ts (generated, committed) and hand-written types
 └── store/                     # Zustand stores
 ```
 
-The preview is drawn by the same Rust engine that renders the export ([`apps/engine`](../engine)), compiled to WebAssembly. The image build compiles it and copies the fonts into `public/engine/`; for `npm run dev`, run `make engine-wasm` once.
+The preview is drawn by the same Rust engine that renders the export ([`apps/engine`](../engine)), compiled to WebAssembly. The image build compiles it and copies the fonts into `public/engine/`; for `npm run dev`, run `make engine-wasm` once. Every transcript edit (a word's text, a caption's edges) is also the engine's, through the same module; the editor only draws and handles gestures.
 
 ## State management
 

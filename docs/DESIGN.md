@@ -37,7 +37,10 @@ the two scale on different hardware.
    project's WebSocket. The result is a `Transcript`: segments of words, each with
    `start`, `end` and `confidence`.
 3. **Edit.** The SPA edits the transcript and the style and autosaves them with
-   `PATCH /projects/{id}`. The preview is drawn by the engine in the browser.
+   `PATCH /projects/{id}`. The preview is drawn by the engine in the browser, and
+   every transcript edit is one of the engine's (see below). Words are edited on
+   the preview, captions are retimed on the timeline, and nothing else changes
+   the transcript.
 4. **Render.** `POST /projects/{id}/download {format}` computes a hash of
    everything that decides the output (transcript, timing offset, style, format,
    size, fps). If `projects/{id}/renders/{hash}.<ext>` exists, it is
@@ -92,6 +95,28 @@ build produces byte-identical frames. Nothing else may draw captions.
   a presigned write URL for the output, valid for that render only, so the
   engine holds no storage credentials. It posts progress back with a per-job
   token. The API reaches it through a `RenderBackend` seam (`RENDER_BACKEND`).
+
+## The editor
+
+The page is the preview beside the style panel, with the **timeline docked
+full-width underneath**; on a narrow screen the same pieces stack. One layout is
+mounted at a time, so there is one `<video>` and one engine whatever the width.
+
+- **Preview.** The video with the engine's frame drawn over it, fitted to its
+  panel. While paused, the caption block can be dragged (it sets `position_x/y`)
+  and a word double-clicked to edit: one word at a time, an empty edit deletes it.
+  A tap on the picture plays or pauses.
+- **Timeline.** A ruler over a video track and a caption track, with the
+  playhead across them. Caption blocks are the engine's `lines`; a selected block's
+  edges retime through the engine. The ruler and both tracks seek by click or
+  drag. Ctrl/Cmd + wheel or a pinch zooms around the pointer, the buttons around
+  the playhead, and Fit shows the whole video.
+- **Transport.** Play/pause, the timecode and mute; Space plays, the arrows step a
+  frame.
+- **Playback.** The one `<video>` is shared through a context. Its playing time
+  never passes through React state: the timeline, playhead and timecode follow the
+  element each frame and write to the DOM directly.
+- **Autosave.** Edits are saved 800 ms after the last one; there is no Save button.
 
 ## Transcription
 
