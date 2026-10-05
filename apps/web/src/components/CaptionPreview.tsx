@@ -156,10 +156,11 @@ function CaptionCanvas({
       for (const e of events) v.removeEventListener(e, start);
       v.removeEventListener("play", sync);
       v.removeEventListener("pause", sync);
-      dragFrom.current = null;
     };
   }, [renderer, scene, video]);
 
+  // Belongs to the gesture, not the scene: every move of a drag changes the style,
+  // which rebuilds the scene and re-runs the drawing effect mid-drag.
   const dragFrom = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
   function onPointerDown(e: React.PointerEvent): void {
