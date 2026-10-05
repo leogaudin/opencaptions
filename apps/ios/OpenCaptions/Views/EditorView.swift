@@ -9,6 +9,8 @@ struct EditorView: View {
     @State private var showTranscribe = false
     @State private var edit: WordEdit?
     @State private var panel = Panel.timeline
+    @State private var exporter: ExportController?
+    @State private var showExport = false
 
     private enum Panel: String, CaseIterable {
         case timeline = "Timeline"
@@ -56,14 +58,21 @@ struct EditorView: View {
         .toolbar {
             ToolbarItem(placement: .status) { SaveLabel(state: model.saveState) }
             ToolbarItem(placement: .primaryAction) {
-                Button(model.transcript == nil ? "Transcribe" : "Re-transcribe", systemImage: "waveform") {
-                    showTranscribe = true
+                Menu {
+                    Button("Save video", systemImage: "square.and.arrow.down") { Task { await saveVideo() } }
+                        .disabled(model.transcript == nil || model.isTranscribing || exporter?.isRunning == true)
+                    Button(model.transcript == nil ? "Transcribe" : "Re-transcribe", systemImage: "waveform") {
+                        showTranscribe = true
+                    }
+                    .disabled(model.isTranscribing || exporter?.isRunning == true)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
-                .disabled(model.isTranscribing)
             }
         }
         .overlay(alignment: .top) { progress }
         .sheet(isPresented: $showTranscribe) { TranscribeSheet(model: model) }
+        .sheet(isPresented: $showExport) { if let exporter { ExportSheet(controller: exporter) } }
         .alert(
             "Edit word", isPresented: Binding(get: { edit != nil }, set: { if !$0 { edit = nil } }),
             presenting: edit
@@ -87,11 +96,31 @@ struct EditorView: View {
         .onChange(of: model.isTranscribing) { _, busy in
             UIApplication.shared.isIdleTimerDisabled = busy
         }
+        .onChange(of: exporter?.isRunning) { _, busy in
+            UIApplication.shared.isIdleTimerDisabled = busy == true
+        }
         .onDisappear {
             playback.pause()
             UIApplication.shared.isIdleTimerDisabled = false
             Task { await model.flush() }
         }
+    }
+
+    /// Saves what is on screen: pending edits land first, and the preview lets go of the
+    /// engine while the export uses it.
+    private func saveVideo() async {
+        guard let source = app.store.sourceURL(for: model.project.id) else { return }
+        await model.flush()
+        playback.pause()
+        // Exports are named by content hash in the project's own folder, outside backups.
+        guard let directory = try? app.store.rendersDirectory(for: model.project.id) else { return }
+        let controller = ExportController(run: { [fonts = app.fontCache] project, source, progress in
+            try await CaptionExporter(fonts: fonts).export(
+                project: project, source: source, in: directory, progress: progress)
+        })
+        exporter = controller
+        controller.start(project: model.project, source: source)
+        showExport = true
     }
 
     private var ratio: Double {
@@ -103,6 +132,7 @@ struct EditorView: View {
             Color.black
             PreviewView(
                 playback: playback, project: model.project, fonts: app.fontCache,
+                suspended: exporter?.isRunning == true,
                 onTogglePlay: { playback.toggle() },
                 onMove: { model.setPosition(x: $0, y: $1) },
                 onEditWord: { index in

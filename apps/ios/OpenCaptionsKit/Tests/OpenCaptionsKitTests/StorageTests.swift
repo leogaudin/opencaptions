@@ -100,4 +100,42 @@ import Testing
         let left = (try? FileManager.default.contentsOfDirectory(atPath: store.root.path)) ?? []
         #expect(left.isEmpty)
     }
+
+    // MARK: Export key and orientation
+
+    @Test func theExportKeyChangesWithEveryInputAndIsStableOtherwise() throws {
+        var p = try project("clip")
+        p.videoWidth = 1080
+        p.videoHeight = 1920
+        p.videoFps = 30
+        let base = try #require(ExportKey.hash(for: p))
+        #expect(base.count == 16 && base.allSatisfy { "0123456789abcdef".contains($0) })
+        #expect(ExportKey.hash(for: p) == base, "stable")
+        var changed = p
+        changed.title = "renamed"
+        changed.updatedAt = Date()
+        #expect(ExportKey.hash(for: changed) == base, "the title and dates are not pixels")
+        for edit in [
+            { (q: inout Project) in q.captionOffsetMs = 100 },
+            { (q: inout Project) in q.styleConfig.fontSize += 1 },
+            { (q: inout Project) in q.transcript?.segments[0].words[0].text = "uno" },
+            { (q: inout Project) in q.videoWidth = 720 },
+            { (q: inout Project) in q.videoFps = 60 },
+        ] {
+            var q = p
+            edit(&q)
+            #expect(ExportKey.hash(for: q) != base)
+        }
+        #expect(ExportKey.hash(for: p, format: "mp4-hevc") != base)
+        var none = p
+        none.transcript = nil
+        #expect(ExportKey.hash(for: none) == nil)
+    }
+
+    @Test func aTracksRotationBecomesTheOrientationThatUprightsIt() {
+        #expect(VideoOrientation.from(.identity) == .up)
+        #expect(VideoOrientation.from(CGAffineTransform(rotationAngle: .pi / 2)) == .right)
+        #expect(VideoOrientation.from(CGAffineTransform(rotationAngle: -.pi / 2)) == .left)
+        #expect(VideoOrientation.from(CGAffineTransform(rotationAngle: .pi)) == .down)
+    }
 }

@@ -116,6 +116,8 @@ final class PreviewUIView: UIView {
     func configure(project: Project, fonts: FontCache, suspended: Bool, isPlaying: Bool) {
         lastProject = project
         lastFonts = fonts
+        // An export replaced the engine's scene; ours must be laid out again.
+        if self.suspended, !suspended { sceneKey = nil }
         self.suspended = suspended
         self.isPlaying = isPlaying
         style = project.styleConfig
