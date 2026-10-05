@@ -10,9 +10,9 @@ public final class Playback {
     public private(set) var time: Double = 0
     public private(set) var isPlaying = false
     public private(set) var duration: Double = 0
-    public var isMuted: Bool {
-        get { player.isMuted }
-        set { player.isMuted = newValue }
+    /// Stored (not read from the player) so a view that shows it updates when it changes.
+    public var isMuted = false {
+        didSet { player.isMuted = isMuted }
     }
 
     @ObservationIgnored private var observer: Any?
@@ -20,6 +20,12 @@ public final class Playback {
     @ObservationIgnored private var rateObserver: NSKeyValueObservation?
 
     public init() {
+        // Without a playback category the ringer switch silences the video, as it would a
+        // game; a video player should sound regardless of it.
+        #if os(iOS)
+            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+            try? AVAudioSession.sharedInstance().setActive(true)
+        #endif
         player.actionAtItemEnd = .none
         observer = player.addPeriodicTimeObserver(
             forInterval: CMTime(value: 1, timescale: 60), queue: .main

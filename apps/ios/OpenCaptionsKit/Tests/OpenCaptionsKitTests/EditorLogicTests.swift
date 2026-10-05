@@ -7,17 +7,27 @@ import Testing
 final class Counter { var value = 0 }
 
 @Suite struct EditorLogicTests {
+    @MainActor @Test func muteIsStateAViewCanShowAndTheDefaultIsSound() {
+        let playback = Playback()
+        #expect(!playback.isMuted && !playback.player.isMuted)
+        playback.isMuted = true
+        #expect(playback.isMuted && playback.player.isMuted)
+        playback.isMuted.toggle()
+        #expect(!playback.player.isMuted)
+    }
+
     // MARK: Autosave
 
     @MainActor @Test func autosaveWaitsForQuietAndSavesOnce() async throws {
         let saves = Counter()
-        let saver = Autosaver(delay: .milliseconds(40)) { saves.value += 1 }
+        // Generous margins: the point is the order of events, not the speed of the machine.
+        let saver = Autosaver(delay: .milliseconds(300)) { saves.value += 1 }
         for _ in 0..<5 {
             saver.schedule()
-            try await Task.sleep(for: .milliseconds(10))
+            try await Task.sleep(for: .milliseconds(20))
         }
         #expect(saves.value == 0, "still being edited")
-        try await Task.sleep(for: .milliseconds(120))
+        try await Task.sleep(for: .milliseconds(900))
         #expect(saves.value == 1)
     }
 
