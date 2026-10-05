@@ -79,4 +79,4 @@ logs/
 # The CI gate regenerates this file and diffs against the committed version,
 # so it must be checked in. Run `npm run generate-types` in apps/web (or
 # `bash scripts/generate-api-types.sh` from the repo root) to refresh it.
-# !apps/web/src/types/api.generated.ts
+# !apps/web/src/types/api.generated.tsapps/ios/OpenCaptionsKit/.swiftpm/

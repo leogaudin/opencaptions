@@ -34,14 +34,37 @@ public final class WhisperKitTranscriber: Transcriber {
         guard let model = WhisperModels.model(id) else { throw TranscriptionError.unknownModel(id) }
         if let folder = folder(for: id) { return folder }
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
-        let folder = try await WhisperKit.download(
-            variant: model.variant, downloadBase: modelsDirectory
-        ) { p in progress(p.fractionCompleted) }
+        // WhisperKit reports progress per file, and a model is a few dozen small files and
+        // two or three huge ones, so its fraction races to ~75% and then crawls. Bytes on
+        // disk (partial files are written as they arrive) against the model's known size
+        // move steadily instead.
+        let expected = Double(model.megabytes) * 1_000_000
+        let baseline = Self.bytes(in: modelsDirectory)
+        let directory = modelsDirectory
+        let watcher = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(300))
+                let done = Double(max(0, Self.bytes(in: directory) - baseline))
+                progress(min(0.99, done / expected))
+            }
+        }
+        defer { watcher.cancel() }
+        let folder = try await WhisperKit.download(variant: model.variant, downloadBase: modelsDirectory) { _ in }
+        progress(1)
         var excluded = modelsDirectory
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         try? excluded.setResourceValues(values)
         return folder
+    }
+
+    /// The size of everything under `directory`, partial downloads included.
+    private static func bytes(in directory: URL) -> Int64 {
+        let keys: [URLResourceKey] = [.fileSizeKey]
+        guard let files = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: keys) else { return 0 }
+        return files.reduce(into: Int64(0)) { total, file in
+            total += Int64((try? (file as? URL)?.resourceValues(forKeys: Set(keys)).fileSize) ?? 0)
+        }
     }
 
     public func transcribe(
@@ -62,18 +85,26 @@ public final class WhisperKitTranscriber: Transcriber {
                 verbose: false, load: true, download: false))
 
         let lang = language.flatMap { $0 == "auto" ? nil : $0 }
+        // `detectLanguage` must be asked for: left alone WhisperKit assumes English, and the
+        // model then transcribes speech in any other language as an English translation.
         let options = DecodingOptions(
-            task: .transcribe, language: lang, skipSpecialTokens: true, wordTimestamps: true)
-        // Decoding reports per window, not per word; the pipeline's own progress
-        // counts the audio covered.
+            task: .transcribe, language: lang, detectLanguage: lang == nil, skipSpecialTokens: true,
+            wordTimestamps: true)
+        // Decoding reports per 30-second window, so a short clip has one step and the
+        // fraction stays 0 until it ends. The words decoded so far are the honest progress.
         let covered = pipe.progress
-        let results = try await pipe.transcribe(audioArray: samples, decodeOptions: options) { _ in
-            progress(min(1, covered.fractionCompleted), "Transcribing…")
+        let results = try await pipe.transcribe(audioArray: samples, decodeOptions: options) { step in
+            let tail = step.text.replacingOccurrences(of: #"<\|[^|]*\|>"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines).suffix(70)
+            progress(min(1, covered.fractionCompleted), tail.isEmpty ? "Transcribing…" : "…\(tail)")
             return nil
         }
         try Task.checkCancellation()
         progress(1, "Done")
-        return TranscriptMapping.transcript(
+        let transcript = TranscriptMapping.transcript(
             from: results, duration: duration.isFinite ? duration : 0, requestedLanguage: lang)
+        // Replacing someone's captions with nothing is never what they asked for.
+        guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }
+        return transcript
     }
 }

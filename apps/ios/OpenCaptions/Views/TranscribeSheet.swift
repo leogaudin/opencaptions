@@ -46,14 +46,21 @@ struct TranscribeSheet: View {
                     }
                 }
                 if let downloading {
-                    Section("Downloading the model") { ProgressView(value: downloading) }
+                    Section("Downloading the model") {
+                        ProgressView(value: downloading) {
+                            Text("\(Int(downloading * 100))% of \(chosen.megabytes) MB").font(.footnote)
+                        }
+                    }
                 }
                 if let failure {
                     Section { Text(failure).foregroundStyle(.red) }
                 }
+                if model.isTranscribing {
+                    Section { Label("A transcription is already running.", systemImage: "hourglass") }
+                }
                 Section {
                     Button("Transcribe") { Task { await begin(allowMetered: false) } }
-                        .disabled(downloading != nil)
+                        .disabled(downloading != nil || model.isTranscribing)
                 } footer: {
                     Text("Keep OpenCaptions open while it works.")
                 }
@@ -71,7 +78,7 @@ struct TranscribeSheet: View {
                 Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
     }
 

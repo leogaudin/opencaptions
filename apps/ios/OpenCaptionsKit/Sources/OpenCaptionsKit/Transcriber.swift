@@ -4,12 +4,14 @@ public enum TranscriptionError: Error, Equatable, Sendable, LocalizedError {
     case unknownModel(String)
     case modelNotDownloaded(String)
     case noAudio
+    case noSpeech
 
     public var errorDescription: String? {
         switch self {
         case .unknownModel(let id): "Unknown model \(id)."
         case .modelNotDownloaded(let id): "The \(id) model has not been downloaded."
         case .noAudio: "This video has no audio to transcribe."
+        case .noSpeech: "No speech was found in this video."
         }
     }
 }
