@@ -22,6 +22,7 @@ No existing OSS tool combines automatic transcription with **animated styled cap
 - 🎨 **Animated styled captions** with 3 built-in presets + full custom panel
 - ✏️ **Built-in editor** — a timeline to retime captions, fix a misheard word right on the video, customize style with live preview
 - 📤 **Multi-format export** — burned-in MP4, SRT, VTT, JSON
+- 📱 **iPhone and iPad app** — the same engine and editor on the phone, with on-device Whisper (WhisperKit): no server, no account
 - 🐳 **Docker Compose first** — one command to run the whole stack
 - 🔒 **Privacy by design** — no telemetry, no tracking, no phone-home; accounts are local to your instance
 - 🍎 **Apple Silicon** — images are multi-arch and run natively on M-series Macs. Local
@@ -173,12 +174,13 @@ apps/
   api/                      # FastAPI + Celery workers
   engine/                   # Rust caption engine: render server + WebAssembly preview
   web/                      # React frontend
+  ios/                      # iPhone and iPad app (macOS + Xcode; see apps/ios/README.md)
 ```
 
 ## Documentation
 
 - [Contributing](CONTRIBUTING.md) — dev setup and the acceptance gate
-- [Design](docs/DESIGN.md) — how it works, including the planned iOS app
+- [Design](docs/DESIGN.md) — how it works, including the iOS app
 - [Security policy](SECURITY.md) — threat model and vulnerability reporting
 - [Third-party notices](NOTICE) — bundled components and their licences
 

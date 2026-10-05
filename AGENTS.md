@@ -37,6 +37,15 @@ make check-versions   # the manifests agree on the version
 make check-compose    # docker-compose.yml fallbacks agree with each other and config.py
 ```
 
+iOS needs macOS with full Xcode, and is **not** part of `make ci` (it has its own
+workflow, `.github/workflows/ios.yml`); nobody without a Mac is blocked:
+
+```bash
+make ios-engine    # the engine as an xcframework (needs Rust 1.85+ and the Apple targets)
+make ios-test      # OpenCaptionsKit's tests, on the Mac
+make ios-build     # the app for the simulator
+```
+
 Two things that are easy to get wrong:
 
 - **`npx tsc --noEmit` is not a valid web typecheck.** The web project
@@ -95,6 +104,7 @@ images, which is what an end user does.
 | `apps/api/` | FastAPI + Celery workers. Pydantic models, Alembic migrations, services, tasks. |
 | `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. |
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
+| `apps/ios/` | The iPhone/iPad app: SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
 | `scripts/` | `ci-local.sh` (acceptance gate), `check-ci-parity.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
 | `docs/DESIGN.md` | The design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
@@ -105,6 +115,7 @@ images, which is what an end user does.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`).
 - **Python:** ruff, 100-char line length, target py312, strict mypy, and an enforced mccabe complexity budget (`max-complexity = 10`). See `apps/api/pyproject.toml [tool.ruff]`.
 - **TypeScript/JS:** biome (formatter + linter), 100-char line width, 2-space indent, double quotes, semicolons. See `apps/web/biome.json`.
+- **Swift:** Swift 6 language mode (strict concurrency); logic goes in `OpenCaptionsKit` with tests, views stay thin. The engine is only called through the `CaptionEngine` actor.
 - **Rust:** `cargo fmt`, `clippy -D warnings` for the server, `wasm32-unknown-unknown` and `aarch64-apple-ios`, edition 2024.
 - **Strict TypeScript:** `tsconfig.json` sets `"strict": true`. No `as any`, `@ts-ignore`, or `@ts-expect-error`.
 - **License:** AGPL-3.0-only, and contributors accept `CLA.md`.

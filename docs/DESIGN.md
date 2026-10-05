@@ -2,8 +2,8 @@
 
 OpenCaptions turns a video into a captioned one: it transcribes the speech with
 word timings, lets you edit and style the captions, and renders them into the
-video. It runs as one Docker Compose stack you host yourself; a native iOS app
-that does the same on the phone is designed below and not built yet.
+video. It runs as one Docker Compose stack you host yourself, and as a native iOS
+app that does the same on the phone, with no server.
 
 ## Services
 
@@ -176,41 +176,64 @@ and refuses per-job provider or model choices. The SPA only reflects what the AP
 returns. An entitlement seam (`services/entitlements.py`) is where per-user
 limits would plug in.
 
-## iOS app (designed, not built)
+## iOS app
 
-Everything runs on the phone: no server, no accounts. It is a Swift UI over three
-things it does not reimplement.
+`apps/ios`. Everything runs on the phone: no server, no accounts. It is a SwiftUI
+app over three things it does not reimplement.
 
 | Piece | iOS |
 |---|---|
-| Caption drawing and edits | The same engine crate, linked as a static library (`cargo rustc --release --lib --crate-type staticlib --target aarch64-apple-ios`; CI lints that target). Swift imports the C header directly. One Swift actor owns the buffer protocol and serializes the calls, which the engine allows from any thread. |
-| Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Core ML, Neural Engine), mapped once to the same `Transcript` shape, so its transcripts and the server's are interchangeable. |
-| Decode, composite, encode | AVFoundation: each engine frame is composited onto the decoded `CVPixelBuffer` with Core Image, then written by `AVAssetWriter`. HDR stays HDR (HEVC 10-bit, captions at reference white). |
+| Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. One Swift actor, `CaptionEngine`, makes every call: the engine keeps one scene per process and allows its calls from any thread if they are serialized, which an actor guarantees. |
+| Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Core ML, Neural Engine), pinned, in its own SwiftPM target so the core tests do not build it. Its result is mapped to the same `Transcript` shape the way the server's local provider does, so transcripts are interchangeable. A `Transcriber` protocol sits in front, so a hosted endpoint can be a second conformance later. |
+| Decode, composite, encode | AVAssetReader decodes, the engine draws each overlay, Core Image composites, AVAssetWriter encodes (H.264, or 10-bit HEVC for HDR) with the audio re-encoded as AAC. The picture is baked upright at the size it is shown. |
 
-**What Swift builds.** The preview is an `AVPlayer` with the engine's frame drawn
-on top. The timeline mirrors the web one, using the engine's edit calls. The style
-controls and presets mirror the web's.
+**Layout.** `project.yml` (XcodeGen; the `.xcodeproj` is generated, not committed)
+describes the app target, which is SwiftUI views and wiring. Everything testable
+lives in the local package `OpenCaptionsKit`: models in the API's shapes, the engine
+actor, project storage, the editor's logic, the exporter. The minimum is iOS 18, for
+the timeline's scroll position; the app is universal (iPhone and iPad). iOS is not
+part of `make ci`: it has its own macOS workflow, and nobody without a Mac is blocked.
+
+**The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
+frame on a layer above it, redrawn on the player's clock; a tap plays or pauses, and
+while paused a drag moves the caption and a double-tap edits one word. The timeline
+has a ruler over a video track and a caption track, a playhead, pinch zoom around the
+pinch, and edge handles that retime through the engine; on a wide screen it spans the
+bottom, on a phone upright the preview sits over a Timeline/Style panel. Style
+controls and presets are the web's, from the same `presets.json`; the caption offset
+is the engine's. Edits autosave after a quiet moment and when the app leaves the
+foreground; there is no Save button.
+
+**Fonts.** Inter is bundled with the engine's other fonts, in the same order the
+server loads them. A style that names another Google Fonts family fetches it once,
+as the server does (TrueType, the weight nearest 800), and keeps it on disk.
 
 **Storage.** Projects are files, because one process reads and writes them:
 `Application Support/Projects/<id>/` holds:
-- `project.json`: title, created date, `Transcript`, `StyleConfig` and timing
-  offset, in the API's shapes, so a project moves between phone and server
-  unchanged;
-- `source.<ext>`: copied in at import, so a project survives the clip being
-  deleted from Photos;
-- `renders/`: named by the same content hash as the server, and excluded from
-  backup.
+- `project.json`: title, dates, `Transcript`, `StyleConfig` and timing offset, in the
+  API's shapes, so a project moves between phone and server unchanged;
+- `source.<ext>`: copied in at import, so a project survives the clip being deleted
+  from Photos;
+- `renders/`: saved videos named by a hash of what decides their pixels (local to
+  the phone, not the server's hash), excluded from backup.
 
-Writes are atomic (write a temporary file, then rename). The project list is a
-scan of the folder, and an unreadable project is hidden rather than failing the
-list.
+Writes are atomic (a temporary file, then a rename). The project list is a scan of
+the folder, and an unreadable project is hidden rather than failing the list.
+Subtitle files (SRT, VTT) are only exported by the Docker product.
 
-**Models.** The same choice as on the desktop, downloaded on demand and never
-bundled. Weights are excluded from backup. First launch defaults to `base`, so an
-App Store reviewer can finish a job quickly, and a cellular download asks first.
+**Models.** The desktop's ids, limited to what WhisperKit publishes, downloaded on
+demand into a backup-excluded folder and never bundled. First launch defaults to
+`base`, so an App Store reviewer can finish a job quickly, and a metered connection
+asks before a download.
+
+**HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
+with BT.2020. Core Image puts sRGB white well above reference white in an HDR
+signal, so the captions are scaled by a measured factor per transfer function, and
+the tests read the output's luma to check they land at reference white.
 
 **Long jobs.** The app asks the user to keep it in the foreground and keeps the
-screen awake. There is no background processing.
+screen awake during a download, a transcription or a save. There is no background
+processing.
 
 ## Licence
 

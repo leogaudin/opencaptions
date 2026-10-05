@@ -5,7 +5,7 @@ import PackageDescription
 // `make ios-engine` builds the engine into ../Build/OpenCaptionsEngine.xcframework.
 let package = Package(
     name: "OpenCaptionsKit",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
         .library(name: "OpenCaptionsKit", targets: ["OpenCaptionsKit"]),
         .library(name: "OpenCaptionsTranscription", targets: ["OpenCaptionsTranscription"]),
