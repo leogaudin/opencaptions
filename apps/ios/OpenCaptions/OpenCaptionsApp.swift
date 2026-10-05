@@ -9,6 +9,9 @@ struct OpenCaptionsApp: App {
             ProjectsView()
                 .environment(app)
                 .task { await app.bootstrap() }
+                // One look, dark and immersive, whatever the system setting.
+                .preferredColorScheme(.dark)
+                .tint(Theme.accent)
         }
     }
 }

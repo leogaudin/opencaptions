@@ -18,7 +18,7 @@ struct ExportSheet: View {
                 done(url)
             case .failed(let reason):
                 VStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundStyle(.red)
+                    Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundStyle(Theme.danger)
                     Text("It could not be saved").font(.headline)
                     Text(reason).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
@@ -32,6 +32,7 @@ struct ExportSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .presentationDetents([.height(250)])
         .presentationDragIndicator(.visible)
+        .tint(Theme.accent)
         .interactiveDismissDisabled(controller.isRunning)
     }
 
@@ -39,17 +40,18 @@ struct ExportSheet: View {
         VStack(spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(Int(fraction * 100))%")
-                    .font(.system(size: 46, weight: .semibold, design: .rounded)).monospacedDigit()
+                    .font(.system(size: 46, weight: .heavy, design: .rounded)).monospacedDigit()
                 Spacer()
                 TimeLeft(fraction: fraction, startedAt: controller.startedAt)
             }
-            ProgressView(value: fraction)
+            ProgressView(value: fraction).tint(Theme.accent)
             Text("Adding the captions to your video. Keep OpenCaptions open until it finishes.")
                 .font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
-            Button("Cancel", role: .destructive) {
+            Button("Cancel") {
                 controller.cancel()
                 dismiss()
             }
+            .font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.danger)
             .padding(.top, 4)
         }
     }
@@ -57,18 +59,17 @@ struct ExportSheet: View {
     private func done(_ url: URL) -> some View {
         VStack(spacing: 16) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
-                .font(.headline).foregroundStyle(.green)
+                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.accent)
             HStack(spacing: 12) {
-                ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
-                    .buttonStyle(.borderedProminent)
+                ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
+                    .buttonStyle(PrimaryButtonStyle())
                 Button { Task { await saveToPhotos(url) } } label: {
-                    Label("Save to Photos", systemImage: "photo.on.rectangle").frame(maxWidth: .infinity)
+                    Label("Save to Photos", systemImage: "photo.on.rectangle")
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(SecondaryButtonStyle())
             }
-            .controlSize(.large)
             Text(photosMessage ?? " ").font(.footnote).foregroundStyle(.secondary)
-            Button("Done") { dismiss() }
+            Button("Done") { dismiss() }.font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textSecondary)
         }
     }
 

@@ -82,7 +82,14 @@ build produces byte-identical frames. Nothing else may draw captions.
   by clearing it): text of several words is refused, because splitting a word
   would invent timings. The web calls them through WebAssembly, and the phone
   will call the same code natively.
-- **Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
+- **Look.** One dark, immersive look, whatever the system setting, in the manner of Edits and
+Instagram and in the desktop's spirit: the wordmark is the desktop's solid "burned-in subtitle"
+block, and the caption highlight yellow is the only accent. It is plain SwiftUI with no UI
+library: `Theme` holds the handful of colours, the button styles, the card and the wordmark,
+and the screens draw their own top bars instead of the system navigation bar (the edge swipe
+back is put back by hand). Sheets (style, transcribe, save) use the same surfaces.
+
+**Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
   offline install still draws. Any Google Fonts family can be chosen: the API
   fetches it once, keeps it in the store (`fonts/`), and gives the preview and
   the engine the same file. A bundled face wins over a requested one, and

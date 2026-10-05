@@ -18,69 +18,162 @@ struct TranscribeSheet: View {
 
     private var chosen: WhisperModel { WhisperModels.model(modelID) ?? WhisperModels.all[0] }
     private var downloaded: Bool { app.transcriber.isDownloaded(modelID) }
+    private var busy: Bool { downloading != nil || model.isTranscribing }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Language") {
-                    Picker("Spoken language", selection: $language) {
-                        Text("Detect automatically").tag("auto")
-                        ForEach(languages) { Text($0.label).tag($0.code) }
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(spacing: 22) {
+                    languageSection
+                    modelSection
+                    if model.transcript != nil {
+                        Label("This replaces the current captions, including your edits.", systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accent)
+                            .card()
                     }
-                }
-                Section {
-                    Picker("Model", selection: $modelID) {
-                        ForEach(WhisperModels.all) { Text("\($0.label) · \($0.megabytes) MB").tag($0.id) }
+                    if model.isTranscribing {
+                        Label("A transcription is already running.", systemImage: "hourglass")
+                            .font(.system(size: 14, weight: .semibold)).card()
                     }
-                } header: {
-                    Text("Model")
-                } footer: {
-                    Text(downloaded
-                        ? "Downloaded. Transcription runs on this device."
-                        : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate.")
-                }
-                if model.transcript != nil {
-                    Section {
-                        Label("This replaces the current captions, including your edits.", systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.orange)
-                    }
-                }
-                if let downloading {
-                    Section("Downloading the model") {
-                        ProgressView(value: downloading) {
-                            Text("\(Int(downloading * 100))% of \(chosen.megabytes) MB").font(.footnote)
+                    if let downloading {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Downloading the model").font(.system(size: 15, weight: .bold))
+                            ProgressView(value: downloading).tint(Theme.accent)
+                            Text("\(Int(downloading * 100))% of \(chosen.megabytes) MB")
+                                .font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.textSecondary)
                         }
+                        .card()
+                    }
+                    if let failure {
+                        Text(failure).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
                     }
                 }
-                if let failure {
-                    Section { Text(failure).foregroundStyle(.red) }
-                }
-                if model.isTranscribing {
-                    Section { Label("A transcription is already running.", systemImage: "hourglass") }
-                }
-                Section {
-                    Button("Transcribe") { Task { await begin(allowMetered: false) } }
-                        .disabled(downloading != nil || model.isTranscribing)
-                } footer: {
-                    Text("Keep OpenCaptions open while it works.")
-                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
             }
-            .navigationTitle("Transcribe")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
-            .confirmationDialog(
-                "Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData,
-                titleVisibility: .visible
-            ) {
-                Button("Download") { Task { await begin(allowMetered: true) } }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
-            }
+            footer
         }
+        .background(Theme.background)
+        .tint(Theme.accent)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
+        .confirmationDialog(
+            "Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData,
+            titleVisibility: .visible
+        ) {
+            Button("Download") { Task { await begin(allowMetered: true) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
+        }
     }
+
+    // MARK: Pieces
+
+    private var header: some View {
+        HStack {
+            Text("Transcribe").font(.system(size: 24, weight: .heavy))
+            Spacer()
+            Button { dismiss() } label: { Image(systemName: "xmark") }
+                .buttonStyle(CircleButtonStyle())
+                .accessibilityLabel("Close")
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 22)
+        .padding(.bottom, 10)
+    }
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel("Spoken language")
+            HStack {
+                Text("Language").font(.system(size: 16, weight: .medium))
+                Spacer()
+                Picker("Spoken language", selection: $language) {
+                    Text("Auto-detect").tag("auto")
+                    ForEach(languages) { Text($0.label).tag($0.code) }
+                }
+                .labelsHidden().pickerStyle(.menu)
+            }
+            .card()
+        }
+    }
+
+    private var modelSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel("Model")
+            VStack(spacing: 0) {
+                ForEach(Array(WhisperModels.all.enumerated()), id: \.element.id) { index, option in
+                    if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 52) }
+                    modelRow(option)
+                }
+            }
+            .background(Theme.surface, in: .rect(cornerRadius: Theme.radius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
+            Text(downloaded
+                ? "Downloaded. Transcription runs on this device."
+                : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent iPhone.")
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+        }
+    }
+
+    private func modelRow(_ option: WhisperModel) -> some View {
+        let selected = option.id == modelID
+        return Button { modelID = option.id } label: {
+            HStack(spacing: 14) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(selected ? Theme.accent : Theme.textSecondary.opacity(0.6))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.label).font(.system(size: 16, weight: .semibold))
+                    if let hint = Self.hint(option.id) {
+                        Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    }
+                }
+                Spacer()
+                if app.transcriber.isDownloaded(option.id) {
+                    Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.textSecondary)
+                        .accessibilityLabel("Downloaded")
+                }
+                Text("\(option.megabytes) MB").font(.system(size: 13, weight: .medium).monospacedDigit())
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private static func hint(_ id: String) -> String? {
+        switch id {
+        case "tiny": "Fastest, least accurate"
+        case "base": "Fast, good for most videos"
+        case "small": "A balance of speed and accuracy"
+        case "large-v3-turbo": "Most accurate for its speed"
+        default: nil
+        }
+    }
+
+    private var footer: some View {
+        VStack(spacing: 8) {
+            Button(downloaded ? "Transcribe" : "Download and transcribe") {
+                Task { await begin(allowMetered: false) }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(busy)
+            Text("Keep OpenCaptions open while it works.")
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+        .background(Theme.background.shadow(.drop(color: .black.opacity(0.5), radius: 12, y: -4)))
+    }
+
+    // MARK: Work
 
     private func begin(allowMetered: Bool) async {
         failure = nil

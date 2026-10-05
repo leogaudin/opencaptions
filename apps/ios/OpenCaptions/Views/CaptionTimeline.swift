@@ -14,7 +14,7 @@ struct CaptionTimeline: View {
     private static let rulerHeight = 26.0
     private static let videoHeight = 38.0
     private static let captionHeight = 54.0
-    private static let labelWidth = 64.0
+    private static let labelWidth = 44.0
 
     @State private var zoom: Double?  // points per second; nil is "fit"
     @State private var scrollPosition = ScrollPosition(x: 0)
@@ -35,10 +35,8 @@ struct CaptionTimeline: View {
                 playback: playback, duration: duration, canZoomOut: zoom != nil,
                 canZoomIn: px < max(fit, TimelineScale.maxPointsPerSecond) - 1e-6,
                 zoomOut: { zoomButton(1 / 1.5) }, zoomIn: { zoomButton(1.5) }, fit: { zoom = nil })
-            Divider()
             HStack(alignment: .top, spacing: 0) {
                 labels
-                Divider()
                 scroller
             }
         }
@@ -47,15 +45,19 @@ struct CaptionTimeline: View {
     private var labels: some View {
         VStack(spacing: 0) {
             Color.clear.frame(height: Self.rulerHeight)
-            label("Video", height: Self.videoHeight)
-            label("Captions", height: Self.captionHeight)
+            label("film", "Video", height: Self.videoHeight)
+            label("captions.bubble", "Captions", height: Self.captionHeight)
             Spacer(minLength: 0)
         }
         .frame(width: Self.labelWidth)
     }
 
-    private func label(_ text: String, height: Double) -> some View {
-        Text(text).font(.caption2).foregroundStyle(.secondary).frame(height: height)
+    private func label(_ symbol: String, _ name: String, height: Double) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(Theme.textSecondary)
+            .frame(width: Self.labelWidth, height: height)
+            .accessibilityLabel(name)
     }
 
     // MARK: Tracks
@@ -119,15 +121,14 @@ struct CaptionTimeline: View {
             for i in first...last {
                 let t = Double(i) * step
                 let x = t * px
-                context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)), with: .color(.secondary.opacity(0.4)))
+                context.fill(Path(CGRect(x: x, y: size.height - 8, width: 1, height: 8)), with: .color(Theme.textSecondary.opacity(0.6)))
                 context.draw(
-                    Text(TimelineScale.tickLabel(t, step: step)).font(.system(size: 10).monospacedDigit())
-                        .foregroundStyle(.secondary),
-                    at: CGPoint(x: x + 4, y: size.height / 2), anchor: .leading)
+                    Text(TimelineScale.tickLabel(t, step: step)).font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .foregroundStyle(Theme.textSecondary),
+                    at: CGPoint(x: x + 3, y: size.height / 2 - 2), anchor: .leading)
             }
         }
         .frame(width: contentWidth, height: Self.rulerHeight)
-        .overlay(alignment: .bottom) { Divider() }
         .contentShape(.rect)
         .gesture(tapToSeek)
         .accessibilityLabel("Timeline ruler")
@@ -136,11 +137,11 @@ struct CaptionTimeline: View {
     private var videoTrack: some View {
         ZStack(alignment: .leading) {
             Color.clear
-            RoundedRectangle(cornerRadius: 4)
-                .fill(.quaternary)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Theme.raised)
                 .overlay(alignment: .leading) {
-                    Text(model.project.title).font(.caption2).foregroundStyle(.secondary)
-                        .lineLimit(1).padding(.horizontal, 8)
+                    Text(model.project.title).font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary).lineLimit(1).padding(.horizontal, 10)
                 }
                 .frame(width: duration * px, height: Self.videoHeight - 8)
         }
@@ -211,12 +212,14 @@ private struct Playhead: View {
     var body: some View {
         ZStack(alignment: .top) {
             Rectangle()
-                .fill(Color.accentColor)
+                .fill(.white)
                 .frame(width: 2)
+                .shadow(color: .black.opacity(0.5), radius: 1.5)
                 .allowsHitTesting(false)
             Circle()
-                .fill(Color.accentColor)
-                .overlay(Circle().stroke(.white, lineWidth: 2))
+                .fill(.white)
+                .overlay(Circle().stroke(.black.opacity(0.25), lineWidth: 1))
+                .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
                 .frame(width: 16, height: 16)
                 .padding(14)
                 .contentShape(.rect)
@@ -243,13 +246,14 @@ private struct CaptionBlock: View {
 
     var body: some View {
         let width = max((line.end - line.start) * px, 4)
-        RoundedRectangle(cornerRadius: 4)
-            .fill(Color.accentColor.opacity(selected ? 0.5 : 0.22))
+        RoundedRectangle(cornerRadius: 9)
+            .fill(selected ? Theme.accent : Color.white.opacity(0.13))
             .overlay {
-                RoundedRectangle(cornerRadius: 4).stroke(Color.accentColor, lineWidth: selected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 9).stroke(selected ? Theme.accent : Color.white.opacity(0.22), lineWidth: 1)
             }
             .overlay(alignment: .leading) {
-                Text(line.text).font(.caption2).lineLimit(1).padding(.horizontal, 6)
+                Text(line.text).font(.system(size: 12, weight: .bold)).lineLimit(1).padding(.horizontal, 9)
+                    .foregroundStyle(selected ? Theme.onAccent : Theme.textPrimary)
                     .allowsHitTesting(false)
             }
             .frame(width: width, height: 40)
@@ -269,8 +273,9 @@ private struct CaptionBlock: View {
     /// A narrow bar with a wider touch target, dragged along the track.
     private func handle(_ edge: CaptionEdge) -> some View {
         Capsule()
-            .fill(Color.accentColor)
-            .frame(width: 6, height: 40)
+            .fill(.white)
+            .overlay(Capsule().stroke(.black.opacity(0.3), lineWidth: 1))
+            .frame(width: 6, height: 28)
             .padding(.horizontal, 12)
             .contentShape(.rect)
             .offset(x: edge == .start ? -12 : 12)
