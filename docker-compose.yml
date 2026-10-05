@@ -1,0 +1,282 @@
+# OpenCaptions, in one file.
+#
+#   Run it:      copy this file into an empty directory, `docker compose up -d`.
+#                Images are pulled from GHCR; nothing else is needed.
+#   Develop it:  in a clone, `docker compose up -d --build` builds every image
+#                from source, and `docker compose watch` adds live reload.
+#
+# `build:` and `develop:` are only read when building or watching, so an end user
+# who has this file alone is never affected by the paths they name.
+
+name: opencaptions
+
+# Scaling: transcription and rendering consume separate Celery queues, so they
+# scale independently — OC_CPU_TRANSCRIBERS and OC_RENDERERS set their replica
+# counts. The api holds no per-process state (sessions live in Redis) so it scales
+# too, but migrations run on its boot, so bring one up before adding more. `web`
+# publishes the only host port and cannot be replicated as-is.
+#
+# GPU is additive: COMPOSE_PROFILES=gpu starts the GPU worker, and
+# OC_CPU_TRANSCRIBERS=0 stops jobs landing on the slower CPU one.
+#
+# It needs a profile rather than a device count: a `driver: nvidia` reservation
+# makes compose FAIL on hosts without the nvidia runtime, even at count 0.
+
+# There is no env file. Application defaults live in apps/api/app/core/config.py
+# and only what a container cannot infer appears below: credentials two services
+# must agree on, the service topology, and per-service overrides. To change
+# anything else, name it in the `environment:` block of the services that read
+# it.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # `--single-node --default-bucket` self-configures the node, key and bucket on
+  # first boot, so there is no init sidecar. The image has no shell, hence the
+  # CLI healthcheck. Config is the inline `garage_toml` below.
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-0000000000000000000000000000000000000000000000000000000000000000}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-opencaptions-dev-admin-token}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-opencaptions}
+    configs:
+      - source: garage_toml
+        target: /etc/garage.toml
+    volumes:
+      - garage_data:/var/lib/garage
+    healthcheck:
+      # start_period covers first-boot key and bucket creation.
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
+    build: { context: apps/api, target: runtime }
+    develop:
+      watch:
+        - { path: apps/api/app, target: /app/app, action: sync+restart }
+        - { path: apps/api/pyproject.toml, action: rebuild }
+        - { path: apps/api/uv.lock, action: rebuild }
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    volumes:
+      - ${MODELS_PATH:-./models}:/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # No `profiles:` on purpose: behind one, an unconfigured deployment would boot
+  # healthy and queue jobs forever with no error shown.
+  worker-transcription:
+    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
+    build: { context: apps/api, target: runtime }
+    develop:
+      watch:
+        - { path: apps/api/app, target: /app/app, action: sync+restart }
+        - { path: apps/api/pyproject.toml, action: rebuild }
+        - { path: apps/api/uv.lock, action: rebuild }
+    restart: unless-stopped
+    deploy:
+      # ⚠ 0 with no gpu profile = zero workers (jobs queue silently forever).
+      #   1 with gpu profile active = two workers share the queue (GPU half-wasted).
+      replicas: ${OC_CPU_TRANSCRIBERS:-1}
+    command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    volumes:
+      - ${MODELS_PATH:-./models}:/models
+
+  worker-transcription-gpu:
+    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+      # Forced, not defaulted. Missing CUDA falls back to CPU and says so in /health.
+      WHISPER_DEVICE: cuda
+      WHISPER_COMPUTE_TYPE: float16
+    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}-gpu
+    build: { context: apps/api, target: runtime-gpu }
+    develop:
+      watch:
+        - { path: apps/api/app, target: /app/app, action: sync+restart }
+        - { path: apps/api/pyproject.toml, action: rebuild }
+        - { path: apps/api/uv.lock, action: rebuild }
+    profiles: ["gpu"]
+    restart: unless-stopped
+    command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    volumes:
+      - ${MODELS_PATH:-./models}:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Renders come off their own queue, so this scales independently of
+  # transcription: OC_RENDERERS=4 runs four render workers and leaves
+  # transcription alone. See "Scaling" below.
+  worker-rendering:
+    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
+    build: { context: apps/api, target: runtime }
+    develop:
+      watch:
+        - { path: apps/api/app, target: /app/app, action: sync+restart }
+        - { path: apps/api/pyproject.toml, action: rebuild }
+        - { path: apps/api/uv.lock, action: rebuild }
+    restart: unless-stopped
+    command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "rendering", "--concurrency=2", "--loglevel=info"]
+    deploy:
+      replicas: ${OC_RENDERERS:-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+      engine:
+        condition: service_healthy
+
+  # Draws the captions and encodes the export. Holds no storage credentials: each
+  # render request carries a presigned read of the source and write of the output.
+  engine:
+    image: ghcr.io/leogaudin/opencaptions-engine:${OPENCAPTIONS_VERSION:-latest}
+    build: apps/engine
+    develop:
+      watch:
+        - { path: apps/engine, action: rebuild, ignore: [target/] }
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/leogaudin/opencaptions-web:${OPENCAPTIONS_VERSION:-latest}
+    # The preview is the engine compiled to WebAssembly, so the build needs it too.
+    build: { context: apps/web, additional_contexts: { engine: apps/engine } }
+    develop:
+      watch:
+        - { path: apps/web, action: rebuild, ignore: [node_modules/, dist/] }
+        - { path: apps/engine/src, action: rebuild }
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    # The only published port: nginx proxies /api, /ws and the OpenAPI docs, so
+    # nothing else needs one. Every interface, and signup is open: see the README's
+    # security note before putting this anywhere untrusted.
+    ports:
+      - "0.0.0.0:5173:5173"
+
+volumes:
+  postgres_data:
+  redis_data:
+  garage_data:
+
+# Inlined so this stays a single copy-and-run file. Secrets arrive as GARAGE_* env vars.
+# https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/
+configs:
+  garage_toml:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+      db_engine = "sqlite"
+      # One node, no replication. Raise only for a real multi-node cluster.
+      replication_factor = 1
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "127.0.0.1:3901"
+
+      [s3_api]
+      # Must equal the S3_REGION the app signs with: Garage rejects
+      # a SigV4 request whose region differs.
+      s3_region = "us-east-1"
+      api_bind_addr = "[::]:3900"
+      root_domain = ".s3.garage.localhost"
+
+      [admin]
+      api_bind_addr = "[::]:3903"

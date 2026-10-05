@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a problem with OpenCaptions
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What went wrong, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: install-path
+    attributes:
+      label: How did you install OpenCaptions?
+      options:
+        - Pulled pre-built images (docker-compose.yml alone)
+        - Built from source, production-like (make up)
+        - Built from source with live reload (docker compose watch)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OpenCaptions version
+      description: OPENCAPTIONS_VERSION tag if you pinned one, otherwise the commit SHA (git rev-parse --short HEAD).
+    validations:
+      required: true
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU mode enabled?
+      description: Set by running with COMPOSE_PROFILES=gpu.
+      options:
+        - No (CPU)
+        - Yes (COMPOSE_PROFILES=gpu)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: health
+    attributes:
+      label: Output of GET /api/v1/health
+      description: Paste the response from curl -s http://localhost:5173/api/v1/health
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant container logs
+      description: e.g. make logs or docker compose logs. Paste only the relevant portion.
+      render: shell
+    validations:
+      required: false

@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+.turbo/
+.parcel-cache/
+*.tsbuildinfo
+
+# Frontend build output
+apps/web/dist/
+apps/web/public/engine/
+apps/engine/target/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Data + persistent volumes (anchored to repo root — do NOT remove the leading
+# slash or git will ignore any nested directory with the same name, e.g.
+# apps/api/app/models/ which holds tracked source code)
+/data/
+/backups/
+/models/
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+# Auth storage state persisted by the e2e setup project (apps/web). Anchored to
+# its real location: a "playwright/.auth/" pattern would bind to the repo root.
+apps/web/playwright/.auth/
+
+# Logs
+*.log
+logs/
+
+# Generated types — intentionally TRACKED (not ignored).
+# The CI gate regenerates this file and diffs against the committed version,
+# so it must be checked in. Run `npm run generate-types` in apps/web (or
+# `bash scripts/generate-api-types.sh` from the repo root) to refresh it.
+# !apps/web/src/types/api.generated.ts

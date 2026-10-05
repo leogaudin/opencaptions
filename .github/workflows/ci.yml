@@ -1,0 +1,310 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY_GHCR: ghcr.io
+  REGISTRY_HUB: docker.io
+  IMAGE_NAMESPACE: opencaptions
+
+jobs:
+  lint-backend:
+    name: Lint backend (ruff + mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: latest
+      - name: Sync deps
+        working-directory: apps/api
+        run: uv sync --extra dev --locked
+      - name: Ruff
+        working-directory: apps/api
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        working-directory: apps/api
+        run: uv run ruff format --check .
+      - name: MyPy
+        working-directory: apps/api
+        run: uv run mypy app/
+
+  lint-frontend:
+    name: Lint frontend (biome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install web deps
+        working-directory: apps/web
+        run: npm ci --no-audit --no-fund
+      - name: Biome web
+        working-directory: apps/web
+        run: npm run lint
+
+  engine:
+    name: Engine (rustfmt + clippy + tests)
+    runs-on: ubuntu-latest
+    container: rust:1.94-slim-bookworm
+    defaults:
+      run:
+        working-directory: apps/engine
+    steps:
+      - uses: actions/checkout@v6
+      - name: Toolchain components
+        run: rustup component add rustfmt clippy && rustup target add wasm32-unknown-unknown aarch64-apple-ios
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy (server)
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Clippy (WebAssembly)
+        run: cargo clippy --locked --lib --target wasm32-unknown-unknown -- -D warnings
+      - name: Clippy (iOS)
+        run: cargo clippy --locked --lib --target aarch64-apple-ios -- -D warnings
+      - name: Tests
+        run: cargo test --locked
+
+  typecheck:
+    name: Typecheck frontend (tsc + type-generation gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Sync API deps (for OpenAPI dump)
+        working-directory: apps/api
+        run: uv sync --extra dev --locked
+      - name: Install web deps
+        working-directory: apps/web
+        run: npm ci --no-audit --no-fund
+      # The script finds the uv-managed interpreter at apps/api/.venv itself.
+      - name: Generate types from OpenAPI schema
+        run: bash scripts/generate-api-types.sh
+      - name: Verify generated types are up-to-date
+        run: git diff --exit-code -- apps/web/src/types/api.generated.ts
+      # This project references a composite Node config for Playwright/Vite.
+      # Plain `tsc --noEmit` cannot build that reference from a clean checkout
+      # and fails with TS6305; build mode orders and checks both projects.
+      - name: Typecheck web project references
+        working-directory: apps/web
+        run: npm run typecheck
+      - name: Build web (typecheck + Vite)
+        working-directory: apps/web
+        run: npm run build
+
+  test-backend:
+    name: Test backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: latest
+      - name: Sync deps
+        working-directory: apps/api
+        run: uv sync --extra dev --locked
+      - name: Pytest
+        working-directory: apps/api
+        run: uv run pytest
+
+  compose-drift:
+    name: Repository guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check compose fallbacks
+        run: bash scripts/check-compose.sh
+      - name: Check the manifests agree on the version
+        run: bash scripts/check-version-sync.sh
+      # Keeps `make ci` honest: it is the documented acceptance criterion, so it
+      # must keep covering everything this workflow covers.
+      - name: Check local acceptance gate covers this workflow
+        run: bash scripts/check-ci-parity.sh
+
+  build:
+    name: Build images (linux/amd64${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && ', linux/arm64' || '' }})
+    runs-on: ubuntu-latest
+    needs: [lint-backend, lint-frontend, typecheck, engine, test-backend, compose-drift]
+    strategy:
+      matrix:
+        service: [api, engine, web]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v4
+      - name: Build (PR / branch)
+        if: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') }}
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/${{ matrix.service }}
+          build-contexts: engine=apps/engine
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
+      - name: Build multi-arch (tag push)
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/${{ matrix.service }}
+          build-contexts: engine=apps/engine
+          platforms: linux/amd64,linux/arm64
+          push: false
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install web deps
+        working-directory: apps/web
+        run: npm ci --no-audit --no-fund
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Bring up stack
+        run: |
+          docker compose up -d --build --wait --wait-timeout 180
+      - name: Run Playwright
+        working-directory: apps/web
+        env:
+          BASE_URL: http://localhost:5173
+        run: npm run test:e2e
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  publish:
+    name: Publish images
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    if: ${{ github.event_name == 'push' }}
+    env:
+      # `secrets` may not appear in a step-level `if`, so decide once here.
+      DOCKERHUB_CONFIGURED: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [api, engine, web]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v4
+      - name: Login GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login Docker Hub
+        if: ${{ env.DOCKERHUB_CONFIGURED == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          # Always push to GHCR (uses GITHUB_TOKEN); push to Docker Hub only
+          # when credentials are configured — prevents tag-push failures when
+          # DOCKERHUB_TOKEN is not set on the repository.
+          images: |
+            ghcr.io/${{ github.repository_owner }}/opencaptions-${{ matrix.service }}
+            docker.io/opencaptions/${{ matrix.service }},enable=${{ secrets.DOCKERHUB_TOKEN != '' }}
+          tags: |
+            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=sha,format=short
+      - name: Determine platforms
+        id: platforms
+        run: echo "platforms=${{ startsWith(github.ref, 'refs/tags/') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}" >> "$GITHUB_OUTPUT"
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/${{ matrix.service }}
+          build-contexts: engine=apps/engine
+          platforms: ${{ steps.platforms.outputs.platforms }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
+
+  publish-gpu:
+    name: Publish GPU image (api only)
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    if: ${{ github.event_name == 'push' }}
+    env:
+      # `secrets` may not appear in a step-level `if`, so decide once here.
+      DOCKERHUB_CONFIGURED: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - name: Login GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login Docker Hub
+        if: ${{ env.DOCKERHUB_CONFIGURED == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/opencaptions-api
+            docker.io/opencaptions/api,enable=${{ secrets.DOCKERHUB_TOKEN != '' }}
+          # GPU images get a -gpu suffix on every tag
+          flavor: suffix=-gpu
+          tags: |
+            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=sha,format=short
+      - name: Build & push (GPU, amd64 only — CUDA has no ARM images)
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          platforms: linux/amd64
+          push: true
+          target: runtime-gpu
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Read the cache but never export it: several GB of CUDA layers,
+          # uploaded after the image is already pushed, can fail a good publish.
+          cache-from: type=gha,scope=api-gpu

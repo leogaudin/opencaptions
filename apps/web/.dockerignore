@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+playwright/.cache/
+*.log
+.git/
+.gitignore
+*.md
+public/engine/

@@ -1,0 +1,25 @@
+# Third-Party Notices
+
+OpenCaptions is licensed under AGPL-3.0-only. It relies on third-party
+components that carry their own licences and remain the property of their
+respective owners. This file summarises the significant ones.
+
+| Component | Role | Licence | Distribution |
+| --- | --- | --- | --- |
+| faster-whisper | Local transcription engine | MIT | Python dependency |
+| CTranslate2 | Inference backend for faster-whisper | MIT | Python dependency |
+| OpenAI Whisper model weights (incl. `large-v3-turbo`) | Speech-to-text model | MIT | Downloaded at runtime, not shipped |
+| Inter | Default and fallback caption font | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
+| Google Fonts families | Caption fonts chosen in the editor | Predominantly SIL OFL 1.1 | Fetched from Google on first use and kept in object storage, not shipped |
+| Anton (subset) | Engine test fixture | SIL OFL 1.1 | `apps/engine/testdata`, not in any image |
+| rustybuzz, tiny-skia | Text shaping and drawing in the engine | MIT / BSD-3-Clause | Rust dependencies |
+| FFmpeg (`ffmpeg`) | Decoding and encoding in the engine | GPLv2+ (Debian build) | Debian package in the engine image |
+
+Nothing in this file is legal advice.
+
+## Verification
+
+The font licences are the `*-OFL.txt` files shipped beside each font. Taken as
+stated facts (not independently verified here): the MIT licensing of
+faster-whisper, CTranslate2 and the Whisper weights; the licences declared by
+the Rust crates; and Debian's FFmpeg build being GPLv2+.
