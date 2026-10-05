@@ -67,6 +67,17 @@ public final class WhisperKitTranscriber: Transcriber {
         }
     }
 
+    /// The language of the loudest stretches of audio, or nil if the model cannot say.
+    private func detectLanguage(of samples: [Float], with pipe: WhisperKit) async -> String? {
+        var verdicts: [[String: Float]] = []
+        for window in LanguageGuess.loudestWindows(in: samples) {
+            if let verdict = try? await pipe.detectLangauge(audioArray: Array(samples[window])) {
+                verdicts.append(verdict.langProbs)
+            }
+        }
+        return LanguageGuess.winner(of: verdicts)
+    }
+
     public func transcribe(
         source: URL, language: String?, model: String,
         progress: @escaping @Sendable (Double, String) -> Void
@@ -78,31 +89,35 @@ public final class WhisperKitTranscriber: Transcriber {
         let samples = try await AudioExtractor.samples(from: source)
         let duration = try await AVURLAsset(url: source).load(.duration).seconds
 
-        progress(0, "Loading \(info.label)…")
+        progress(0, "Loading model into RAM…")
         let pipe = try await WhisperKit(
             WhisperKitConfig(
                 model: info.variant, downloadBase: modelsDirectory, modelFolder: folder.path,
                 verbose: false, load: true, download: false))
 
-        let lang = language.flatMap { $0 == "auto" ? nil : $0 }
-        // `detectLanguage` must be asked for: left alone WhisperKit assumes English, and the
-        // model then transcribes speech in any other language as an English translation.
+        var lang = language.flatMap { $0 == "auto" ? nil : $0 }
+        // Judge the language from where the speech is, not from the first 30 seconds. An
+        // English-only model has nothing to detect.
+        if lang == nil, !info.englishOnly {
+            progress(0, "Detecting the language…")
+            lang = await detectLanguage(of: samples, with: pipe)
+        }
+        // `detectLanguage` must be asked for when nothing else decided: left alone WhisperKit
+        // assumes English, and the model then transcribes other speech as an English translation.
         let options = DecodingOptions(
-            task: .transcribe, language: lang, detectLanguage: lang == nil, skipSpecialTokens: true,
-            wordTimestamps: true)
-        // Decoding reports per 30-second window, so a short clip has one step and the
-        // fraction stays 0 until it ends. The words decoded so far are the honest progress.
+            task: .transcribe, language: lang, detectLanguage: lang == nil && !info.englishOnly,
+            skipSpecialTokens: true, wordTimestamps: true)
+        // Decoding reports per 30-second window, so a short clip is one step and the fraction
+        // stays 0 until it ends; the screen shows a spinner until there is a fraction.
         let covered = pipe.progress
-        let results = try await pipe.transcribe(audioArray: samples, decodeOptions: options) { step in
-            let tail = step.text.replacingOccurrences(of: #"<\|[^|]*\|>"#, with: "", options: .regularExpression)
-                .trimmingCharacters(in: .whitespacesAndNewlines).suffix(70)
-            progress(min(1, covered.fractionCompleted), tail.isEmpty ? "Transcribing…" : "…\(tail)")
+        let results = try await pipe.transcribe(audioArray: samples, decodeOptions: options) { _ in
+            progress(min(1, covered.fractionCompleted), "Transcribing…")
             return nil
         }
         try Task.checkCancellation()
         progress(1, "Done")
         let transcript = TranscriptMapping.transcript(
-            from: results, duration: duration.isFinite ? duration : 0, requestedLanguage: lang)
+            from: results, duration: duration.isFinite ? duration : 0, requestedLanguage: language.flatMap { $0 == "auto" ? nil : $0 })
         // Replacing someone's captions with nothing is never what they asked for.
         guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }
         return transcript

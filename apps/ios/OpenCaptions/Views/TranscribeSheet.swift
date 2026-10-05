@@ -10,7 +10,8 @@ struct TranscribeSheet: View {
     let model: EditorModel
 
     @State private var modelID = WhisperModels.defaultID
-    @State private var language = "auto"
+    /// Remembered between runs: someone who picks Spanish once is probably transcribing Spanish.
+    @AppStorage("transcribeLanguage") private var language = "auto"
     @State private var downloading: Double?
     @State private var askAboutData = false
     @State private var failure: String?
@@ -23,19 +24,20 @@ struct TranscribeSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            ScrollView {
+            ScrollView(.vertical) {
                 VStack(spacing: 22) {
-                    languageSection
-                    modelSection
                     if model.transcript != nil {
                         Label("This replaces the current captions, including your edits.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accent)
+                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accentInk)
+                            .fixedSize(horizontal: false, vertical: true)
                             .card()
                     }
                     if model.isTranscribing {
                         Label("A transcription is already running.", systemImage: "hourglass")
                             .font(.system(size: 14, weight: .semibold)).card()
                     }
+                    languageSection
+                    modelSection
                     if let downloading {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Downloading the model").font(.system(size: 15, weight: .bold))
@@ -52,11 +54,15 @@ struct TranscribeSheet: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
             }
+            // Vertical only: nothing here is wider than the screen, so nothing may drift sideways.
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollIndicators(.hidden)
             footer
         }
         .background(Theme.background)
-        .tint(Theme.accent)
+        .tint(Theme.accentInk)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .confirmationDialog(
@@ -98,6 +104,8 @@ struct TranscribeSheet: View {
                 .labelsHidden().pickerStyle(.menu)
             }
             .card()
+            Text("Auto-detect works best on clear speech. If it guesses wrong, choose the language.")
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
         }
     }
 
@@ -106,11 +114,12 @@ struct TranscribeSheet: View {
             SectionLabel("Model")
             VStack(spacing: 0) {
                 ForEach(Array(WhisperModels.all.enumerated()), id: \.element.id) { index, option in
-                    if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 52) }
+                    if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 16) }
                     modelRow(option)
                 }
             }
             .background(Theme.surface, in: .rect(cornerRadius: Theme.radius))
+            .clipShape(.rect(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
             Text(downloaded
                 ? "Downloaded. Transcription runs on this device."
@@ -119,20 +128,19 @@ struct TranscribeSheet: View {
         }
     }
 
+    /// The chosen model is the highlighted row (a yellow edge and a soft wash), not a ticked box:
+    /// there is exactly one, and it should not read as a list of options to tick.
     private func modelRow(_ option: WhisperModel) -> some View {
         let selected = option.id == modelID
         return Button { modelID = option.id } label: {
-            HStack(spacing: 14) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(selected ? Theme.accent : Theme.textSecondary.opacity(0.6))
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(option.label).font(.system(size: 16, weight: .semibold))
                     if let hint = Self.hint(option.id) {
                         Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                     }
                 }
-                Spacer()
+                Spacer(minLength: 8)
                 if app.transcriber.isDownloaded(option.id) {
                     Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.textSecondary)
                         .accessibilityLabel("Downloaded")
@@ -140,7 +148,12 @@ struct TranscribeSheet: View {
                 Text("\(option.megabytes) MB").font(.system(size: 13, weight: .medium).monospacedDigit())
                     .foregroundStyle(Theme.textSecondary)
             }
-            .padding(.horizontal, 14).padding(.vertical, 12)
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(selected ? Theme.accent.opacity(0.14) : .clear)
+            .overlay(alignment: .leading) {
+                Rectangle().fill(Theme.accent).frame(width: selected ? 4 : 0)
+            }
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
