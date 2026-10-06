@@ -7,6 +7,25 @@ public struct ServerCapabilities: Decodable, Equatable, Sendable {
         public var id: String
         public var label: String
         public var note: String?
+
+        public init(id: String, label: String, note: String?) {
+            self.id = id
+            self.label = label
+            self.note = note
+        }
+    }
+
+    /// The models worth offering on a phone: the server's, narrowed to the same short ladder the phone
+    /// offers for its own (a server lists everything faster-whisper knows), in that order, plus the
+    /// server's own default when it is something else (an operator's choice).
+    public var leanModels: [Model] {
+        let ladder = WhisperModels.all.map(\.id)
+        let byID = Dictionary(models.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var lean = ladder.compactMap { byID[$0] }
+        if let id = defaultModel, !ladder.contains(id) {
+            lean.insert(byID[id] ?? Model(id: id, label: id, note: nil), at: 0)
+        }
+        return lean
     }
 
     public var apiVersion: Int

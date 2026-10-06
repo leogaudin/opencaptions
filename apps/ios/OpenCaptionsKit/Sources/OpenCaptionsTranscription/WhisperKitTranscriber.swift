@@ -106,7 +106,7 @@ public final class WhisperKitTranscriber: Transcriber {
         let samples = try await AudioExtractor.samples(from: source)
         let duration = try await AVURLAsset(url: source).load(.duration).seconds
 
-        progress(0, "Loading model into RAM…")
+        progress(0, "Loading the model into memory…")
         let pipe = try await WhisperKit(
             WhisperKitConfig(
                 model: info.variant, downloadBase: modelsDirectory, modelFolder: folder.path,

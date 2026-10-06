@@ -257,6 +257,28 @@ private func fixture(_ name: String) throws -> Data {
         #expect(StubServer.sent.contains { $0.method == "DELETE" && $0.path.hasSuffix("transcriptions/job-1") })
     }
 
+    @Test func aServersFullModelListIsNarrowedToThePhonesLadder() throws {
+        func caps(models: [String], default defaultModel: String?) throws -> ServerCapabilities {
+            let list = models.map { #"{"id":"\#($0)","label":"\#($0.uppercased())","note":""}"# }.joined(separator: ",")
+            let json = """
+                {"api_version":1,"instance_name":"S","models":[\(list)],"default_model":\(defaultModel.map { "\"\($0)\"" } ?? "null"),
+                 "languages":[],"max_upload_mb":1,"max_duration_s":1,"result_ttl_h":1,"hosted_mode":false}
+                """
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try decoder.decode(ServerCapabilities.self, from: Data(json.utf8))
+        }
+        let everything = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo", "distil-large-v3"]
+        // The phone's own order and short list, whatever the server lists.
+        #expect(try caps(models: everything, default: "large-v3-turbo").leanModels.map(\.id) == WhisperModels.all.map(\.id))
+        // A server that offers fewer offers fewer.
+        #expect(try caps(models: ["base", "large-v3"], default: "base").leanModels.map(\.id) == ["base", "large-v3"])
+        // An operator's own default is kept, first, even off the ladder.
+        #expect(try caps(models: ["tiny", "my-finetune"], default: "my-finetune").leanModels.map(\.id) == ["my-finetune", "tiny"])
+        // A hosted server fixes the model and lists none.
+        #expect(try caps(models: [], default: nil).leanModels.isEmpty)
+    }
+
     @Test func theServersCapabilitiesAreReadFromTheSharedFixture() async throws {
         try happyServer()
         let caps = try await transcriber().capabilities()

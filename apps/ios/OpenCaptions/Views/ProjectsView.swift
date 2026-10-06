@@ -29,20 +29,14 @@ struct ProjectsView: View {
     @State private var path: [UUID] = []
     @State private var deleting: Project?
     @State private var renaming: Project?
-    @State private var renamingTitle: String?
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 240), spacing: 14)]
 
     var body: some View {
         NavigationStack(path: $path) { library }
-            .renameAlert("Rename project", name: $renamingTitle) { title in
-                if let project = renaming { app.rename(project, to: title) }
-                renaming = nil
-            }
-            .onChange(of: renaming) { _, project in renamingTitle = project?.title }
             .modifier(
                 ProjectDialogs(
-                    deleting: $deleting, pending: $pending, onDelete: { app.delete($0) },
+                    deleting: $deleting, pending: $pending, renaming: $renaming, onDelete: { app.delete($0) },
                     choose: { item in Task { await confirm(item) } }))
         #if DEBUG
             // Screenshots on a simulator: open the first project straight away.
@@ -98,7 +92,11 @@ struct ProjectsView: View {
                         .buttonStyle(.plain)
                         .contextMenu {
                             Button("Rename", systemImage: "pencil") { renaming = project }
-                            Button("Delete", systemImage: "trash", role: .destructive) { deleting = project }
+                            // The app's tint is black, which would make the destructive item black too.
+                            Button(role: .destructive) { deleting = project } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            .tint(Theme.danger)
                         }
                 }
             }
@@ -288,24 +286,56 @@ private struct Thumbnail: View {
     }
 }
 
-/// The questions this screen asks: delete a project, import the video just picked, and report an error.
+/// The questions this screen asks: rename a project, delete one, import the video just picked, and report
+/// an error. One alert serves the delete question and the error: several `.alert`s on one view compete,
+/// and only one of them is reliably shown.
 private struct ProjectDialogs: ViewModifier {
     @Environment(AppModel.self) private var app
     @Binding var deleting: Project?
     @Binding var pending: PendingImport?
+    @Binding var renaming: Project?
     let onDelete: (Project) -> Void
     let choose: (PendingImport) -> Void
+
+    private enum Prompt {
+        case delete(Project)
+        case error(String)
+    }
+
+    private var prompt: Prompt? {
+        if let deleting { return .delete(deleting) }
+        if let message = app.errorMessage { return .error(message) }
+        return nil
+    }
 
     func body(content: Content) -> some View {
         content
             .alert(
-                "Delete this project?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-                presenting: deleting
-            ) { project in
-                Button("Cancel", role: .cancel) {}
-                Button("Delete “\(project.title)”", role: .destructive) { onDelete(project) }
-            } message: { _ in
-                Text("The video and its captions are removed from this device.")
+                alertTitle, isPresented: Binding(get: { prompt != nil }, set: { if !$0 { deleting = nil; app.errorMessage = nil } }),
+                presenting: prompt
+            ) { prompt in
+                switch prompt {
+                case .delete(let project):
+                    Button("Cancel", role: .cancel) {}
+                    Button("Delete “\(project.title)”", role: .destructive) { onDelete(project) }
+                case .error:
+                    Button("OK") {}
+                }
+            } message: { prompt in
+                switch prompt {
+                case .delete: Text("The video and its captions are removed from this device.")
+                case .error(let message): Text(message)
+                }
+            }
+            .sheet(item: $renaming) { project in
+                RenameSheet(project: project) { title in
+                    app.rename(project, to: title)
+                    renaming = nil
+                } cancel: {
+                    renaming = nil
+                }
+                .presentationBackground(Theme.background)
+                .presentationCornerRadius(24)
             }
             .sheet(item: $pending) { item in
                 ImportConfirmSheet(
@@ -317,10 +347,57 @@ private struct ProjectDialogs: ViewModifier {
                 .presentationBackground(Theme.background)
                 .presentationCornerRadius(24)
             }
-            .alert("Something went wrong", isPresented: .constant(app.errorMessage != nil)) {
-                Button("OK") { app.errorMessage = nil }
-            } message: {
-                Text(app.errorMessage ?? "")
+    }
+
+    private var alertTitle: String {
+        if case .delete = prompt { return "Delete this project?" }
+        return "Something went wrong"
+    }
+}
+
+/// Renaming a project: its name in a field, selected, with the keyboard up.
+struct RenameSheet: View {
+    let project: Project
+    let save: (String) -> Void
+    let cancel: () -> Void
+    @State private var title: String
+    @State private var selection: TextSelection?
+    @FocusState private var focused: Bool
+
+    init(project: Project, save: @escaping (String) -> Void, cancel: @escaping () -> Void) {
+        self.project = project
+        self.save = save
+        self.cancel = cancel
+        _title = State(initialValue: project.title)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Rename").font(.system(size: 22, weight: .heavy))
+            TextField("Name", text: $title, selection: $selection)
+                .focused($focused)
+                .submitLabel(.done)
+                .onSubmit { save(title) }
+                .font(.system(size: 18, weight: .semibold))
+                .padding(.horizontal, 14).padding(.vertical, 12)
+                .background(Theme.raised, in: .rect(cornerRadius: 12))
+            HStack(spacing: 10) {
+                Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
+                Button("Save") { save(title) }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+        }
+        .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
+        .presentationDetents([.height(210)])
+        .presentationDragIndicator(.visible)
+        .tint(Theme.accent)
+        .onAppear {
+            focused = true
+            Task {
+                try? await Task.sleep(for: .milliseconds(80))
+                selection = TextSelection(range: title.startIndex..<title.endIndex)
+            }
+        }
     }
 }

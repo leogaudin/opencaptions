@@ -44,10 +44,10 @@ final class AppModel {
         Diagnostics.log("launch")
     }
 
-    /// Where transcription happens now: the connected server, or this phone.
-    var activeTranscriber: any Transcriber {
-        if useServer, let serverConnection { return ServerTranscriber(connection: serverConnection) }
-        return transcriber
+    /// A transcriber for the connected server, whatever the remembered choice: for a transcription
+    /// that picks the server just once.
+    var serverTranscriber: ServerTranscriber? {
+        serverConnection.map { ServerTranscriber(connection: $0) }
     }
 
     func connect(_ connection: ServerConnection) {

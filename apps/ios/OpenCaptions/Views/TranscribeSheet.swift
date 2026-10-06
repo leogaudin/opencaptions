@@ -18,8 +18,11 @@ struct TranscribeSheet: View {
     private let languages = TranscriptionLanguages.all
 
     private var chosen: WhisperModel { WhisperModels.model(modelID) ?? WhisperModels.all[0] }
+    /// Where this transcription goes: what Settings says until the user changes it here, which applies
+    /// to this one only.
+    @State private var sourceChoice: Bool?
     /// With a server in use, nothing is downloaded: it has its own models and runs them.
-    private var onServer: Bool { app.useServer && app.serverConnection != nil }
+    private var onServer: Bool { (sourceChoice ?? app.useServer) && app.serverConnection != nil }
     private var downloaded: Bool { onServer || app.transcriber.isDownloaded(modelID) }
     private var busy: Bool { downloading != nil || model.isTranscribing }
     @State private var serverModels: ServerCapabilities?
@@ -45,6 +48,7 @@ struct TranscribeSheet: View {
                         Label("A transcription is already running.", systemImage: "hourglass")
                             .font(.system(size: 14, weight: .semibold)).card()
                     }
+                    if app.serverConnection != nil { sourceSection }
                     languageSection
                     if onServer { serverSection } else { modelSection }
                     if let downloading {
@@ -100,13 +104,25 @@ struct TranscribeSheet: View {
         .padding(.bottom, 10)
     }
 
+    /// Phone or server for this transcription only (Settings holds the standing choice).
+    private var sourceSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel("Transcribe on")
+            SourcePicker(useServer: Binding(get: { onServer }, set: { sourceChoice = $0 }))
+            if sourceChoice != nil, sourceChoice != app.useServer {
+                Text("Just this time. Settings keeps your usual choice.")
+                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+            }
+        }
+    }
+
     /// The server's models (as it lists them) and where the audio goes.
     private var serverSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Model")
-            if let serverModels, !serverModels.models.isEmpty {
+            if let serverModels, !serverModels.leanModels.isEmpty {
                 VStack(spacing: 0) {
-                    ForEach(Array(serverModels.models.enumerated()), id: \.element.id) { index, option in
+                    ForEach(Array(serverModels.leanModels.enumerated()), id: \.element.id) { index, option in
                         if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 16) }
                         serverModelRow(option, selected: option.id == (serverModelID ?? serverModels.defaultModel))
                     }
@@ -154,7 +170,9 @@ struct TranscribeSheet: View {
         serverModels = nil
         serverProblem = nil
         do {
-            serverModels = try await ServerTranscriber(connection: connection).capabilities()
+            let caps = try await ServerTranscriber(connection: connection).capabilities()
+            serverModels = caps
+            serverModelID = nil
         } catch {
             serverProblem = error.localizedDescription
         }
@@ -260,8 +278,9 @@ struct TranscribeSheet: View {
     private func begin(allowMetered: Bool) async {
         failure = nil
         if onServer {
+            guard let server = app.serverTranscriber else { return }
             model.startTranscription(
-                with: app.activeTranscriber, model: serverModelID ?? serverModels?.defaultModel ?? "",
+                with: server, model: serverModelID ?? serverModels?.defaultModel ?? "",
                 language: language == "auto" ? nil : language)
             dismiss()
             return

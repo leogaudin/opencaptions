@@ -39,38 +39,76 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .id(refresh)
+        // Sizes (saved videos, models) are read when the tab is shown, so a save made since is counted.
+        // Outside the id: inside it, each refresh would remake the view and appear again, for ever.
+        .onAppear { refresh += 1 }
         .alert(
-            "Delete this model?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-            presenting: deleting
-        ) { model in
-            Button("Cancel", role: .cancel) {}
-            Button("Delete \(model.label)", role: .destructive) { delete(model) }
-        } message: { model in
-            Text("It frees \(Self.size(app.transcriber.sizeOnDisk(model.id))) and downloads again when you next choose it.")
-        }
-        .alert(
-            "Download on a metered connection?", isPresented: Binding(get: { meteredFor != nil }, set: { if !$0 { meteredFor = nil } }),
-            presenting: meteredFor
-        ) { model in
-            Button("Cancel", role: .cancel) {}
-            Button("Download \(model.megabytes) MB") { startDownload(model) }
-        } message: { _ in
-            Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
-        }
-        .alert("Delete every saved video?", isPresented: $clearingSaved) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete saved videos", role: .destructive) {
-                app.store.clearRenders()
-                refresh += 1
+            alertTitle, isPresented: Binding(get: { prompt != nil }, set: { if !$0 { dismissPrompts() } }),
+            presenting: prompt
+        ) { prompt in
+            switch prompt {
+            case .deleteModel(let model):
+                Button("Cancel", role: .cancel) {}
+                Button("Delete \(model.label)", role: .destructive) { delete(model) }
+            case .metered(let model):
+                Button("Cancel", role: .cancel) {}
+                Button("Download \(model.megabytes) MB") { startDownload(model) }
+            case .clearSaved:
+                Button("Cancel", role: .cancel) {}
+                Button("Delete saved videos", role: .destructive) {
+                    app.store.clearRenders()
+                    refresh += 1
+                }
+            case .failure:
+                Button("OK") {}
             }
-        } message: {
-            Text("Your projects are kept. Saving a project again makes its video again.")
+        } message: { prompt in
+            switch prompt {
+            case .deleteModel(let model):
+                Text("It frees \(Self.size(app.transcriber.sizeOnDisk(model.id))) and downloads again when you next choose it.")
+            case .metered:
+                Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
+            case .clearSaved:
+                Text("Your projects are kept. Saving a project again makes its video again.")
+            case .failure(let message):
+                Text(message)
+            }
         }
-        .alert("Something went wrong", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
-            Button("OK") {}
-        } message: {
-            Text(failure ?? "")
+    }
+
+    // MARK: One alert for the screen
+    // Several `.alert`s on one view compete and only one is reliably shown, so the questions this
+    // screen asks share one, chosen by what is pending.
+
+    private enum Prompt {
+        case deleteModel(WhisperModel)
+        case metered(WhisperModel)
+        case clearSaved
+        case failure(String)
+    }
+
+    private var prompt: Prompt? {
+        if let deleting { return .deleteModel(deleting) }
+        if let meteredFor { return .metered(meteredFor) }
+        if clearingSaved { return .clearSaved }
+        if let failure { return .failure(failure) }
+        return nil
+    }
+
+    private var alertTitle: String {
+        switch prompt {
+        case .deleteModel: "Delete this model?"
+        case .metered: "Download on a metered connection?"
+        case .clearSaved: "Delete every saved video?"
+        case .failure, nil: "Something went wrong"
         }
+    }
+
+    private func dismissPrompts() {
+        deleting = nil
+        meteredFor = nil
+        clearingSaved = false
+        failure = nil
     }
 
     // MARK: Sections

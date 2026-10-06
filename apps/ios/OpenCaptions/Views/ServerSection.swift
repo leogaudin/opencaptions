@@ -1,8 +1,18 @@
 import OpenCaptionsKit
 import SwiftUI
 
-/// Where transcription happens: on this phone, or on another OpenCaptions server (a GPU box at home,
-/// the Docker stack on a desktop). Connecting checks the server first, so what is kept works.
+/// The choice of where audio is transcribed: on this phone, or on the connected server. One component for
+/// Settings (where it is remembered) and the Transcribe sheet (where it applies once).
+struct SourcePicker: View {
+    @Binding var useServer: Bool
+
+    var body: some View {
+        SegmentedPills(options: [false, true], selection: $useServer, label: { $0 ? "My server" : "On this phone" })
+    }
+}
+
+/// Where transcription happens, remembered. Choosing "My server" with none connected asks for one; once
+/// connected, it stays connected (until disconnected) and its details show only while it is the choice.
 struct ServerSection: View {
     @Environment(AppModel.self) private var app
     @State private var connecting = false
@@ -12,15 +22,12 @@ struct ServerSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Where to transcribe")
-            SegmentedPills(
-                options: [false, true], selection: Binding(get: { app.useServer }, set: choose),
-                label: { $0 ? "My server" : "On this phone" })
-            if let connection = app.serverConnection {
+            SourcePicker(useServer: Binding(get: { app.useServer }, set: choose))
+            if app.useServer, let connection = app.serverConnection {
                 connected(connection)
-            } else {
-                Text("Transcribe on another OpenCaptions server instead of on this phone: faster on a computer with a graphics card. Nothing changes until you connect one.")
+            } else if app.serverConnection == nil {
+                Text("Choose “My server” to transcribe on another OpenCaptions server instead, which is faster on a computer with a graphics card.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
-                Button("Connect a server") { connecting = true }.buttonStyle(PillButtonStyle(prominent: true))
             }
         }
         #if DEBUG
@@ -64,7 +71,7 @@ struct ServerSection: View {
             case nil:
                 EmptyView()
             }
-            Text("With “My server” the audio of a video is sent to \(connection.url.host ?? "it") to be transcribed, and deleted there afterwards.")
+            Text("The audio of a video is sent to \(connection.url.host ?? "it") to be transcribed, and deleted there afterwards.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
         }
         .card()
