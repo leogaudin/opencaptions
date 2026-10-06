@@ -762,6 +762,21 @@ mod tests {
     }
 
     #[test]
+    fn a_word_with_a_space_in_it_is_drawn_as_one_wider_word() {
+        let book = book();
+        let one = Scene::new(&book, input("word_highlight", &[("hello", 0.0, 0.5)], 3));
+        let spaced = Scene::new(
+            &book,
+            input("word_highlight", &[("hello world", 0.0, 0.5)], 3),
+        );
+        assert_eq!(spaced.lines[0].words.len(), 1, "one word, not two");
+        assert!(spaced.lines[0].words[0].slot.width() > one.lines[0].words[0].slot.width() * 1.5);
+        let mut renderer = Renderer::new(spaced);
+        assert!(renderer.render(0.2), "it draws");
+        assert!(renderer.rgba().iter().any(|b| *b != 0));
+    }
+
+    #[test]
     fn lines_follow_speech_hold_briefly_and_clear_in_long_gaps() {
         let scene = Scene::new(&book(), input("word_highlight", WORDS, 3));
         assert_eq!(scene.lines.len(), 2);

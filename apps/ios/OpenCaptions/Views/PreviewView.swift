@@ -36,7 +36,7 @@ struct PreviewView: UIViewRepresentable {
     }
 }
 
-final class PreviewUIView: UIView {
+final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private let playerLayer: AVPlayerLayer
     private let overlay = CALayer()
     private let player: AVPlayer
@@ -111,14 +111,26 @@ final class PreviewUIView: UIView {
         double.numberOfTapsRequired = 2
         single.require(toFail: double)
         let pan = UIPanGestureRecognizer(target: self, action: #selector(panned))
+        // One finger drags; a second one joining it stops the drag and pinches (below).
         pan.maximumNumberOfTouches = 1
         // Two fingers anywhere on the video change the font size: pinching out is bigger. It
         // works while the video plays, like the drag.
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinched))
+        // A finger already dragging can be joined by a second to pinch: the pinch is not held back
+        // by the drag that began first.
+        pan.delegate = self
+        pinch.delegate = self
         [single, double, pan, pinch].forEach(addGestureRecognizer)
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
+    ) -> Bool {
+        (gestureRecognizer is UIPanGestureRecognizer && other is UIPinchGestureRecognizer)
+            || (gestureRecognizer is UIPinchGestureRecognizer && other is UIPanGestureRecognizer)
+    }
 
     deinit {
         if let timeObserver { player.removeTimeObserver(timeObserver) }

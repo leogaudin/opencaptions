@@ -119,12 +119,10 @@ public final class EditorModel {
         await refreshLines()
     }
 
-    /// Sets one word's text. Empty deletes the word; several words replace it with one each, sharing
-    /// its time (the engine's rule).
+    /// Sets one word's text (empty deletes the word; spaces inside stay, as the engine decides).
     public func setWord(index: Int, text: String) {
-        let word = CaptionGestures.normalizedWord(text)
         let engine = engine
-        enqueue { try await engine.setWord($0, index: index, text: word) }
+        enqueue { try await engine.setWord($0, index: index, text: text) }
     }
 
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours.

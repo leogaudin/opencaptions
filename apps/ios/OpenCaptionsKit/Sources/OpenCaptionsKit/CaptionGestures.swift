@@ -52,9 +52,5 @@ public enum CaptionGestures {
             .map { caption.index * max(1, wordsPerLine) + $0 }
     }
 
-    /// A word as typed in the edit field: runs of whitespace become one space and the ends are
-    /// trimmed. Several words in it are kept, and the engine shares the word's time between them.
-    public static func normalizedWord(_ text: String) -> String {
-        text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-    }
+
 }

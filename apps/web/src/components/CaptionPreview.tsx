@@ -61,7 +61,7 @@ interface Editing {
 /**
  * Draws the engine's overlay for whatever frame the video is showing, and lets
  * the caption be dragged to reposition it and a word double-clicked to edit it
- * (several words split it; clearing it deletes the word).
+ * (spaces stay inside it; clearing it deletes the word).
  * Both read the engine's own geometry, so the hit targets match the pixels.
  */
 function CaptionCanvas({
@@ -285,7 +285,7 @@ function CaptionCanvas({
           autoFocus
           data-testid="caption-word-edit"
           value={editing.text}
-          // One word at a time: spaces (typed or pasted) are dropped, never split on.
+          // Spaces are kept as typed; the engine collapses them and keeps it one word.
           onChange={(e) => setEditing({ ...editing, text: e.target.value })}
           onBlur={() => finishEdit(true)}
           onKeyDown={(e) => {

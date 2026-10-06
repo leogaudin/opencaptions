@@ -101,11 +101,6 @@ final class Counter { var value = 0 }
         #expect(CaptionGestures.wordIndex(at: CGPoint(x: 45, y: 5), in: caption, wordsPerLine: 3) == nil, "the gap")
     }
 
-    @Test func aTypedWordKeepsItsWordsOneSpaceApart() {
-        #expect(CaptionGestures.normalizedWord(" hello \n  world\n") == "hello world")
-        #expect(CaptionGestures.normalizedWord("   ") == "")
-    }
-
     // MARK: Fonts
 
     @Test func theFontURLIsFoundInTheCSSAPIReturns() throws {
@@ -190,13 +185,11 @@ final class Counter { var value = 0 }
     @Test func aWordEditIsTheEnginesAndIsSavedAfterAQuietMoment() async throws {
         let (model, store) = try make()
         model.setWord(index: 1, text: " zwei ")
-        model.setWord(index: 2, text: "drei  vier")  // two words: the word is split in two
+        model.setWord(index: 2, text: "drei  vier")  // spaces stay inside: still one word
         await model.settled()
-        #expect(model.transcript?.words.map(\.text) == ["one", "zwei", "drei", "vier", "four"])
-        let (drei, vier) = (try #require(model.transcript?.words[2]), try #require(model.transcript?.words[3]))
-        #expect(drei.end == vier.start && vier.start > drei.start, "they share the original word's span, in order")
+        #expect(model.transcript?.words.map(\.text) == ["one", "zwei", "drei vier", "four"])
         await model.flush()
-        #expect(try store.load(model.project.id).transcript?.words.map(\.text) == ["one", "zwei", "drei", "vier", "four"])
+        #expect(try store.load(model.project.id).transcript?.words.map(\.text) == ["one", "zwei", "drei vier", "four"])
         #expect(model.saveState == .saved)
     }
 

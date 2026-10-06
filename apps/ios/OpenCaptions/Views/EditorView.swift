@@ -304,7 +304,7 @@ private struct WordEditCard: View {
                     .font(.system(size: 22, weight: .bold))
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
-                Text("Type several words to split it in two. Clear it to delete the word.")
+                Text("Clear it to delete the word.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                 HStack(spacing: 10) {
                     Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())

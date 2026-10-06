@@ -7,12 +7,7 @@ import ImageIO
 /// unchanged project is saved again at once. Local to the phone (it is not the
 /// server's hash), but built the same way: the inputs in canonical JSON.
 public enum ExportKey {
-    /// Bumped when the pipeline changes what it makes from the same inputs (a brighter HDR caption,
-    /// a new encoder setting), so a file made by an older pipeline is not handed back as current.
-    static let pipelineVersion = 2
-
     private struct Inputs: Encodable {
-        var pipeline = ExportKey.pipelineVersion
         var transcript: Transcript
         var style: StyleConfig
         var captionOffsetMs: Int
@@ -22,7 +17,7 @@ public enum ExportKey {
         var fps: Double
 
         enum CodingKeys: String, CodingKey {
-            case pipeline, transcript, style, format, width, height, fps
+            case transcript, style, format, width, height, fps
             case captionOffsetMs = "caption_offset_ms"
         }
     }
