@@ -114,13 +114,10 @@ function CaptionCanvas({
     let ready = false;
     const draw = (): void => {
       if (!ready) return;
-      const image = renderer.render(v.currentTime);
-      if (!image) return;
-      if (ctx.canvas.width !== image.width || ctx.canvas.height !== image.height) {
-        ctx.canvas.width = image.width;
-        ctx.canvas.height = image.height;
-      }
-      ctx.putImageData(image, 0, 0);
+      // Only the rows that changed; the first frame of a scene is all of them.
+      const update = renderer.render(v.currentTime);
+      if (!update) return;
+      ctx.putImageData(update.image, 0, update.top);
       const next = renderer.activeCaption();
       if (!sameCaption(next, activeRef.current)) {
         activeRef.current = next;
@@ -146,6 +143,10 @@ function CaptionCanvas({
       () => {
         if (!live) return;
         renderer.setScene(scene);
+        if (ctx.canvas.width !== scene.width || ctx.canvas.height !== scene.height) {
+          ctx.canvas.width = scene.width;
+          ctx.canvas.height = scene.height;
+        }
         ready = true;
         draw();
         if (!v.paused) start();

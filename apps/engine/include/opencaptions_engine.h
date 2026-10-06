@@ -44,6 +44,9 @@ uint32_t oc_render(float t);
 const uint8_t *oc_frame_ptr(void);
 uint32_t oc_frame_width(void);
 uint32_t oc_frame_height(void);
+/* The rows top..bottom the last changed frame changed (all of them after a new scene). */
+uint32_t oc_changed_top(void);
+uint32_t oc_changed_bottom(void);
 
 /* The caption showing at the last rendered time. */
 int32_t oc_active_index(void);      /* line index, or -1 */

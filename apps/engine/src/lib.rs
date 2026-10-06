@@ -235,6 +235,19 @@ mod abi {
         rects.len() as u32
     }
 
+    /// The first row the last changed frame changed; with `oc_changed_bottom`, the band of
+    /// the frame a viewer needs to copy (the whole frame after a new scene).
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_changed_top() -> u32 {
+        lock(&RENDERER).as_ref().map_or(0, |r| r.changed_rows().0)
+    }
+
+    /// One past the last row the last changed frame changed.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_changed_bottom() -> u32 {
+        lock(&RENDERER).as_ref().map_or(0, |r| r.changed_rows().1)
+    }
+
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_frame_width() -> u32 {
         lock(&RENDERER).as_ref().map_or(0, |r| r.scene().width())
@@ -402,7 +415,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 18);
+        assert_eq!(exported.len(), 20);
         assert_eq!(exported, declared);
     }
 }

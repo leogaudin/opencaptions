@@ -70,7 +70,10 @@ its arithmetic is deterministic (an integer blur, no platform maths), so every
 build produces byte-identical frames. Nothing else may draw captions.
 
 - **Scene.** `set_scene` lays out the transcript once for a style and a frame
-  size. `render(t)` then draws one frame, redrawing only the area that changed.
+  size. `render(t)` then draws one frame, redrawing only the area that changed,
+  and reports the band of rows it changed (`oc_changed_top`/`_bottom`; the whole
+  frame after a new scene), so the web preview copies and draws just that band
+  while a video plays.
   Lines are the transcript's words in reading order, cut every `words_per_line`
   words. A line holds through short gaps and clears in long ones.
 - **Timing offset.** One global nudge of every caption against the audio

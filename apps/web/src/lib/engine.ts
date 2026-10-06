@@ -24,6 +24,8 @@ interface Exports {
   oc_frame_ptr(): number;
   oc_frame_width(): number;
   oc_frame_height(): number;
+  oc_changed_top(): number;
+  oc_changed_bottom(): number;
   oc_active_index(): number;
   oc_active_bounds(): number;
   oc_active_word_rects(): number;
@@ -38,6 +40,12 @@ interface Exports {
     offsetMs: number,
   ): number;
   oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
+}
+
+/** The rows of the overlay that changed, from `top`, the frame's width. */
+export interface FrameUpdate {
+  image: ImageData;
+  top: number;
 }
 
 export interface SceneInput {
@@ -132,8 +140,12 @@ export interface CaptionRenderer {
   loadFont(family: string): Promise<void>;
   /** Lay out captions for a new transcript, style or size. */
   setScene(input: SceneInput): void;
-  /** The overlay at `t` seconds, or null when it is unchanged since the last call. */
-  render(t: number): ImageData | null;
+  /**
+   * What changed in the overlay at `t` seconds, or null when nothing did: the rows
+   * from `top` as an image the frame's width (the whole frame after a new scene).
+   * Drawing it at (0, top) over the last one gives the frame.
+   */
+  render(t: number): FrameUpdate | null;
   /** The caption showing now, in frame pixels, or null when none shows. */
   activeCaption(): ActiveCaption | null;
 }
@@ -231,10 +243,14 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
     },
     render(t) {
       if (!x.oc_render(t)) return null;
-      const [w, h] = [x.oc_frame_width(), x.oc_frame_height()];
-      // Copied out: the view would detach if the engine's memory grew.
-      const pixels = new Uint8ClampedArray(x.memory.buffer, x.oc_frame_ptr(), w * h * 4).slice();
-      return new ImageData(pixels, w, h);
+      const w = x.oc_frame_width();
+      const [top, bottom] = [x.oc_changed_top(), x.oc_changed_bottom()];
+      if (bottom <= top) return null;
+      // Copied out: the view would detach if the engine's memory grew. Only the changed
+      // rows: a whole frame per screen refresh was most of what playing cost.
+      const start = x.oc_frame_ptr() + top * w * 4;
+      const pixels = new Uint8ClampedArray(x.memory.buffer, start, (bottom - top) * w * 4).slice();
+      return { image: new ImageData(pixels, w, bottom - top), top };
     },
     activeCaption() {
       const index = x.oc_active_index();

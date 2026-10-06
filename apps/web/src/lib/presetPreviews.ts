@@ -65,10 +65,11 @@ async function draw(presets: readonly BuiltinPreset[]): Promise<Record<string, s
       height: FRAME.height,
       caption_offset_ms: 0,
     });
-    const image = renderer.render(at);
-    if (!image) continue;
+    // A new scene's first frame is the whole frame.
+    const update = renderer.render(at);
+    if (!update) continue;
     fullCtx.clearRect(0, 0, FRAME.width, FRAME.height);
-    fullCtx.putImageData(image, 0, 0);
+    fullCtx.putImageData(update.image, 0, update.top);
     cropCtx.clearRect(0, 0, CROP.width, CROP.height);
     cropCtx.drawImage(full, CROP.x, CROP.y, CROP.width, CROP.height, 0, 0, CROP.width, CROP.height);
     out[preset.id] = crop.toDataURL("image/png");

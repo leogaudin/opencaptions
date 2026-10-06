@@ -550,6 +550,8 @@ pub struct Renderer {
     rgba: Vec<u8>,
     last: Option<FrameKey>,
     dirty: Option<IntRect>,
+    /// The rows the last `render` changed, `top..bottom`: all of them the first time.
+    changed: (u32, u32),
 }
 
 fn rows(r: IntRect, width: u32) -> impl Iterator<Item = std::ops::Range<usize>> {
@@ -566,6 +568,7 @@ impl Renderer {
             scene,
             last: None,
             dirty: None,
+            changed: (0, 0),
         }
     }
 
@@ -576,6 +579,24 @@ impl Renderer {
             return false;
         }
         let width = self.scene.width;
+        // A new scene's first frame is all new to whoever shows it; after that, only the rows
+        // cleared and drawn. Showing just those is what keeps a playing preview cheap.
+        let mut changed = if self.last.is_none() {
+            Some((0, self.scene.height))
+        } else {
+            None
+        };
+        let mut grow = |r: IntRect| {
+            let (top, bottom) = (r.y() as u32, r.bottom() as u32);
+            changed = Some(changed.map_or((top, bottom), |(t, b)| (t.min(top), b.max(bottom))));
+        };
+        if let Some(r) = self.dirty {
+            grow(r);
+        }
+        if let Some(i) = key.0 {
+            grow(self.scene.lines[i].bounds);
+        }
+        self.changed = changed.unwrap_or((0, 0));
         if let Some(r) = self.dirty.take() {
             for span in rows(r, width) {
                 self.canvas.data_mut()[span.clone()].fill(0);
@@ -635,6 +656,11 @@ impl Renderer {
     }
 
     /// The current frame: width × height × 4 bytes of straight-alpha RGBA.
+    /// The rows the last `render` that returned true changed, as `top..bottom`.
+    pub fn changed_rows(&self) -> (u32, u32) {
+        self.changed
+    }
+
     pub fn rgba(&self) -> &[u8] {
         &self.rgba
     }
@@ -902,6 +928,36 @@ mod tests {
             (cx + cw / 2.0 - 540.0).abs() < 1.0 && (cy + ch / 2.0 - 960.0).abs() < 1.0,
             "centred"
         );
+    }
+
+    #[test]
+    fn a_frame_reports_the_rows_it_changed_and_no_others_differ() {
+        let mut r = Renderer::new(Scene::new(&book(), input("word_pop", WORDS, 3)));
+        let row = (1080 * 4) as usize;
+        assert!(r.render(0.3));
+        assert_eq!(
+            r.changed_rows(),
+            (0, 1920),
+            "a new scene's first frame is all new"
+        );
+        // A word popping in, the next one, then nothing showing: each time, the rows outside the
+        // band are exactly as they were, so a viewer copying only the band shows the frame.
+        for t in [0.52, 1.03, 100.0] {
+            let before = r.rgba().to_vec();
+            assert!(r.render(t), "{t} changes something");
+            let (top, bottom) = r.changed_rows();
+            assert!(top < bottom && bottom <= 1920);
+            assert!(
+                bottom - top < 1920 / 2,
+                "a caption's band, not the frame: {top}..{bottom}"
+            );
+            let after = r.rgba();
+            assert_eq!(before[..top as usize * row], after[..top as usize * row]);
+            assert_eq!(
+                before[bottom as usize * row..],
+                after[bottom as usize * row..]
+            );
+        }
     }
 
     #[test]
