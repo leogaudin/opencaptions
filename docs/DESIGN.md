@@ -96,6 +96,20 @@ stores (with a button to clear the saved videos, which can be made again), and a
 button that shares `diagnostics.log`: a small log kept on the device with the milestones of the long
 jobs and any uncaught exception, so a crash that leaves no report can still be explained.
 
+**Presets and fonts.** The preset tiles are drawn by the engine (`CaptionEngine.samples`: the same
+drawing as the preview and the export, in a phone-shaped frame, cropped to the band around the
+caption), so each shows its real font, colours and highlight; the scene in use is put back after.
+The row scrolls sideways, with a fade and an arrow at its right edge until it has been scrolled.
+The font row opens a list of the fonts in use, each name in its own face (a name-only subset
+fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
+one the server lists), searchable. The caption itself is always drawn by the engine.
+
+**Missed speech.** Whisper skips a whole 30 s window it judges silent, which music and noisy
+speech trigger, leaving a hole in the captions with good ones on either side. After the main
+pass, every stretch of 12 s or more without words is decoded again without that judgement
+(`TranscriptGaps`), and the result is kept only if it looks like speech (a few words, not one
+line repeated).
+
 **Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
 can be changed, its size and length) before it is imported; cancelling throws the copy away.
 

@@ -1,0 +1,81 @@
+import OpenCaptionsKit
+import SwiftUI
+
+/// The presets in a row that scrolls sideways. At the start a fade and an arrow on the right edge
+/// say there is more; they go as soon as it has been scrolled.
+struct PresetStrip: View {
+    @Environment(AppModel.self) private var app
+    let presets: [Preset]
+    let active: (Preset) -> Bool
+    let apply: (Preset) -> Void
+    @State private var scrolled = false
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(presets) { preset in
+                    PresetTile(preset: preset, image: app.presetPreviews.images[preset.id], active: active(preset)) {
+                        apply(preset)
+                    }
+                }
+            }
+            .padding(.vertical, 2).padding(.trailing, 28)
+        }
+        .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.x > 12 } action: { _, now in
+            withAnimation(.easeOut(duration: 0.2)) { scrolled = now }
+        }
+        .overlay(alignment: .trailing) {
+            if !scrolled {
+                ZStack(alignment: .trailing) {
+                    LinearGradient(colors: [Theme.surface.opacity(0), Theme.surface], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: 56)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: 26, height: 26)
+                        .background(Theme.raised, in: .circle)
+                        .overlay(Circle().stroke(Theme.stroke, lineWidth: 1))
+                        .padding(.trailing, 2)
+                }
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
+        .task(id: presets.map(\.id)) {
+            await app.presetPreviews.load(presets, fonts: app.fontCache)
+        }
+    }
+}
+
+private struct PresetTile: View {
+    let preset: Preset
+    let image: CGImage?
+    let active: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 7) {
+                ZStack {
+                    LinearGradient(
+                        colors: [Color(red: 0.24, green: 0.2, blue: 0.4), Color(red: 0.1, green: 0.12, blue: 0.18)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing)
+                    if let image {
+                        Image(decorative: image, scale: 1).resizable().scaledToFill()
+                    } else {
+                        ProgressView().controlSize(.small)
+                    }
+                }
+                .frame(width: 156, height: 87)
+                .clipShape(.rect(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.stroke, lineWidth: 1))
+                Text(preset.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+            }
+            .padding(6)
+            .overlay { RoundedRectangle(cornerRadius: 17).stroke(Theme.accent, lineWidth: active ? 2.5 : 0) }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(preset.name)
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}

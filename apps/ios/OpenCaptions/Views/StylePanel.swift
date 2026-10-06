@@ -6,27 +6,25 @@ struct StylePanel: View {
     let model: EditorModel
     let presets: [Preset]
 
+    @State private var choosingFont = false
     private var style: StyleConfig { model.project.styleConfig }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 section("Presets") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(presets) { preset in
-                                PresetTile(preset: preset, active: style.matches(preset)) { model.apply(preset) }
-                            }
-                        }
-                        .padding(.vertical, 2)
-                    }
+                    PresetStrip(presets: presets, active: { style.matches($0) }, apply: { model.apply($0) })
                 }
                 section("Text") {
                     Row("Font") {
-                        Picker("Font", selection: model.binding(\.font)) {
-                            ForEach(fonts, id: \.self) { Text($0).tag($0) }
+                        Button { choosingFont = true } label: {
+                            HStack(spacing: 6) {
+                                FontName(family: style.font, size: 16)
+                                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(Theme.textPrimary)
                         }
-                        .labelsHidden().pickerStyle(.menu).tint(Theme.textPrimary)
+                        .buttonStyle(.plain)
                     }
                     LabeledSlider("Size", value: intBinding(\.fontSize), range: 20...120, step: 1)
                     Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
@@ -66,6 +64,17 @@ struct StylePanel: View {
         }
         .background(Theme.background)
         .tint(Theme.accent)
+        #if DEBUG
+            .task { if ProcessInfo.processInfo.environment["OC_SHOW_FONTS"] != nil { choosingFont = true } }
+        #endif
+        .sheet(isPresented: $choosingFont) {
+            FontPickerSheet(current: style.font, suggested: fonts) { family in
+                model.updateStyle { $0.font = family }
+            }
+            .presentationDetents([.large])
+            .presentationBackground(Theme.background)
+            .presentationCornerRadius(24)
+        }
     }
 
     // MARK: Layout
@@ -156,36 +165,6 @@ private struct LabeledSlider: View {
             }
             Slider(value: $value, in: range, step: step)
         }
-    }
-}
-
-private struct PresetTile: View {
-    let preset: Preset
-    let active: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Text("Aa")
-                    .font(.system(size: 22, weight: .heavy))
-                    .foregroundStyle(ColorHex.color(preset.config.highlightColor))
-                    .frame(width: 84, height: 54)
-                    .background(
-                        preset.config.background == .none
-                            ? Color.black : ColorHex.color(preset.config.backgroundColor).opacity(0.9),
-                        in: .rect(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.stroke, lineWidth: 1))
-                Text(preset.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
-            }
-            .padding(7)
-            .overlay {
-                RoundedRectangle(cornerRadius: 16).stroke(Theme.accent, lineWidth: active ? 2 : 0)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(preset.name)
-        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 

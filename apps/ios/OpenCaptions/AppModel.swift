@@ -10,6 +10,9 @@ final class AppModel {
     let store: ProjectStore
     let transcriber: WhisperKitTranscriber
     let fontCache: FontCache
+    let fontCatalog: FontCatalog
+    /// Tiles of the presets drawn by the engine, made once.
+    let presetPreviews = PresetPreviews()
     private(set) var presets: [Preset] = []
     private(set) var projects: [Project] = []
     var errorMessage: String?
@@ -26,6 +29,7 @@ final class AppModel {
         // Weights are large and re-downloadable: never in a backup.
         transcriber = WhisperKitTranscriber(modelsDirectory: support.appendingPathComponent("Models", isDirectory: true))
         fontCache = FontCache(directory: support.appendingPathComponent("Fonts", isDirectory: true))
+        fontCatalog = FontCatalog(directory: support.appendingPathComponent("Fonts", isDirectory: true))
         presets = (try? Presets.builtin()) ?? []
         Diagnostics.recordUncaughtExceptions()
         Diagnostics.log("launch")

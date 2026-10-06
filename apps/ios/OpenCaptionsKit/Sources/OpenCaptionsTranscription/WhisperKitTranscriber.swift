@@ -132,11 +132,46 @@ public final class WhisperKitTranscriber: Transcriber {
             return nil
         }
         try Task.checkCancellation()
+        let requested = language.flatMap { $0 == "auto" ? nil : $0 }
+        let seconds = duration.isFinite ? duration : 0
+        var transcript = TranscriptMapping.transcript(from: results, duration: seconds, requestedLanguage: requested)
+        if !transcript.segments.isEmpty {
+            transcript = try await fillGaps(
+                in: transcript, samples: samples, duration: seconds, language: lang ?? transcript.language,
+                pipe: pipe, progress: progress)
+        }
         progress(1, "Done")
-        let transcript = TranscriptMapping.transcript(
-            from: results, duration: duration.isFinite ? duration : 0, requestedLanguage: language.flatMap { $0 == "auto" ? nil : $0 })
         // Replacing someone's captions with nothing is never what they asked for.
         guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }
         return transcript
+    }
+
+    /// Decodes again each long stretch without words, without Whisper's "this window is silent"
+    /// judgement, which skips a whole window of music or noisy speech (see `TranscriptGaps`).
+    private func fillGaps(
+        in transcript: Transcript, samples: [Float], duration: Double, language: String,
+        pipe: WhisperKit, progress: @escaping @Sendable (Double, String) -> Void
+    ) async throws -> Transcript {
+        let rate = AudioExtractor.sampleRate
+        let gaps = TranscriptGaps.find(in: transcript, duration: duration).prefix(12)
+        guard !gaps.isEmpty else { return transcript }
+        var options = DecodingOptions(
+            task: .transcribe, language: language, temperatureFallbackCount: Self.fallbackRetries,
+            skipSpecialTokens: true, wordTimestamps: true)
+        options.noSpeechThreshold = nil
+        options.logProbThreshold = nil
+        options.firstTokenLogProbThreshold = nil
+        var fills: [(gap: ClosedRange<Double>, transcript: Transcript)] = []
+        for (index, gap) in gaps.enumerated() {
+            try Task.checkCancellation()
+            progress(1, "Checking for missed speech (\(index + 1) of \(gaps.count))…")
+            let from = max(0, Int(gap.lowerBound * rate))
+            let to = min(samples.count, Int(gap.upperBound * rate))
+            guard to - from > Int(rate) else { continue }
+            guard let results = try? await pipe.transcribe(audioArray: Array(samples[from..<to]), decodeOptions: options)
+            else { continue }
+            fills.append((gap, TranscriptMapping.transcript(from: results, duration: gap.upperBound - gap.lowerBound, requestedLanguage: language)))
+        }
+        return TranscriptGaps.merge(transcript, fills: fills)
     }
 }
