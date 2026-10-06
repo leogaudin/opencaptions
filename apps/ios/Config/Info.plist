@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- What the generated Info.plist cannot express; Xcode merges it with the generated keys. -->
+<plist version="1.0">
+<dict>
+	<!-- opencaptions://connect?url=…&key=… : the link the web app makes to pair this app with a server. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>org.leogaudin.opencaptions</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>opencaptions</string>
+			</array>
+		</dict>
+	</array>
+	<!-- A server on the local network (a GPU box at home) is plain http; nothing else is allowed to be. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Reaches an OpenCaptions server on your network to transcribe your videos there.</string>
+</dict>
+</plist>

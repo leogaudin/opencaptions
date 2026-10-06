@@ -30,6 +30,10 @@ test that downloads the `tiny` model and transcribes real speech (network, about
 `OC_WHISPER_MODELS=<dir>` keeps the model between runs). Open `apps/ios/OpenCaptions.xcodeproj`
 in Xcode to run on a simulator or device.
 
+Transcription runs on the phone by default. Settings → "Where to transcribe" can point it at
+another OpenCaptions server instead (paste the link the web app's Account page makes when you
+create a key); see "Transcribing on a server" in `docs/DESIGN.md`.
+
 ## Layout
 
 ```

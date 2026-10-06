@@ -18,16 +18,16 @@ No existing OSS tool combines automatic transcription with **animated styled cap
 
 ## Features (v0.1)
 
-- 🎙 **Word-level transcription** via faster-whisper (local) or OpenAI Whisper API (BYOA)
+- 🎙 **Word-level transcription** via faster-whisper (local), the OpenAI Whisper API (BYOA), or another OpenCaptions server (for example a GPU box at home), which the iOS app can use too
 - 🎨 **Animated styled captions** with 3 built-in presets + full custom panel
 - ✏️ **Built-in editor** — a timeline to retime captions, fix a misheard word right on the video, customize style with live preview
 - 📤 **Multi-format export** — burned-in MP4, SRT, VTT, JSON
-- 📱 **iPhone and iPad app** — the same engine and editor on the phone, with on-device Whisper (WhisperKit): no server, no account
+- 📱 **iPhone and iPad app** — the same engine and editor on the phone, with on-device Whisper (WhisperKit): no server, no account (or point it at your own server to transcribe faster)
 - 🐳 **Docker Compose first** — one command to run the whole stack
 - 🔒 **Privacy by design** — no telemetry, no tracking, no phone-home; accounts are local to your instance
 - 🍎 **Apple Silicon** — images are multi-arch and run natively on M-series Macs. Local
   transcription is CPU-only there: faster-whisper runs on CTranslate2, which has no
-  Metal or CoreML backend. Use the OpenAI provider, or a small model, if speed matters.
+  Metal or CoreML backend. Use the OpenAI provider, another OpenCaptions server with a GPU (`TRANSCRIPTION_PROVIDER=opencaptions`, `TRANSCRIPTION_REMOTE_URL`, `TRANSCRIPTION_REMOTE_KEY`), or a small model, if speed matters.
 
 ## Quick Start
 

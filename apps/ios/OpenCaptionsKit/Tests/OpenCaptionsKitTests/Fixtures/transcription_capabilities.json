@@ -1,0 +1,17 @@
+{
+  "api_version": 1,
+  "instance_name": "Home GPU",
+  "models": [
+    { "id": "large-v3-turbo", "label": "Large v3 Turbo", "note": "Fast and accurate" },
+    { "id": "large-v3", "label": "Large v3", "note": "Most accurate" }
+  ],
+  "default_model": "large-v3-turbo",
+  "languages": [
+    { "code": "en", "label": "English" },
+    { "code": "fr", "label": "French" }
+  ],
+  "max_upload_mb": 2048,
+  "max_duration_s": 3600,
+  "result_ttl_h": 24,
+  "hosted_mode": false
+}

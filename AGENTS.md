@@ -97,6 +97,12 @@ images, which is what an end user does.
     (`localhost:5173/api/v1/...`). The bind address is a documented security
     property (README, SECURITY.md); changing it is an edit to that line, not a variable.
 
+13. **Transcription between OpenCaptions components uses the transcription API and
+    the shared `Transcript` schema** (`app/api/transcriptions.py`; the `opencaptions`
+    provider and the iOS `ServerTranscriber` are its clients). Never a second format.
+    The sample responses in `apps/ios/OpenCaptionsKit/Tests/OpenCaptionsKitTests/Fixtures/`
+    are read by both the API and the Swift tests: change the contract in both.
+
 ## Layout
 
 | Path | Owns |

@@ -41,6 +41,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: org.leogaudin.opencaptions
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
+        # The keys the generated plist cannot hold: the pairing link's URL scheme and local-network access.
+        INFOPLIST_FILE: Config/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: OpenCaptions
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_BackgroundColor: LaunchBackground

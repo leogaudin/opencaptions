@@ -42,6 +42,14 @@ trusted network, turn registration off by setting `REGISTRATION_ENABLED` to
 `false` in the `api` service's `environment:` block, and/or bind the port to
 `127.0.0.1` behind a reverse proxy.
 
+Transcription can leave the machine: with the `openai` or `opencaptions` provider, or when
+a phone app is connected to your server, audio is sent to the other end. Your instance, as
+the other end, deletes the audio of a job when it ends and a transcript after
+`TRANSCRIPTION_RESULT_TTL_H` hours (24 by default). Its transcription API takes the same API
+keys as the rest of the API: revoke a key on the Account page to cut off a phone. The address
+set in `TRANSCRIPTION_REMOTE_URL` goes through the same guard as a video URL, so a private
+address is refused unless its host is listed in `SSRF_ALLOWED_HOSTS`.
+
 If a user forgets their password, recovery depends on whether SMTP is configured
 (see the `SMTP_*` variables in the env examples). With SMTP set up, self-service
 reset is offered from the login page: request a link by email, set a new

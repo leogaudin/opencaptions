@@ -24,6 +24,7 @@ struct SettingsView: View {
             ScrollView(.vertical) {
                 VStack(spacing: 24) {
                     appearanceSection
+                    ServerSection()
                     transcriptionSection
                     modelsSection
                     storageSection

@@ -11,6 +11,13 @@ final class AppModel {
     let transcriber: WhisperKitTranscriber
     let fontCache: FontCache
     let fontCatalog: FontCatalog
+    private let serverSettings = ServerSettings(secrets: KeychainSecretStore())
+    /// Another OpenCaptions server to transcribe on, once one is connected.
+    private(set) var serverConnection: ServerConnection?
+    /// Whether transcription goes to that server (always false with none connected).
+    private(set) var useServer = false
+    /// A server named by a pairing link, until the user says whether to use it.
+    var pendingConnection: ServerConnection?
     /// Tiles of the presets drawn by the engine, made once.
     let presetPreviews = PresetPreviews()
     private(set) var presets: [Preset] = []
@@ -30,9 +37,40 @@ final class AppModel {
         transcriber = WhisperKitTranscriber(modelsDirectory: support.appendingPathComponent("Models", isDirectory: true))
         fontCache = FontCache(directory: support.appendingPathComponent("Fonts", isDirectory: true))
         fontCatalog = FontCatalog(directory: support.appendingPathComponent("Fonts", isDirectory: true))
+        serverConnection = serverSettings.connection
+        useServer = serverSettings.useServer
         presets = (try? Presets.builtin()) ?? []
         Diagnostics.recordUncaughtExceptions()
         Diagnostics.log("launch")
+    }
+
+    /// Where transcription happens now: the connected server, or this phone.
+    var activeTranscriber: any Transcriber {
+        if useServer, let serverConnection { return ServerTranscriber(connection: serverConnection) }
+        return transcriber
+    }
+
+    func connect(_ connection: ServerConnection) {
+        serverSettings.save(connection)
+        serverConnection = connection
+        useServer = true
+    }
+
+    func disconnectServer() {
+        serverSettings.disconnect()
+        serverConnection = nil
+        useServer = false
+    }
+
+    func setUseServer(_ use: Bool) {
+        guard serverConnection != nil else { return }
+        serverSettings.useServer = use
+        useServer = use
+    }
+
+    /// A pairing link opened on this phone: ask before trusting it with the user's audio.
+    func handle(link: URL) {
+        if let connection = ServerConnection.parse(link: link) { pendingConnection = connection }
     }
 
     /// The application default style: the first preset, as on the web.

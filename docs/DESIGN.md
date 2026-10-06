@@ -96,6 +96,16 @@ stores (with a button to clear the saved videos, which can be made again), and a
 button that shares `diagnostics.log`: a small log kept on the device with the milestones of the long
 jobs and any uncaught exception, so a crash that leaves no report can still be explained.
 
+**Transcribing on a server.** Settings → "Where to transcribe" switches between this phone and
+"My server": another OpenCaptions backend, connected by pasting the link the web app makes
+(or typing the address and key) and checked before it is kept. The key is in the Keychain, the
+address in preferences. `ServerTranscriber` is a `Transcriber` like the on-device one: it exports
+only the audio (AAC, about 1 MB a minute), uploads it, follows the job, fetches the
+`Transcript` and tells the server to forget it. The transcribe sheet then lists the server's
+models and downloads nothing. A pairing link opened on the phone asks before it is used,
+because it decides where the audio goes. The upload and the wait happen while the app is
+open (no background upload yet); plain `http` is allowed only to local-network addresses.
+
 **Presets and fonts.** The preset tiles are drawn by the engine (`CaptionEngine.samples`: the same
 drawing as the preview and the export, in a phone-shaped frame, cropped to the band around the
 caption), so each shows its real font, colours and highlight; the scene in use is put back after.
@@ -168,10 +178,42 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
   `models/`. VAD and no-speech thresholds can be tuned (`WHISPER_*`).
 - `openai`: the OpenAI API. Audio leaves the machine, so the UI says so whenever
   this provider is active.
+- `opencaptions`: another OpenCaptions backend, reached through its transcription
+  API (below). `TRANSCRIPTION_REMOTE_URL` and `TRANSCRIPTION_REMOTE_KEY` name it; the
+  audio leaves the machine, so the UI names its host. A laptop stack without a GPU
+  can hand its transcriptions to one that has.
 
 The provider and model are chosen per job, with the deployment's defaults
 preselected. The seam doesn't depend on the model, so any engine that yields
 words with timings fits behind it.
+
+### The transcription API
+
+What any OpenCaptions component calls to have speech transcribed on a backend, with no
+project in between (`app/api/transcriptions.py`). The result is the `Transcript` every
+part of the system already uses, so a caller maps nothing: the iOS app and an instance
+with the `opencaptions` provider are two clients of it. Auth is an API key
+(`Authorization: Bearer oc_…`), minted on the Account page, which also makes a
+`opencaptions://connect?url=…&key=…` link that sets the phone app up.
+
+| Call | |
+|---|---|
+| `GET /api/v1/transcription/capabilities` | `api_version`, the instance's name, models, languages, limits, retention. A client refuses a version it does not know. |
+| `POST /api/v1/transcriptions` | audio (anything ffmpeg reads) + `language` [+ `model`]; returns `202 {job_id}` |
+| `GET /api/v1/jobs/{id}` | progress, as for any job |
+| `GET /api/v1/transcriptions/{id}` | the `Transcript`, once completed (`409` before, `404` after it expires) |
+| `DELETE /api/v1/transcriptions/{id}` | cancel and delete everything of it |
+
+It is asynchronous because a long recording takes minutes on a CPU. The audio is deleted
+when its job ends; the result is kept `TRANSCRIPTION_RESULT_TTL_H` (24) hours so a client
+that was suspended can still fetch it, and the first request after that time removes what
+has expired, so no separate janitor runs. A user may have `TRANSCRIPTION_MAX_CONCURRENT`
+(2) running. A job has its own owner (`jobs.user_id`), so it needs no project. The
+`opencaptions` provider sends an `X-OpenCaptions-Hop` header, and an instance that itself
+forwards refuses a request carrying it, so two instances cannot be configured into a loop.
+The remote address goes through the same SSRF guard as `video_url`; `SSRF_ALLOWED_HOSTS`
+admits a GPU box on the LAN. Sample responses in the iOS package's test fixtures are read by both the API tests and the
+app's tests, so neither end can change the contract alone.
 
 ## Data
 

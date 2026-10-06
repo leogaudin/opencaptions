@@ -18,8 +18,13 @@ struct TranscribeSheet: View {
     private let languages = TranscriptionLanguages.all
 
     private var chosen: WhisperModel { WhisperModels.model(modelID) ?? WhisperModels.all[0] }
-    private var downloaded: Bool { app.transcriber.isDownloaded(modelID) }
+    /// With a server in use, nothing is downloaded: it has its own models and runs them.
+    private var onServer: Bool { app.useServer && app.serverConnection != nil }
+    private var downloaded: Bool { onServer || app.transcriber.isDownloaded(modelID) }
     private var busy: Bool { downloading != nil || model.isTranscribing }
+    @State private var serverModels: ServerCapabilities?
+    @State private var serverModelID: String?
+    @State private var serverProblem: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,7 +46,7 @@ struct TranscribeSheet: View {
                             .font(.system(size: 14, weight: .semibold)).card()
                     }
                     languageSection
-                    modelSection
+                    if onServer { serverSection } else { modelSection }
                     if let downloading {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Downloading the model").font(.system(size: 15, weight: .bold))
@@ -71,6 +76,7 @@ struct TranscribeSheet: View {
         .tint(Theme.accent)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
+        .task(id: onServer) { await loadServerModels() }
         .confirmationDialog(
             "Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData,
             titleVisibility: .visible
@@ -95,6 +101,66 @@ struct TranscribeSheet: View {
         .padding(.horizontal, 18)
         .padding(.top, 22)
         .padding(.bottom, 10)
+    }
+
+    /// The server's models (as it lists them) and where the audio goes.
+    private var serverSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel("Model")
+            if let serverModels, !serverModels.models.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(serverModels.models.enumerated()), id: \.element.id) { index, option in
+                        if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 16) }
+                        serverModelRow(option, selected: option.id == (serverModelID ?? serverModels.defaultModel))
+                    }
+                }
+                .background(Theme.surface, in: .rect(cornerRadius: Theme.radius))
+                .clipShape(.rect(cornerRadius: Theme.radius))
+                .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
+            } else if let serverProblem {
+                Text(serverProblem).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
+            } else if serverModels == nil {
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Asking \(app.serverConnection?.displayName ?? "the server")…")
+                        .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
+                }
+                .card()
+            } else {
+                Text("The server chooses the model.").font(.system(size: 14)).foregroundStyle(Theme.textSecondary).card()
+            }
+            Text("Only the audio is sent, to \(app.serverConnection?.url.host ?? "the server"), which deletes it when it is done. Change this in Settings.")
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+        }
+    }
+
+    private func serverModelRow(_ option: ServerCapabilities.Model, selected: Bool) -> some View {
+        Button { serverModelID = option.id } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(option.label).font(.system(size: 16, weight: .semibold))
+                if let note = option.note, !note.isEmpty {
+                    Text(note).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(selected ? Theme.accent.opacity(0.14) : .clear)
+            .overlay(alignment: .leading) { Rectangle().fill(Theme.accent).frame(width: selected ? 4 : 0) }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func loadServerModels() async {
+        guard onServer, let connection = app.serverConnection else { return }
+        serverModels = nil
+        serverProblem = nil
+        do {
+            serverModels = try await ServerTranscriber(connection: connection).capabilities()
+        } catch {
+            serverProblem = error.localizedDescription
+        }
     }
 
     private var languageSection: some View {
@@ -178,12 +244,12 @@ struct TranscribeSheet: View {
 
     private var footer: some View {
         VStack(spacing: 8) {
-            Button(downloaded ? "Transcribe" : "Download and transcribe") {
+            Button(downloaded ? (onServer ? "Transcribe on \(app.serverConnection?.displayName ?? "the server")" : "Transcribe") : "Download and transcribe") {
                 Task { await begin(allowMetered: false) }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(busy)
-            Text("Keep OpenCaptions open while it works.")
+            Text(onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
         }
         .padding(.horizontal, 18)
@@ -196,6 +262,13 @@ struct TranscribeSheet: View {
 
     private func begin(allowMetered: Bool) async {
         failure = nil
+        if onServer {
+            model.startTranscription(
+                with: app.activeTranscriber, model: serverModelID ?? serverModels?.defaultModel ?? "",
+                language: language == "auto" ? nil : language)
+            dismiss()
+            return
+        }
         if !downloaded {
             if !allowMetered, await NetworkCost.isExpensive() {
                 askAboutData = true
