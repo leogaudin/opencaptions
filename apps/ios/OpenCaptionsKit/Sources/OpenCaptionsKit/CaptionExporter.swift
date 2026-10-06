@@ -108,9 +108,6 @@ public struct CaptionExporter: Sendable {
             let pq = transfer == .pq
             let avTransfer = pq ? AVVideoTransferFunction_SMPTE_ST_2084_PQ : AVVideoTransferFunction_ITU_R_2100_HLG
             compression[AVVideoProfileLevelKey] = kVTProfileLevel_HEVC_Main10_AutoLevel as String
-            // The hardware encoder otherwise adds Dolby Vision (profile 8.4) metadata to an HLG file on
-            // its own. The file is HDR as tagged, and says no more than that.
-            compression[kVTCompressionPropertyKey_HDRMetadataInsertionMode as String] = kVTHDRMetadataInsertionMode_None
             var encoding = Encoding(
                 pixelFormat: kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange,
                 settings: [

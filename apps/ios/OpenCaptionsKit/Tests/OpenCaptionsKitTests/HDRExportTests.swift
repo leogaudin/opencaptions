@@ -36,15 +36,6 @@ extension EngineSuites {
             ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("oc-\(UUID().uuidString)"))
         }
 
-        /// Whether the file declares Dolby Vision (a `dvcC` or `dvvC` box in its sample description).
-        func declaresDolbyVision(_ url: URL) async throws -> Bool {
-            let track = try #require(try await AVURLAsset(url: url).loadTracks(withMediaType: .video).first)
-            let format = try #require(try await track.load(.formatDescriptions).first)
-            let atoms = CMFormatDescriptionGetExtension(
-                format, extensionKey: kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms) as? [String: Any]
-            return atoms?.keys.contains { $0 == "dvcC" || $0 == "dvvC" } ?? false
-        }
-
         /// The brightest luma in a block of the first frame, as the 10-bit code value.
         func peakLuma(_ url: URL, rows: Range<Int>, columns: Range<Int>) async throws -> Int {
             let asset = AVURLAsset(url: url)
@@ -91,8 +82,6 @@ extension EngineSuites {
             #expect(CMFormatDescriptionGetMediaSubType(format) == kCMVideoCodecType_HEVC, "HEVC, as 10-bit needs")
             let primaries = CMFormatDescriptionGetExtension(format, extensionKey: kCMFormatDescriptionExtension_ColorPrimaries) as? String
             #expect(primaries == kCMFormatDescriptionColorPrimaries_ITU_R_2020 as String)
-            // Plain HDR10/HLG, as tagged: no Dolby Vision metadata that the encoder adds on its own.
-            #expect(try await !declaresDolbyVision(url), "the file declares Dolby Vision")
 
             // The caption's white is at four times reference white (PQ: 203 nits is code 573 and
             // about 800 nits is 707; HLG: 721 and 918, near its 940 peak). A real clip's walls sit at
