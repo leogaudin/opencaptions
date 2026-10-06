@@ -30,7 +30,7 @@ import Testing
 
     @Test func thePresetsAreTheSharedFile() throws {
         let presets = try Presets.load(from: Repo.presets)
-        #expect(presets.map(\.id).first == "builtin:soft-pill")
+        #expect(presets.map(\.id).first == "builtin:classic")
         #expect(Set(presets.map(\.id)).count == presets.count)
         #expect(presets.count >= 3)
         let again = try JSONDecoder().decode([Preset].self, from: JSONEncoder().encode(presets))

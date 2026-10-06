@@ -22,6 +22,12 @@ public final class WhisperKitTranscriber: Transcriber {
         return contents.contains { $0.hasSuffix(".mlmodelc") } ? folder : nil
     }
 
+    /// When Whisper dislikes a window (repetitive, or low confidence) it decodes it again hotter,
+    /// five times by default, and every retry costs as much as the first decode: on music, which
+    /// trips those checks all the time, that is the pause of tens of seconds. Two retries keep the
+    /// recovery and bound the wait to three decodes of a window.
+    static let fallbackRetries = 2
+
     public func isDownloaded(_ id: String) -> Bool {
         folder(for: id) != nil
     }
@@ -116,8 +122,8 @@ public final class WhisperKitTranscriber: Transcriber {
         // `detectLanguage` must be asked for when nothing else decided: left alone WhisperKit
         // assumes English, and the model then transcribes other speech as an English translation.
         let options = DecodingOptions(
-            task: .transcribe, language: lang, detectLanguage: lang == nil && !info.englishOnly,
-            skipSpecialTokens: true, wordTimestamps: true)
+            task: .transcribe, language: lang, temperatureFallbackCount: Self.fallbackRetries,
+            detectLanguage: lang == nil && !info.englishOnly, skipSpecialTokens: true, wordTimestamps: true)
         // Decoding reports per 30-second window, so a short clip is one step and the fraction
         // stays 0 until it ends; the screen shows a spinner until there is a fraction.
         let covered = pipe.progress
