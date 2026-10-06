@@ -9,7 +9,14 @@ import * as api from "@/lib/api";
 import { createAutosave } from "@/lib/autosave";
 import { clampCaptionOffsetMs } from "@/lib/captionOffset";
 import { downloadWhenReady, forgetDownload, saveVideo } from "@/lib/downloads";
-import { defaultStyle, type Job, type Project, type StyleConfig, type Transcript } from "@/types";
+import {
+  defaultStyle,
+  type Job,
+  type Project,
+  type StyleConfig,
+  type Transcript,
+  type TranscriptionProvider,
+} from "@/types";
 
 type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -35,7 +42,7 @@ interface EditorState {
   /** Applies a pure edit to the transcript: the engine's edits, the only way it changes. */
   editTranscript: (f: (t: Transcript) => Transcript) => void;
   startTranscription: (body?: {
-    provider?: "local" | "openai";
+    provider?: TranscriptionProvider;
     model?: string;
     language?: string;
   }) => Promise<void>;

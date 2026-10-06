@@ -7,6 +7,7 @@
  */
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { ApiKeys } from "@/components/ApiKeys";
+import { TranscriptionService } from "@/components/TranscriptionService";
 import * as api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import type { UsageRead } from "@/types";
@@ -53,6 +54,7 @@ export function AccountPage() {
 
       <ChangeEmailForm currentEmail={user?.email ?? ""} onChanged={(u) => setUser(u)} />
       <ChangePasswordForm />
+      <TranscriptionService />
       <ApiKeys />
     </div>
   );

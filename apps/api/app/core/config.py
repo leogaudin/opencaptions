@@ -51,9 +51,6 @@ class Settings(BaseSettings):
     instance_name: str = "OpenCaptions"
     transcription_result_ttl_h: int = 24
     transcription_max_concurrent: int = 2
-    # The address clients outside the stack reach this instance at, for pairing links;
-    # empty means the address the request came in on.
-    public_url: str = ""
 
     # Voice-activity filtering drops non-speech before decoding, which keeps
     # Whisper from inventing words over music. It can also drop real speech under

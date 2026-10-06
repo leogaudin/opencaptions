@@ -29,6 +29,10 @@ export type Transcript = components["schemas"]["Transcript"];
 export type FontFamily = components["schemas"]["FontFamily"];
 
 export type ApiKey = components["schemas"]["ApiKeyRead"];
+/** Where audio is transcribed: here, on OpenAI, or on another OpenCaptions server. */
+export type TranscriptionProvider = NonNullable<
+  components["schemas"]["TranscribeRequest"]["provider"]
+>;
 
 export type ApiKeyCreated = components["schemas"]["ApiKeyCreated"];
 

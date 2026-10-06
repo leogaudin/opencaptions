@@ -112,6 +112,10 @@ export function ApiKeys() {
 function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
   const [copied, setCopied] = useState(false);
   const example = `curl -H "Authorization: Bearer ${value}" ${location.origin}/api/v1/projects`;
+  // Opens the OpenCaptions app on a phone and fills in this server and key. The phone has to
+  // reach the address, so a page opened as localhost is called out.
+  const pairing = `opencaptions://connect?url=${encodeURIComponent(location.origin)}&key=${encodeURIComponent(value)}`;
+  const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(location.hostname);
   return (
     <div
       className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs"
@@ -136,6 +140,16 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
         </button>
       </div>
       <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-[11px]">{example}</pre>
+      <p className="mt-3 font-medium text-foreground">Use it from the OpenCaptions app</p>
+      <p className="mt-1 text-muted-foreground">
+        Open this link on the phone (send it by message or AirDrop) to transcribe on this server
+        instead of on the phone.
+        {local &&
+          " This page is open as localhost, which a phone cannot reach: open this page by this computer's address on your network, then create the key."}
+      </p>
+      <code className="mt-1 block break-all rounded bg-background px-2 py-1 text-[11px]">
+        {pairing}
+      </code>
       <button type="button" onClick={onDone} className="mt-2 underline">
         Done
       </button>

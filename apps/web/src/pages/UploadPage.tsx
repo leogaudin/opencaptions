@@ -1,5 +1,5 @@
 /**
- * UploadPage: drop a video, pick provider, show privacy disclosure for OpenAI.
+ * UploadPage: drop a video, pick provider, show a privacy disclosure when audio leaves the machine.
  *
  * Two-mode input: "Upload file" (local file via dropzone) or "From URL"
  * (direct link to a video file — page links like YouTube are NOT supported).
@@ -13,8 +13,9 @@ import { VideoDropzone } from "@/components/VideoDropzone";
 import { startProjectFromFile, startProjectFromUrl } from "@/lib/projectActions";
 import { useTranscriptionSettings } from "@/lib/useTranscriptionSettings";
 import { stripExt } from "@/lib/utils";
+import type { TranscriptionProvider } from "@/types";
 
-type Provider = "local" | "openai";
+type Provider = TranscriptionProvider;
 type InputMode = "file" | "url";
 
 export function UploadPage() {
@@ -31,6 +32,8 @@ export function UploadPage() {
     defaultModel,
   } = useTranscriptionSettings();
   const openaiConfigured = settings?.transcription.openai_configured ?? false;
+  const remoteConfigured = settings?.transcription.remote_configured ?? false;
+  const remoteHost = hostOf(settings?.transcription.remote_url);
   const hostedMode = settings?.hosted_mode ?? false;
   const defaultProvider = (settings?.transcription.provider ?? "local") as Provider;
   // Null until the user picks, so the choice tracks the deployment default.
@@ -191,7 +194,7 @@ export function UploadPage() {
             nothing to choose. The privacy disclosure is kept regardless: if the
             audio leaves the machine the user is told, whoever decided that. */}
         {hostedMode ? (
-          provider === "openai" && <PrivacyDisclosure />
+          provider !== "local" && <PrivacyDisclosure provider={provider} host={remoteHost} />
         ) : (
           <div>
             <label className="mb-1 block text-sm font-medium" htmlFor="provider">
@@ -207,8 +210,13 @@ export function UploadPage() {
               <option value="openai" disabled={!openaiConfigured}>
                 OpenAI Whisper API{!openaiConfigured && " — set OPENAI_API_KEY first"}
               </option>
+              <option value="opencaptions" disabled={!remoteConfigured}>
+                {remoteConfigured
+                  ? `Another OpenCaptions server (${remoteHost})`
+                  : "Another OpenCaptions server — set TRANSCRIPTION_REMOTE_URL first"}
+              </option>
             </select>
-            {provider === "openai" && <PrivacyDisclosure />}
+            {provider !== "local" && <PrivacyDisclosure provider={provider} host={remoteHost} />}
             {defaultProvider !== provider && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Server default: {defaultProvider}
@@ -280,7 +288,25 @@ export function UploadPage() {
   );
 }
 
-function PrivacyDisclosure() {
+/** The host of a URL, or an empty string for none or a malformed one. */
+function hostOf(url: string | null | undefined): string {
+  if (!url) return "";
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
+}
+
+function PrivacyDisclosure({ provider, host }: { provider: Provider; host: string }) {
+  if (provider === "opencaptions") {
+    return (
+      <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
+        <strong>Privacy notice:</strong> your audio will be sent to {host || "the remote server"},
+        which transcribes it and deletes the audio when it is done. This server keeps the result.
+      </div>
+    );
+  }
   return (
     <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
       <strong>Privacy notice:</strong> selecting the OpenAI provider will upload your audio to

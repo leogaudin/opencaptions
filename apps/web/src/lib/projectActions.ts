@@ -1,11 +1,11 @@
 import * as api from "@/lib/api";
 import { stripExt } from "@/lib/utils";
-import type { Project } from "@/types";
+import type { Project, TranscriptionProvider } from "@/types";
 
 /** Transcription options for creating a project and starting its first job. */
 export interface StartOptions {
   title?: string;
-  provider?: "local" | "openai";
+  provider?: TranscriptionProvider;
   model?: string;
   language?: string;
 }

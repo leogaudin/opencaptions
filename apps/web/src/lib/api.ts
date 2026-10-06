@@ -13,6 +13,7 @@ import type {
   ProjectList,
   StyleConfig,
   Transcript,
+  TranscriptionProvider,
   UsageRead,
   UserRead,
 } from "@/types";
@@ -234,7 +235,7 @@ export function getThumbnailUrl(projectId: string): string {
 }
 
 export interface TranscribeBody {
-  provider?: "local" | "openai";
+  provider?: TranscriptionProvider;
   model?: string;
   language?: string;
 }
@@ -329,6 +330,20 @@ export function changePassword(currentPassword: string, newPassword: string): Pr
 
 export function getSettings(): Promise<AppSettingsResponse> {
   return request<AppSettingsResponse>("/settings");
+}
+
+/** What the server says about the remote OpenCaptions instance it is set to transcribe on. */
+export type RemoteTranscriptionTest =
+  | {
+      ok: true;
+      instance_name?: string | null;
+      api_version?: number;
+      models: { id: string; label: string }[];
+    }
+  | { ok: false; error: string };
+
+export function testRemoteTranscription(): Promise<RemoteTranscriptionTest> {
+  return request<RemoteTranscriptionTest>("/settings/transcription/test", { method: "POST" });
 }
 
 // ---------- Health ----------
