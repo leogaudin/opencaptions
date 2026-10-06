@@ -90,6 +90,15 @@ handful of colours (each a light and a dark value), the button styles, the card 
 wordmark, and the screens draw their own top bars instead of the system navigation bar (the
 edge swipe back is put back by hand). Sheets (style, transcribe, save) use the same surfaces.
 
+**Settings.** A second tab holds the appearance (system, light or dark), the default spoken
+language, the speech models (each can be downloaded or deleted, with its size on disk), what the app
+stores (with a button to clear the saved videos, which can be made again), and about, including a
+button that shares `diagnostics.log`: a small log kept on the device with the milestones of the long
+jobs and any uncaught exception, so a crash that leaves no report can still be explained.
+
+**Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
+can be changed, its size and length) before it is imported; cancelling throws the copy away.
+
 **Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
   offline install still draws. Any Google Fonts family can be chosen: the API
   fetches it once, keeps it in the store (`fonts/`), and gives the preview and

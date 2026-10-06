@@ -27,8 +27,12 @@ struct TranscribeSheet: View {
             ScrollView(.vertical) {
                 VStack(spacing: 22) {
                     if model.transcript != nil {
-                        Label("This replaces the current captions, including your edits.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accentInk)
+                        Label {
+                            Text("This replaces the current captions, including your edits.")
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.accent)
+                        }
+                            .font(.system(size: 14, weight: .semibold))
                             .fixedSize(horizontal: false, vertical: true)
                             .card()
                     }
@@ -54,15 +58,17 @@ struct TranscribeSheet: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 24)
-                .frame(maxWidth: .infinity)
+                // Exactly the scroll view's width, so nothing inside can make it drift sideways.
+                .containerRelativeFrame(.horizontal)
             }
+            .clipped()
             // Vertical only: nothing here is wider than the screen, so nothing may drift sideways.
             .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.hidden)
             footer
         }
         .background(Theme.background)
-        .tint(Theme.accentInk)
+        .tint(Theme.accent)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .confirmationDialog(
@@ -101,7 +107,7 @@ struct TranscribeSheet: View {
                     Text("Auto-detect").tag("auto")
                     ForEach(languages) { Text($0.label).tag($0.code) }
                 }
-                .labelsHidden().pickerStyle(.menu)
+                .labelsHidden().pickerStyle(.menu).tint(Theme.textPrimary)
             }
             .card()
             Text("Auto-detect works best on clear speech. If it guesses wrong, choose the language.")

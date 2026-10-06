@@ -13,12 +13,11 @@ enum Theme {
     static let textPrimary = Color(light: "#0A0A0B", dark: "#FFFFFF")
     static let textSecondary = Color(light: "#6B6B75", dark: "#8E8E96")
     static let stroke = textPrimary.opacity(0.09)
-    /// The caption highlight yellow, as the desktop's favicon and style presets.
+    /// The caption highlight yellow, as the desktop's favicon and style presets. It fills and tints
+    /// (sliders, progress, the primary button); text stays the primary colour, because a darker
+    /// yellow to read on white is simply brown.
     static let accent = Color(hex: "#FFDD00")
     static let onAccent = Color.black
-    /// The accent where it is text or a thin line: yellow on dark, a deeper gold on light, where
-    /// pure yellow would not be legible.
-    static let accentInk = Color(light: "#9A7400", dark: "#FFDD00")
     static let danger = Color(light: "#E5393B", dark: "#FF5C5C")
     /// The playhead and other marks that must stand out from the surface under them.
     static let mark = textPrimary

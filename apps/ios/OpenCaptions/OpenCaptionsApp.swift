@@ -7,7 +7,7 @@ struct OpenCaptionsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ProjectsView()
+            RootView()
                 .environment(app)
                 .task { await app.bootstrap() }
                 .preferredColorScheme(appearance.scheme)

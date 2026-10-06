@@ -46,6 +46,7 @@ struct EditorView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .overlay(alignment: .top) { progress }
         .overlay { wordEditor }
         .sheet(isPresented: $showTranscribe) {
@@ -104,6 +105,11 @@ struct EditorView: View {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { Task { await model.flush() } }
+            // The system takes the hardware encoder from an app that leaves the screen, which ends a
+            // save abruptly. Stopping it ourselves leaves a clear message instead of a dead app.
+            if phase == .background {
+                exporter?.interrupt("The save stopped because OpenCaptions left the screen. Keep it open while it saves, then try again.")
+            }
         }
         // A long job needs the app in the foreground: there is no background processing.
         .onChange(of: model.isTranscribing) { _, busy in
@@ -234,7 +240,7 @@ struct EditorView: View {
                     // ends: a spinner, with the words as they are decoded, beats a stuck 0%.
                     if fraction > 0 {
                         Text("\(Int(fraction * 100))%").font(.system(size: 20, weight: .heavy).monospacedDigit())
-                            .foregroundStyle(Theme.accentInk)
+                            .foregroundStyle(Theme.textPrimary)
                     } else {
                         ProgressView().tint(Theme.accent)
                     }

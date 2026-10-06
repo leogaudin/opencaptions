@@ -81,6 +81,39 @@ public struct ProjectStore: Sendable {
         .sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// What the projects take on disk, in bytes: the copied-in videos and project files, and
+    /// the saved (captioned) videos, which can be made again.
+    public func usage() -> (projects: Int64, renders: Int64) {
+        func size(_ url: URL) -> Int64 {
+            let keys: [URLResourceKey] = [.fileSizeKey]
+            guard let files = FileManager.default.enumerator(at: url, includingPropertiesForKeys: keys) else { return 0 }
+            return files.reduce(into: Int64(0)) { total, file in
+                total += Int64((try? (file as? URL)?.resourceValues(forKeys: Set(keys)).fileSize) ?? 0)
+            }
+        }
+        let ids = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
+        var projects: Int64 = 0
+        var renders: Int64 = 0
+        for name in ids where UUID(uuidString: name) != nil {
+            let dir = root.appendingPathComponent(name)
+            let saved = size(dir.appendingPathComponent("renders", isDirectory: true))
+            renders += saved
+            projects += size(dir) - saved
+        }
+        return (projects, renders)
+    }
+
+    /// Deletes every saved (captioned) video; the projects themselves are untouched.
+    public func clearRenders() {
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? [] {
+            guard UUID(uuidString: name) != nil else { continue }
+            let renders = root.appendingPathComponent(name).appendingPathComponent("renders", isDirectory: true)
+            for file in (try? FileManager.default.contentsOfDirectory(atPath: renders.path)) ?? [] {
+                try? FileManager.default.removeItem(at: renders.appendingPathComponent(file))
+            }
+        }
+    }
+
     public func delete(_ id: UUID) throws {
         try FileManager.default.removeItem(at: directory(for: id))
     }

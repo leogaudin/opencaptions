@@ -24,58 +24,19 @@ struct PickedMovie: Transferable {
 struct ProjectsView: View {
     @Environment(AppModel.self) private var app
     @State private var picked: PhotosPickerItem?
-    @State private var importing = false
+    @State private var importing: String?  // what the spinner says, while there is one
+    @State private var pending: PendingImport?
     @State private var path: [UUID] = []
     @State private var deleting: Project?
-    @AppStorage(Appearance.storageKey) private var appearance = Appearance.system
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 240), spacing: 14)]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            VStack(spacing: 0) {
-                header
-                if app.projects.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 18) {
-                            ForEach(app.projects) { project in
-                                NavigationLink(value: project.id) { ProjectCard(project: project) }
-                                    .buttonStyle(.plain)
-                                    .contextMenu {
-                                        Button("Delete", systemImage: "trash", role: .destructive) { deleting = project }
-                                    }
-                            }
-                        }
-                        .padding(.horizontal, 18)
-                        .padding(.top, 8)
-                        .padding(.bottom, 32)
-                    }
-                }
-            }
-            .background(Theme.background.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
-            .overlay { if importing { importingCard } }
-            .navigationDestination(for: UUID.self) { id in
-                if let project = app.projects.first(where: { $0.id == id }) {
-                    EditorView(model: app.editor(for: project))
-                }
-            }
-            .confirmationDialog(
-                "Delete this project?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-                titleVisibility: .visible, presenting: deleting
-            ) { project in
-                Button("Delete “\(project.title)”", role: .destructive) { app.delete(project) }
-            } message: { _ in
-                Text("The video and its captions are removed from this device.")
-            }
-            .alert("Something went wrong", isPresented: .constant(app.errorMessage != nil)) {
-                Button("OK") { app.errorMessage = nil }
-            } message: {
-                Text(app.errorMessage ?? "")
-            }
-        }
+        NavigationStack(path: $path) { library }
+            .modifier(
+                ProjectDialogs(
+                    deleting: $deleting, pending: $pending, onDelete: { app.delete($0) },
+                    choose: { item in Task { await confirm(item) } }))
         #if DEBUG
             // Screenshots on a simulator: open the first project straight away.
             .task(id: app.projects.first?.id) {
@@ -83,6 +44,17 @@ struct ProjectsView: View {
                     let first = app.projects.first
                 {
                     path.append(first.id)
+                }
+            }
+        #endif
+        #if DEBUG
+            // Screenshots on a simulator: OC_SHOW_IMPORT=<video> shows the import confirmation for it.
+            .task {
+                guard let path = ProcessInfo.processInfo.environment["OC_SHOW_IMPORT"] else { return }
+                let copy = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mp4")
+                try? FileManager.default.copyItem(at: URL(fileURLWithPath: path), to: copy)
+                if let info = try? await VideoProbe.probe(copy) {
+                    pending = PendingImport(url: copy, title: "Video 6 Oct 2026", info: info, poster: await PendingImport.poster(of: copy))
                 }
             }
         #endif
@@ -95,21 +67,45 @@ struct ProjectsView: View {
         }
     }
 
+    /// The header and the grid of projects (or the empty state).
+    private var library: some View {
+        VStack(spacing: 0) {
+            header
+            if app.projects.isEmpty { emptyState } else { grid }
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .overlay { if importing != nil { importingCard } }
+        .navigationDestination(for: UUID.self) { id in
+            if let project = app.projects.first(where: { $0.id == id }) {
+                EditorView(model: app.editor(for: project))
+            }
+        }
+    }
+
+    private var grid: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 18) {
+                ForEach(app.projects) { project in
+                    NavigationLink(value: project.id) { ProjectCard(project: project) }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button("Delete", systemImage: "trash", role: .destructive) { deleting = project }
+                        }
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 8)
+            .padding(.bottom, 32)
+        }
+    }
+
     // MARK: Pieces
 
     private var header: some View {
         HStack(spacing: 10) {
             Wordmark()
             Spacer()
-            Menu {
-                Picker("Appearance", selection: $appearance) {
-                    ForEach(Appearance.allCases) { Label($0.label, systemImage: $0.symbol).tag($0) }
-                }
-            } label: {
-                Image(systemName: appearance.symbol)
-            }
-            .buttonStyle(CircleButtonStyle())
-            .accessibilityLabel("Appearance")
             if !app.projects.isEmpty {
                 picker { Image(systemName: "plus") }.buttonStyle(CircleButtonStyle(prominent: true))
             }
@@ -157,26 +153,43 @@ struct ProjectsView: View {
     private var importingCard: some View {
         VStack(spacing: 12) {
             ProgressView().tint(Theme.accent)
-            Text("Importing…").font(.system(size: 15, weight: .semibold))
+            Text(importing ?? "").font(.system(size: 15, weight: .semibold))
         }
         .padding(.horizontal, 28).padding(.vertical, 22)
         .background(Theme.raised, in: .rect(cornerRadius: Theme.radius))
         .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
     }
 
+    /// A picked video is copied somewhere the app owns and looked at, then the user is shown it and
+    /// decides: nothing is imported until they say so.
     private func load(_ item: PhotosPickerItem) async {
-        importing = true
+        importing = "Preparing your video…"
         defer {
-            importing = false
+            importing = nil
             picked = nil
         }
         guard let movie = try? await item.loadTransferable(type: PickedMovie.self) else {
             app.errorMessage = "That video could not be read."
             return
         }
-        defer { try? FileManager.default.removeItem(at: movie.url) }  // a no-op once it has been moved in
-        let title = "Video " + Date().formatted(date: .abbreviated, time: .shortened)
-        if let project = await app.importVideo(from: movie.url, title: title, move: true) {
+        guard let info = try? await VideoProbe.probe(movie.url) else {
+            try? FileManager.default.removeItem(at: movie.url)
+            app.errorMessage = "That file does not look like a video."
+            return
+        }
+        pending = PendingImport(
+            url: movie.url, title: "Video " + Date().formatted(date: .abbreviated, time: .shortened),
+            info: info, poster: await PendingImport.poster(of: movie.url))
+    }
+
+    private func confirm(_ item: PendingImport) async {
+        pending = nil
+        importing = "Importing…"
+        defer { importing = nil }
+        let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let project = await app.importVideo(
+            from: item.url, title: title.isEmpty ? "Untitled" : title, move: true)
+        {
             path.append(project.id)
         }
     }
@@ -196,6 +209,7 @@ struct ProjectCard: View {
                     if let seconds = project.videoDuration, seconds > 0 {
                         Text(Self.length(seconds))
                             .font(.system(size: 12, weight: .bold).monospacedDigit())
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 7).padding(.vertical, 3)
                             .background(.black.opacity(0.6), in: .capsule)
                             .padding(8)
@@ -222,7 +236,7 @@ struct ProjectCard: View {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.mini).tint(Theme.accent)
                 Text(fraction > 0 ? "Transcribing… \(Int(fraction * 100))%" : "Transcribing…")
-                    .foregroundStyle(Theme.accentInk)
+                    .foregroundStyle(Theme.textSecondary)
             }
         } else if let transcript = (app.openEditor(for: project.id)?.project ?? project).transcript {
             Text("\(transcript.words.count) words · " + project.createdAt.formatted(date: .abbreviated, time: .omitted))
@@ -249,5 +263,41 @@ private struct Thumbnail: View {
             generator.maximumSize = CGSize(width: 480, height: 480)
             image = try? await generator.image(at: CMTime(seconds: 0.2, preferredTimescale: 600)).image
         }
+    }
+}
+
+/// The questions this screen asks: delete a project, import the video just picked, and report an error.
+private struct ProjectDialogs: ViewModifier {
+    @Environment(AppModel.self) private var app
+    @Binding var deleting: Project?
+    @Binding var pending: PendingImport?
+    let onDelete: (Project) -> Void
+    let choose: (PendingImport) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog(
+                "Delete this project?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+                titleVisibility: .visible, presenting: deleting
+            ) { project in
+                Button("Delete “\(project.title)”", role: .destructive) { onDelete(project) }
+            } message: { _ in
+                Text("The video and its captions are removed from this device.")
+            }
+            .sheet(item: $pending) { item in
+                ImportConfirmSheet(
+                    item: item, choose: choose,
+                    cancel: {
+                        try? FileManager.default.removeItem(at: item.url)
+                        pending = nil
+                    })
+                .presentationBackground(Theme.background)
+                .presentationCornerRadius(24)
+            }
+            .alert("Something went wrong", isPresented: .constant(app.errorMessage != nil)) {
+                Button("OK") { app.errorMessage = nil }
+            } message: {
+                Text(app.errorMessage ?? "")
+            }
     }
 }

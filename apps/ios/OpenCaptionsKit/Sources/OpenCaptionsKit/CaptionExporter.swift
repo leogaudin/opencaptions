@@ -45,15 +45,22 @@ public struct CaptionExporter: Sendable {
         let final = directory.appendingPathComponent("\(key).mp4")
         if FileManager.default.fileExists(atPath: final.path) { return final }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // A save that was killed leaves its partial file behind; none of them is any use.
+        for stale in (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
+        where stale.hasSuffix(".partial.mp4") {
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent(stale))
+        }
         let partial = directory.appendingPathComponent("\(key).partial.mp4")
-        try? FileManager.default.removeItem(at: partial)
 
+        Diagnostics.log("export start \(key) hdr=\(project.hdrTransfer?.rawValue ?? "no") mem=\(Diagnostics.footprintMB())MB")
         do {
             try await write(project: project, transcript: transcript, source: source, to: partial, progress: progress)
             try? FileManager.default.removeItem(at: final)
             try FileManager.default.moveItem(at: partial, to: final)
+            Diagnostics.log("export done \(key) mem=\(Diagnostics.footprintMB())MB")
             return final
         } catch {
+            Diagnostics.log("export failed \(key): \(error)")
             try? FileManager.default.removeItem(at: partial)
             throw error
         }
@@ -166,28 +173,41 @@ public struct CaptionExporter: Sendable {
         let context = CIContext(options: [.workingFormat: CIFormat.RGBAh])
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
         var overlay: CIImage?
+        var logged = 0
         do {
             while let sample = videoOut.copyNextSampleBuffer() {
                 try Task.checkCancellation()
                 let time = CMSampleBufferGetPresentationTimeStamp(sample)
-                try await ready(videoIn, writer: writer, audio: audio)
+                try await ready(videoIn, writer: writer, reader: reader, audio: audio)
                 guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { continue }
                 // Unchanged since the last frame: the same overlay, no redraw.
                 if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }
-                let picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
-                var buffer: CVPixelBuffer?
-                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
-                guard let buffer else { throw ExportError.failed("out of memory") }
-                for (key, value) in encoding.attachments { CVBufferSetAttachment(buffer, key, value, .shouldPropagate) }
-                context.render(
-                    overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds,
-                    colorSpace: encoding.colorSpace)
-                guard adaptor.append(buffer, withPresentationTime: time) else {
-                    throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
+                // Each frame holds tens of megabytes of pixel buffers; a pool per frame returns them
+                // at once instead of whenever the long-running task next unwinds.
+                try autoreleasepool {
+                    let picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
+                    var buffer: CVPixelBuffer?
+                    CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
+                    guard let buffer else { throw ExportError.failed("out of memory") }
+                    for (key, value) in encoding.attachments { CVBufferSetAttachment(buffer, key, value, .shouldPropagate) }
+                    context.render(
+                        overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds,
+                        colorSpace: encoding.colorSpace)
+                    // Calling into a writer that has failed raises an exception, which ends the app.
+                    guard writer.status == .writing, adaptor.append(buffer, withPresentationTime: time) else {
+                        throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
+                    }
                 }
-                if duration > 0 { progress(min(1, time.seconds / duration)) }
+                if duration > 0 {
+                    let fraction = min(1, time.seconds / duration)
+                    progress(fraction)
+                    if Int(fraction * 20) > logged {  // every 5%: where it was, and how much memory it held
+                        logged = Int(fraction * 20)
+                        Diagnostics.log("export \(Int(fraction * 100))% mem=\(Diagnostics.footprintMB())MB")
+                    }
+                }
             }
-            try await drain(audio, writer: writer)
+            try await drain(audio, writer: writer, reader: reader)
         } catch {
             reader.cancelReading()
             writer.cancelWriting()
@@ -240,22 +260,34 @@ public struct CaptionExporter: Sendable {
     /// further ahead than that before it accepts another frame, and each would wait for the
     /// other forever. It pushes back on its own when audio gets too far ahead.
     private func ready(
-        _ videoIn: AVAssetWriterInput, writer: AVAssetWriter, audio: AudioPipeline?
+        _ videoIn: AVAssetWriterInput, writer: AVAssetWriter, reader: AVAssetReader, audio: AudioPipeline?
     ) async throws {
         while true {
             try Task.checkCancellation()
-            if writer.status == .failed { throw ExportError.failed(writer.error?.localizedDescription ?? "cannot write") }
-            if let audio { feed(audio) }
+            try check(writer, reader)
+            if let audio { feed(audio, writer: writer, reader: reader) }
             if videoIn.isReadyForMoreMediaData { return }
             try await Task.sleep(for: .milliseconds(2))
         }
     }
 
+    /// Stops with the real reason if either end has failed, which is what happens when the app
+    /// leaves the screen mid-save and the system takes the hardware encoder away.
+    private func check(_ writer: AVAssetWriter, _ reader: AVAssetReader) throws {
+        if writer.status == .failed || writer.status == .cancelled {
+            throw ExportError.failed(writer.error?.localizedDescription ?? "the save was interrupted")
+        }
+        if reader.status == .failed {
+            throw ExportError.failed(reader.error?.localizedDescription ?? "the video could not be read")
+        }
+    }
+
     /// Gives the writer audio for as long as it takes it.
-    private func feed(_ audio: AudioPipeline) {
-        while !audio.done, audio.input.isReadyForMoreMediaData {
+    private func feed(_ audio: AudioPipeline, writer: AVAssetWriter, reader: AVAssetReader) {
+        while !audio.done, writer.status == .writing, audio.input.isReadyForMoreMediaData {
             guard let next = audio.output.copyNextSampleBuffer() else {
-                audio.input.markAsFinished()
+                // Out of audio (or the reader failed, which the next check reports).
+                if writer.status == .writing { audio.input.markAsFinished() }
                 audio.done = true
                 return
             }
@@ -263,12 +295,12 @@ public struct CaptionExporter: Sendable {
         }
     }
 
-    private func drain(_ audio: AudioPipeline?, writer: AVAssetWriter) async throws {
+    private func drain(_ audio: AudioPipeline?, writer: AVAssetWriter, reader: AVAssetReader) async throws {
         guard let audio else { return }
         while !audio.done {
             try Task.checkCancellation()
-            if writer.status == .failed { throw ExportError.failed(writer.error?.localizedDescription ?? "cannot write") }
-            feed(audio)
+            try check(writer, reader)
+            feed(audio, writer: writer, reader: reader)
             if !audio.done { try await Task.sleep(for: .milliseconds(2)) }
         }
     }

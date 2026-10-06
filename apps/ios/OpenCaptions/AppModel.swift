@@ -27,6 +27,8 @@ final class AppModel {
         transcriber = WhisperKitTranscriber(modelsDirectory: support.appendingPathComponent("Models", isDirectory: true))
         fontCache = FontCache(directory: support.appendingPathComponent("Fonts", isDirectory: true))
         presets = (try? Presets.builtin()) ?? []
+        Diagnostics.recordUncaughtExceptions()
+        Diagnostics.log("launch")
     }
 
     /// The application default style: the first preset, as on the web.

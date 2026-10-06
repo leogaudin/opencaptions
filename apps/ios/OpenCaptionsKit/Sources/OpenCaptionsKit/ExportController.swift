@@ -75,6 +75,14 @@ public final class ExportController {
         }
     }
 
+    /// Stops the running export for a reason the user should read (the app left the screen).
+    public func interrupt(_ reason: String) {
+        guard isRunning else { return }
+        task?.cancel()
+        watchdog?.cancel()
+        state = .failed(reason)
+    }
+
     public func cancel() {
         task?.cancel()
         watchdog?.cancel()

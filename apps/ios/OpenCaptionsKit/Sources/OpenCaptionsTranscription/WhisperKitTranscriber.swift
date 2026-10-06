@@ -26,6 +26,17 @@ public final class WhisperKitTranscriber: Transcriber {
         folder(for: id) != nil
     }
 
+    /// What a downloaded model takes on disk, in bytes (0 if it is not downloaded).
+    public func sizeOnDisk(_ id: String) -> Int64 {
+        folder(for: id).map(Self.bytes(in:)) ?? 0
+    }
+
+    /// Removes a downloaded model. It downloads again the next time it is chosen.
+    public func delete(_ id: String) throws {
+        guard let folder = folder(for: id) else { return }
+        try FileManager.default.removeItem(at: folder)
+    }
+
     /// Downloads a model, reporting the fraction done. Does nothing if it is there.
     @discardableResult
     public func download(

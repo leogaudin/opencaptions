@@ -99,6 +99,21 @@ import Testing
         #expect(p.videoWidth == 64)
     }
 
+    @Test func usageSeparatesSavedVideosFromTheProjectsAndClearingKeepsTheProjects() async throws {
+        let store = store()
+        let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
+        try await SampleVideo.write(to: clip)
+        let p = try await store.importVideo(from: clip, title: "x", style: try Repo.defaultStyle())
+        try Data(repeating: 7, count: 50_000).write(to: try store.rendersDirectory(for: p.id).appendingPathComponent("a.mp4"))
+        let before = store.usage()
+        #expect(before.renders == 50_000)
+        #expect(before.projects > 1_000, "the video and project file")
+        store.clearRenders()
+        let after = store.usage()
+        #expect(after.renders == 0 && after.projects == before.projects)
+        #expect(store.list().map(\.id) == [p.id])
+    }
+
     @Test func aFailedImportLeavesNothingBehind() async throws {
         let store = store()
         let notVideo = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).txt")

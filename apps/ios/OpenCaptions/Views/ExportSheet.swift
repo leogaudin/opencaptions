@@ -8,6 +8,7 @@ struct ExportSheet: View {
     @Environment(\.dismiss) private var dismiss
     let controller: ExportController
     @State private var photosMessage: String?
+    @State private var contentHeight: CGFloat = 220
 
     var body: some View {
         VStack(spacing: 18) {
@@ -27,12 +28,15 @@ struct ExportSheet: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 28)
-        .padding(.bottom, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.height(250)])
+        .padding(.top, 30)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity)
+        // The sheet is as tall as what it shows (measured), not a fixed height with room to spare.
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)
-        .tint(Theme.accentInk)
+        .tint(Theme.accent)
         .interactiveDismissDisabled(controller.isRunning)
     }
 
@@ -59,7 +63,7 @@ struct ExportSheet: View {
     private func done(_ url: URL) -> some View {
         VStack(spacing: 16) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
-                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.accentInk)
+                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.textPrimary)
             HStack(spacing: 12) {
                 ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
                     .buttonStyle(PrimaryButtonStyle())

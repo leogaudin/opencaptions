@@ -226,6 +226,19 @@ extension EngineSuites {
         #expect(slow.state == .done(URL(fileURLWithPath: "/done")))
     }
 
+    @Test func anInterruptedExportSaysWhyAndIsNotAFailureOfTheFile() async throws {
+        let slow = ExportController { _, _, _ in
+            try await Task.sleep(for: .seconds(30))
+            return URL(fileURLWithPath: "/never")
+        }
+        slow.start(project: try project(), source: URL(fileURLWithPath: "/x"))
+        slow.interrupt("The app left the screen.")
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(slow.state == .failed("The app left the screen."))
+        slow.interrupt("again")  // nothing is running: nothing changes
+        #expect(slow.state == .failed("The app left the screen."))
+    }
+
     @Test func aFailureIsReportedAndCancelGoesBackToIdle() async throws {
         let failing = ExportController { _, _, _ in throw ExportError.noVideo }
         failing.start(project: try project(), source: URL(fileURLWithPath: "/x"))
