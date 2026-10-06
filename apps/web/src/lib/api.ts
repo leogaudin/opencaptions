@@ -11,6 +11,7 @@ import type {
   Job,
   Project,
   ProjectList,
+  RenderOptions,
   StyleConfig,
   Transcript,
   TranscriptionProvider,
@@ -254,18 +255,23 @@ export function getExportLinks(projectId: string): Promise<ExportLinks> {
 }
 
 /** Request a download: a URL when ready, otherwise a job_id to wait on. */
-export function requestDownload(projectId: string, format: string): Promise<DownloadResponse> {
+export function requestDownload(
+  projectId: string,
+  format: string,
+  options: RenderOptions,
+): Promise<DownloadResponse> {
   return request<DownloadResponse>(`/projects/${projectId}/download`, {
     method: "POST",
-    json: { format },
+    json: { format, ...options },
   });
 }
 
 /**
  * Direct download URL for a prepared format. Used for programmatic <a> clicks.
  */
-export function getDownloadUrl(projectId: string, format: string): string {
-  return `${API_BASE}/projects/${projectId}/download/${format}`;
+export function getDownloadUrl(projectId: string, format: string, options: RenderOptions): string {
+  const query = new URLSearchParams(options).toString();
+  return `${API_BASE}/projects/${projectId}/download/${format}?${query}`;
 }
 
 // ---------- Jobs ----------

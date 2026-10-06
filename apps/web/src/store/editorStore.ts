@@ -8,6 +8,7 @@ import { create } from "zustand";
 import * as api from "@/lib/api";
 import { createAutosave } from "@/lib/autosave";
 import { clampCaptionOffsetMs } from "@/lib/captionOffset";
+import { getDownloadOptions } from "@/lib/downloadOptions";
 import { downloadWhenReady, forgetDownload, saveVideo } from "@/lib/downloads";
 import {
   defaultStyle,
@@ -183,12 +184,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
       // The server hashes what it has stored, so pending edits must land first.
       await autosave.flush();
       try {
-        const result = await api.requestDownload(project.id, format);
+        const options = getDownloadOptions();
+        const result = await api.requestDownload(project.id, format, options);
         if (result.ready || !result.job_id) {
-          saveVideo(project.id, format);
+          saveVideo(project.id, format, options);
           return;
         }
-        downloadWhenReady(result.job_id, project.id, format);
+        downloadWhenReady(result.job_id, project.id, format, options);
         set({
           activeJobId: result.job_id,
           jobs: [pendingRender(project.id, result.job_id), ...get().jobs],

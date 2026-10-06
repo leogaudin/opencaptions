@@ -73,9 +73,16 @@ export type WhisperModelOption = components["schemas"]["ModelOption"];
 /** One video format entry from GET /projects/{id}/exports. */
 export type VideoExportFormat = RequireAll<components["schemas"]["VideoExportOption"]>;
 
+/** How a video is saved beside its format: size, quality and frame rate. */
+export type RenderOptions = Omit<RequireAll<components["schemas"]["RenderRequest"]>, "format">;
+
+/** The sizes and frame rates a project's video offers: its own, and lower ones. */
+export type ExportChoices = components["schemas"]["ExportChoices"];
+
 /** Available exports for a project (GET /projects/{id}/exports). */
 export type ExportLinks = {
   video: VideoExportFormat[];
+  choices: ExportChoices;
   subtitles: components["schemas"]["SubtitleExportLinks"];
 };
 

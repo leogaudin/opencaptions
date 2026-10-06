@@ -98,7 +98,11 @@ export async function mockTranscribedProject(
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ video: [], subtitles: { srt: "", vtt: "", json: "" } }),
+      body: JSON.stringify({
+        video: [],
+        choices: { resolutions: ["original"], frame_rates: ["original"], source_fps: 30 },
+        subtitles: { srt: "", vtt: "", json: "" },
+      }),
     }),
   );
   return () => project;

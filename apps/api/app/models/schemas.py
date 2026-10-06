@@ -268,7 +268,26 @@ class TranscribeRequest(BaseModel):
     language: str = Field(default="auto", description="'auto' or ISO 639-1 code")
 
 
-class RenderRequest(BaseModel):
+ExportResolution = Literal["original", "2160", "1080", "720"]
+ExportQuality = Literal["smaller", "balanced", "best"]
+ExportFrameRate = Literal["original", "30", "24"]
+
+
+class RenderOptions(BaseModel):
+    """How a video is saved, beside its format. A choice above the source's is the source's."""
+
+    resolution: ExportResolution = Field(
+        default="original", description="The short side in pixels, or the source's size"
+    )
+    quality: ExportQuality = Field(
+        default="balanced", description="Smaller file, balanced, or best picture (not for ProRes)"
+    )
+    frame_rate: ExportFrameRate = Field(
+        default="original", description="Frames per second, or the source's rate"
+    )
+
+
+class RenderRequest(RenderOptions):
     """POST /projects/{id}/download body — request a render in a specific format."""
 
     format: str = Field(description="Format id from the format registry (mp4, mp4-hevc, webm, mov)")
@@ -475,6 +494,17 @@ class VideoExportOption(BaseModel):
     ready: bool = Field(description="Whether the rendered file is already cached in storage")
     download_url: str = Field(description="Relative URL to download the rendered file")
     note: str | None = Field(default=None, description="Optional note about the format")
+    has_quality: bool = Field(
+        default=True, description="Whether the quality choice applies (not to ProRes)"
+    )
+
+
+class ExportChoices(BaseModel):
+    """The size and frame-rate choices this project's video offers: its own, and lower ones."""
+
+    resolutions: list[ExportResolution]
+    frame_rates: list[ExportFrameRate]
+    source_fps: float | None = Field(default=None, description="The source's frame rate")
 
 
 class SubtitleExportLinks(BaseModel):
@@ -491,6 +521,7 @@ class ExportsResponse(BaseModel):
     """Available exports: every video format with its cache status and subtitle links."""
 
     video: list[VideoExportOption]
+    choices: ExportChoices
     subtitles: SubtitleExportLinks
 
 

@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.models.schemas import StyleConfig
+from app.models.schemas import ExportQuality, RenderOptions, StyleConfig
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,22 @@ class RenderFormat:
     codec: str
     extension: str
     mime: str
-    crf: int | None
+    # The CRF for each quality: the scale differs per codec. None for ProRes, whose
+    # quality is its profile, the same whatever quality is asked for.
+    crf_by_quality: dict[ExportQuality, int] | None
     pro_res_profile: str | None
     note: str | None
+
+    @property
+    def has_quality(self) -> bool:
+        return self.crf_by_quality is not None
+
+    def crf(self, quality: ExportQuality = "balanced") -> int | None:
+        return self.crf_by_quality[quality] if self.crf_by_quality else None
+
+    def effective_quality(self, quality: ExportQuality) -> ExportQuality:
+        """The quality as it changes the bytes: one value for a format that has no choice."""
+        return quality if self.has_quality else "balanced"
 
 
 # === Format Registry ===
@@ -46,7 +59,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="h264",
         extension=".mp4",
         mime="video/mp4",
-        crf=18,
+        crf_by_quality={"smaller": 23, "balanced": 18, "best": 15},
         pro_res_profile=None,
         note=None,
     ),
@@ -56,7 +69,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="h265",
         extension=".mp4",
         mime="video/mp4",
-        crf=23,
+        crf_by_quality={"smaller": 28, "balanced": 23, "best": 20},
         pro_res_profile=None,
         note=None,
     ),
@@ -66,7 +79,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="vp9",
         extension=".webm",
         mime="video/webm",
-        crf=28,
+        crf_by_quality={"smaller": 33, "balanced": 28, "best": 24},
         pro_res_profile=None,
         note="VP9 encoding is very slow — expect 5-10x real-time on a modern CPU.",
     ),
@@ -77,9 +90,9 @@ _FORMAT_DEFS: list[RenderFormat] = [
         extension=".mov",
         mime="video/quicktime",
         # ProRes does NOT accept crf — quality is controlled by proResProfile.
-        crf=None,
+        crf_by_quality=None,
         pro_res_profile="hq",
-        note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video).",
+        note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video); the quality choice does not change them.",
     ),
 ]
 
@@ -113,6 +126,7 @@ def compute_render_hash(
     width: int,
     height: int,
     fps: int,
+    quality: ExportQuality = "balanced",
 ) -> str:
     """Digest of every render-affecting input, as 16 hex characters.
 
@@ -128,6 +142,7 @@ def compute_render_hash(
             "width": width,
             "height": height,
             "fps": fps,
+            "quality": quality,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -184,8 +199,11 @@ class RenderInputs:
     width: int
     height: int
     fps: int
+    quality: ExportQuality = "balanced"
 
     def hash_for(self, format_id: str) -> str:
+        fmt = get_format(format_id)
+        quality = fmt.effective_quality(self.quality) if fmt else self.quality
         return compute_render_hash(
             transcript=self.transcript,
             style_config=self.style_config,
@@ -194,20 +212,59 @@ class RenderInputs:
             width=self.width,
             height=self.height,
             fps=self.fps,
+            quality=quality,
         )
 
     def object_key_for(self, project_id: str, fmt: RenderFormat) -> str:
         return render_object_key(project_id, self.hash_for(fmt.id), fmt.extension)
 
 
-def resolve_render_inputs(project: RenderableProject) -> RenderInputs:
-    """Hash inputs for a project.
+_SHORT_SIDES = {"2160": 2160, "1080": 1080, "720": 720}
+_FRAME_RATES = {"30": 30.0, "24": 24.0}
+
+
+def _source_geometry(project: RenderableProject) -> tuple[int, int, float]:
+    width = int(project.video_width) if project.video_width else DEFAULT_WIDTH
+    height = int(project.video_height) if project.video_height else DEFAULT_HEIGHT
+    fps = float(project.video_fps) if project.video_fps else float(DEFAULT_FPS)
+    return width, height, max(_MIN_FPS, min(_MAX_FPS, fps))
+
+
+def available_resolutions(project: RenderableProject) -> list[str]:
+    """The sizes a project can be saved at: its own, and each smaller one (never larger)."""
+    width, height, _ = _source_geometry(project)
+    short = min(width, height)
+    return ["original"] + [r for r, side in _SHORT_SIDES.items() if side < short]
+
+
+def available_frame_rates(project: RenderableProject) -> list[str]:
+    """Its own frame rate, and each clearly lower one: frames are dropped, never made up."""
+    _, _, fps = _source_geometry(project)
+    return ["original"] + [r for r, value in _FRAME_RATES.items() if value < fps - 0.5]
+
+
+def _even(value: float) -> int:
+    # Encoders need even dimensions in 4:2:0.
+    return max(2, int(round(value)) & ~1)
+
+
+def resolve_render_inputs(
+    project: RenderableProject, options: RenderOptions | None = None
+) -> RenderInputs:
+    """Hash inputs for a project, saved with ``options``.
 
     The transcript stays as stored and the caption offset travels beside it: the
     engine applies the offset, so its draw and the hash see the same two inputs.
+    The size and frame rate are those of the output; a choice above the source's
+    falls back to the source's, so asking for more never upscales or invents frames.
     """
-    fps = float(project.video_fps) if project.video_fps else float(DEFAULT_FPS)
-    fps = max(_MIN_FPS, min(_MAX_FPS, fps))
+    options = options or RenderOptions()
+    width, height, fps = _source_geometry(project)
+    target = _SHORT_SIDES.get(options.resolution)
+    if target and target < min(width, height):
+        scale = target / min(width, height)
+        width, height = _even(width * scale), _even(height * scale)
+    fps = min(fps, _FRAME_RATES.get(options.frame_rate, fps))
 
     style_config = (
         dict(project.style_config) if project.style_config else StyleConfig().model_dump()
@@ -217,7 +274,8 @@ def resolve_render_inputs(project: RenderableProject) -> RenderInputs:
         transcript=dict(project.transcript),
         style_config=style_config,
         caption_offset_ms=int(project.caption_offset_ms or 0),
-        width=int(project.video_width) if project.video_width else DEFAULT_WIDTH,
-        height=int(project.video_height) if project.video_height else DEFAULT_HEIGHT,
+        width=width,
+        height=height,
         fps=int(round(fps)),
+        quality=options.quality,
     )

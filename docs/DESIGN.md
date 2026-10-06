@@ -41,13 +41,20 @@ the two scale on different hardware.
    every transcript edit is one of the engine's (see below). Words are edited on
    the preview, captions are retimed on the timeline, and nothing else changes
    the transcript.
-4. **Render.** `POST /projects/{id}/download {format}` computes a hash of
-   everything that decides the output (transcript, timing offset, style, format,
-   size, fps). If `projects/{id}/renders/{hash}.<ext>` exists, it is
-   ready at once; otherwise a render job is queued and the SPA polls the job.
-   The cache needs no database state: readiness is an existence check.
-5. **Download.** `GET /projects/{id}/download/{format}`. Subtitles (SRT, VTT,
-   JSON) are generated from the transcript, without rendering.
+4. **Render.** `POST /projects/{id}/download {format, resolution, quality, frame_rate}`
+   computes a hash of everything that decides the output (transcript, timing
+   offset, style, format, size, fps, quality). The options are the iOS Save
+   sheet's: a short side (2160, 1080, 720) and a frame rate (30, 24) only ever
+   lower the source's, never raise it, and the quality (smaller, balanced, best)
+   is a CRF per codec in `render_formats.py`; ProRes keeps its profile, so its
+   quality is left out of its hash. `resolve_render_inputs` alone turns options
+   into the output's size and rate, for every caller. If
+   `projects/{id}/renders/{hash}.<ext>` exists, it is ready at once; otherwise a
+   render job is queued and the SPA polls the job. The cache needs no database
+   state: readiness is an existence check. `GET /projects/{id}/exports` lists
+   the sizes and rates a project offers.
+5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&quality=…&frame_rate=…`.
+   Subtitles (SRT, VTT, JSON) are generated from the transcript, without rendering.
 
 ## The caption engine
 

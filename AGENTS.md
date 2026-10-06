@@ -70,9 +70,9 @@ images, which is what an end user does.
 
 3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic — integer blur, no platform maths — so both builds produce byte-identical frames. See `docs/DESIGN.md`.
 
-4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format + dimensions + fps) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
+4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format + dimensions + fps + quality) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
 
-5. **Per-codec encoding facts live only in `apps/api/app/services/render_formats.py`.** Never hardcode a CRF at a call site. CRF defaults differ per codec (H.264=18, H.265=23, VP9=28), and ProRes accepts no CRF at all (uses a profile). Codec and container are coupled: VP9→.webm, ProRes→.mov. The engine maps each codec to its encoder and audio codec.
+5. **Per-codec encoding facts live only in `apps/api/app/services/render_formats.py`.** Never hardcode a CRF at a call site. CRFs differ per codec and per download quality (balanced: H.264=18, H.265=23, VP9=28), and ProRes accepts no CRF at all (uses a profile). Codec and container are coupled: VP9→.webm, ProRes→.mov. The engine maps each codec to its encoder and audio codec.
 
 6. **"Rendering" is not a user-facing concept.** The UI has a single Download button. No user-visible string may mention rendering. `render` remains correct in backend code and logs.
 

@@ -7,7 +7,8 @@
  *
  * Video download logic (multi-format, content-addressed cache):
  *   - Primary button always downloads MP4 (H.264).
- *   - Attached dropdown lists all four formats with readiness indicators.
+ *   - Attached dropdown: the size, quality and frame rate (remembered per
+ *     browser, lib/downloadOptions), then all four formats.
  *   - If the format is ready on the server, download triggers immediately.
  *   - If not, the server returns a job_id and lib/downloads saves the file
  *     when that render finishes, whichever page the user is on by then.
@@ -23,6 +24,7 @@ import { ChevronDown, Download, FileText, Loader2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
 import { AutosaveIndicator } from "@/components/AutosaveIndicator";
+import { DownloadOptions } from "@/components/DownloadOptions";
 import { RetranscribeDialog } from "@/components/RetranscribeDialog";
 import * as api from "@/lib/api";
 import { usePendingDownload } from "@/lib/downloads";
@@ -197,10 +199,19 @@ export function EditorToolbar() {
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="z-50 min-w-[200px] rounded-md border border-border bg-card p-1 shadow-md"
+                className="z-50 w-[260px] rounded-md border border-border bg-card p-1 shadow-md"
                 sideOffset={4}
                 align="end"
               >
+                {exports && exports.video.length > 0 && (
+                  <>
+                    <DownloadOptions
+                      choices={exports.choices}
+                      qualityApplies={exports.video.some((f) => f.has_quality)}
+                    />
+                    <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                  </>
+                )}
                 {(exports?.video ?? []).map((fmt) => (
                   <DropdownMenu.Item
                     key={fmt.format}

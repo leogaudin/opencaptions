@@ -71,6 +71,7 @@ export function FontPicker({ value, onChange }: { value: string; onChange: (f: s
   const [google, setGoogle] = useState<Row[] | "loading" | "failed">("loading");
   const [attempt, setAttempt] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the retry button's trigger — a new attempt reloads the lists
   useEffect(() => {
     if (!open) return;
     let live = true;

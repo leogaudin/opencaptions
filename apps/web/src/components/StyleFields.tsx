@@ -111,10 +111,12 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  label = (v) => v,
 }: {
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
+  label?: (v: T) => string;
 }) {
   return (
     <div className="inline-flex w-full rounded-full border border-border bg-background p-1">
@@ -131,7 +133,7 @@ export function Segmented<T extends string>({
                 : "text-muted-foreground hover:bg-accent/50"
             }`}
           >
-            {opt}
+            {label(opt)}
           </button>
         );
       })}

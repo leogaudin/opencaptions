@@ -9,6 +9,7 @@ import os
 import pathlib
 import tempfile
 from typing import Annotated
+from urllib.parse import urlencode
 
 from fastapi import (
     APIRouter,
@@ -45,12 +46,14 @@ from app.models.schemas import (
     _415_UNSUPPORTED_MEDIA,
     DownloadResponse,
     ErrorResponse,
+    ExportChoices,
     ExportsResponse,
     JobStatus,
     ProjectList,
     ProjectListItem,
     ProjectStatus,
     ProjectUpdate,
+    RenderOptions,
     RenderRequest,
     SubtitleExportLinks,
     TranscribeRequest,
@@ -514,7 +517,8 @@ async def request_download(
         raise http_error(400, "no_transcript", "Cannot render: project has no transcript yet")
 
     # Compute the content-addressed hash for this render configuration
-    inputs = resolve_render_inputs(proj)
+    options = RenderOptions.model_validate(body.model_dump(exclude={"format"}))
+    inputs = resolve_render_inputs(proj, options)
     render_hash = inputs.hash_for(fmt.id)
 
     output_key = render_object_key(str(project_id), render_hash, fmt.extension)
@@ -524,10 +528,11 @@ async def request_download(
     if exists:
         return DownloadResponse(
             ready=True,
-            download_url=f"/api/v1/projects/{project_id}/download/{fmt.id}",
+            download_url=f"/api/v1/projects/{project_id}/download/{fmt.id}"
+            f"?{urlencode(options.model_dump())}",
         )
 
-    # Check if a render job for this project+format is already in flight
+    # Check if a render job for this exact output is already in flight
     # (deduplication: avoid enqueuing the same work twice).
     result = await session.execute(
         select(Job)
@@ -537,8 +542,10 @@ async def request_download(
         .order_by(Job.created_at.desc())
     )
     for existing_job in result.scalars().all():
-        # Check if the job's metadata matches this format
-        if existing_job.metadata_json and existing_job.metadata_json.get("format_id") == fmt.id:
+        if (
+            existing_job.metadata_json
+            and existing_job.metadata_json.get("render_hash") == render_hash
+        ):
             from starlette.responses import JSONResponse
 
             return JSONResponse(
@@ -563,14 +570,18 @@ async def request_download(
         user_id=user.id,
         type="rendering",
         status="pending",
-        metadata_json={"format_id": fmt.id, "render_hash": render_hash},
+        metadata_json={
+            "format_id": fmt.id,
+            "options": options.model_dump(),
+            "render_hash": render_hash,
+        },
     )
     session.add(job)
     await session.flush()
 
     from app.tasks.render import render_video
 
-    async_result = render_video.delay(str(job.id), str(proj.id), body.format)
+    async_result = render_video.delay(str(job.id), str(proj.id), body.format, options.model_dump())
     job.celery_task_id = async_result.id
     proj.status = "rendering"
     await session.flush()
@@ -596,6 +607,7 @@ async def request_download(
 async def download_render(
     proj: Annotated[Project, Depends(get_owned_project)],
     format_id: Annotated[str, Path()],
+    options: Annotated[RenderOptions, Query()],
     request: Request,
     session: Annotated[AsyncSession, Depends(db_session)],
 ) -> StreamingResponse:
@@ -620,7 +632,7 @@ async def download_render(
     if proj.transcript is None:
         raise http_error(404, "not_rendered", "No transcript — cannot have a render")
 
-    render_hash = resolve_render_inputs(proj).hash_for(fmt.id)
+    render_hash = resolve_render_inputs(proj, options).hash_for(fmt.id)
 
     output_key = render_object_key(str(project_id), render_hash, fmt.extension)
 
@@ -722,7 +734,12 @@ async def get_project_exports(
     """
     import asyncio
 
-    from app.services.render_formats import all_formats, resolve_render_inputs
+    from app.services.render_formats import (
+        all_formats,
+        available_frame_rates,
+        available_resolutions,
+        resolve_render_inputs,
+    )
 
     project_id = proj.id
     if proj.transcript is None:
@@ -745,11 +762,17 @@ async def get_project_exports(
                 ready=exists,
                 download_url=f"{base}/download/{fmt.id}",
                 note=fmt.note,
+                has_quality=fmt.has_quality,
             )
         )
 
     return ExportsResponse(
         video=video_exports,
+        choices=ExportChoices(
+            resolutions=available_resolutions(proj),
+            frame_rates=available_frame_rates(proj),
+            source_fps=float(proj.video_fps) if proj.video_fps else None,
+        ),
         subtitles=SubtitleExportLinks(
             srt=f"{base}/export.srt",
             vtt=f"{base}/export.vtt",

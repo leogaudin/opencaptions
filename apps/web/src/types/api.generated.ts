@@ -959,12 +959,28 @@ export interface components {
             field?: string | null;
         };
         /**
+         * ExportChoices
+         * @description The size and frame-rate choices this project's video offers: its own, and lower ones.
+         */
+        ExportChoices: {
+            /** Resolutions */
+            resolutions: ("original" | "2160" | "1080" | "720")[];
+            /** Frame Rates */
+            frame_rates: ("original" | "30" | "24")[];
+            /**
+             * Source Fps
+             * @description The source's frame rate
+             */
+            source_fps?: number | null;
+        };
+        /**
          * ExportsResponse
          * @description Available exports: every video format with its cache status and subtitle links.
          */
         ExportsResponse: {
             /** Video */
             video: components["schemas"]["VideoExportOption"][];
+            choices: components["schemas"]["ExportChoices"];
             subtitles: components["schemas"]["SubtitleExportLinks"];
         };
         /**
@@ -1252,6 +1268,27 @@ export interface components {
          * @description POST /projects/{id}/download body — request a render in a specific format.
          */
         RenderRequest: {
+            /**
+             * Resolution
+             * @description The short side in pixels, or the source's size
+             * @default original
+             * @enum {string}
+             */
+            resolution: "original" | "2160" | "1080" | "720";
+            /**
+             * Quality
+             * @description Smaller file, balanced, or best picture (not for ProRes)
+             * @default balanced
+             * @enum {string}
+             */
+            quality: "smaller" | "balanced" | "best";
+            /**
+             * Frame Rate
+             * @description Frames per second, or the source's rate
+             * @default original
+             * @enum {string}
+             */
+            frame_rate: "original" | "30" | "24";
             /**
              * Format
              * @description Format id from the format registry (mp4, mp4-hevc, webm, mov)
@@ -1664,6 +1701,12 @@ export interface components {
              * @description Optional note about the format
              */
             note?: string | null;
+            /**
+             * Has Quality
+             * @description Whether the quality choice applies (not to ProRes)
+             * @default true
+             */
+            has_quality: boolean;
         };
         /**
          * Word
@@ -2462,7 +2505,14 @@ export interface operations {
     };
     download_render_api_v1_projects__project_id__download__format_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The short side in pixels, or the source's size */
+                resolution?: "original" | "2160" | "1080" | "720";
+                /** @description Smaller file, balanced, or best picture (not for ProRes) */
+                quality?: "smaller" | "balanced" | "best";
+                /** @description Frames per second, or the source's rate */
+                frame_rate?: "original" | "30" | "24";
+            };
             header?: never;
             path: {
                 format_id: string;

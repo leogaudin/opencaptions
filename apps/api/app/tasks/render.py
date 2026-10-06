@@ -46,11 +46,16 @@ def _font_url(family: str) -> str | None:
 # share too much local state to split without passing a bag of variables around.
 # It sits on the `def` line because that is where ruff anchors C901.
 def render_video(  # noqa: C901
-    self: celery.Task, job_id: str, project_id: str, format_id: str = "mp4"
+    self: celery.Task,
+    job_id: str,
+    project_id: str,
+    format_id: str = "mp4",
+    options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Render a project into ``format_id`` (mp4, mp4-hevc, webm, mov)."""
+    """Render a project into ``format_id`` (mp4, mp4-hevc, webm, mov) with ``options``."""
     logger.info("render_video starting job=%s project=%s format=%s", job_id, project_id, format_id)
 
+    from app.models.schemas import RenderOptions
     from app.services.render_formats import get_format, render_object_key, resolve_render_inputs
     from app.storage import s3
 
@@ -61,11 +66,12 @@ def render_video(  # noqa: C901
     fmt = get_format(format_id)
     if fmt is None:
         raise RuntimeError(f"Unknown format id: {format_id}")
+    render_options = RenderOptions.model_validate(options or {})
 
     logger.info(
         "render format resolved: codec=%s crf=%s proResProfile=%s ext=%s",
         fmt.codec,
-        fmt.crf,
+        fmt.crf(render_options.quality),
         fmt.pro_res_profile,
         fmt.extension,
     )
@@ -84,7 +90,7 @@ def render_video(  # noqa: C901
             # style fallback, transcript and offset all feed the
             # content-addressed hash, so any disagreement between the two would
             # present as a permanent cache miss.
-            inputs = resolve_render_inputs(project)
+            inputs = resolve_render_inputs(project, render_options)
             project.status = "rendering"
             session.commit()
 
@@ -120,7 +126,7 @@ def render_video(  # noqa: C901
             "height": inputs.height,
             "codec": fmt.codec,
             # ProRes takes a profile instead of a CRF; the engine reads whichever is set.
-            "crf": fmt.crf,
+            "crf": fmt.crf(render_options.quality),
             "pro_res_profile": fmt.pro_res_profile,
             # Lets the engine push live progress back while it renders.
             "progress_url": f"http://api:8000/api/v1/jobs/{job_id}/progress",

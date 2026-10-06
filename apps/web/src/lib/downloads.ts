@@ -7,10 +7,14 @@
  */
 import { useSyncExternalStore } from "react";
 import { ApiException, getDownloadUrl, getJob } from "@/lib/api";
+import { DEFAULT_RENDER_OPTIONS } from "@/lib/downloadOptions";
+import type { RenderOptions } from "@/types";
 
 interface Pending {
   projectId: string;
   format: string;
+  // Absent in a wait saved before the options existed.
+  options?: RenderOptions;
 }
 
 const KEY = "opencaptions:pending-downloads";
@@ -45,9 +49,9 @@ const without = (jobId: string) =>
   Object.fromEntries(Object.entries(pending).filter(([id]) => id !== jobId));
 
 /** Save a ready video through the browser. */
-export function saveVideo(projectId: string, format: string): void {
+export function saveVideo(projectId: string, format: string, options: RenderOptions): void {
   const a = document.createElement("a");
-  a.href = getDownloadUrl(projectId, format);
+  a.href = getDownloadUrl(projectId, format, options);
   a.download = `opencaptions-${projectId}.${EXTENSIONS[format] ?? "mp4"}`;
   // Firefox ignores a click on an anchor that is not in the document.
   document.body.append(a);
@@ -59,7 +63,7 @@ async function poll(): Promise<void> {
   // A hidden tab cannot start a download; the next visible tick does it.
   if (document.visibilityState !== "visible") return;
   await Promise.all(
-    Object.entries(pending).map(async ([jobId, { projectId, format }]) => {
+    Object.entries(pending).map(async ([jobId, { projectId, format, options }]) => {
       // Only a verdict ends the wait: a dropped request or an API restart must
       // not lose a render that is still running.
       const job = await getJob(jobId).catch((e: unknown) =>
@@ -70,15 +74,20 @@ async function poll(): Promise<void> {
         commit(without(jobId));
       } else if (job.status === "completed" && pending[jobId]) {
         commit(without(jobId));
-        saveVideo(projectId, format);
+        saveVideo(projectId, format, options ?? DEFAULT_RENDER_OPTIONS);
       }
     }),
   );
 }
 
 /** Download `format` of `projectId` once render `jobId` finishes. */
-export function downloadWhenReady(jobId: string, projectId: string, format: string): void {
-  commit({ ...pending, [jobId]: { projectId, format } });
+export function downloadWhenReady(
+  jobId: string,
+  projectId: string,
+  format: string,
+  options: RenderOptions,
+): void {
+  commit({ ...pending, [jobId]: { projectId, format, options } });
 }
 
 /** Stop waiting for a render, e.g. after cancelling it. */
