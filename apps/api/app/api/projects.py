@@ -137,6 +137,7 @@ async def _ingest_video(
     from app.services.audio import probe_video_metadata
 
     key = f"projects/{project.id}/source{extension}"
+    project.video_size_bytes = os.path.getsize(tmp_path)
 
     # Probe before upload — best-effort, never fail the upload over it.
     try:

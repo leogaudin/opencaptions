@@ -9,6 +9,7 @@
  * like the other sliders. Theme tokens only, no hardcoded colours.
  */
 import { Minus, Plus, RotateCcw } from "lucide-react";
+import { RangeInput } from "@/components/RangeInput";
 import { CAPTION_OFFSET_MAX_MS, CAPTION_OFFSET_MIN_MS } from "@/lib/captionOffset";
 import { useEditorStore } from "@/store/editorStore";
 
@@ -51,17 +52,15 @@ export function CaptionOffsetControl() {
         >
           <Minus className="h-3.5 w-3.5" aria-hidden />
         </button>
-        <input
+        <RangeInput
           id="caption-offset"
-          type="range"
           min={CAPTION_OFFSET_MIN_MS}
           max={CAPTION_OFFSET_MAX_MS}
           step={10}
           value={captionOffsetMs}
-          onChange={(e) => setCaptionOffset(Number(e.target.value))}
+          onChange={setCaptionOffset}
           data-testid="caption-offset-slider"
           aria-label="Caption timing offset in milliseconds"
-          className="w-full accent-primary"
         />
         <button
           type="button"

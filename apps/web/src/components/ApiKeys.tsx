@@ -4,7 +4,8 @@
  * copy and an example call, because it cannot be shown again.
  */
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import qrcode from "qrcode-generator";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import * as api from "@/lib/api";
 import type { ApiKey } from "@/types";
 
@@ -116,6 +117,14 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
   // reach the address, so a page opened as localhost is called out.
   const pairing = `opencaptions://connect?url=${encodeURIComponent(location.origin)}&key=${encodeURIComponent(value)}`;
   const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(location.hostname);
+  // The same link as a QR code: the phone's own Camera app reads it and offers to open OpenCaptions,
+  // so nothing has to be sent between the computer and the phone.
+  const qr = useMemo(() => {
+    const code = qrcode(0, "M");
+    code.addData(pairing);
+    code.make();
+    return code.createDataURL(6, 2);
+  }, [pairing]);
   return (
     <div
       className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs"
@@ -147,9 +156,23 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
         {local &&
           " This page is open as localhost, which a phone cannot reach: open this page by this computer's address on your network, then create the key."}
       </p>
-      <code className="mt-1 block break-all rounded bg-background px-2 py-1 text-[11px]">
-        {pairing}
-      </code>
+      <div className="mt-2 flex items-start gap-3">
+        <img
+          src={qr}
+          alt="QR code that connects the OpenCaptions app to this server"
+          data-testid="pairing-qr"
+          className="h-36 w-36 shrink-0 rounded-md bg-white p-1"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <div className="min-w-0">
+          <p className="text-muted-foreground">
+            Or point the phone's Camera at this code and tap the banner that appears.
+          </p>
+          <code className="mt-1 block break-all rounded bg-background px-2 py-1 text-[11px]">
+            {pairing}
+          </code>
+        </div>
+      </div>
       <button type="button" onClick={onDone} className="mt-2 underline">
         Done
       </button>

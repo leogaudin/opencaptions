@@ -110,3 +110,68 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* The range input, in the accent's own yellow (see RangeInput): a filled track up to the
+   thumb, and a round thumb with a ring that reads on both the light and dark page. */
+@layer components {
+  input[type="range"].oc-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1.25rem;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"].oc-range:focus-visible {
+    outline: none;
+  }
+  input[type="range"].oc-range::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      hsl(var(--primary)) var(--fill),
+      hsl(var(--secondary)) var(--fill)
+    );
+  }
+  input[type="range"].oc-range::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--secondary));
+  }
+  input[type="range"].oc-range::-moz-range-progress {
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+  }
+  input[type="range"].oc-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -6px;
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--background));
+    background: hsl(var(--primary));
+    box-shadow:
+      0 0 0 1px hsl(var(--border)),
+      0 1px 3px rgb(0 0 0 / 0.3);
+  }
+  input[type="range"].oc-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--background));
+    background: hsl(var(--primary));
+    box-shadow:
+      0 0 0 1px hsl(var(--border)),
+      0 1px 3px rgb(0 0 0 / 0.3);
+  }
+  input[type="range"].oc-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.45);
+  }
+  input[type="range"].oc-range:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.45);
+  }
+}
+

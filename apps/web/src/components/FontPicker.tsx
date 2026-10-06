@@ -66,25 +66,55 @@ function FontName({ family }: { family: string }) {
 export function FontPicker({ value, onChange }: { value: string; onChange: (f: string) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
+  const [included, setIncluded] = useState<Row[]>([]);
+  // The Google Fonts catalogue is listed by the server, which has to reach Google to do it.
+  const [google, setGoogle] = useState<Row[] | "loading" | "failed">("loading");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!open || rows.length) return;
-    Promise.all([
-      engineFamilies().catch((): string[] => []),
-      listFonts().catch((): FontFamily[] => []),
-    ]).then(([bundled, google]) =>
-      setRows([
-        ...bundled.map((family) => ({ family, category: "Included" })),
-        ...google.filter((f) => !bundled.includes(f.family)),
-      ]),
+    if (!open) return;
+    let live = true;
+    setGoogle("loading");
+    engineFamilies().then(
+      (names) => live && setIncluded(names.map((family) => ({ family, category: "Included" }))),
+      () => undefined,
     );
-  }, [open, rows.length]);
+    listFonts().then(
+      (rows: FontFamily[]) => live && setGoogle(rows),
+      () => live && setGoogle("failed"),
+    );
+    return () => {
+      live = false;
+    };
+  }, [open, attempt]);
 
   const q = query.trim().toLowerCase();
-  const matches = (q ? rows.filter((r) => r.family.toLowerCase().includes(q)) : rows).slice(
-    0,
-    SHOWN,
+  const has = (r: Row): boolean => !q || r.family.toLowerCase().includes(q);
+  const names = new Set(included.map((r) => r.family));
+  const catalogue = Array.isArray(google) ? google.filter((r) => !names.has(r.family)) : [];
+  const shownIncluded = included.filter(has);
+  const matchingCatalogue = catalogue.filter(has);
+  const shownCatalogue = matchingCatalogue.slice(0, SHOWN);
+  const row = (r: Row) => (
+    <li key={r.family}>
+      <button
+        type="button"
+        onClick={() => {
+          onChange(r.family);
+          setOpen(false);
+        }}
+        aria-current={r.family === value}
+        className="flex w-full items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left hover:bg-accent aria-[current=true]:bg-accent"
+      >
+        <FontName family={r.family} />
+        <span className="shrink-0 text-[11px] text-muted-foreground">{r.category}</span>
+      </button>
+    </li>
+  );
+  const heading = (text: string) => (
+    <li className="px-2 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      {text}
+    </li>
   );
 
   return (
@@ -123,25 +153,36 @@ export function FontPicker({ value, onChange }: { value: string; onChange: (f: s
               className="mt-3 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
             />
             <ul className="mt-2 min-h-0 flex-1 overflow-y-auto">
-              {matches.map((r) => (
-                <li key={r.family}>
+              {shownIncluded.length > 0 && heading("Included")}
+              {shownIncluded.map(row)}
+              {heading("More fonts · Google Fonts")}
+              {google === "loading" && (
+                <li className="px-2 py-3 text-sm text-muted-foreground">Loading Google Fonts…</li>
+              )}
+              {google === "failed" && (
+                <li className="px-2 py-3 text-sm text-muted-foreground" data-testid="fonts-failed">
+                  Google Fonts could not be loaded: this server needs internet access to list them.
+                  The included fonts above still work.{" "}
                   <button
                     type="button"
-                    onClick={() => {
-                      onChange(r.family);
-                      setOpen(false);
-                    }}
-                    aria-current={r.family === value}
-                    className="flex w-full items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left hover:bg-accent aria-[current=true]:bg-accent"
+                    onClick={() => setAttempt((n) => n + 1)}
+                    className="underline hover:text-foreground"
                   >
-                    <FontName family={r.family} />
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{r.category}</span>
+                    Try again
                   </button>
                 </li>
-              ))}
-              {rows.length > 0 && matches.length === 0 && (
-                <li className="px-2 py-3 text-sm text-muted-foreground">No font matches.</li>
               )}
+              {shownCatalogue.map(row)}
+              {matchingCatalogue.length > shownCatalogue.length && (
+                <li className="px-2 py-2 text-xs text-muted-foreground">
+                  {matchingCatalogue.length - shownCatalogue.length} more: type to search them.
+                </li>
+              )}
+              {Array.isArray(google) &&
+                shownIncluded.length === 0 &&
+                matchingCatalogue.length === 0 && (
+                  <li className="px-2 py-3 text-sm text-muted-foreground">No font matches.</li>
+                )}
             </ul>
           </Dialog.Content>
         </Dialog.Portal>

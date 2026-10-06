@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, BigInteger, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, mapped_column, relationship
 
@@ -68,6 +68,9 @@ class Project(Base):
     video_height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     video_fps: Mapped[float | None] = mapped_column(Float, nullable=True)
     video_duration: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # What the uploaded file weighs, for the project list. Null for a project made before it was
+    # recorded.
+    video_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(

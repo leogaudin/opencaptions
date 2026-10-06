@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { RangeInput } from "@/components/RangeInput";
 import { hexToRgba } from "@/lib/utils";
 import type { StyleConfig } from "@/types";
 
@@ -73,15 +74,7 @@ export function SliderField({
         </span>
       }
     >
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-primary"
-      />
+      <RangeInput value={value} min={min} max={max} step={step} onChange={onChange} />
     </Field>
   );
 }
@@ -124,7 +117,7 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex w-full overflow-hidden rounded-md border border-border bg-background p-0.5">
+    <div className="inline-flex w-full rounded-full border border-border bg-background p-1">
       {options.map((opt) => {
         const active = opt === value;
         return (
@@ -132,7 +125,7 @@ export function Segmented<T extends string>({
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className={`flex-1 rounded px-2 py-1 text-[11px] capitalize transition-colors ${
+            className={`flex-1 rounded-full px-3 py-1.5 text-[11px] font-medium capitalize transition-colors ${
               active
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent/50"

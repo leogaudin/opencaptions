@@ -69,8 +69,6 @@ function TranscriptionRuntime({ info: t }: { info: NonNullable<HealthResponse["t
         </span>
         <span className="text-muted-foreground">Provider</span>
         <span className="font-mono text-xs">{t.default_provider}</span>
-        <span className="text-muted-foreground">Model</span>
-        <span className="font-mono text-xs">{t.default_model}</span>
       </div>
       {t.device_fallback_reason && (
         <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">

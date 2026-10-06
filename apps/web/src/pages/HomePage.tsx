@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 /**
  * HomePage:
  *   - Empty state: a single primary "New project" action (to the upload page,
@@ -8,13 +8,14 @@ import { Trash2 } from "lucide-react";
  *   - With projects: a scannable list with poster thumbnails, relative "updated"
  *     time, live progress for active work, and per-row delete.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProjectThumbnail } from "@/components/ProjectThumbnail";
 import * as api from "@/lib/api";
 import { formatRelativeTime } from "@/lib/time";
 import { shellX } from "@/lib/ui";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
+import { formatBytes } from "@/lib/utils";
 import type { ProjectListItem } from "@/types";
 
 export function HomePage() {
@@ -38,6 +39,10 @@ export function HomePage() {
 
   const handleDeleted = useCallback((id: string) => {
     setItems((prev) => (prev ? prev.filter((p) => p.id !== id) : prev));
+  }, []);
+
+  const handleRenamed = useCallback((id: string, title: string) => {
+    setItems((prev) => (prev ? prev.map((p) => (p.id === id ? { ...p, title } : p)) : prev));
   }, []);
 
   if (error) {
@@ -71,7 +76,7 @@ export function HomePage() {
       </div>
       <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((p) => (
-          <ProjectRow key={p.id} item={p} onDeleted={handleDeleted} />
+          <ProjectRow key={p.id} item={p} onDeleted={handleDeleted} onRenamed={handleRenamed} />
         ))}
       </ul>
     </div>
@@ -144,11 +149,16 @@ function EmptyState() {
 function ProjectRow({
   item,
   onDeleted,
+  onRenamed,
 }: {
   item: ProjectListItem;
   onDeleted: (id: string) => void;
+  onRenamed: (id: string, title: string) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  // Renaming happens here, on the list, and nowhere else: one place to do it.
+  const [draft, setDraft] = useState<string | null>(null);
+  const settled = useRef(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,6 +174,24 @@ function ProjectRow({
       setConfirming(false);
     }
   }, [item.id, onDeleted]);
+
+  const finishRename = useCallback(
+    async (save: boolean) => {
+      // Enter and the blur it causes both land here: the first one decides.
+      if (settled.current || draft === null) return;
+      settled.current = true;
+      const title = draft.trim();
+      setDraft(null);
+      if (!save || !title || title === item.title) return;
+      try {
+        await api.updateProject(item.id, { title });
+        onRenamed(item.id, title);
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    },
+    [draft, item.id, item.title, onRenamed],
+  );
 
   return (
     <li className="group relative text-sm">
@@ -199,21 +227,57 @@ function ProjectRow({
               </button>
             </span>
           ) : (
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              aria-label={`Delete ${item.title}`}
-              title="Delete project"
-              data-testid="delete-project"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  settled.current = false;
+                  setDraft(item.title);
+                }}
+                aria-label={`Rename ${item.title}`}
+                title="Rename project"
+                data-testid="rename-project"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-black/80 group-hover:opacity-100"
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                aria-label={`Delete ${item.title}`}
+                title="Delete project"
+                data-testid="delete-project"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </button>
+            </>
           )}
         </div>
       </div>
       <div className="mt-2 min-w-0">
-        <div className="truncate font-semibold">{item.title}</div>
+        {draft === null ? (
+          <div className="truncate font-semibold" data-testid="project-title">
+            {item.title}
+          </div>
+        ) : (
+          <input
+            // biome-ignore lint/a11y/noAutofocus: the field replaces the title just clicked to rename
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
+            onBlur={() => finishRename(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") finishRename(true);
+              else if (e.key === "Escape") finishRename(false);
+            }}
+            aria-label="Project name"
+            data-testid="rename-input"
+            maxLength={255}
+            className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold"
+          />
+        )}
         <div
           className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
           title={new Date(item.updated_at).toLocaleString()}
@@ -223,6 +287,7 @@ function ProjectRow({
           ) : (
             <StatusBadge status={item.status} />
           )}
+          {item.video_size_bytes != null && <span>{formatBytes(item.video_size_bytes)}</span>}
           <span>{formatRelativeTime(item.updated_at)}</span>
         </div>
       </div>

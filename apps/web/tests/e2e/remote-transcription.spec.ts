@@ -95,5 +95,9 @@ test.describe("Transcribing on another OpenCaptions server", () => {
     await expect(link).toContainText("opencaptions://connect?url=");
     await expect(link).toContainText(encodeURIComponent(new URL(page.url()).origin));
     await expect(link).toContainText("&key=oc_");
+    // The same link as a QR code, which the phone's Camera app can read.
+    const qr = page.getByTestId("pairing-qr");
+    await expect(qr).toBeVisible();
+    await expect(qr).toHaveAttribute("src", /^data:image\/gif;base64,/);
   });
 });

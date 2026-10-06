@@ -20,6 +20,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.0",
     "clsx": "^2.1.0",
     "lucide-react": "^1.47.0",
+    "qrcode-generator": "2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-dropzone": "^20.1.2",

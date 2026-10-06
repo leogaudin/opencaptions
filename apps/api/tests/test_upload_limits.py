@@ -36,6 +36,19 @@ async def test_settings_advertise_the_duration_limit(first_client: AsyncClient) 
 
 
 @pytest.mark.asyncio
+async def test_the_list_shows_what_each_upload_weighs(first_client: AsyncClient) -> None:
+    with (
+        patch("app.services.audio.probe_video_metadata", return_value=_probe(5.0)),
+        patch("app.storage.s3.upload_file"),
+        patch("app.api.projects._generate_and_store_thumbnail"),
+    ):
+        r = await _upload(first_client)
+    assert r.status_code == 201, r.text
+    listed = (await first_client.get("/api/v1/projects")).json()["items"]
+    assert [p["video_size_bytes"] for p in listed] == [len(b"not a real video")]
+
+
+@pytest.mark.asyncio
 async def test_video_longer_than_the_limit_is_rejected(
     first_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:

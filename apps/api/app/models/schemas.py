@@ -230,6 +230,7 @@ class ProjectListItem(BaseModel):
     id: UUID
     title: str
     status: str
+    video_size_bytes: int | None = None
     created_at: datetime
     updated_at: datetime
 

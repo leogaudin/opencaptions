@@ -1160,6 +1160,8 @@ export interface components {
             title: string;
             /** Status */
             status: string;
+            /** Video Size Bytes */
+            video_size_bytes?: number | null;
             /**
              * Created At
              * Format: date-time
