@@ -62,6 +62,8 @@ public actor CaptionEngine {
     public static let shared = CaptionEngine()
 
     private var bundledFamilies: [String]?
+    /// The scene last set, so a sample can be drawn and the real scene put back.
+    private var scene: SceneInput?
 
     // MARK: Buffers
 
@@ -159,8 +161,48 @@ public actor CaptionEngine {
             transcript: transcript, style: style, width: width, height: height,
             captionOffsetMs: captionOffsetMs
         )
+        try apply(input)
+    }
+
+    private func apply(_ input: SceneInput) throws {
         let (ptr, len) = try put(json: input)
         guard oc_set_scene(ptr, len) == 1 else { throw failure() }
+        scene = input
+    }
+
+    /// One frame per style of `words`, as they look while the middle word is spoken: what a style
+    /// picker shows. The same drawing as the preview and the export, so a tile cannot disagree with
+    /// the result. The scene in use is put back before returning, so a preview open at the same
+    /// time carries on unaffected. Fonts must have been made available (`ensureFont`) already.
+    public func samples(
+        of styles: [StyleConfig], words: [String], width: Int, height: Int
+    ) -> [CaptionFrame?] {
+        let previous = scene
+        defer { if let previous { try? apply(previous) } }
+        let step = 0.4
+        let spoken = words.enumerated().map { i, text in
+            Word(text: text, start: Double(i) * step, end: Double(i + 1) * step)
+        }
+        let transcript = Transcript(
+            language: "en", languageDetection: .manual, duration: Double(words.count) * step,
+            segments: [
+                TranscriptSegment(
+                    id: "sample", words: spoken, start: 0, end: Double(words.count) * step,
+                    text: words.joined(separator: " "))
+            ])
+        let middle = (Double(words.count) / 2).rounded(.down) * step + step / 2
+        return styles.map { style in
+            var style = style
+            style.positionX = 0.5
+            style.positionY = 0.5
+            style.wordsPerLine = max(style.wordsPerLine, words.count)
+            do {
+                try apply(
+                    SceneInput(
+                        transcript: transcript, style: style, width: width, height: height, captionOffsetMs: 0))
+            } catch { return nil }
+            return render(at: middle)
+        }
     }
 
     /// The overlay at `t` seconds, or nil when it is unchanged since the last call.

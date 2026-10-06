@@ -44,9 +44,25 @@ public struct FontCache: Sendable {
         return nil
     }
 
-    private func fetch(_ family: String, weight: Int) async -> Data? {
+    /// A subset of the family that can draw only its own name, a few kilobytes: what a font list
+    /// shows each row in. Kept on disk beside the full fonts.
+    public func sample(for family: String) async -> URL? {
+        let slug = file(for: family).deletingPathExtension().lastPathComponent
+        let cached = directory.appendingPathComponent("samples", isDirectory: true).appendingPathComponent("\(slug).ttf")
+        if FileManager.default.fileExists(atPath: cached.path) { return cached }
+        for weight in Self.weights {
+            guard let data = await fetch(family, weight: weight, text: family) else { continue }
+            try? FileManager.default.createDirectory(at: cached.deletingLastPathComponent(), withIntermediateDirectories: true)
+            guard (try? data.write(to: cached, options: .atomic)) != nil else { return nil }
+            return cached
+        }
+        return nil
+    }
+
+    private func fetch(_ family: String, weight: Int, text: String? = nil) async -> Data? {
         var components = URLComponents(string: "https://fonts.googleapis.com/css2")!
         components.queryItems = [URLQueryItem(name: "family", value: "\(family):wght@\(weight)")]
+            + (text.map { [URLQueryItem(name: "text", value: $0)] } ?? [])
         guard let cssURL = components.url else { return nil }
         var request = URLRequest(url: cssURL)
         // Not a browser, so the API answers with TrueType rather than woff2.

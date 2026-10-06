@@ -242,9 +242,10 @@ Writes are atomic (a temporary file, then a rename). The project list is a scan 
 the folder, and an unreadable project is hidden rather than failing the list.
 Subtitle files (SRT, VTT) are only exported by the Docker product.
 
-**Models.** The desktop's ids, limited to what WhisperKit publishes, downloaded on
-demand into a backup-excluded folder and never bundled. First launch defaults to
-`base`, so an App Store reviewer can finish a job quickly, and a metered connection
+**Models.** The desktop's ids, limited to what WhisperKit publishes and to a short list:
+Tiny, Base, Small, Large v3 Turbo and Large v3 (no English-only or superseded ones).
+They are downloaded on demand into a backup-excluded folder and never bundled. The
+default is Large v3 Turbo (the best quality for its size), and a metered connection
 asks before a download.
 
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC

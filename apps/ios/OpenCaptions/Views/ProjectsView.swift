@@ -252,10 +252,13 @@ private struct Thumbnail: View {
     @State private var image: CGImage?
 
     var body: some View {
-        ZStack {
-            Theme.surface
-            if let image { Image(decorative: image, scale: 1).resizable().scaledToFill() }
-        }
+        // The shape is the colour's (whatever the proposed size is); the picture only fills it and
+        // is cropped to it, so a landscape video cannot widen the card.
+        Theme.surface
+            .overlay {
+                if let image { Image(decorative: image, scale: 1).resizable().scaledToFill() }
+            }
+            .clipped()
         .task(id: url) {
             guard let url else { return }
             let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))

@@ -8,9 +8,9 @@ import Testing
         let models = WhisperModels.all
         #expect(Set(models.map(\.id)).count == models.count)
         #expect(models.map(\.megabytes) == models.map(\.megabytes).sorted())
-        #expect(WhisperModels.model(WhisperModels.defaultID)?.id == "base")
-        #expect(WhisperModels.model("base.en")?.englishOnly == true)
-        #expect(WhisperModels.model("base")?.englishOnly == false)
+        #expect(WhisperModels.model(WhisperModels.defaultID)?.id == "large-v3-turbo")
+        #expect(WhisperModels.all.allSatisfy { !$0.englishOnly }, "multilingual models only")
+        #expect(WhisperModels.all.map(\.megabytes) == WhisperModels.all.map(\.megabytes).sorted())
         #expect(WhisperModels.model("nonsense") == nil)
         #expect(models.allSatisfy { !$0.variant.isEmpty && $0.megabytes > 0 })
     }

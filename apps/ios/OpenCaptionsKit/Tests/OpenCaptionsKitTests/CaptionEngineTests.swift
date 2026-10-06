@@ -17,6 +17,24 @@ extension EngineSuites {
                 captionOffsetMs: offsetMs)
         }
 
+        @Test func sampleFramesDrawEachStyleAndLeaveTheSceneInUseAlone() async throws {
+            try await scene()
+            let before = try #require(await engine.render(at: 1.0))
+            let plain = try Repo.defaultStyle()
+            var big = plain
+            big.highlightColor = "#FF0000"
+            big.fontSize = 90
+            let frames = await engine.samples(of: [plain, big], words: ["Make", "it", "pop"], width: 600, height: 300)
+            #expect(frames.count == 2)
+            let (a, b) = (try #require(frames[0]), try #require(frames[1]))
+            #expect(a.width == 600 && a.height == 300)
+            #expect(a.rgba != b.rgba, "different styles draw differently")
+            #expect(a.rgba.contains { $0 != 0 }, "something is drawn")
+            // The editor's scene is back: drawing the same time gives the frame it gave before.
+            let after = try #require(await engine.render(at: 1.0))
+            #expect(after == before)
+        }
+
         @Test func bundledFontsRegisterOnceAndInterIsOne() async throws {
             let families = try await engine.registerBundledFonts(in: Repo.fonts)
             #expect(families.contains("Inter"))

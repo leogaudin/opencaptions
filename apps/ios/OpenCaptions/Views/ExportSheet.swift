@@ -28,8 +28,8 @@ struct ExportSheet: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 30)
-        .padding(.bottom, 16)
+        .padding(.top, 28)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity)
         // The sheet is as tall as what it shows (measured), not a fixed height with room to spare.
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
@@ -41,7 +41,7 @@ struct ExportSheet: View {
     }
 
     private func running(_ fraction: Double) -> some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(Int(fraction * 100))%")
                     .font(.system(size: 46, weight: .heavy, design: .rounded)).monospacedDigit()
@@ -56,12 +56,11 @@ struct ExportSheet: View {
                 dismiss()
             }
             .font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.danger)
-            .padding(.top, 4)
         }
     }
 
     private func done(_ url: URL) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
                 .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.textPrimary)
             HStack(spacing: 12) {
@@ -72,9 +71,12 @@ struct ExportSheet: View {
                 }
                 .buttonStyle(SecondaryButtonStyle())
             }
-            Text(photosMessage ?? " ").font(.footnote).foregroundStyle(.secondary)
-            Button("Done") { dismiss() }.font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+            if let photosMessage { Text(photosMessage).font(.footnote).foregroundStyle(.secondary) }
+            Button("Done") { dismiss() }
+                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+                .padding(.vertical, 2)
         }
+        .animation(.default, value: photosMessage)
     }
 
     private func saveToPhotos(_ url: URL) async {
@@ -83,9 +85,7 @@ struct ExportSheet: View {
             return
         }
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
-            }
+            try await PhotosLibrary.addVideo(at: url)
             photosMessage = "Saved to Photos."
         } catch {
             photosMessage = "Could not save: \(error.localizedDescription)"
@@ -107,6 +107,16 @@ private struct TimeLeft: View {
             } else {
                 Text("Starting…").font(.footnote).foregroundStyle(.secondary)
             }
+        }
+    }
+}
+
+/// Photos runs the change on its own queue, so the closure must not be isolated to the main actor
+/// (a closure written inside a view method is, and Swift traps when Photos calls it).
+private enum PhotosLibrary {
+    nonisolated static func addVideo(at url: URL) async throws {
+        try await PHPhotoLibrary.shared().performChanges { @Sendable in
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
         }
     }
 }
