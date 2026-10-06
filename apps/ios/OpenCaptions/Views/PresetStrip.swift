@@ -57,9 +57,8 @@ private struct PresetTile: View {
         Button(action: action) {
             VStack(spacing: 7) {
                 ZStack {
-                    LinearGradient(
-                        colors: [Color(red: 0.24, green: 0.2, blue: 0.4), Color(red: 0.1, green: 0.12, blue: 0.18)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing)
+                    // A plain card, the web's too: captions are mostly white, so it is dark.
+                    Color(hex: "#232736")
                     if let image {
                         Image(decorative: image, scale: 1).resizable().scaledToFill()
                     } else {
@@ -68,7 +67,7 @@ private struct PresetTile: View {
                 }
                 .frame(width: 156, height: 87)
                 .clipShape(.rect(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.stroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
                 Text(preset.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             }
             .padding(6)

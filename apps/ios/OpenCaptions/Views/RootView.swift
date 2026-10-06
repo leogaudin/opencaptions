@@ -17,5 +17,8 @@ struct RootView: View {
             Tab("Settings", systemImage: "gearshape.fill", value: Page.settings) { SettingsView() }
         }
         .tint(Theme.textPrimary)
+        // The content fades into the page behind the bar (`fadesIntoTabBar`), so the bar needs no
+        // edge of its own.
+        .toolbarBackground(.hidden, for: .tabBar)
     }
 }

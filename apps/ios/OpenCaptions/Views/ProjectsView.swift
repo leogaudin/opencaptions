@@ -75,6 +75,7 @@ struct ProjectsView: View {
             if app.projects.isEmpty { emptyState } else { grid }
         }
         .background(Theme.background.ignoresSafeArea())
+        .fadesIntoTabBar()
         .toolbar(.hidden, for: .navigationBar)
         .overlay { if importing != nil { importingCard } }
         .navigationDestination(for: UUID.self) { id in
@@ -104,6 +105,9 @@ struct ProjectsView: View {
             .padding(.top, 8)
             .padding(.bottom, 32)
         }
+        // Under the tab bar, which the content dissolves into (`fadesIntoTabBar`): the scroll view
+        // keeps its own inset, so the last row can still be scrolled clear of the bar.
+        .ignoresSafeArea(.container, edges: .bottom)
     }
 
     // MARK: Pieces

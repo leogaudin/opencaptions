@@ -7,7 +7,7 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PresetSwatch } from "@/components/StyleFields";
-import { usePresetPreviews } from "@/lib/presetPreviews";
+import { TILE_CARD, usePresetPreviews } from "@/lib/presetPreviews";
 import { BUILTIN_PRESETS } from "@/lib/presets";
 import type { StyleConfig } from "@/types";
 
@@ -61,8 +61,8 @@ export function PresetStrip({
               }`}
             >
               <span
-                className="flex h-[87px] w-[156px] items-center justify-center overflow-hidden rounded-xl border border-border"
-                style={{ background: "linear-gradient(135deg, #3d3366, #1a1d2e)" }}
+                className="flex h-[87px] w-[156px] items-center justify-center overflow-hidden rounded-xl border border-white/15"
+                style={{ background: TILE_CARD }}
               >
                 {previews?.[p.id] ? (
                   <img

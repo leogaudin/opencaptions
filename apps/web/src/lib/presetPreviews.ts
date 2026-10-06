@@ -12,6 +12,12 @@ import { createCaptionRenderer } from "@/lib/engine";
 import type { BuiltinPreset } from "@/lib/presets";
 import type { Transcript } from "@/types";
 
+/**
+ * The plain card a tile sits on, the same dark in light and dark mode: captions are mostly white,
+ * so they need a dark ground to be seen in both. (Paper, which has dark text, brings its own pill.)
+ */
+export const TILE_CARD = "#232736";
+
 const FRAME = { width: 540, height: 960 };
 const CROP = { x: 90, y: 380, width: 360, height: 200 };
 const TILE_FONT_SIZE = 64;

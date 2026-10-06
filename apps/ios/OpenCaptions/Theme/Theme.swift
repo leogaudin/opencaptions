@@ -187,3 +187,19 @@ struct SectionLabel: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+extension View {
+    /// Lets what scrolls dissolve into the page just above the tab bar, instead of being cut off
+    /// at its edge: a fade from clear to the page's colour, under the bar.
+    func fadesIntoTabBar() -> some View {
+        overlay(alignment: .bottom) {
+            LinearGradient(
+                colors: [Theme.background.opacity(0), Theme.background.opacity(0.92), Theme.background],
+                startPoint: .top, endPoint: .bottom
+            )
+            .frame(height: 96)
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+        }
+    }
+}

@@ -36,8 +36,11 @@ struct SettingsView: View {
             }
             .clipped()
             .scrollIndicators(.hidden)
+            // Under the tab bar, which the content dissolves into (`fadesIntoTabBar`).
+            .ignoresSafeArea(.container, edges: .bottom)
         }
         .background(Theme.background.ignoresSafeArea())
+        .fadesIntoTabBar()
         .id(refresh)
         // Sizes (saved videos, models) are read when the tab is shown, so a save made since is counted.
         // Outside the id: inside it, each refresh would remake the view and appear again, for ever.
