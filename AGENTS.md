@@ -15,7 +15,11 @@ the push is expected to be green. Before that:
 `make ci` is safe to run while your own stack is up: it validates a clean
 snapshot of committed source in pinned containers, and its end-to-end stack runs
 under its own project name on an off-default port, so none of your volumes are
-reachable from it.
+reachable from it. It builds the api, engine and web images once (tagged `ci-local`, never
+over a live stack's `latest`), starts the e2e stack from them, and removes them at the end,
+keeping at most a few GB of build cache. The GPU image is the slowest build and only what
+the publish job pushes, so it is built when `apps/api/Dockerfile`, `pyproject.toml` or
+`uv.lock` differ from `origin/main`; `scripts/ci-local.sh --gpu` builds it regardless.
 
 | Command | Use |
 |---------|-----|

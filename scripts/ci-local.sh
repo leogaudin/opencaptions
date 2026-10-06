@@ -7,10 +7,14 @@
 # project name, named volumes and off-default ports, so it never touches a live stack
 # and can run while `make up` is live. Teardown is unconditional.
 #
+# It leaves nothing behind: the images it builds carry their own tag (never a live stack's
+# `latest`), are removed at the end, and what it adds to Docker's build cache is capped.
+#
 # Usage:
 #   scripts/ci-local.sh            # committed HEAD
 #   scripts/ci-local.sh --staged   # HEAD + staged changes (pre-commit check)
 #   scripts/ci-local.sh --no-e2e   # skip images + e2e (fast static gate)
+#   scripts/ci-local.sh --gpu      # also build the GPU image (otherwise only when its inputs changed)
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,9 +28,19 @@ CI_OVERRIDE='services:
   web:      { ports:   !override ["127.0.0.1:15173:5173"] }
   api:      { volumes: !override ["./models:/models:ro"] }
   worker-transcription: { volumes: !override ["./models:/models:ro"] }'
+# The images this stack builds are tagged `ci-local`, not `latest`: a live stack's images are
+# named the same, and building over them would leave its own as untagged leftovers.
+CI_IMAGE_TAG="ci-local"
 compose_ci() {
-  printf '%s\n' "$CI_OVERRIDE" | docker compose -p "$CI_PROJECT" -f docker-compose.yml -f - "$@"
+  printf '%s\n' "$CI_OVERRIDE" |
+    OPENCAPTIONS_VERSION="$CI_IMAGE_TAG" docker compose -p "$CI_PROJECT" -f docker-compose.yml -f - "$@"
 }
+GPU_IMAGE="opencaptions-ci-gpu:local"
+# What the GPU image is made from: it changes rarely, and it is the slowest build (several
+# GB of CUDA libraries), so it is built when one of these differs from origin/main.
+GPU_INPUTS="apps/api/Dockerfile apps/api/pyproject.toml apps/api/uv.lock"
+# How much Docker build cache may stay after a run, so the next run is fast but disk is bounded.
+KEEP_BUILD_CACHE="6GB"
 
 # Pinned toolchain, matching ci.yml and the Dockerfiles.
 NODE_IMAGE="node:24-bookworm"
@@ -39,12 +53,14 @@ TOOLS_IMAGE="opencaptions-ci-tools:local"
 WEB_BASE_URL="http://localhost:15173"
 
 INCLUDE_E2E=1
+FORCE_GPU=0
 SOURCE_REF="HEAD"
 STAGED=0
 for arg in "$@"; do
   case "$arg" in
     --no-e2e) INCLUDE_E2E=0 ;;
     --staged) STAGED=1 ;;
+    --gpu) FORCE_GPU=1 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -68,12 +84,19 @@ WORKTREE="$(mktemp -d "${TMPDIR:-/tmp}/oc-ci-XXXXXX")"
 # non-root user and must be able to traverse the snapshot.
 chmod 755 "$WORKTREE"
 STACK_UP=0
+IMAGES_BUILT=0
 
 cleanup() {
   local status=$?
   if [ "$STACK_UP" = "1" ]; then
     step "Tearing down the isolated CI stack"
     (cd "$WORKTREE" && compose_ci down -v --remove-orphans >/dev/null 2>&1) || true
+  fi
+  if [ "$IMAGES_BUILT" = "1" ]; then
+    # Only what this run built: its own tag, never a live stack's images.
+    # shellcheck disable=SC2046
+    docker image rm -f "$GPU_IMAGE" $( (cd "$WORKTREE" && compose_ci config --images 2>/dev/null) | grep ":$CI_IMAGE_TAG\$" || true) >/dev/null 2>&1 || true
+    docker builder prune -f --keep-storage "$KEEP_BUILD_CACHE" >/dev/null 2>&1 || true
   fi
   # Container-written files are root-owned; remove them from a container.
   if [ -d "$WORKTREE" ]; then
@@ -182,18 +205,28 @@ if [ "$INCLUDE_E2E" = "0" ]; then
   exit 0
 fi
 
-# --- Images (including the GPU target that publish-gpu builds) -------------
-step "Building images (api, api GPU target, engine, web)"
-# Chained with && because `set -e` does not apply inside a subshell on the left of `||`:
-# written as separate lines, only the last build's status would count and a failed
-# earlier image would pass the gate.
-(
-  cd "$WORKTREE" &&
-    docker build -q --target runtime apps/api >/dev/null &&
-    docker build -q --target runtime-gpu apps/api >/dev/null &&
-    docker build -q apps/engine >/dev/null &&
-    docker build -q --build-context engine=apps/engine apps/web >/dev/null
-) || fail "image builds failed"
+# --- Images ----------------------------------------------------------------
+# The api, engine and web images are built once, here, by the same compose file the stack
+# runs from, and the end-to-end stack below starts from them (it does not build again).
+step "Building images (api, engine, web)"
+IMAGES_BUILT=1
+(cd "$WORKTREE" && compose_ci build -q >/dev/null) || fail "image builds failed"
+
+# The GPU image is what publish-gpu pushes, so building it here is a rehearsal of that: worth
+# its several GB only when something it is made from changed (or when asked with --gpu).
+build_gpu=$FORCE_GPU
+if [ "$build_gpu" = "0" ]; then
+  # An unknown origin/main (a fresh clone, no remote) cannot say nothing changed: build.
+  # shellcheck disable=SC2086
+  git -C "$REPO_ROOT" diff --quiet origin/main "$( [ "$STAGED" = "1" ] && echo "$TREE" || echo "$SOURCE_REF" )" -- $GPU_INPUTS 2>/dev/null || build_gpu=1
+fi
+if [ "$build_gpu" = "1" ]; then
+  step "Building the GPU image (its inputs changed, or --gpu)"
+  (cd "$WORKTREE" && docker build -q -t "$GPU_IMAGE" --target runtime-gpu apps/api >/dev/null) \
+    || fail "the GPU image build failed"
+else
+  echo "GPU image skipped: apps/api/Dockerfile, pyproject.toml and uv.lock match origin/main (--gpu builds it anyway)"
+fi
 
 # --- End-to-end against a disposable stack ---------------------------------
 step "End-to-end (Playwright) against an isolated stack"
@@ -215,7 +248,7 @@ if [ -n "$bad" ]; then
   fail "the CI stack would touch host state — refusing to run e2e"
 fi
 
-compose_ci up -d --build --wait --wait-timeout 240 || {
+compose_ci up -d --wait --wait-timeout 240 || {
   compose_ci ps
   fail "the isolated CI stack did not become healthy"
 }
