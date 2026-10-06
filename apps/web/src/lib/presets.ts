@@ -3,8 +3,8 @@
  * `presets.json`, so the iOS app offers the same ones.
  *
  * The first, Classic, is the application default and equals the API's `StyleConfig()`.
- * The rest are looks of the kind short-form editors offer (a boxed word, a neon glow, a
- * display face at the middle of the frame...). Presets using `highlight_box` mark the
+ * The rest are looks of the kind short-form editors offer (a boxed word, a coral pill, a
+ * monospace terminal...). Presets using `highlight_box` mark the
  * active word with a filled box instead of recolouring it, so every word stays legible
  * at full contrast.
  */

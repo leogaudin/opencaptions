@@ -37,7 +37,7 @@ def test_the_cheap_looking_presets_are_gone_and_purple_punch_stays() -> None:
     ids = {p["id"] for p in _presets()}
     assert "builtin:purple-punch" in ids
     assert not ids & {"builtin:soft-pill", "builtin:hot-take"}
-    assert len(ids) >= 15
+    assert len(ids) >= 8
 
 
 def test_the_default_preset_is_the_apis_default_style() -> None:

@@ -44,104 +44,16 @@
     }
   },
   {
-    "id": "builtin:hormozi",
-    "name": "Hormozi",
-    "config": {
-      "font": "Montserrat",
-      "font_size": 78,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#22E56B",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.62,
-      "animation": "word_highlight",
-      "words_per_line": 2,
-      "word_spacing": 0.02,
-      "stroke_width": 9,
-      "stroke_color": "#000000",
-      "shadow_blur": 6,
-      "shadow_color": "#000000B0"
-    }
-  },
-  {
-    "id": "builtin:beast",
-    "name": "Beast",
-    "config": {
-      "font": "Anton",
-      "font_size": 104,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FFE600",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.5,
-      "animation": "word_pop",
-      "words_per_line": 2,
-      "word_spacing": 0,
-      "stroke_width": 10,
-      "stroke_color": "#000000",
-      "shadow_blur": 10,
-      "shadow_color": "#000000C0"
-    }
-  },
-  {
-    "id": "builtin:neon",
-    "name": "Neon",
-    "config": {
-      "font": "Poppins",
-      "font_size": 66,
-      "text_color": "#F5FFFF",
-      "highlight_color": "#00F0FF",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.8,
-      "animation": "word_highlight",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 20,
-      "shadow_color": "#00E5FFB0"
-    }
-  },
-  {
-    "id": "builtin:bubblegum",
-    "name": "Bubblegum",
-    "config": {
-      "font": "Poppins",
-      "font_size": 66,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FF3D9A",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.8,
-      "animation": "highlight_box",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 10,
-      "shadow_color": "#00000080"
-    }
-  },
-  {
     "id": "builtin:sunset",
     "name": "Sunset",
     "config": {
       "font": "Montserrat",
       "font_size": 62,
-      "text_color": "#FFF1DC",
-      "highlight_color": "#FF8A00",
+      "text_color": "#FFFFFF",
+      "highlight_color": "#FFE066",
       "background": "pill",
-      "background_color": "#1B0A2A",
-      "background_opacity": 0.8,
+      "background_color": "#FF4D6D",
+      "background_opacity": 0.95,
       "position_x": 0.5,
       "position_y": 0.84,
       "animation": "word_pop",
@@ -201,7 +113,7 @@
     "id": "builtin:terminal",
     "name": "Terminal",
     "config": {
-      "font": "Courier Prime",
+      "font": "JetBrains Mono",
       "font_size": 56,
       "text_color": "#D9FFD9",
       "highlight_color": "#39FF14",
@@ -264,72 +176,6 @@
     }
   },
   {
-    "id": "builtin:red-alert",
-    "name": "Red Alert",
-    "config": {
-      "font": "Anton",
-      "font_size": 92,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#E50914",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.7,
-      "animation": "highlight_box",
-      "words_per_line": 2,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 12,
-      "shadow_color": "#000000B0"
-    }
-  },
-  {
-    "id": "builtin:ocean",
-    "name": "Ocean",
-    "config": {
-      "font": "Poppins",
-      "font_size": 62,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#0A84FF",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.82,
-      "animation": "highlight_box",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 8,
-      "shadow_color": "#00000090"
-    }
-  },
-  {
-    "id": "builtin:emerald",
-    "name": "Emerald",
-    "config": {
-      "font": "Montserrat",
-      "font_size": 64,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#059669",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.82,
-      "animation": "highlight_box",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 8,
-      "shadow_color": "#00000090"
-    }
-  },
-  {
     "id": "builtin:subtle",
     "name": "Subtle",
     "config": {
@@ -352,28 +198,6 @@
     }
   },
   {
-    "id": "builtin:bebas",
-    "name": "Bebas",
-    "config": {
-      "font": "Bebas Neue",
-      "font_size": 110,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FF5A1F",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.55,
-      "animation": "word_highlight",
-      "words_per_line": 2,
-      "word_spacing": 0,
-      "stroke_width": 6,
-      "stroke_color": "#000000",
-      "shadow_blur": 6,
-      "shadow_color": "#000000A0"
-    }
-  },
-  {
     "id": "builtin:candy",
     "name": "Candy",
     "config": {
@@ -393,50 +217,6 @@
       "stroke_color": "#2B0A5E",
       "shadow_blur": 0,
       "shadow_color": "#00000000"
-    }
-  },
-  {
-    "id": "builtin:midnight",
-    "name": "Midnight",
-    "config": {
-      "font": "Rubik",
-      "font_size": 62,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FFD60A",
-      "background": "pill",
-      "background_color": "#000000",
-      "background_opacity": 0.9,
-      "position_x": 0.5,
-      "position_y": 0.84,
-      "animation": "word_highlight",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 0,
-      "shadow_color": "#00000000"
-    }
-  },
-  {
-    "id": "builtin:gold",
-    "name": "Gold",
-    "config": {
-      "font": "Oswald",
-      "font_size": 84,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FFC400",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.7,
-      "animation": "word_highlight",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 5,
-      "stroke_color": "#000000",
-      "shadow_blur": 6,
-      "shadow_color": "#000000A0"
     }
   }
 ]
