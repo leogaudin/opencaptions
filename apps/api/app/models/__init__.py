@@ -85,8 +85,13 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    project_id: Mapped[UUID] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    # Null for a transcription asked for through the transcription API, which has no project.
+    project_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    # Who asked, for a job with no project to say it. Null where the project says it.
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True
     )
     type: Mapped[str] = mapped_column(String(32))  # 'transcription' | 'rendering'
     status: Mapped[str] = mapped_column(
@@ -104,7 +109,7 @@ class Job(Base):
         DateTime(timezone=True), default=_now, onupdate=_now
     )
 
-    project: Mapped[Project] = relationship("Project", back_populates="jobs")
+    project: Mapped[Project | None] = relationship("Project", back_populates="jobs")
 
 
 class ApiKey(Base):

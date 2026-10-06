@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -67,12 +67,14 @@ async def sum_usage_for_user(
 ) -> float:
     """Sum one unit of recorded usage across a user's jobs.
 
-    Ownership comes from the parent project, since jobs carry no owner column.
-    ``since`` is inclusive and ``until`` exclusive, so adjacent windows do not
-    double-count.
+    A job is a user's by its own owner, or by its project's for one made before jobs
+    had one. ``since`` is inclusive and ``until`` exclusive, so adjacent windows do
+    not double-count.
     """
     stmt = (
-        select(Job).join(Project, Job.project_id == Project.id).where(Project.owner_id == owner_id)
+        select(Job)
+        .outerjoin(Project, Job.project_id == Project.id)
+        .where(or_(Job.user_id == owner_id, Project.owner_id == owner_id))
     )
     if since is not None:
         stmt = stmt.where(Job.created_at >= since)

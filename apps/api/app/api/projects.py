@@ -436,7 +436,7 @@ async def start_transcription(
     if not decision.allowed:
         raise http_error(status.HTTP_403_FORBIDDEN, "not_entitled", decision.reason)
 
-    job = Job(project_id=proj.id, type="transcription", status="pending")
+    job = Job(project_id=proj.id, user_id=user.id, type="transcription", status="pending")
     session.add(job)
     await session.flush()
 
@@ -559,6 +559,7 @@ async def request_download(
     # Cache MISS: enqueue a new render job.
     job = Job(
         project_id=proj.id,
+        user_id=user.id,
         type="rendering",
         status="pending",
         metadata_json={"format_id": fmt.id, "render_hash": render_hash},

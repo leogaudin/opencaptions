@@ -86,6 +86,8 @@ async def report_progress(
         job.message = body.message[:255]
     await session.flush()
 
+    if job.project_id is None:
+        return  # a job with no project has no channel to broadcast on
     publish_to_project(
         job.project_id,
         {

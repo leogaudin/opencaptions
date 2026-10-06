@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+import asyncio
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
@@ -18,6 +19,7 @@ from app.models.schemas import (
 )
 from app.services.languages import all_languages
 from app.services.whisper_models import all_models
+from app.transcription import remote
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -41,6 +43,10 @@ async def get_settings(
     return AppSettingsResponse(
         transcription=TranscriptionSettings(
             provider=env_settings.transcription_provider,
+            remote_url=None
+            if hosted or not env_settings.transcription_remote_url
+            else env_settings.transcription_remote_url,
+            remote_configured=False if hosted else remote.configured(),
             model=None if hosted else env_settings.whisper_model,
             device=None if hosted else env_settings.whisper_device,
             openai_configured=False if hosted else bool(env_settings.openai_api_key),
@@ -58,3 +64,25 @@ async def get_settings(
         registration_enabled=env_settings.registration_enabled,
         hosted_mode=env_settings.hosted_mode,
     )
+
+
+@router.post(
+    "/transcription/test",
+    summary="Test the remote transcription instance",
+)
+async def test_remote_transcription(
+    _user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, Any]:
+    """Reach the configured remote OpenCaptions instance with the configured key.
+
+    Returns ``{ok: true, instance_name, api_version, models}``, or ``{ok: false, error}``
+    saying why not (unreachable, key rejected, incompatible version, address refused).
+    Always 200: a failed test is an answer, not a failure of this request. Not available in
+    hosted mode, where the provider is fixed.
+    """
+    if env_settings.hosted_mode:
+        return {"ok": False, "error": "This instance runs a fixed transcription provider."}
+    try:
+        return {"ok": True, **await asyncio.to_thread(remote.check_connection)}
+    except remote.RemoteTranscriptionError as exc:
+        return {"ok": False, "error": str(exc)}

@@ -11,6 +11,7 @@ Pipeline:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import tempfile
 from pathlib import Path
@@ -20,6 +21,7 @@ import celery
 
 from app.core.celery_app import celery_app
 from app.models import Project
+from app.models.schemas import Transcript
 from app.services import progress
 from app.services.audio import AudioExtractionError, extract_audio, probe_duration
 from app.tasks.common import TaskContext
@@ -29,6 +31,43 @@ from app.tasks.common import sync_session_factory as _sync_session_factory
 STAGE = "transcription"
 
 logger = logging.getLogger(__name__)
+
+
+def _transcribe_audio(
+    task: TaskContext,
+    audio_path: Path,
+    *,
+    provider: str,
+    model: str | None,
+    language: str,
+) -> Transcript:
+    """Turn an extracted audio file into a Transcript with the chosen provider.
+
+    The one place that happens, for a project's video and for audio sent through the
+    transcription API alike.
+    """
+    # Providers register themselves on import.
+    import app.transcription  # noqa: F401
+    from app.transcription.base import get_provider
+
+    transcription_provider = get_provider(provider)
+
+    # Loading blocks until the weights are on disk, which on first use means
+    # fetching gigabytes. Say which is happening before it starts, or the bar
+    # sits at the same number for minutes with no explanation.
+    task.enter_stage(
+        progress.TRANSCRIBE_LOADING_MODEL
+        if transcription_provider.is_model_cached(model)
+        else progress.TRANSCRIBE_FETCHING_MODEL,
+        STAGE,
+    )
+
+    def _on_progress(fraction: float, message: str) -> None:
+        task.report_progress(fraction, message, STAGE)
+
+    return transcription_provider.transcribe(
+        str(audio_path), language=language, model=model, on_progress=_on_progress
+    )
 
 
 @celery_app.task(name="app.tasks.transcribe.transcribe_video", bind=True)
@@ -54,8 +93,6 @@ def transcribe_video(
     # Defer heavy imports so module load doesn't pull torch/faster-whisper for
     # workers on the rendering queue (which won't import this file at all).
     from app.storage import s3
-    from app.transcription import local as _local_provider  # noqa: F401 — registers
-    from app.transcription.base import get_provider
 
     session_local = _sync_session_factory()
     task = TaskContext(job_id, project_id, session_local, logger)
@@ -98,26 +135,8 @@ def transcribe_video(
             logger.info("Audio extracted, duration=%.2fs", duration)
 
             # 4. Run provider
-            transcription_provider = get_provider(provider)
-
-            # Loading blocks until the weights are on disk, which on first use means
-            # fetching gigabytes. Say which is happening before it starts, or the bar
-            # sits at the same number for minutes with no explanation.
-            task.enter_stage(
-                progress.TRANSCRIBE_LOADING_MODEL
-                if transcription_provider.is_model_cached(model)
-                else progress.TRANSCRIBE_FETCHING_MODEL,
-                STAGE,
-            )
-
-            def _on_progress(fraction: float, message: str) -> None:
-                task.report_progress(fraction, message, STAGE)
-
-            transcript = transcription_provider.transcribe(
-                str(local_audio),
-                language=language,
-                model=model,
-                on_progress=_on_progress,
+            transcript = _transcribe_audio(
+                task, local_audio, provider=provider, model=model, language=language
             )
 
         # 5. Persist transcript
@@ -154,3 +173,60 @@ def transcribe_video(
         reason = str(e)[:500]
         task.mark_failed(reason, "Transcription failed", STAGE)
         return {"status": "failed", "reason": reason}
+
+
+@celery_app.task(name="app.tasks.transcribe.transcribe_upload", bind=True)
+def transcribe_upload(
+    self: celery.Task,
+    job_id: str,
+    audio_key: str,
+    result_key: str,
+    *,
+    provider: str = "local",
+    model: str | None = None,
+    language: str = "auto",
+) -> dict[str, str]:
+    """Transcribe audio sent through the transcription API: no project, just a result.
+
+    The audio is fetched from storage, normalised, transcribed, and the Transcript JSON
+    written to ``result_key`` for the client to fetch. The audio is deleted either way.
+    """
+    logger.info("transcribe_upload starting job=%s provider=%s model=%s", job_id, provider, model)
+    from app.storage import s3
+
+    task = TaskContext(job_id, None, _sync_session_factory(), logger)
+    try:
+        task.set_job_status("running", celery_task_id=self.request.id, progress=0.0)
+        with tempfile.TemporaryDirectory(prefix="opencaptions-") as tmpdir:
+            tmp = Path(tmpdir)
+            local_media, local_audio = tmp / "upload.bin", tmp / "audio.wav"
+            task.enter_stage(progress.TRANSCRIBE_DOWNLOADING, STAGE)
+            s3.download_file(audio_key, str(local_media))
+            task.enter_stage(progress.TRANSCRIBE_EXTRACTING, STAGE)
+            try:
+                extract_audio(local_media, local_audio)
+            except AudioExtractionError as e:
+                raise RuntimeError(f"Audio extraction failed: {e}") from e
+            duration = probe_duration(local_audio)
+            transcript = _transcribe_audio(
+                task, local_audio, provider=provider, model=model, language=language
+            )
+        s3.put_object_bytes(result_key, transcript.model_dump_json().encode(), "application/json")
+        task.set_job_status(
+            "completed",
+            progress=progress.DONE,
+            message=f"Transcribed {len(transcript.segments)} segments",
+        )
+        from app.services.usage import UNIT_TRANSCRIPTION_SECONDS
+
+        task.record_usage(UNIT_TRANSCRIPTION_SECONDS, float(duration))
+        return {"status": "completed", "segments": str(len(transcript.segments))}
+    except Exception as e:  # noqa: BLE001
+        logger.exception("transcribe_upload failed")
+        reason = str(e)[:500]
+        task.mark_failed(reason, "Transcription failed", STAGE)
+        return {"status": "failed", "reason": reason}
+    finally:
+        # The audio is only ever there to be transcribed.
+        with contextlib.suppress(Exception):
+            s3.delete_object(audio_key)

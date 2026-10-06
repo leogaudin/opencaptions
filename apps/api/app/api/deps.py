@@ -138,15 +138,19 @@ async def get_owned_job(
     user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(db_session)],
 ) -> Job:
-    """Load a job only if the caller owns its project, else 404.
+    """Load a job only if the caller owns it, else 404.
 
-    Jobs have no owner column: ownership is derived from the project.
+    A job's owner is the user it was made for, or, for one made before jobs had an
+    owner of their own, the owner of its project.
     """
     job = await session.get(Job, job_id)
     if job is None:
         raise _job_not_found()
-    proj = await session.get(Project, job.project_id)
-    if proj is None or proj.owner_id != user.id:
+    owner = job.user_id
+    if owner is None and job.project_id is not None:
+        proj = await session.get(Project, job.project_id)
+        owner = proj.owner_id if proj is not None else None
+    if owner != user.id:
         raise _job_not_found()
     return job
 

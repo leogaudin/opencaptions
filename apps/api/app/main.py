@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __version__
-from app.api import auth, fonts, health, jobs, keys, projects
+from app.api import auth, fonts, health, jobs, keys, projects, transcriptions
 from app.api import settings as settings_router
 from app.api import websocket as ws_router
 from app.api.csrf import CSRFMiddleware
@@ -197,6 +197,7 @@ def create_app() -> FastAPI:
     v1.include_router(auth.router)
     v1.include_router(projects.router)
     v1.include_router(jobs.router)
+    v1.include_router(transcriptions.router)
     v1.include_router(fonts.router)
     v1.include_router(keys.router)
     v1.include_router(settings_router.router)

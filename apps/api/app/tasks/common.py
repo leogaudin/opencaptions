@@ -26,7 +26,9 @@ class TaskContext:
     """Status and notification operations shared by render/transcribe tasks."""
 
     job_id: str
-    project_id: str
+    # None for a transcription asked for through the transcription API: nothing to notify
+    # over a project's channel, and no project to mark.
+    project_id: str | None
     sessions: SyncSessionFactory
     logger: logging.Logger
 
@@ -45,6 +47,8 @@ class TaskContext:
         # import and keeps the function patchable in task tests.
         from app.api.websocket import publish_to_project
 
+        if self.project_id is None:
+            return
         try:
             publish_to_project(UUID(self.project_id), {"type": message_type, "payload": payload})
         except Exception as exc:  # noqa: BLE001
@@ -87,12 +91,13 @@ class TaskContext:
 
     def mark_failed(self, reason: str, message: str, stage: str) -> None:
         self.set_job_status("failed", error=reason, message=message)
-        with self.sessions() as session:
-            session.execute(
-                text("UPDATE projects SET status='error', error=:e WHERE id=:id"),
-                {"e": reason, "id": self.project_id},
-            )
-            session.commit()
+        if self.project_id is not None:
+            with self.sessions() as session:
+                session.execute(
+                    text("UPDATE projects SET status='error', error=:e WHERE id=:id"),
+                    {"e": reason, "id": self.project_id},
+                )
+                session.commit()
         self.publish(
             "job_failed",
             {"job_id": self.job_id, "error": reason, "stage": stage},

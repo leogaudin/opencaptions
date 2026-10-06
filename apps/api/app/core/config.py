@@ -34,11 +34,26 @@ class Settings(BaseSettings):
     s3_region: str = "us-east-1"
 
     # ----- Transcription -----
-    transcription_provider: str = "local"  # 'local' or 'openai'
+    transcription_provider: str = "local"  # 'local', 'openai' or 'opencaptions'
     whisper_model: str = "large-v3-turbo"
     whisper_device: str = "auto"  # 'auto', 'cpu', 'cuda', 'cuda:0', etc.
     whisper_compute_type: str = "int8"
     openai_api_key: str = ""
+
+    # Another OpenCaptions backend to transcribe on (provider 'opencaptions'): its
+    # public origin and an API key minted there. A private address is refused unless
+    # its host is in SSRF_ALLOWED_HOSTS, as for any other URL this server is asked to reach.
+    transcription_remote_url: str = ""
+    transcription_remote_key: str = ""
+    # What this instance offers to others through POST /transcriptions: how long a
+    # finished transcript is kept for its client to fetch, and how many jobs one
+    # user may have running at once.
+    instance_name: str = "OpenCaptions"
+    transcription_result_ttl_h: int = 24
+    transcription_max_concurrent: int = 2
+    # The address clients outside the stack reach this instance at, for pairing links;
+    # empty means the address the request came in on.
+    public_url: str = ""
 
     # Voice-activity filtering drops non-speech before decoding, which keeps
     # Whisper from inventing words over music. It can also drop real speech under

@@ -534,6 +534,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/transcription/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What this instance transcribes with and accepts
+         * @description The models, languages and limits a client builds its choices from.
+         *
+         *     Requires a key: it reveals nothing sensitive, but a 401 here is also how a client
+         *     finds out its key was revoked. In hosted mode the model is fixed and not offered.
+         */
+        get: operations["capabilities_api_v1_transcription_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transcriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transcribe an audio or video file
+         * @description Queue a transcription; watch it at ``GET /jobs/{job_id}``, fetch the result at
+         *     ``GET /transcriptions/{job_id}``.
+         */
+        post: operations["create_transcription_api_v1_transcriptions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transcriptions/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a finished transcript
+         * @description The Transcript JSON (the schema of ``project.transcript``) of a completed job.
+         */
+        get: operations["get_transcription_api_v1_transcriptions__job_id__get"];
+        put?: never;
+        post?: never;
+        /** Cancel a transcription and delete its audio and result */
+        delete: operations["delete_transcription_api_v1_transcriptions__job_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/fonts": {
         parameters: {
             query?: never;
@@ -652,6 +717,31 @@ export interface paths {
         get: operations["get_settings_api_v1_settings_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/transcription/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test the remote transcription instance
+         * @description Reach the configured remote OpenCaptions instance with the configured key.
+         *
+         *     Returns ``{ok: true, instance_name, api_version, models}``, or ``{ok: false, error}``
+         *     saying why not (unreachable, key rejected, incompatible version, address refused).
+         *     Always 200: a failed test is an answer, not a failure of this request. Not available in
+         *     hosted mode, where the provider is fixed.
+         */
+        post: operations["test_remote_transcription_api_v1_settings_transcription_test_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -781,6 +871,22 @@ export interface components {
             /** Video Url */
             video_url?: string | null;
         };
+        /** Body_create_transcription_api_v1_transcriptions_post */
+        Body_create_transcription_api_v1_transcriptions_post: {
+            /**
+             * Audio
+             * @description Audio, or video: anything ffmpeg reads
+             */
+            audio: string;
+            /**
+             * Language
+             * @description 'auto' or an ISO 639-1 code
+             * @default auto
+             */
+            language: string;
+            /** Model */
+            model?: string | null;
+        };
         /**
          * ChangeEmailRequest
          * @description PATCH /auth/me/email. The current password is required, so a hijacked
@@ -909,9 +1015,9 @@ export interface components {
             id: string;
             /**
              * Project Id
-             * Format: uuid
+             * @description The project the job works on; null for a transcription made through POST /transcriptions, which has none
              */
-            project_id: string;
+            project_id?: string | null;
             /**
              * Type
              * @enum {string}
@@ -1278,7 +1384,7 @@ export interface components {
          */
         TranscribeRequest: {
             /** Provider */
-            provider?: ("local" | "openai") | null;
+            provider?: ("local" | "openai" | "opencaptions") | null;
             /** Model */
             model?: string | null;
             /**
@@ -1330,6 +1436,56 @@ export interface components {
             end: number;
             /** Text */
             text: string;
+        };
+        /**
+         * TranscriptionCapabilities
+         * @description GET /transcription/capabilities: what this instance transcribes with and accepts.
+         */
+        TranscriptionCapabilities: {
+            /**
+             * Api Version
+             * @description Version of the transcription API. A client refuses a major version it does not know.
+             */
+            api_version: number;
+            /**
+             * Instance Name
+             * @description A name to show for this instance
+             */
+            instance_name: string;
+            /**
+             * Models
+             * @description Models a request may name, ascending in size; empty when the instance fixes the model (hosted mode)
+             */
+            models: components["schemas"]["ModelOption"][];
+            /**
+             * Default Model
+             * @description The model used when a request names none
+             */
+            default_model: string | null;
+            /** Languages */
+            languages: components["schemas"]["LanguageOption"][];
+            /** Max Upload Mb */
+            max_upload_mb: number;
+            /** Max Duration S */
+            max_duration_s: number;
+            /**
+             * Result Ttl H
+             * @description Hours a finished transcript can be fetched before it is deleted
+             */
+            result_ttl_h: number;
+            /** Hosted Mode */
+            hosted_mode: boolean;
+        };
+        /**
+         * TranscriptionCreated
+         * @description POST /transcriptions: the job to watch, at GET /jobs/{job_id}.
+         */
+        TranscriptionCreated: {
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
         };
         /**
          * TranscriptionInfo
@@ -1384,9 +1540,20 @@ export interface components {
         TranscriptionSettings: {
             /**
              * Provider
-             * @description Active transcription provider (local or openai)
+             * @description Active transcription provider (local, openai or opencaptions)
              */
             provider: string;
+            /**
+             * Remote Url
+             * @description Where the `opencaptions` provider sends audio: another OpenCaptions backend's address. Null when none is configured, and in hosted mode.
+             */
+            remote_url?: string | null;
+            /**
+             * Remote Configured
+             * @description Whether a remote OpenCaptions backend is configured (its URL and key are both set), i.e. whether the `opencaptions` provider can be chosen. The key itself is never exposed.
+             * @default false
+             */
+            remote_configured: boolean;
             /**
              * Model
              * @description Configured default Whisper model identifier. Matches one of `available_models[].id` unless overridden to a custom model path. Null in hosted mode, where the model is fixed and not the user's concern.
@@ -2721,6 +2888,146 @@ export interface operations {
             };
         };
     };
+    capabilities_api_v1_transcription_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptionCapabilities"];
+                };
+            };
+        };
+    };
+    create_transcription_api_v1_transcriptions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-OpenCaptions-Hop"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_transcription_api_v1_transcriptions_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptionCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_transcription_api_v1_transcriptions__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Job not found (`error: job_not_found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not finished (`transcription_not_ready`) or failed (`transcription_failed`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_transcription_api_v1_transcriptions__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Job not found (`error: job_not_found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_fonts_api_v1_fonts_get: {
         parameters: {
             query?: never;
@@ -2937,6 +3244,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppSettingsResponse"];
+                };
+            };
+        };
+    };
+    test_remote_transcription_api_v1_settings_transcription_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

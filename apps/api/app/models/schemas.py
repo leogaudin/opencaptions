@@ -173,7 +173,11 @@ class JobStatus(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    project_id: UUID
+    project_id: UUID | None = Field(
+        default=None,
+        description="The project the job works on; null for a transcription made through "
+        "POST /transcriptions, which has none",
+    )
     type: Literal["transcription", "rendering"]
     status: Literal["pending", "running", "completed", "failed", "cancelled"]
     progress: float = 0.0
@@ -258,7 +262,7 @@ class ProjectUpdate(BaseModel):
 class TranscribeRequest(BaseModel):
     """POST /projects/{id}/transcribe body."""
 
-    provider: Literal["local", "openai"] | None = None
+    provider: Literal["local", "openai", "opencaptions"] | None = None
     model: str | None = None
     language: str = Field(default="auto", description="'auto' or ISO 639-1 code")
 
@@ -343,10 +347,51 @@ class ModelOption(BaseModel):
     )
 
 
+class TranscriptionCapabilities(BaseModel):
+    """GET /transcription/capabilities: what this instance transcribes with and accepts."""
+
+    api_version: int = Field(
+        description="Version of the transcription API. A client refuses a major version it "
+        "does not know."
+    )
+    instance_name: str = Field(description="A name to show for this instance")
+    models: list[ModelOption] = Field(
+        description="Models a request may name, ascending in size; empty when the instance "
+        "fixes the model (hosted mode)"
+    )
+    default_model: str | None = Field(description="The model used when a request names none")
+    languages: list[LanguageOption]
+    max_upload_mb: int
+    max_duration_s: int
+    result_ttl_h: int = Field(
+        description="Hours a finished transcript can be fetched before it is deleted"
+    )
+    hosted_mode: bool
+
+
+class TranscriptionCreated(BaseModel):
+    """POST /transcriptions: the job to watch, at GET /jobs/{job_id}."""
+
+    job_id: UUID
+
+
 class TranscriptionSettings(BaseModel):
     """Transcription configuration block."""
 
-    provider: str = Field(description="Active transcription provider (local or openai)")
+    provider: str = Field(
+        description="Active transcription provider (local, openai or opencaptions)"
+    )
+    remote_url: str | None = Field(
+        default=None,
+        description="Where the `opencaptions` provider sends audio: another OpenCaptions "
+        "backend's address. Null when none is configured, and in hosted mode.",
+    )
+    remote_configured: bool = Field(
+        default=False,
+        description="Whether a remote OpenCaptions backend is configured (its URL and key "
+        "are both set), i.e. whether the `opencaptions` provider can be chosen. The key "
+        "itself is never exposed.",
+    )
     model: str | None = Field(
         description="Configured default Whisper model identifier. Matches one of "
         "`available_models[].id` unless overridden to a custom model path. Null in "
