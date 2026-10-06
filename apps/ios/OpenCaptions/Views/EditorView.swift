@@ -10,6 +10,7 @@ struct EditorView: View {
     let model: EditorModel
     @State private var playback = Playback()
     @State private var showTranscribe = false
+    @State private var renaming: String?
     @State private var showStyle = false
     @State private var edit: WordEdit?
     @State private var exporter: ExportController?
@@ -49,6 +50,7 @@ struct EditorView: View {
         .toolbar(.hidden, for: .tabBar)
         .overlay(alignment: .top) { progress }
         .overlay { wordEditor }
+        .renameAlert("Rename project", name: $renaming) { model.rename(to: $0) }
         .sheet(isPresented: $showTranscribe) {
             TranscribeSheet(model: model).presentationBackground(Theme.background).presentationCornerRadius(24)
         }
@@ -200,6 +202,7 @@ struct EditorView: View {
                     showTranscribe = true
                 }
                 .disabled(model.isTranscribing || exporter?.isRunning == true)
+                Button("Rename", systemImage: "pencil") { renaming = model.project.title }
             } label: {
                 Image(systemName: "ellipsis")
             }

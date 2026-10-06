@@ -76,6 +76,26 @@ final class AppModel {
         }
     }
 
+    /// Renames a project: through its editor if one is open (which owns the file while it is),
+    /// else straight in the store.
+    func rename(_ project: Project, to title: String) {
+        if let editor = openEditor(for: project.id) {
+            editor.rename(to: title)
+        } else {
+            let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty, name != project.title else { return }
+            do {
+                var stored = try store.load(project.id)
+                stored.title = name
+                stored.updatedAt = Date()
+                _ = try store.save(stored)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+        reload()
+    }
+
     func delete(_ project: Project) {
         editors[project.id]?.cancelTranscription()
         editors[project.id] = nil

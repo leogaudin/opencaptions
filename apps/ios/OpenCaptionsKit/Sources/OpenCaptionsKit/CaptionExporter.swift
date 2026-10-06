@@ -69,8 +69,8 @@ public struct CaptionExporter: Sendable {
     /// How frames are decoded, composited and encoded. SDR is 8-bit H.264. An HDR source
     /// stays HDR: decoded to 10 bits so nothing is clipped, and written as 10-bit HEVC
     /// with the source's BT.2020 primaries and transfer function. Core Image works in
-    /// light relative to reference white, so the sRGB captions land at reference white
-    /// in the HDR signal rather than at peak brightness.
+    /// light relative to reference white, so the sRGB captions land at `CaptionFrame.hdrWhiteScale`
+    /// times reference white in the HDR signal, not at peak brightness.
     private struct Encoding {
         var pixelFormat: OSType
         var settings: [String: Any]
@@ -115,7 +115,7 @@ public struct CaptionExporter: Sendable {
                     kCVImageBufferTransferFunctionKey: pq ? kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ : kCVImageBufferTransferFunction_ITU_R_2100_HLG,
                     kCVImageBufferYCbCrMatrixKey: kCVImageBufferYCbCrMatrix_ITU_R_2020,
                 ])
-            encoding.overlayGain = pq ? 0.277 : 0.282
+            encoding.overlayGain = (pq ? 0.277 : 0.282) * CaptionFrame.hdrWhiteScale
             return encoding
         }
     }
@@ -303,20 +303,5 @@ public struct CaptionExporter: Sendable {
             feed(audio, writer: writer, reader: reader)
             if !audio.done { try await Task.sleep(for: .milliseconds(2)) }
         }
-    }
-}
-
-private extension CIImage {
-    /// Premultiplied colour scaled by `gain` (alpha unchanged), in the context's linear working space.
-    func scaled(by gain: Double) -> CIImage {
-        guard gain != 1 else { return self }
-        return applyingFilter(
-            "CIColorMatrix",
-            parameters: [
-                "inputRVector": CIVector(x: gain, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: gain, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: gain, w: 0),
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
-            ])
     }
 }

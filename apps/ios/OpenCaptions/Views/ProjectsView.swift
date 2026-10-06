@@ -28,11 +28,18 @@ struct ProjectsView: View {
     @State private var pending: PendingImport?
     @State private var path: [UUID] = []
     @State private var deleting: Project?
+    @State private var renaming: Project?
+    @State private var renamingTitle: String?
 
     private let columns = [GridItem(.adaptive(minimum: 158, maximum: 240), spacing: 14)]
 
     var body: some View {
         NavigationStack(path: $path) { library }
+            .renameAlert("Rename project", name: $renamingTitle) { title in
+                if let project = renaming { app.rename(project, to: title) }
+                renaming = nil
+            }
+            .onChange(of: renaming) { _, project in renamingTitle = project?.title }
             .modifier(
                 ProjectDialogs(
                     deleting: $deleting, pending: $pending, onDelete: { app.delete($0) },
@@ -90,6 +97,7 @@ struct ProjectsView: View {
                     NavigationLink(value: project.id) { ProjectCard(project: project) }
                         .buttonStyle(.plain)
                         .contextMenu {
+                            Button("Rename", systemImage: "pencil") { renaming = project }
                             Button("Delete", systemImage: "trash", role: .destructive) { deleting = project }
                         }
                 }
@@ -218,7 +226,8 @@ struct ProjectCard: View {
                 .clipShape(.rect(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.stroke, lineWidth: 1))
             VStack(alignment: .leading, spacing: 2) {
-                Text(project.title).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                Text((app.openEditor(for: project.id)?.project ?? project).title)
+                    .font(.system(size: 15, weight: .semibold)).lineLimit(1)
                 status.font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
             }
         }

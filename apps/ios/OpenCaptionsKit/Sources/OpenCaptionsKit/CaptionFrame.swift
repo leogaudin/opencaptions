@@ -29,3 +29,34 @@ extension CaptionFrame {
         context.createCGImage(ciImage, from: CGRect(x: 0, y: 0, width: width, height: height))
     }
 }
+
+extension CaptionFrame {
+    /// How much brighter than reference white (the white of an SDR picture, 203 nits in PQ)
+    /// captions are over an HDR video. At reference white they look grey beside an HDR
+    /// picture's highlights, like a dimmed copy of the text; at twice it (about 400 nits)
+    /// they read as white. The preview and the export use the same factor.
+    public static let hdrWhiteScale = 2.0
+
+    /// The overlay for an HDR video's preview: half-float, in extended linear sRGB, with white at
+    /// `hdrWhiteScale` (a layer showing it must set `wantsExtendedDynamicRangeContent`).
+    public func hdrCGImage(using context: CIContext) -> CGImage? {
+        context.createCGImage(
+            ciImage.scaled(by: Self.hdrWhiteScale), from: CGRect(x: 0, y: 0, width: width, height: height),
+            format: .RGBAh, colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB))
+    }
+}
+
+extension CIImage {
+    /// Premultiplied colour scaled by `gain` (alpha unchanged), in the context's linear working space.
+    func scaled(by gain: Double) -> CIImage {
+        guard gain != 1 else { return self }
+        return applyingFilter(
+            "CIColorMatrix",
+            parameters: [
+                "inputRVector": CIVector(x: gain, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: gain, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: gain, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+            ])
+    }
+}

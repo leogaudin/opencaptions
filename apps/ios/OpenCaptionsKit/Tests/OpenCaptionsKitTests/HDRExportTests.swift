@@ -4,7 +4,7 @@ import Foundation
 import Testing
 @testable import OpenCaptionsKit
 
-/// An HDR source stays HDR, and the captions sit at reference white in it.
+/// An HDR source stays HDR, and the captions sit at twice reference white in it: white, not grey.
 extension EngineSuites {
     @Suite struct HDRExportTests {
         let fonts = FontCache(directory: FileManager.default.temporaryDirectory.appendingPathComponent("oc-fonts"))
@@ -62,9 +62,9 @@ extension EngineSuites {
             return peak
         }
 
-        @Test(arguments: [("hlg", HDRTransfer.hlg, 721), ("pq", HDRTransfer.pq, 573)])
-        func anHDRSourceStaysHDRWithTheCaptionsAtReferenceWhite(
-            name: String, transfer: HDRTransfer, referenceWhite: Int
+        @Test(arguments: [("hlg", HDRTransfer.hlg, 821), ("pq", HDRTransfer.pq, 639)])
+        func anHDRSourceStaysHDRWithTheCaptionsAtTwiceReferenceWhite(
+            name: String, transfer: HDRTransfer, captionWhite: Int
         ) async throws {
             let store = store()
             let p = try await project(from: fixture(name), store: store)
@@ -83,9 +83,11 @@ extension EngineSuites {
             let primaries = CMFormatDescriptionGetExtension(format, extensionKey: kCMFormatDescriptionExtension_ColorPrimaries) as? String
             #expect(primaries == kCMFormatDescriptionColorPrimaries_ITU_R_2020 as String)
 
-            // The caption's white is at reference white, not at the top of the range.
+            // The caption's white is at twice reference white (PQ: 203 nits is code 573, and 406
+            // nits is 639; HLG: 721 and 821), not at the top of the range and not at reference
+            // white, where it looks like a dimmed copy of the text.
             let peak = try await peakLuma(url, rows: 380..<430, columns: 30..<240)
-            #expect(abs(peak - referenceWhite) < 20, "caption white is code \(peak); reference white is about \(referenceWhite)")
+            #expect(abs(peak - captionWhite) < 20, "caption white is code \(peak); expected about \(captionWhite)")
             #expect(peak < 900, "not at peak brightness")
             // The background (a grey of the source) is still there, darker than the caption.
             let corner = try await peakLuma(url, rows: 10..<20, columns: 10..<20)

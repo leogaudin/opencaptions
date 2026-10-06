@@ -16,6 +16,25 @@ public enum CaptionGestures {
         )
     }
 
+    /// Where a finger may land to drag the caption, in frame pixels: the caption's own box, or
+    /// where it would be when nothing is showing, made at least `minimumPoints` across and a
+    /// `slopPoints` wider all round, so a small caption can be grabbed (a finger is not a cursor).
+    public static func dragRegion(
+        caption: FrameRect?, position: (x: Double, y: Double), frame: CGSize, pixelsPerPoint: Double,
+        minimumPoints: Double = 48, slopPoints: Double = 24
+    ) -> FrameRect {
+        let base = caption ?? FrameRect(
+            x: position.x * frame.width - frame.width * 0.3, y: position.y * frame.height - frame.height * 0.04,
+            width: frame.width * 0.6, height: frame.height * 0.08)
+        let slop = slopPoints * pixelsPerPoint
+        let minimum = minimumPoints * pixelsPerPoint
+        let width = max(base.width + 2 * slop, minimum)
+        let height = max(base.height + 2 * slop, minimum)
+        return FrameRect(
+            x: base.x + base.width / 2 - width / 2, y: base.y + base.height / 2 - height / 2,
+            width: width, height: height)
+    }
+
     /// The transcript word under a tap at `point` (frame pixels), if it is on a word of
     /// the active caption: word N of line L is flat word `L * wordsPerLine + N`.
     public static func wordIndex(at point: CGPoint, in caption: ActiveCaption, wordsPerLine: Int) -> Int? {

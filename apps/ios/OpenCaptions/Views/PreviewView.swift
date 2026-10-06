@@ -58,6 +58,8 @@ final class PreviewUIView: UIView {
     private var ready = false
     private var suspended = false
     private var isPlaying = false
+    /// An HDR video's captions are drawn brighter than SDR white (see `CaptionFrame.hdrWhiteScale`).
+    private var hdr = false
     private var wordsPerLine = 3
     private var style: StyleConfig?
     private var frameSize = CGSize.zero
@@ -137,6 +139,12 @@ final class PreviewUIView: UIView {
         if self.suspended, !suspended { sceneKey = nil }
         self.suspended = suspended
         self.isPlaying = isPlaying
+        let isHDR = project.hdrTransfer != nil
+        if isHDR != hdr {
+            hdr = isHDR
+            overlay.wantsExtendedDynamicRangeContent = isHDR
+            sceneKey = nil  // draw it again in the new format
+        }
         style = project.styleConfig
         wordsPerLine = project.styleConfig.wordsPerLine
         guard let transcript = project.transcript, bounds.width > 0, bounds.height > 0 else { return }
@@ -187,7 +195,7 @@ final class PreviewUIView: UIView {
                 let active = await engine.activeCaption()
                 if !suspended {
                     caption = active
-                    if let frame { overlay.contents = frame.cgImage(using: ciContext) }
+                    if let frame { overlay.contents = hdr ? frame.hdrCGImage(using: ciContext) : frame.cgImage(using: ciContext) }
                 }
                 next = pendingTime
             }
@@ -213,11 +221,18 @@ final class PreviewUIView: UIView {
     }
 
     @objc private func panned(_ g: UIPanGestureRecognizer) {
-        guard let style, !isPlaying else { return }
+        guard let style else { return }
         switch g.state {
         case .began:
-            let p = framePoint(g.location(in: self))
-            guard let caption, caption.bounds.contains(x: p.x, y: p.y) else {
+            // A pan is recognised after the finger has moved a few points, so the touch began
+            // where it is now less what it has travelled.
+            let now = g.location(in: self)
+            let travelled = g.translation(in: self)
+            let landed = framePoint(CGPoint(x: now.x - travelled.x, y: now.y - travelled.y))
+            let region = CaptionGestures.dragRegion(
+                caption: caption?.bounds, position: (style.positionX, style.positionY), frame: frameSize,
+                pixelsPerPoint: frameSize.width / max(1, bounds.width))
+            guard region.contains(x: landed.x, y: landed.y) else {
                 g.state = .cancelled
                 return
             }

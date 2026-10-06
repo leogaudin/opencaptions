@@ -133,6 +133,27 @@ final class Counter { var value = 0 }
 
 // MARK: The editor model, on the real engine
 
+@Suite struct DragRegionTests {
+    let frame = CGSize(width: 1080, height: 1920)
+
+    @Test func aSmallCaptionCanBeGrabbedFromAFingerWidthAround() {
+        // A caption 60 x 24 px on a preview drawn at 3 px per point: a 20 x 8 pt target.
+        let small = FrameRect(x: 500, y: 900, width: 60, height: 24)
+        let region = CaptionGestures.dragRegion(caption: small, position: (0.5, 0.5), frame: frame, pixelsPerPoint: 3)
+        #expect(region.contains(x: 530, y: 912), "on the caption")
+        #expect(region.contains(x: 530 + 70, y: 912), "a little to the side (24 pt is 72 px)")
+        #expect(region.contains(x: 530, y: 912 + 70), "a little below")
+        #expect(!region.contains(x: 530 + 200, y: 912), "but not far away")
+        #expect(region.width >= 48 * 3 && region.height >= 48 * 3, "at least 48 pt each way")
+    }
+
+    @Test func withNothingShowingTheCaptionsPlaceStillCanBeGrabbed() {
+        let region = CaptionGestures.dragRegion(caption: nil, position: (0.5, 0.84), frame: frame, pixelsPerPoint: 3)
+        #expect(region.contains(x: 540, y: 0.84 * 1920))
+        #expect(!region.contains(x: 540, y: 0.2 * 1920))
+    }
+}
+
 @MainActor
 @Suite(.serialized) struct EditorModelTests {
     func make(offset: Int = 0, empty: Bool = false) throws -> (EditorModel, ProjectStore) {
@@ -164,6 +185,17 @@ final class Counter { var value = 0 }
         await model.flush()
         #expect(try store.load(model.project.id).transcript?.words.map(\.text) == ["one", "zwei", "dreivier", "four"])
         #expect(model.saveState == .saved)
+    }
+
+    @Test func renamingTrimsKeepsTheOldNameForABlankOneAndIsSaved() async throws {
+        let (model, store) = try make()
+        #expect(!model.rename(to: "   "), "blank is not a name")
+        #expect(!model.rename(to: "clip"), "unchanged is not a change")
+        #expect(model.project.title == "clip")
+        #expect(model.rename(to: "  Beach day \n"))
+        #expect(model.project.title == "Beach day")
+        await model.flush()
+        #expect(try store.load(model.project.id).title == "Beach day")
     }
 
     @Test func clearingAWordDeletesIt() async throws {

@@ -134,6 +134,19 @@ public final class EditorModel {
         }
     }
 
+    // MARK: Title
+
+    /// Renames the project. Whitespace around the name goes, and a blank name is not a name: the
+    /// old one stays. Returns whether it changed.
+    @discardableResult
+    public func rename(to title: String) -> Bool {
+        let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name != project.title else { return false }
+        project.title = name
+        changed()
+        return true
+    }
+
     // MARK: Style
 
     public func updateStyle(_ change: (inout StyleConfig) -> Void) {

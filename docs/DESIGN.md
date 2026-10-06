@@ -265,7 +265,16 @@ asks before a download.
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
 with BT.2020. Core Image puts sRGB white well above reference white in an HDR
 signal, so the captions are scaled by a measured factor per transfer function, and
-the tests read the output's luma to check they land at reference white.
+the tests read the output's luma to check where they land. They land at twice reference
+white (about 400 nits in PQ): at reference white itself they look like a dimmed copy of
+the text beside an HDR picture's highlights. The preview does the same for an HDR video
+(a half-float, extended-range layer scaled by the same `CaptionFrame.hdrWhiteScale`), so
+what is seen while editing is what is saved.
+
+**Dragging the caption.** The grab region is the caption's box made at least 48 pt across
+and 24 pt wider all round (`CaptionGestures.dragRegion`), measured from where the finger
+landed (a pan is only recognised after it has moved a little), and it works while the
+video plays.
 
 **Long jobs.** The app asks the user to keep it in the foreground and keeps the
 screen awake during a download, a transcription or a save. There is no background
