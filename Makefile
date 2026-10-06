@@ -108,6 +108,12 @@ ios-test:            ## Run the iOS logic tests on the Mac (no simulator)
 	$(IOS_ONLY)
 	@cd apps/ios/OpenCaptionsKit && swift test
 
+ios-ui-test: ios-project ## Drive the caption gestures on a simulator (a booted one, or IOS_SIM=<name>)
+	@cd apps/ios && xcodebuild test -project OpenCaptions.xcodeproj -scheme OpenCaptions \
+		-destination "platform=iOS Simulator,name=$${IOS_SIM:-iPhone 18 Pro}" -derivedDataPath Build/DerivedData \
+		-only-testing:OpenCaptionsUITests > Build/ui-test.log 2>&1; status=$$?; \
+		grep -E "Test Case .*(passed|failed)|error:|\*\* TEST" Build/ui-test.log; exit $$status
+
 ios-build: ios-project ## Build the iOS app for the simulator
 	$(IOS_ONLY)
 	@cd apps/ios && xcodebuild build -project OpenCaptions.xcodeproj -scheme OpenCaptions \

@@ -55,10 +55,13 @@ public final class EditorModel {
 
     // MARK: Saving
 
-    private func changed() {
+    /// Something changed: stamp it and schedule a save. The timeline's lines are worked out again only
+    /// when what changed can alter them (the words, how many go on a line, the timing offset): a drag
+    /// or a colour must not make the engine lay out the whole transcript again.
+    private func changed(affectsLines: Bool = true) {
         project.updatedAt = Date()
         autosaver?.schedule()
-        Task { await refreshLines() }
+        if affectsLines { Task { await refreshLines() } }
     }
 
     private func save() async {
@@ -142,7 +145,7 @@ public final class EditorModel {
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, name != project.title else { return false }
         project.title = name
-        changed()
+        changed(affectsLines: false)
         return true
     }
 
@@ -152,8 +155,9 @@ public final class EditorModel {
         var style = project.styleConfig
         change(&style)
         guard style != project.styleConfig else { return }
+        let affectsLines = style.wordsPerLine != project.styleConfig.wordsPerLine
         project.styleConfig = style
-        changed()
+        changed(affectsLines: affectsLines)
     }
 
     /// A binding to one style field, for a control.
@@ -174,6 +178,20 @@ public final class EditorModel {
         }
     }
 
+    /// What a drag and a pinch settle on, in one change: where the caption is (kept in the frame) and
+    /// how big (within the range a pinch and the slider reach). Either may be nil.
+    public func adjustCaption(position: (x: Double, y: Double)?, fontSize: Int?) {
+        updateStyle {
+            if let position {
+                $0.positionX = min(1, max(0, position.x))
+                $0.positionY = min(1, max(0, position.y))
+            }
+            if let fontSize {
+                $0.fontSize = Int(min(CaptionGestures.fontSizeRange.upperBound, max(CaptionGestures.fontSizeRange.lowerBound, Double(fontSize))))
+            }
+        }
+    }
+
     public func setPosition(x: Double, y: Double) {
         updateStyle {
             $0.positionX = min(1, max(0, x))
@@ -185,7 +203,7 @@ public final class EditorModel {
         let clamped = min(Self.offsetRangeMs.upperBound, max(Self.offsetRangeMs.lowerBound, ms))
         guard clamped != project.captionOffsetMs else { return }
         project.captionOffsetMs = clamped
-        changed()
+        changed()  // the offset moves every line
     }
 
     // MARK: Transcription

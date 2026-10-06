@@ -1,0 +1,96 @@
+{
+ "schema_version": 1,
+ "language": "en",
+ "language_detection": "manual",
+ "duration": 5.0,
+ "segments": [
+  {
+   "id": "s1",
+   "words": [
+    {
+     "text": "Welcome",
+     "start": 0.25,
+     "end": 0.556,
+     "confidence": 0.95
+    },
+    {
+     "text": "to",
+     "start": 0.596,
+     "end": 0.902,
+     "confidence": 0.95
+    },
+    {
+     "text": "OpenCaptions.",
+     "start": 0.942,
+     "end": 1.248,
+     "confidence": 0.95
+    }
+   ],
+   "start": 0.25,
+   "end": 1.248,
+   "text": "Welcome to OpenCaptions."
+  },
+  {
+   "id": "s2",
+   "words": [
+    {
+     "text": "Captions",
+     "start": 1.288,
+     "end": 1.593,
+     "confidence": 0.95
+    },
+    {
+     "text": "that",
+     "start": 1.633,
+     "end": 1.939,
+     "confidence": 0.95
+    },
+    {
+     "text": "you",
+     "start": 1.979,
+     "end": 2.285,
+     "confidence": 0.95
+    },
+    {
+     "text": "can",
+     "start": 2.325,
+     "end": 2.631,
+     "confidence": 0.95
+    },
+    {
+     "text": "edit,",
+     "start": 2.671,
+     "end": 2.977,
+     "confidence": 0.95
+    },
+    {
+     "text": "right",
+     "start": 3.017,
+     "end": 3.323,
+     "confidence": 0.95
+    },
+    {
+     "text": "on",
+     "start": 3.363,
+     "end": 3.668,
+     "confidence": 0.95
+    },
+    {
+     "text": "your",
+     "start": 3.708,
+     "end": 4.014,
+     "confidence": 0.95
+    },
+    {
+     "text": "phone.",
+     "start": 4.054,
+     "end": 4.36,
+     "confidence": 0.95
+    }
+   ],
+   "start": 1.288,
+   "end": 4.36,
+   "text": "Captions that you can edit, right on your phone."
+  }
+ ]
+}

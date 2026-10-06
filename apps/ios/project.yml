@@ -19,7 +19,33 @@ settings:
 packages:
   OpenCaptionsKit:
     path: OpenCaptionsKit
+schemes:
+  OpenCaptions:
+    build:
+      targets:
+        OpenCaptions: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - OpenCaptionsUITests
 targets:
+  OpenCaptionsUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: OpenCaptionsUITests
+        type: group
+    dependencies:
+      - target: OpenCaptions
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: org.leogaudin.opencaptions.uitests
+        TEST_TARGET_NAME: OpenCaptions
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: R32B9PWM4R
   OpenCaptions:
     type: application
     platform: iOS

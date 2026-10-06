@@ -211,6 +211,23 @@ final class Counter { var value = 0 }
         #expect(style.matches(preset), "and it still reads as that preset")
     }
 
+    @Test func aDragAndAPinchSettleInOneChangeWithinLimits() async throws {
+        let (model, _) = try make()
+        await model.settled()
+        let lines = model.lines
+        let before = model.project.updatedAt
+        model.adjustCaption(position: (x: 1.7, y: 0.25), fontSize: 999)
+        let style = model.project.styleConfig
+        #expect(style.positionX == 1 && style.positionY == 0.25, "kept in the frame")
+        #expect(Double(style.fontSize) == CaptionGestures.fontSizeRange.upperBound, "kept in the size range")
+        #expect(model.project.updatedAt > before)
+        model.adjustCaption(position: nil, fontSize: 5)
+        #expect(Double(model.project.styleConfig.fontSize) == CaptionGestures.fontSizeRange.lowerBound)
+        #expect(model.project.styleConfig.positionY == 0.25, "the part not given is left alone")
+        await model.settled()
+        #expect(model.lines == lines, "where and how big does not change what is on each line")
+    }
+
     @Test func renamingTrimsKeepsTheOldNameForABlankOneAndIsSaved() async throws {
         let (model, store) = try make()
         #expect(!model.rename(to: "   "), "blank is not a name")

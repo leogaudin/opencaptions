@@ -167,8 +167,7 @@ struct EditorView: View {
                 playback: playback, project: model.project, fonts: app.fontCache,
                 suspended: exporter?.isRunning == true,
                 onTogglePlay: { playback.toggle() },
-                onMove: { model.setPosition(x: $0, y: $1) },
-                onResize: { size in model.updateStyle { $0.fontSize = size } },
+                onAdjust: { position, size in model.adjustCaption(position: position, fontSize: size) },
                 onEditWord: { index in
                     playback.pause()
                     let text = model.transcript?.words[safe: index]?.text ?? ""
@@ -177,6 +176,15 @@ struct EditorView: View {
             )
             .aspectRatio(ratio, contentMode: .fit)
         }
+        #if DEBUG
+            // What the UI tests read: the caption's size and place, as an invisible label.
+            .overlay(alignment: .topLeading) {
+                let style = model.project.styleConfig
+                Text("size=\(style.fontSize) x=\(Int((style.positionX * 100).rounded())) y=\(Int((style.positionY * 100).rounded()))")
+                    .font(.system(size: 4)).opacity(0.02).allowsHitTesting(false)
+                    .accessibilityIdentifier("debug-style")
+            }
+        #endif
     }
 
     /// The timeline sits on a rounded dark panel that runs down under the home indicator.

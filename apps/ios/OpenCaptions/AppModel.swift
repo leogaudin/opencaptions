@@ -147,9 +147,15 @@ final class AppModel {
 
     #if DEBUG
         /// For screenshots on a simulator: `SIMCTL_CHILD_OC_SEED_VIDEO=<clip>` (and
-        /// `OC_SEED_TRANSCRIPT=<json>`) makes a project from host files on first launch.
+        /// `OC_SEED_TRANSCRIPT=<json>`) makes a project from host files on first launch (`OC_RESET`
+        /// first removes any others); the UI tests start the app this way.
         private func seedForScreenshots() async {
             let env = ProcessInfo.processInfo.environment
+            // OC_RESET: start from no projects, so a UI test always begins from the same place.
+            if env["OC_RESET"] != nil {
+                for project in projects { try? store.delete(project.id) }
+                reload()
+            }
             guard projects.isEmpty, let video = env["OC_SEED_VIDEO"],
                 var project = await importVideo(from: URL(fileURLWithPath: video), title: "Demo clip")
             else { return }

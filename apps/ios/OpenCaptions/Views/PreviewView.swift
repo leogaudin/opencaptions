@@ -14,23 +14,21 @@ struct PreviewView: UIViewRepresentable {
     /// Held while an export owns the engine.
     var suspended = false
     let onTogglePlay: () -> Void
-    let onMove: (_ x: Double, _ y: Double) -> Void
-    let onResize: (_ fontSize: Int) -> Void
+    /// Where a drag and a pinch settled (either may be nil), once the fingers are up.
+    let onAdjust: (_ position: (x: Double, y: Double)?, _ fontSize: Int?) -> Void
     let onEditWord: (_ index: Int) -> Void
 
     func makeUIView(context: Context) -> PreviewUIView {
         let view = PreviewUIView(player: playback.player)
         view.onTogglePlay = onTogglePlay
-        view.onMove = onMove
-        view.onResize = onResize
+        view.onAdjust = onAdjust
         view.onEditWord = onEditWord
         return view
     }
 
     func updateUIView(_ view: PreviewUIView, context: Context) {
         view.onTogglePlay = onTogglePlay
-        view.onMove = onMove
-        view.onResize = onResize
+        view.onAdjust = onAdjust
         view.onEditWord = onEditWord
         view.configure(project: project, fonts: fonts, suspended: suspended, isPlaying: playback.isPlaying)
     }
@@ -45,16 +43,18 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     nonisolated(unsafe) private var timeObserver: Any?
 
     var onTogglePlay: () -> Void = {}
-    var onMove: (Double, Double) -> Void = { _, _ in }
-    var onResize: (Int) -> Void = { _ in }
-    private var pinchStart: Int?
+    var onAdjust: ((x: Double, y: Double)?, Int?) -> Void = { _, _ in }
     var onEditWord: (Int) -> Void = { _ in }
 
-    // The scene the engine holds is rebuilt when any of this changes.
+    // The scene the engine holds is rebuilt when any of this changes. Cheap to compare, because this
+    // is asked on every update of the view: the project's own stamp stands for its words, and what is
+    // compared is never the transcript itself.
     private struct SceneKey: Equatable {
-        var transcript: Transcript
+        var project: UUID
+        var stamp: Date
         var style: StyleConfig
         var offsetMs: Int
+        var segments: Int
         var width: Int
         var height: Int
     }
@@ -73,6 +73,25 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var pendingTime: Double?
     private var dragStart: (x: Double, y: Double)?
     private var dragSerial = 0
+
+    /// A drag or a pinch in progress. The caption layer follows the fingers by being moved and scaled
+    /// (the picture the engine already drew, so nothing for the engine to do), and what the fingers
+    /// settle on is committed once, when they lift. Changing the style on every touch event made the
+    /// engine lay the whole transcript out again each time, while it was drawing the playing video.
+    private struct Live {
+        var offset = CGSize.zero  // points
+        var scale: CGFloat = 1
+        var pivot = CGPoint.zero  // points: the middle of the caption, which a pinch scales about
+        var position: (x: Double, y: Double)?
+        var fontSize: Int?
+    }
+    private var live = Live()
+    private var panning = false
+    private var pinching = false
+    private var pinchStartSize = 0
+    /// Committed, and waiting for the engine to draw the caption where it now is, to let go of the layer.
+    private var awaitingScene = false
+    private var resetAfterGeneration: Int?
     private let verticalGuide = CALayer()
     private let horizontalGuide = CALayer()
     private let haptic = UISelectionFeedbackGenerator()
@@ -84,6 +103,12 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         playerLayer = AVPlayerLayer(player: player)
         super.init(frame: .zero)
         backgroundColor = .black
+        #if DEBUG
+            // Found by the UI tests, which drive the gestures.
+            isAccessibilityElement = true
+            accessibilityIdentifier = "preview"
+            accessibilityLabel = "Video preview"
+        #endif
         playerLayer.videoGravity = .resizeAspect
         layer.addSublayer(playerLayer)
         overlay.contentsGravity = .resize
@@ -139,7 +164,9 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     override func layoutSubviews() {
         super.layoutSubviews()
         playerLayer.frame = bounds
-        overlay.frame = bounds
+        // Not `frame`, which means nothing while the layer is being transformed.
+        overlay.bounds = CGRect(origin: .zero, size: bounds.size)
+        overlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         verticalGuide.frame = CGRect(x: bounds.midX - 0.5, y: 0, width: 1, height: bounds.height)
         horizontalGuide.frame = CGRect(x: 0, y: bounds.midY - 0.5, width: bounds.width, height: 1)
         // The scene is sized to the view, so a new size lays it out again.
@@ -179,19 +206,22 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         frameSize = CGSize(width: width, height: height)
 
         let key = SceneKey(
-            transcript: transcript, style: project.styleConfig, offsetMs: project.captionOffsetMs,
-            width: width, height: height)
+            project: project.id, stamp: project.updatedAt, style: project.styleConfig,
+            offsetMs: project.captionOffsetMs, segments: transcript.segments.count, width: width, height: height)
         guard key != sceneKey else { return }
         sceneKey = key
         ready = false
         generation += 1
         let mine = generation
+        // The layer lets go once this scene, which carries what the fingers settled on, has drawn.
+        if awaitingScene { resetAfterGeneration = mine }
+        let style = project.styleConfig
+        let offsetMs = project.captionOffsetMs
         Task { [engine] in
-            await engine.ensureFont(key.style.font, cache: fonts)
+            await engine.ensureFont(style.font, cache: fonts)
             guard mine == generation else { return }
             try? await engine.setScene(
-                transcript: key.transcript, style: key.style, width: width, height: height,
-                captionOffsetMs: key.offsetMs)
+                transcript: transcript, style: style, width: width, height: height, captionOffsetMs: offsetMs)
             guard mine == generation else { return }
             ready = true
             requestDraw(at: player.currentTime().seconds)
@@ -216,6 +246,12 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
                 if !suspended {
                     caption = active
                     if let frame { overlay.contents = hdr ? frame.hdrCGImage(using: ciContext) : frame.cgImage(using: ciContext) }
+                    #if DEBUG
+                        if frame != nil { accessibilityValue = "drawn" }  // the UI tests wait for this
+                    #endif
+                    // Not before the engine has the committed scene: a frame from the old one would
+                    // let go early and the caption would jump back for a moment.
+                    if awaitingScene, ready, resetAfterGeneration == generation { clearLive() }
                 }
                 next = pendingTime
             }
@@ -240,16 +276,78 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         onEditWord(index)
     }
 
+    // MARK: Live drag and pinch
+
+    private func applyLive() {
+        // Scale about the caption's middle, then move: the order a finger expects.
+        var transform = CGAffineTransform(translationX: live.offset.width, y: live.offset.height)
+        transform = transform.translatedBy(x: live.pivot.x, y: live.pivot.y)
+            .scaledBy(x: live.scale, y: live.scale)
+            .translatedBy(x: -live.pivot.x, y: -live.pivot.y)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        overlay.setAffineTransform(transform)
+        CATransaction.commit()
+    }
+
+    private func clearLive() {
+        live = Live()
+        awaitingScene = false
+        resetAfterGeneration = nil
+        applyLive()
+    }
+
+    /// The middle of the caption as drawn, in points: where a pinch scales from.
+    private func captionCentre(_ style: StyleConfig) -> CGPoint {
+        if let box = caption?.bounds, frameSize.width > 0, frameSize.height > 0 {
+            return CGPoint(
+                x: (box.x + box.width / 2) * bounds.width / frameSize.width,
+                y: (box.y + box.height / 2) * bounds.height / frameSize.height)
+        }
+        return CGPoint(x: style.positionX * bounds.width, y: style.positionY * bounds.height)
+    }
+
+    /// When the last finger is up, commit what they settled on, once.
+    private func settleIfIdle() {
+        guard !panning, !pinching else { return }
+        dragSerial += 1
+        verticalGuide.isHidden = true
+        horizontalGuide.isHidden = true
+        let (position, size) = (live.position, live.fontSize)
+        guard position != nil || size != nil else {
+            clearLive()
+            return
+        }
+        awaitingScene = true
+        resetAfterGeneration = nil
+        onAdjust(position, size)
+        // A commit that changes nothing the engine draws brings no new scene: let go anyway.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            if awaitingScene, resetAfterGeneration == nil { clearLive() }
+        }
+    }
+
     @objc private func pinched(_ g: UIPinchGestureRecognizer) {
         guard let style else { return }
         switch g.state {
         case .began:
-            pinchStart = style.fontSize
+            if awaitingScene { clearLive() }
+            pinching = true
+            pinchStartSize = style.fontSize
+            live.pivot = captionCentre(style)
+            live.scale = 1
         case .changed:
-            guard let start = pinchStart else { return }
-            onResize(CaptionGestures.pinchedFontSize(from: start, scale: g.scale))
+            guard pinching, pinchStartSize > 0 else { return }
+            let size = CaptionGestures.pinchedFontSize(from: pinchStartSize, scale: g.scale)
+            live.fontSize = size
+            live.scale = CGFloat(size) / CGFloat(pinchStartSize)
+            applyLive()
         default:
-            pinchStart = nil
+            if pinching {
+                pinching = false
+                settleIfIdle()
+            }
         }
     }
 
@@ -269,32 +367,50 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
                 g.state = .cancelled
                 return
             }
+            if awaitingScene { clearLive() }
+            panning = true
             dragStart = (style.positionX, style.positionY)
         case .changed:
-            guard let start = dragStart else { return }
-            let raw = CaptionGestures.draggedPosition(
-                from: start, translation: g.translation(in: self).asSize, size: bounds.size)
-            // The pull is the engine's, measured against the unsnapped finger position, so
-            // the caption lets go as soon as the finger does. Only the newest answer is used.
-            dragSerial += 1
-            let serial = dragSerial
-            let size = bounds.size
-            Task { [engine] in
-                let snapped = await engine.snapPosition(
-                    x: raw.x, y: raw.y, width: size.width, height: size.height, threshold: Self.snapPull)
-                guard serial == dragSerial, dragStart != nil else { return }
+            guard panning, let start = dragStart else { return }
+            follow(translation: g.translation(in: self), from: start, final: false)
+        case .ended:
+            guard panning, let start = dragStart else { return }
+            follow(translation: g.translation(in: self), from: start, final: true)
+        default:
+            // Cancelled (a second finger joined, which pinches) or failed: what was reached stands.
+            if panning {
+                panning = false
+                dragStart = nil
+                settleIfIdle()
+            }
+        }
+    }
+
+    /// Puts the caption where a drag has taken it, through the engine's pull to the centre lines. The
+    /// answer comes back asynchronously and only the newest is used; the last one is what is committed.
+    private func follow(translation: CGPoint, from start: (x: Double, y: Double), final: Bool) {
+        let raw = CaptionGestures.draggedPosition(from: start, translation: translation.asSize, size: bounds.size)
+        dragSerial += 1
+        let serial = dragSerial
+        let size = bounds.size
+        Task { [engine] in
+            let snapped = await engine.snapPosition(
+                x: raw.x, y: raw.y, width: size.width, height: size.height, threshold: Self.snapPull)
+            if final {
+                panning = false
+                dragStart = nil
+            } else {
+                guard serial == dragSerial, panning else { return }
                 if (snapped.onX && verticalGuide.isHidden) || (snapped.onY && horizontalGuide.isHidden) {
                     haptic.selectionChanged()
                 }
                 verticalGuide.isHidden = !snapped.onX
                 horizontalGuide.isHidden = !snapped.onY
-                onMove(snapped.x, snapped.y)
             }
-        default:
-            dragStart = nil
-            dragSerial += 1
-            verticalGuide.isHidden = true
-            horizontalGuide.isHidden = true
+            live.position = (snapped.x, snapped.y)
+            live.offset = CGSize(width: (snapped.x - start.x) * size.width, height: (snapped.y - start.y) * size.height)
+            applyLive()
+            if final { settleIfIdle() }
         }
     }
 }
