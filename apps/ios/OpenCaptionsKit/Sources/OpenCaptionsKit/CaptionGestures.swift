@@ -52,5 +52,15 @@ public enum CaptionGestures {
             .map { caption.index * max(1, wordsPerLine) + $0 }
     }
 
-
+    /// The transform that shows a drag or a pinch in progress on the caption layer, which covers a
+    /// view of `size`: scaled by `scale` about `pivot` (the caption's middle, in the view's points,
+    /// from its top-left corner), then moved by `offset`. A layer's transform turns about the
+    /// layer's middle, not its corner, so the pivot is taken from there.
+    public static func liveTransform(offset: CGSize, scale: CGFloat, pivot: CGPoint, in size: CGSize) -> CGAffineTransform {
+        let p = CGPoint(x: pivot.x - size.width / 2, y: pivot.y - size.height / 2)
+        return CGAffineTransform(translationX: offset.width, y: offset.height)
+            .translatedBy(x: p.x, y: p.y)
+            .scaledBy(x: scale, y: scale)
+            .translatedBy(x: -p.x, y: -p.y)
+    }
 }

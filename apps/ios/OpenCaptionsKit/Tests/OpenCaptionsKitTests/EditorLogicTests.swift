@@ -80,6 +80,26 @@ final class Counter { var value = 0 }
 
     // MARK: Gestures
 
+    @Test func aPinchScalesAboutTheCaptionWhereverItIs() {
+        // A layer turns about its middle: a caption low on a landscape view must stay put as it
+        // grows, not drift towards the middle of the view.
+        let size = CGSize(width: 390, height: 220)
+        let caption = CGPoint(x: 120, y: 190)
+        // The layer's own coordinates are about its middle, as Core Animation applies them.
+        func shown(_ p: CGPoint, _ t: CGAffineTransform) -> CGPoint {
+            let local = CGPoint(x: p.x - size.width / 2, y: p.y - size.height / 2).applying(t)
+            return CGPoint(x: local.x + size.width / 2, y: local.y + size.height / 2)
+        }
+        let grown = CaptionGestures.liveTransform(offset: .zero, scale: 1.8, pivot: caption, in: size)
+        let centre = shown(caption, grown)
+        #expect(abs(centre.x - caption.x) < 0.001 && abs(centre.y - caption.y) < 0.001)
+        let edge = shown(CGPoint(x: caption.x + 10, y: caption.y), grown)
+        #expect(abs(edge.x - (caption.x + 18)) < 0.001, "and grows about it")
+        let moved = CaptionGestures.liveTransform(offset: CGSize(width: 30, height: -40), scale: 1.8, pivot: caption, in: size)
+        let there = shown(caption, moved)
+        #expect(abs(there.x - 150) < 0.001 && abs(there.y - 150) < 0.001, "then follows the fingers")
+    }
+
     @Test func aDragMovesTheCaptionByTheFractionOfThePreviewAndStaysInFrame() {
         let size = CGSize(width: 200, height: 400)
         let moved = CaptionGestures.draggedPosition(

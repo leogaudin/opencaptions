@@ -293,10 +293,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
 
     private func applyLive() {
         // Scale about the caption's middle, then move: the order a finger expects.
-        var transform = CGAffineTransform(translationX: live.offset.width, y: live.offset.height)
-        transform = transform.translatedBy(x: live.pivot.x, y: live.pivot.y)
-            .scaledBy(x: live.scale, y: live.scale)
-            .translatedBy(x: -live.pivot.x, y: -live.pivot.y)
+        let transform = CaptionGestures.liveTransform(
+            offset: live.offset, scale: live.scale, pivot: live.pivot, in: overlay.bounds.size)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         overlay.setAffineTransform(transform)
