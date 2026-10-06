@@ -13,6 +13,7 @@ struct SaveOptionsSheet: View {
     @AppStorage("export.resolution") private var resolution = ExportOptions.Resolution.original
     @AppStorage("export.keepHDR") private var keepHDR = true
     @State private var contentHeight: CGFloat = 520
+    @State private var freeBytes = DiskSpace.available()
 
     private var isHDR: Bool { project.hdrTransfer != nil }
     private var options: ExportOptions {
@@ -36,6 +37,7 @@ struct SaveOptionsSheet: View {
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
                 Button("Save") { save(options) }.buttonStyle(PrimaryButtonStyle())
+                    .disabled(!fits).opacity(fits ? 1 : 0.4)
             }
         }
         .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
@@ -78,11 +80,31 @@ struct SaveOptionsSheet: View {
         }
     }
 
+    /// Whether the video, as estimated, fits in what the phone has free.
+    private var fits: Bool {
+        options.estimatedBytes(for: project).map { DiskSpace.fits($0, available: freeBytes) } ?? true
+    }
+
     private var estimate: some View {
+        VStack(spacing: 6) {
+            estimateRow
+            if !fits, let free = freeBytes {
+                Text("There is not enough room: this needs about \(Self.size(options.estimatedBytes(for: project) ?? 0)) and the phone has \(Self.size(free)) free. Choose a smaller size or quality, or free up space.")
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.danger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private static func size(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
+    private var estimateRow: some View {
         HStack {
             Label("About", systemImage: "internaldrive").font(.system(size: 13, weight: .medium))
             Spacer()
-            Text(options.estimatedBytes(for: project).map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "")
+            Text(options.estimatedBytes(for: project).map(Self.size) ?? "")
                 .font(.system(size: 15, weight: .bold).monospacedDigit())
         }
         .foregroundStyle(Theme.textSecondary)

@@ -114,6 +114,13 @@ import Testing
         #expect(store.list().map(\.id) == [p.id])
     }
 
+    @Test func aFileFitsOnlyWithRoomToSpare() {
+        #expect(DiskSpace.fits(1_000_000_000, available: 2_000_000_000))
+        #expect(!DiskSpace.fits(1_000_000_000, available: 1_200_000_000), "no margin left")
+        #expect(DiskSpace.fits(5_000_000_000, available: nil), "unknown: try")
+        #expect((DiskSpace.available() ?? 1) > 0)
+    }
+
     @Test func aFailedImportLeavesNothingBehind() async throws {
         let store = store()
         let notVideo = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).txt")

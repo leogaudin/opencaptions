@@ -277,7 +277,7 @@ third smaller), the size (original, or 4K, 1080p, 720p by the short side, never 
 source), the quality (smaller, balanced, best: bits per pixel, with HEVC needing two thirds of
 H.264's) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
 ordinary SDR video before the captions go on. The choice is remembered, and an estimate of the
-size is shown. Everything the options decide is part of the file's name (`ExportKey`).
+size is shown, and when it would not fit in the free space Save is disabled with a message saying so. Everything the options decide is part of the file's name (`ExportKey`). An HDR export is tagged HDR and carries no more: the hardware encoder's automatic Dolby Vision metadata is switched off.
 
 **Dragging the caption.** The grab region is the caption's box made at least 48 pt across
 and 24 pt wider all round (`CaptionGestures.dragRegion`), measured from where the finger
