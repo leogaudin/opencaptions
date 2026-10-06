@@ -2,12 +2,11 @@
  * Built-in style presets shown in the Editor's preset picker. They are data, in
  * `presets.json`, so the iOS app offers the same ones.
  *
- *   1. Soft Pill    — the application default: subtle, pill behind the line
- *   2. Purple Punch — white words, the spoken one boxed in violet
- *   3. Hot Take     — the same idea loud: display face, oversized, hot pink
- *
- * The last two use `highlight_box`, which marks the active word with a filled box
- * instead of recolouring it, so every word stays legible at full contrast.
+ * The first, Classic, is the application default and equals the API's `StyleConfig()`.
+ * The rest are looks of the kind short-form editors offer (a boxed word, a neon glow, a
+ * display face at the middle of the frame...). Presets using `highlight_box` mark the
+ * active word with a filled box instead of recolouring it, so every word stays legible
+ * at full contrast.
  */
 import presets from "@/lib/presets.json";
 import type { StyleConfig } from "@/types";

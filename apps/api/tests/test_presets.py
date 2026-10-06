@@ -27,12 +27,19 @@ def _presets() -> list[dict[str, object]]:
 
 def test_every_preset_is_a_valid_style() -> None:
     presets = _presets()
-    assert [p["id"] for p in presets][0] == "builtin:soft-pill"
+    assert [p["id"] for p in presets][0] == "builtin:classic"
     assert len({p["id"] for p in presets}) == len(presets)
     for p in presets:
         assert StyleConfig.model_validate(p["config"]).model_dump() == p["config"], p["id"]
 
 
+def test_the_cheap_looking_presets_are_gone_and_purple_punch_stays() -> None:
+    ids = {p["id"] for p in _presets()}
+    assert "builtin:purple-punch" in ids
+    assert not ids & {"builtin:soft-pill", "builtin:hot-take"}
+    assert len(ids) >= 15
+
+
 def test_the_default_preset_is_the_apis_default_style() -> None:
-    soft_pill = _presets()[0]["config"]
-    assert soft_pill == StyleConfig().model_dump()
+    classic = _presets()[0]["config"]
+    assert classic == StyleConfig().model_dump()

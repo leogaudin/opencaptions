@@ -88,7 +88,7 @@ export type Animation = "word_highlight" | "highlight_box" | "word_pop" | "word_
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";
 
-/** The application default: the first preset (Soft Pill), which matches the API's defaults. */
+/** The application default: the first preset (Classic), which matches the API's defaults. */
 export const defaultStyle = presets[0]!.config as StyleConfig;
 
 /** WebSocket message envelope. Not part of the OpenAPI spec. */
