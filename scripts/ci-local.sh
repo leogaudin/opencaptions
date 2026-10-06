@@ -184,12 +184,15 @@ fi
 
 # --- Images (including the GPU target that publish-gpu builds) -------------
 step "Building images (api, api GPU target, engine, web)"
+# Chained with && because `set -e` does not apply inside a subshell on the left of `||`:
+# written as separate lines, only the last build's status would count and a failed
+# earlier image would pass the gate.
 (
-  cd "$WORKTREE"
-  docker build -q --target runtime apps/api >/dev/null
-  docker build -q --target runtime-gpu apps/api >/dev/null
-  docker build -q apps/engine >/dev/null
-  docker build -q --build-context engine=apps/engine apps/web >/dev/null
+  cd "$WORKTREE" &&
+    docker build -q --target runtime apps/api >/dev/null &&
+    docker build -q --target runtime-gpu apps/api >/dev/null &&
+    docker build -q apps/engine >/dev/null &&
+    docker build -q --build-context engine=apps/engine apps/web >/dev/null
 ) || fail "image builds failed"
 
 # --- End-to-end against a disposable stack ---------------------------------
