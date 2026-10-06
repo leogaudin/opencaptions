@@ -54,7 +54,6 @@ test.describe("Transcribing on another OpenCaptions server", () => {
       buffer: Buffer.from("intercepted"),
     });
     await page.locator("select#provider").selectOption("opencaptions");
-    await expect(page.getByText("gpu.example.org").first()).toBeVisible();
     await expect(page.getByText(/your audio will be sent to gpu\.example\.org/i)).toBeVisible();
     await page.getByTestId("submit").click();
     await expect.poll(() => bodies.length).toBe(1);
