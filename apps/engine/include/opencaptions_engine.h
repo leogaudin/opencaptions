@@ -65,7 +65,8 @@ uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per
 uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint32_t edge,
                         float time, int32_t offset_ms);
 /* Sets the text of one word, keeping its timing; empty text removes the word, text
- * of several words fails ("one word at a time"). Leaves the edited transcript. */
+ * of several words replaces it with one word each, sharing its span in proportion to
+ * their lengths. Leaves the edited transcript. */
 uint32_t oc_set_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint8_t *text_ptr,
                      size_t text_len);
 

@@ -26,7 +26,7 @@ struct StylePanel: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    LabeledSlider("Size", value: intBinding(\.fontSize), range: 20...120, step: 1)
+                    LabeledSlider("Size", value: intBinding(\.fontSize), range: CaptionGestures.fontSizeRange, step: 1)
                     Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
                     Row("Highlight color") { ColorPicker("Highlight color", selection: color(\.highlightColor), supportsOpacity: false).labelsHidden() }
                     LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)

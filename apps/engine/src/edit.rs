@@ -97,20 +97,52 @@ pub fn retime(t: &Transcript, index: usize, edge: Edge, time: f32, offset_ms: i3
 }
 
 /// Sets the text of word `index`, keeping its timing and every other field.
-/// Empty text removes the word (and a segment left with none). Text with more
-/// than one word is refused: splitting a word would invent timings.
+/// Empty text removes the word (and a segment left with none). Text of several
+/// words replaces the word with one per word, sharing its span in proportion to
+/// their lengths (a word typed in has no recorded timing, so this is an estimate
+/// that stays inside the original span and can be retimed afterwards).
 pub fn set_word(t: &Transcript, index: usize, text: &str) -> Result<Transcript, String> {
     let mut entries = flatten(t);
     if index >= entries.len() {
         return Err(format!("no word at index {index}"));
     }
-    let text = text.trim();
-    if text.is_empty() {
-        entries.remove(index);
-    } else if text.split_whitespace().count() > 1 {
-        return Err("one word at a time".into());
-    } else {
-        entries[index].1.text = text.into();
+    let pieces: Vec<&str> = text.split_whitespace().collect();
+    match pieces.as_slice() {
+        [] => {
+            entries.remove(index);
+        }
+        [only] => entries[index].1.text = (*only).into(),
+        several => {
+            let (segment, original) = entries[index].clone();
+            let weights: Vec<f32> = several
+                .iter()
+                .map(|p| p.chars().count().max(1) as f32)
+                .collect();
+            let total: f32 = weights.iter().sum();
+            let span = original.end - original.start;
+            let mut at = original.start;
+            let split: Vec<(usize, Word)> = several
+                .iter()
+                .zip(&weights)
+                .enumerate()
+                .map(|(i, (piece, weight))| {
+                    let end = if i + 1 == several.len() {
+                        original.end
+                    } else {
+                        at + span * weight / total
+                    };
+                    let word = Word {
+                        text: (*piece).into(),
+                        start: at,
+                        end,
+                        rest: original.rest.clone(),
+                    };
+                    at = end;
+                    (segment, word)
+                })
+                .collect();
+            entries.splice(index..=index, split);
+        }
     }
     Ok(rebuild(t, entries))
 }
@@ -319,11 +351,23 @@ mod tests {
     }
 
     #[test]
-    fn set_word_refuses_several_words_and_missing_indexes() {
-        assert_eq!(
-            set_word(&transcript(), 0, "uno dos").unwrap_err(),
-            "one word at a time"
-        );
+    fn set_word_with_several_words_shares_the_span_in_proportion() {
+        // "one" spans 0.5..0.9: "a bbbb" (1 and 4 letters) gets a fifth and four fifths.
+        let t = set_word(&transcript(), 0, "  a   bbbb ").unwrap();
+        let w = words(&t);
+        assert_eq!(w.len(), 5);
+        assert_eq!((w[0].0.as_str(), w[0].1), ("a", 0.5));
+        assert!((w[0].2 - 0.58).abs() < 1e-5, "a fifth of 0.4: {}", w[0].2);
+        assert_eq!((w[1].0.as_str(), w[1].1), ("bbbb", w[0].2));
+        assert_eq!(w[1].2, 0.9, "the last one ends where the word did");
+        assert_eq!(w[2].0, "two", "the rest follows untouched");
+        assert_eq!(t.segments[0].rest["text"], "a bbbb two");
+        let v = serde_json::to_value(&t).unwrap();
+        assert_eq!(v["segments"][0]["words"][1]["confidence"], 0.9f32, "fields kept");
+    }
+
+    #[test]
+    fn set_word_refuses_missing_indexes() {
         assert!(set_word(&transcript(), 4, "x").is_err());
     }
 

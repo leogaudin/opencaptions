@@ -17,7 +17,7 @@ import {
   SelectField,
   SliderField,
 } from "@/components/StyleFields";
-import { BUILTIN_PRESETS, presetMatches } from "@/lib/presets";
+import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { Animation, CaptionBackground, StyleConfig } from "@/types";
@@ -47,7 +47,7 @@ export function StyleControls() {
             <button
               key={p.id}
               type="button"
-              onClick={() => setStyle(p.config)}
+              onClick={() => setStyle(presetLook(p.config))}
               data-testid={`preset-${p.id}`}
               className={`group relative rounded-md border px-2 py-3 text-xs font-medium transition-colors ${
                 active

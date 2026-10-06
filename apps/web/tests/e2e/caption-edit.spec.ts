@@ -52,12 +52,15 @@ test.describe("Editing a word on the preview", () => {
     expect([first?.start, first?.end]).toEqual([0, 1]);
   });
 
-  test("it is one word at a time: spaces are dropped as they are typed", async () => {
+  test("typing several words splits the word, sharing its time", async () => {
     await editFirstWord();
     await input.fill("hello world");
-    await expect(input).toHaveValue("helloworld");
+    await expect(input).toHaveValue("hello world");
     await input.press("Enter");
-    await expect.poll(savedWords).toEqual(["helloworld", "beta"]);
+    await expect.poll(savedWords).toEqual(["hello", "world", "beta"]);
+    const [hello, world] = (saved().transcript as Transcript).segments[0]?.words ?? [];
+    expect([hello?.start, world?.end]).toEqual([0, 1]);
+    expect(hello?.end).toBe(world?.start);
   });
 
   test("Escape cancels", async ({ page }) => {

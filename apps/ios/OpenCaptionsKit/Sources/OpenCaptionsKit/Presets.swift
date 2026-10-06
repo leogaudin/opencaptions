@@ -25,12 +25,14 @@ extension StyleConfig {
     /// Whether this style is the one a preset defines, so the picker can highlight it.
     /// Compares only what a preset defines as its identity (stroke and shadow can be
     /// tweaked without leaving it), as the web does.
+    /// Whether this style is the preset's look. Where the caption is and how big it is belong to
+    /// the video, not to a look, so they are not compared (see `EditorModel.apply`).
     public func matches(_ preset: Preset) -> Bool {
         let p = preset.config
-        return font == p.font && fontSize == p.fontSize && textColor == p.textColor
+        return font == p.font && textColor == p.textColor
             && highlightColor == p.highlightColor && background == p.background
             && backgroundColor == p.backgroundColor
-            && abs(backgroundOpacity - p.backgroundOpacity) < 0.001 && positionX == p.positionX
-            && positionY == p.positionY && animation == p.animation && wordsPerLine == p.wordsPerLine
+            && abs(backgroundOpacity - p.backgroundOpacity) < 0.001
+            && animation == p.animation && wordsPerLine == p.wordsPerLine
     }
 }

@@ -122,9 +122,9 @@ extension EngineSuites {
             let removed = try await engine.setWord(t, index: 1, text: "")
             #expect(removed.words.map(\.text) == ["one", "three", "four"])
             #expect(removed.segments[0].text == "one")
-            await #expect(throws: EngineError(message: "one word at a time")) {
-                try await engine.setWord(t, index: 0, text: "uno dos")
-            }
+            let split = try await engine.setWord(t, index: 0, text: "uno dos")
+            #expect(split.words.map(\.text) == ["uno", "dos", "two", "three", "four"], "several words split one")
+            #expect(split.words[0].start == t.words[0].start && split.words[1].end == t.words[0].end)
             await #expect(throws: EngineError.self) {
                 try await engine.setWord(t, index: 9, text: "x")
             }

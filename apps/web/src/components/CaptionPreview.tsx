@@ -61,7 +61,7 @@ interface Editing {
 /**
  * Draws the engine's overlay for whatever frame the video is showing, and lets
  * the caption be dragged to reposition it and a word double-clicked to edit it
- * (one word at a time; clearing it deletes the word).
+ * (several words split it; clearing it deletes the word).
  * Both read the engine's own geometry, so the hit targets match the pixels.
  */
 function CaptionCanvas({
@@ -286,7 +286,7 @@ function CaptionCanvas({
           data-testid="caption-word-edit"
           value={editing.text}
           // One word at a time: spaces (typed or pasted) are dropped, never split on.
-          onChange={(e) => setEditing({ ...editing, text: e.target.value.replace(/\s+/g, "") })}
+          onChange={(e) => setEditing({ ...editing, text: e.target.value })}
           onBlur={() => finishEdit(true)}
           onKeyDown={(e) => {
             if (e.key === "Enter") finishEdit(true);

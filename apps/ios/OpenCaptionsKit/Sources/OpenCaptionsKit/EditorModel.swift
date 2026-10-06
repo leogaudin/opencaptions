@@ -119,9 +119,10 @@ public final class EditorModel {
         await refreshLines()
     }
 
-    /// Sets one word's text (spaces are dropped; empty deletes the word).
+    /// Sets one word's text. Empty deletes the word; several words replace it with one each, sharing
+    /// its time (the engine's rule).
     public func setWord(index: Int, text: String) {
-        let word = CaptionGestures.sanitizedWord(text)
+        let word = CaptionGestures.normalizedWord(text)
         let engine = engine
         enqueue { try await engine.setWord($0, index: index, text: word) }
     }
@@ -164,8 +165,15 @@ public final class EditorModel {
             set: { value in self.updateStyle { $0[keyPath: keyPath] = value } })
     }
 
+    /// Applies a preset's look. The position and the size stay as the user set them: a preset is
+    /// a look (font, colours, background, animation), and changing it must not move the caption
+    /// the user placed or resize what they sized.
     public func apply(_ preset: Preset) {
-        updateStyle { $0 = preset.config }
+        updateStyle {
+            let (x, y, size) = ($0.positionX, $0.positionY, $0.fontSize)
+            $0 = preset.config
+            ($0.positionX, $0.positionY, $0.fontSize) = (x, y, size)
+        }
     }
 
     public func setPosition(x: Double, y: Double) {

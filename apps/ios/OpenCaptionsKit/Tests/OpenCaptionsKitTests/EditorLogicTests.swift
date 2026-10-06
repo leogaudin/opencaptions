@@ -101,9 +101,9 @@ final class Counter { var value = 0 }
         #expect(CaptionGestures.wordIndex(at: CGPoint(x: 45, y: 5), in: caption, wordsPerLine: 3) == nil, "the gap")
     }
 
-    @Test func aTypedWordHasNoSpaces() {
-        #expect(CaptionGestures.sanitizedWord(" hello world\n") == "helloworld")
-        #expect(CaptionGestures.sanitizedWord("   ") == "")
+    @Test func aTypedWordKeepsItsWordsOneSpaceApart() {
+        #expect(CaptionGestures.normalizedWord(" hello \n  world\n") == "hello world")
+        #expect(CaptionGestures.normalizedWord("   ") == "")
     }
 
     // MARK: Fonts
@@ -132,6 +132,17 @@ final class Counter { var value = 0 }
 }
 
 // MARK: The editor model, on the real engine
+
+@Suite struct PinchTests {
+    @Test func aPinchScalesTheSizeWithinTheRange() {
+        #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 1) == 48)
+        #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 1.5) == 72)
+        #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 0.5) == 24)
+        #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 0.1) == 20, "not smaller than the range")
+        #expect(CaptionGestures.pinchedFontSize(from: 100, scale: 9) == 160, "not larger")
+        #expect(CaptionGestures.pinchedFontSize(from: 48, scale: .nan) == 48)
+    }
+}
 
 @Suite struct DragRegionTests {
     let frame = CGSize(width: 1080, height: 1920)
@@ -179,12 +190,32 @@ final class Counter { var value = 0 }
     @Test func aWordEditIsTheEnginesAndIsSavedAfterAQuietMoment() async throws {
         let (model, store) = try make()
         model.setWord(index: 1, text: " zwei ")
-        model.setWord(index: 2, text: "drei vier")  // spaces dropped, as typed
+        model.setWord(index: 2, text: "drei  vier")  // two words: the word is split in two
         await model.settled()
-        #expect(model.transcript?.words.map(\.text) == ["one", "zwei", "dreivier", "four"])
+        #expect(model.transcript?.words.map(\.text) == ["one", "zwei", "drei", "vier", "four"])
+        let (drei, vier) = (try #require(model.transcript?.words[2]), try #require(model.transcript?.words[3]))
+        #expect(drei.end == vier.start && vier.start > drei.start, "they share the original word's span, in order")
         await model.flush()
-        #expect(try store.load(model.project.id).transcript?.words.map(\.text) == ["one", "zwei", "dreivier", "four"])
+        #expect(try store.load(model.project.id).transcript?.words.map(\.text) == ["one", "zwei", "drei", "vier", "four"])
         #expect(model.saveState == .saved)
+    }
+
+    @Test func aPresetChangesTheLookButNotWhereOrHowBigTheCaptionIs() async throws {
+        let (model, _) = try make()
+        model.setPosition(x: 0.3, y: 0.2)
+        model.updateStyle { $0.fontSize = 77 }
+        var look = try Repo.defaultStyle()
+        look.font = "Anton"
+        look.highlightColor = "#123456"
+        look.fontSize = 104
+        look.positionX = 0.5
+        look.positionY = 0.9
+        let preset = Preset(id: "p", name: "P", config: look)
+        model.apply(preset)
+        let style = model.project.styleConfig
+        #expect(style.font == "Anton" && style.highlightColor == "#123456", "the look")
+        #expect(style.fontSize == 77 && style.positionX == 0.3 && style.positionY == 0.2, "not the placement")
+        #expect(style.matches(preset), "and it still reads as that preset")
     }
 
     @Test func renamingTrimsKeepsTheOldNameForABlankOneAndIsSaved() async throws {
@@ -231,13 +262,14 @@ final class Counter { var value = 0 }
         #expect(model.project.captionOffsetMs == -2000)
     }
 
-    @Test func aDragKeepsThePositionInFrameAndAPresetReplacesTheStyle() throws {
+    @Test func aDragKeepsThePositionInFrame() throws {
         let (model, _) = try make()
         model.setPosition(x: 1.4, y: -0.2)
         #expect(model.project.styleConfig.positionX == 1 && model.project.styleConfig.positionY == 0)
         let presets = try Presets.load(from: Repo.presets)
         model.apply(presets[1])
-        #expect(model.project.styleConfig == presets[1].config)
+        #expect(model.project.styleConfig.matches(presets[1]))
+        #expect(model.project.styleConfig.positionX == 1 && model.project.styleConfig.positionY == 0)
     }
 
     struct Stub: Transcriber {

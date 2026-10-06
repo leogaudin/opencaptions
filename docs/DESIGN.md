@@ -139,7 +139,7 @@ mounted at a time, so there is one `<video>` and one engine whatever the width.
 
 - **Preview.** The video with the engine's frame drawn over it, fitted to its
   panel. While paused, the caption block can be dragged (it sets `position_x/y`)
-  and a word double-clicked to edit: one word at a time, an empty edit deletes it.
+  and a word double-clicked to edit: several words split it (sharing its time), an empty edit deletes it.
   A tap on the picture plays or pauses.
 - **Timeline.** A ruler over a video track and a caption track, with the
   playhead across them. Caption blocks are the engine's `lines`; a selected block's
@@ -228,7 +228,7 @@ part of `make ci`: it has its own macOS workflow, and nobody without a Mac is bl
 **The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
 frame on a layer above it, redrawn on the player's clock; a tap plays or pauses, and
 while paused a drag moves the caption (snapping to the video's centre lines with a
-guide and a haptic tick, by the engine's rule) and a double-tap opens a card to edit one word (its field takes no spaces: a word is one word). The timeline
+guide and a haptic tick, by the engine's rule) and a double-tap opens a card to edit one word (the keyboard opens with the word selected; several words split it, sharing its time), and two fingers pinch the font size. The timeline
 has a ruler over a video track and a caption track, a playhead, pinch zoom around the
 pinch, and edge handles that retime through the engine. A finger dragging anywhere on it
 scrolls it, a tap seeks, and the playhead's round handle is what moves the playhead by

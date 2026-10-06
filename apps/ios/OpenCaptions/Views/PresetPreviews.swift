@@ -27,7 +27,13 @@ final class PresetPreviews {
         let (width, height) = (540, 960)
         let crop = CGRect(x: 90, y: (height - 200) / 2, width: 360, height: 200)  // a closer look: 1.5x
         let frames = await engine.samples(
-            of: missing.map(\.config), words: ["Make", "it", "pop"], width: width, height: height)
+            of: missing.map { preset in
+                // The same size for every tile: applying a preset keeps the user's size, so the
+                // tiles compare looks, not how big each preset happened to be.
+                var look = preset.config
+                look.fontSize = 64
+                return look
+            }, words: ["Make", "it", "pop"], width: width, height: height)
         for (preset, frame) in zip(missing, frames) {
             guard let full = frame?.cgImage(using: context),
                 let tile = full.cropping(to: crop)

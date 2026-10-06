@@ -16,6 +16,16 @@ public enum CaptionGestures {
         )
     }
 
+    /// The font sizes a pinch and the size slider can reach.
+    public static let fontSizeRange = 20.0...160.0
+
+    /// The font size after a pinch of `scale` (1 = no change) from `start`.
+    public static func pinchedFontSize(from start: Int, scale: Double) -> Int {
+        guard scale.isFinite, scale > 0 else { return start }
+        let size = (Double(start) * scale).rounded()
+        return Int(min(fontSizeRange.upperBound, max(fontSizeRange.lowerBound, size)))
+    }
+
     /// Where a finger may land to drag the caption, in frame pixels: the caption's own box, or
     /// where it would be when nothing is showing, made at least `minimumPoints` across and a
     /// `slopPoints` wider all round, so a small caption can be grabbed (a finger is not a cursor).
@@ -42,8 +52,9 @@ public enum CaptionGestures {
             .map { caption.index * max(1, wordsPerLine) + $0 }
     }
 
-    /// A word as typed in the edit field: one word at a time, so spaces are dropped.
-    public static func sanitizedWord(_ text: String) -> String {
-        text.filter { !$0.isWhitespace }
+    /// A word as typed in the edit field: runs of whitespace become one space and the ends are
+    /// trimmed. Several words in it are kept, and the engine shares the word's time between them.
+    public static func normalizedWord(_ text: String) -> String {
+        text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 }

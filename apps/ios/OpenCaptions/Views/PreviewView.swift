@@ -15,12 +15,14 @@ struct PreviewView: UIViewRepresentable {
     var suspended = false
     let onTogglePlay: () -> Void
     let onMove: (_ x: Double, _ y: Double) -> Void
+    let onResize: (_ fontSize: Int) -> Void
     let onEditWord: (_ index: Int) -> Void
 
     func makeUIView(context: Context) -> PreviewUIView {
         let view = PreviewUIView(player: playback.player)
         view.onTogglePlay = onTogglePlay
         view.onMove = onMove
+        view.onResize = onResize
         view.onEditWord = onEditWord
         return view
     }
@@ -28,6 +30,7 @@ struct PreviewView: UIViewRepresentable {
     func updateUIView(_ view: PreviewUIView, context: Context) {
         view.onTogglePlay = onTogglePlay
         view.onMove = onMove
+        view.onResize = onResize
         view.onEditWord = onEditWord
         view.configure(project: project, fonts: fonts, suspended: suspended, isPlaying: playback.isPlaying)
     }
@@ -43,6 +46,8 @@ final class PreviewUIView: UIView {
 
     var onTogglePlay: () -> Void = {}
     var onMove: (Double, Double) -> Void = { _, _ in }
+    var onResize: (Int) -> Void = { _ in }
+    private var pinchStart: Int?
     var onEditWord: (Int) -> Void = { _ in }
 
     // The scene the engine holds is rebuilt when any of this changes.
@@ -107,7 +112,10 @@ final class PreviewUIView: UIView {
         single.require(toFail: double)
         let pan = UIPanGestureRecognizer(target: self, action: #selector(panned))
         pan.maximumNumberOfTouches = 1
-        [single, double, pan].forEach(addGestureRecognizer)
+        // Two fingers anywhere on the video change the font size: pinching out is bigger. It
+        // works while the video plays, like the drag.
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinched))
+        [single, double, pan, pinch].forEach(addGestureRecognizer)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -218,6 +226,19 @@ final class PreviewUIView: UIView {
                 at: framePoint(g.location(in: self)), in: caption, wordsPerLine: wordsPerLine)
         else { return }
         onEditWord(index)
+    }
+
+    @objc private func pinched(_ g: UIPinchGestureRecognizer) {
+        guard let style else { return }
+        switch g.state {
+        case .began:
+            pinchStart = style.fontSize
+        case .changed:
+            guard let start = pinchStart else { return }
+            onResize(CaptionGestures.pinchedFontSize(from: start, scale: g.scale))
+        default:
+            pinchStart = nil
+        }
     }
 
     @objc private func panned(_ g: UIPanGestureRecognizer) {

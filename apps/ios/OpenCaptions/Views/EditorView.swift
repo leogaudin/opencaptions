@@ -157,6 +157,7 @@ struct EditorView: View {
                 suspended: exporter?.isRunning == true,
                 onTogglePlay: { playback.toggle() },
                 onMove: { model.setPosition(x: $0, y: $1) },
+                onResize: { size in model.updateStyle { $0.fontSize = size } },
                 onEditWord: { index in
                     playback.pause()
                     let text = model.transcript?.words[safe: index]?.text ?? ""
@@ -274,13 +275,14 @@ private struct WordEditCard: View {
     let save: () -> Void
     let cancel: () -> Void
     @FocusState private var focused: Bool
+    @State private var selection: TextSelection?
 
     var body: some View {
         ZStack(alignment: .top) {
             Color.black.opacity(0.5).ignoresSafeArea().onTapGesture(perform: cancel)
             VStack(alignment: .leading, spacing: 14) {
                 Text("Edit word").font(.system(size: 18, weight: .heavy))
-                TextField("Word", text: $text)
+                TextField("Word", text: $text, selection: $selection)
                     .focused($focused)
                     .submitLabel(.done)
                     .onSubmit(save)
@@ -289,13 +291,7 @@ private struct WordEditCard: View {
                     .font(.system(size: 22, weight: .bold))
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
-                    // A word is one word: a space is dropped the moment it is typed or pasted,
-                    // not accepted and then removed on save.
-                    .onChange(of: text) { _, new in
-                        let clean = CaptionGestures.sanitizedWord(new)
-                        if clean != new { text = clean }
-                    }
-                Text("One word at a time. Clear it to delete the word.")
+                Text("Type several words to split it in two. Clear it to delete the word.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                 HStack(spacing: 10) {
                     Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -306,7 +302,14 @@ private struct WordEditCard: View {
             .padding(.horizontal, 18)
             .padding(.top, 76)
         }
-        .onAppear { focused = true }
+        .onAppear {
+            // The keyboard opens with the word selected, so typing replaces it.
+            focused = true
+            Task {
+                try? await Task.sleep(for: .milliseconds(80))
+                selection = TextSelection(range: text.startIndex..<text.endIndex)
+            }
+        }
     }
 }
 

@@ -119,7 +119,8 @@ export interface CaptionEditor {
   ): Transcript;
   /**
    * Sets the text of one word, keeping its timing. Empty text removes the word;
-   * text of several words is refused, since splitting a word would invent timings.
+   * text of several words replaces it with one word each, sharing its span in
+   * proportion to their lengths.
    */
   setWord(t: Transcript, index: number, text: string): Transcript;
 }

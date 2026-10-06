@@ -22,21 +22,30 @@ export interface BuiltinPreset {
 export const BUILTIN_PRESETS = presets as BuiltinPreset[];
 
 /**
+ * A preset's look: its config without where the caption is and how big it is, which
+ * belong to the video and the user, so applying a preset must not move or resize it.
+ */
+export function presetLook(config: StyleConfig): Partial<StyleConfig> {
+  const { position_x, position_y, font_size, ...look } = config;
+  void position_x;
+  void position_y;
+  void font_size;
+  return look;
+}
+
+/**
  * Whether a preset's config is the style currently applied, so the picker can
  * highlight it. Compares only the fields a preset defines as its identity —
- * stroke and shadow are tweakable without leaving the preset.
+ * stroke, shadow, size and place are tweakable without leaving the preset.
  */
 export function presetMatches(a: StyleConfig, b: StyleConfig): boolean {
   return (
     a.font === b.font &&
-    a.font_size === b.font_size &&
     a.text_color === b.text_color &&
     a.highlight_color === b.highlight_color &&
     a.background === b.background &&
     a.background_color === b.background_color &&
     Math.abs(a.background_opacity - b.background_opacity) < 0.001 &&
-    a.position_x === b.position_x &&
-    a.position_y === b.position_y &&
     a.animation === b.animation &&
     a.words_per_line === b.words_per_line
   );
