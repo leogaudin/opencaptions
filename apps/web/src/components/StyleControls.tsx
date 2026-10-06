@@ -9,15 +9,8 @@
 import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
 import { Disclosure } from "@/components/Disclosure";
 import { FontPicker } from "@/components/FontPicker";
-import {
-  ColorField,
-  Field,
-  PresetSwatch,
-  Segmented,
-  SelectField,
-  SliderField,
-} from "@/components/StyleFields";
-import { usePresetPreviews } from "@/lib/presetPreviews";
+import { PresetStrip } from "@/components/PresetStrip";
+import { ColorField, Field, Segmented, SelectField, SliderField } from "@/components/StyleFields";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
@@ -32,9 +25,8 @@ export function StyleControls() {
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
 
   // The active preset is whichever built-in's config matches the current style,
-  // so the picked one can be highlighted in the grid.
+  // so the picked one can be highlighted in the strip.
   const activePresetId = BUILTIN_PRESETS.find((p) => presetMatches(p.config, style))?.id;
-  const previews = usePresetPreviews(BUILTIN_PRESETS);
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
@@ -44,41 +36,7 @@ export function StyleControls() {
         </h2>
       </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-2">
-        {BUILTIN_PRESETS.map((p) => {
-          const active = p.id === activePresetId;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setStyle(presetLook(p.config))}
-              data-testid={`preset-${p.id}`}
-              className={`group relative rounded-xl border p-1.5 text-xs font-medium transition-colors ${
-                active
-                  ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border bg-background hover:border-primary/60 hover:bg-accent/40"
-              }`}
-            >
-              <span
-                className="flex aspect-[9/5] items-center justify-center overflow-hidden rounded-lg"
-                style={{ background: "linear-gradient(135deg, #3d3366, #1a1d2e)" }}
-              >
-                {previews?.[p.id] ? (
-                  <img
-                    src={previews[p.id]}
-                    alt=""
-                    draggable={false}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <PresetSwatch config={p.config} />
-                )}
-              </span>
-              <span className="mt-1.5 block">{p.name}</span>
-            </button>
-          );
-        })}
-      </div>
+      <PresetStrip activeId={activePresetId} onPick={(config) => setStyle(presetLook(config))} />
 
       <FontPicker value={style.font} onChange={(font) => setStyle({ font })} />
 
