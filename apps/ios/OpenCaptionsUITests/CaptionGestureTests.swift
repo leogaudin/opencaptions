@@ -138,4 +138,31 @@ final class CaptionGestureTests: XCTestCase {
         XCTAssertEqual(Double(after.x), 70, accuracy: 7, "from \(before) to \(after)")
         XCTAssertEqual(Double(after.y), 30, accuracy: 7, "from \(before) to \(after)")
     }
+
+    // MARK: Timeline
+
+    /// The playing time as the transport bar shows it: "0:02.00 / 0:05.00".
+    private func shownTime(_ app: XCUIApplication) -> Double {
+        let label = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS ' / '")).firstMatch.label
+        let parts = label.split(separator: " ").first?.split(whereSeparator: { $0 == ":" || $0 == "." }).compactMap { Double($0) } ?? []
+        return parts.count == 3 ? parts[0] * 60 + parts[1] + parts[2] / 100 : -1
+    }
+
+    func testDraggingTheTimelineScrubsAndTheTimeFollows() throws {
+        let app = try launch("portrait")  // opens at 1.0 s
+        let ruler = app.descendants(matching: .any)["Timeline ruler"]
+        XCTAssertTrue(ruler.waitForExistence(timeout: 10))
+        XCTAssertEqual(shownTime(app), 1.0, accuracy: 0.05)
+        // Dragging the track to the left shows what comes later: the playhead stays in the middle.
+        ruler.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).press(
+            forDuration: 0.05, thenDragTo: ruler.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.5)),
+            withVelocity: .slow, thenHoldForDuration: 0.5)
+        let deadline = Date().addingTimeInterval(5)
+        while shownTime(app) <= 1.5, Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertGreaterThan(shownTime(app), 1.5, "the drag moved the time on")
+        // And it stays put when the finger is up (the coast has ended).
+        let rested = shownTime(app)
+        RunLoop.current.run(until: Date().addingTimeInterval(1.0))
+        XCTAssertEqual(shownTime(app), rested, accuracy: 0.05)
+    }
 }

@@ -284,17 +284,23 @@ app over three things it does not reimplement.
 describes the app target, which is SwiftUI views and wiring. Everything testable
 lives in the local package `OpenCaptionsKit`: models in the API's shapes, the engine
 actor, project storage, the editor's logic, the exporter. The minimum is iOS 18, for
-the timeline's scroll position; the app is universal (iPhone and iPad). iOS is not
+the app's scroll and gesture APIs; the app is universal (iPhone and iPad). iOS is not
 part of `make ci`: it has its own macOS workflow, and nobody without a Mac is blocked.
 
 **The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
 frame on a layer above it, redrawn on the player's clock; a tap plays or pauses, and
 while paused a drag moves the caption (snapping to the video's centre lines with a
 guide and a haptic tick, by the engine's rule) and a double-tap opens a card to edit one word (the keyboard opens with the word selected; spaces inside stay, it is still one word), and two fingers pinch the font size. The timeline
-has a ruler over a video track and a caption track, a playhead, pinch zoom around the
-pinch, and edge handles that retime through the engine. A finger dragging anywhere on it
-scrolls it, a tap seeks, and the playhead's round handle is what moves the playhead by
-hand. The video takes the screen, with only the compact timeline under it; on a wide
+has a ruler over a video track and a caption track, and edge handles that retime through
+the engine. The playhead stays in the middle and the timeline moves under it (the track is
+offset by the playing time, so only a small modifier and the ruler read it, never the
+tracks): a finger dragging anywhere on it scrubs, pausing a playing video, and coasts a
+little on release, a pinch zooms, and a tap seeks. It opens at 80 pt per second, and Fit
+zooms out until the whole video spans half the view, so it is all in view wherever the
+playhead is. Dragging a caption's edge holds the track still, or it would move under the
+finger. The transport row has play, the time (current over total), mute, Fit, and undo and
+redo: `EditorModel` records a snapshot (transcript, style, offset) before each change, and
+a run of one kind of change (a slider, an edge) is one step. The video takes the screen, with only the compact timeline under it; on a wide
 screen the style controls sit beside the video, on a phone they come up over it as a
 sheet that rests low enough to keep the caption in view. Style
 controls and presets are the web's, from the same `presets.json`; the caption offset

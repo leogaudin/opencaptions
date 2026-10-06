@@ -5,14 +5,15 @@ import SwiftUI
 struct TransportBar: View {
     let playback: Playback
     let duration: Double
-    let canZoomOut: Bool
-    let canZoomIn: Bool
-    let zoomOut: () -> Void
-    let zoomIn: () -> Void
+    let canFit: Bool
+    let canUndo: Bool
+    let canRedo: Bool
     let fit: () -> Void
+    let undo: () -> Void
+    let redo: () -> Void
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             Button { playback.toggle() } label: {
                 Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 15, weight: .bold))
@@ -22,15 +23,15 @@ struct TransportBar: View {
             }
             .accessibilityLabel(playback.isPlaying ? "Pause" : "Play")
             Timecode(playback: playback, duration: duration)
+            Spacer()
             Button { playback.isMuted.toggle() } label: {
                 Image(systemName: playback.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .foregroundStyle(playback.isMuted ? Theme.textSecondary : Theme.textPrimary)
             }
             .accessibilityLabel(playback.isMuted ? "Unmute" : "Mute")
-            Spacer()
-            tool("minus.magnifyingglass", "Zoom out", enabled: canZoomOut, zoomOut)
-            tool("plus.magnifyingglass", "Zoom in", enabled: canZoomIn, zoomIn)
-            tool("arrow.left.and.right", "Fit the whole video", enabled: canZoomOut, fit)
+            tool("arrow.left.and.right", "Fit the whole video", enabled: canFit, fit)
+            tool("arrow.uturn.backward", "Undo", enabled: canUndo, undo)
+            tool("arrow.uturn.forward", "Redo", enabled: canRedo, redo)
         }
         .buttonStyle(.plain)
         .font(.system(size: 17))
@@ -53,8 +54,15 @@ private struct Timecode: View {
     let duration: Double
 
     var body: some View {
-        (Text(TimelineScale.timecode(playback.time)).foregroundStyle(Theme.textPrimary)
-            + Text(" / " + TimelineScale.timecode(duration)).foregroundStyle(Theme.textSecondary))
-            .font(.system(size: 13, weight: .semibold).monospacedDigit())
+        VStack(alignment: .leading, spacing: 1) {
+            Text(TimelineScale.timecode(playback.time))
+                .font(.system(size: 16, weight: .semibold).monospacedDigit())
+                .foregroundStyle(Theme.textPrimary)
+            Text(TimelineScale.timecode(duration))
+                .font(.system(size: 12, weight: .medium).monospacedDigit())
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(TimelineScale.timecode(playback.time) + " / " + TimelineScale.timecode(duration))
     }
 }

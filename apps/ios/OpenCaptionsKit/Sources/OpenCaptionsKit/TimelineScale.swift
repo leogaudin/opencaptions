@@ -26,15 +26,30 @@ public enum TimelineScale {
         min(max(pointsPerSecond, fit), max(fit, maxPointsPerSecond))
     }
 
-    /// The scroll offset that keeps `time` under `anchorX` (a position within the
-    /// visible width) once the scale is `pointsPerSecond`.
-    public static func scrollOffset(keeping time: Double, at anchorX: Double, pointsPerSecond: Double) -> Double {
-        max(0, time * pointsPerSecond - anchorX)
+    /// The zoom a video opens at, in points per second: close enough to work on a caption.
+    public static let defaultPointsPerSecond = 80.0
+
+    /// The most zoomed out the timeline goes: the whole video spans half the view, so that with
+    /// the playhead in the middle all of it is in view wherever the playhead is.
+    public static func fit(viewport: Double, span: Double) -> Double {
+        viewport / (2 * max(span, 0.001))
     }
 
-    /// The time under a position `x` within the visible width.
-    public static func time(atX x: Double, scrollOffset: Double, pointsPerSecond: Double, span: Double) -> Double {
-        min(span, max(0, (x + scrollOffset) / pointsPerSecond))
+    /// Where `time` (the playhead's) puts the start of the track, in the view: the playhead is in
+    /// the middle, and the track moves under it.
+    public static func trackOrigin(time: Double, pointsPerSecond: Double, viewport: Double) -> Double {
+        viewport / 2 - time * pointsPerSecond
+    }
+
+    /// The time a drag of `translation` points leads to from `start`: dragging the track to the left
+    /// shows what comes later.
+    public static func scrubbed(from start: Double, translation: Double, pointsPerSecond: Double, span: Double) -> Double {
+        min(span, max(0, start - translation / pointsPerSecond))
+    }
+
+    /// The time under a position `x` in the view, when the playhead (in the middle) is at `time`.
+    public static func time(atX x: Double, playheadTime time: Double, pointsPerSecond: Double, viewport: Double, span: Double) -> Double {
+        min(span, max(0, time + (x - viewport / 2) / pointsPerSecond))
     }
 }
 

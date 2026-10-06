@@ -31,6 +31,18 @@ public final class EditorModel {
     public private(set) var saveState: SaveState = .idle
     public private(set) var transcription: TranscriptionState = .idle
 
+    /// What undo and redo move between: the parts of a project a viewer edits (not the title).
+    private struct Snapshot: Equatable {
+        var transcript: Transcript?
+        var style: StyleConfig
+        var offsetMs: Int
+    }
+    private var undoStack: [Snapshot] = []
+    private var redoStack: [Snapshot] = []
+    /// Changes of one kind this close together (a slider dragged, an edge dragged) are one step.
+    public var historyWindow: TimeInterval = 1.0
+    @ObservationIgnored private var lastRecord: (key: String, at: Date)?
+
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private let engine: CaptionEngine
     @ObservationIgnored private var autosaver: Autosaver?
@@ -51,6 +63,54 @@ public final class EditorModel {
     public var isTranscribing: Bool {
         if case .running = transcription { return true }
         return false
+    }
+
+    // MARK: Undo and redo
+
+    public var canUndo: Bool { !undoStack.isEmpty }
+    public var canRedo: Bool { !redoStack.isEmpty }
+
+    private var snapshot: Snapshot {
+        Snapshot(transcript: project.transcript, style: project.styleConfig, offsetMs: project.captionOffsetMs)
+    }
+
+    /// Called just before a change: remembers how things were, unless this continues a change of
+    /// the same `key` made a moment ago. A new change ends what could be redone.
+    private func record(_ key: String) {
+        let now = Date()
+        if let last = lastRecord, last.key == key, now.timeIntervalSince(last.at) < historyWindow {
+            lastRecord = (key, now)
+            return
+        }
+        undoStack.append(snapshot)
+        if undoStack.count > 100 { undoStack.removeFirst() }
+        redoStack.removeAll()
+        lastRecord = (key, now)
+    }
+
+    /// A key that is its own step, never merged with its neighbours.
+    private func step() -> String { "step-\(UUID().uuidString)" }
+
+    public func undo() {
+        guard let previous = undoStack.popLast() else { return }
+        redoStack.append(snapshot)
+        restore(previous)
+    }
+
+    public func redo() {
+        guard let next = redoStack.popLast() else { return }
+        undoStack.append(snapshot)
+        restore(next)
+    }
+
+    private func restore(_ state: Snapshot) {
+        queue.removeAll()  // edits still waiting were made against the state being left
+        project.transcript = state.transcript
+        project.styleConfig = state.style
+        project.captionOffsetMs = state.offsetMs
+        lastRecord = nil
+        selectedLine = nil
+        changed()
     }
 
     // MARK: Saving
@@ -108,6 +168,7 @@ public final class EditorModel {
                 let next = self.queue.removeFirst()
                 guard let current = self.project.transcript else { continue }
                 if let edited = try? await next.edit(current) {
+                    self.record(next.key ?? self.step())
                     self.project.transcript = edited
                     self.changed()
                 }
@@ -152,10 +213,16 @@ public final class EditorModel {
     // MARK: Style
 
     public func updateStyle(_ change: (inout StyleConfig) -> Void) {
+        updateStyle(as: "style", change)
+    }
+
+    /// `key` says what kind of change this is, so that a run of the same kind is one undo step.
+    private func updateStyle(as key: String, _ change: (inout StyleConfig) -> Void) {
         var style = project.styleConfig
         change(&style)
         guard style != project.styleConfig else { return }
         let affectsLines = style.wordsPerLine != project.styleConfig.wordsPerLine
+        record(key)
         project.styleConfig = style
         changed(affectsLines: affectsLines)
     }
@@ -171,7 +238,7 @@ public final class EditorModel {
     /// a look (font, colours, background, animation), and changing it must not move the caption
     /// the user placed or resize what they sized.
     public func apply(_ preset: Preset) {
-        updateStyle {
+        updateStyle(as: step()) {
             let (x, y, size) = ($0.positionX, $0.positionY, $0.fontSize)
             $0 = preset.config
             ($0.positionX, $0.positionY, $0.fontSize) = (x, y, size)
@@ -181,7 +248,7 @@ public final class EditorModel {
     /// What a drag and a pinch settle on, in one change: where the caption is (kept in the frame) and
     /// how big (within the range a pinch and the slider reach). Either may be nil.
     public func adjustCaption(position: (x: Double, y: Double)?, fontSize: Int?) {
-        updateStyle {
+        updateStyle(as: step()) {
             if let position {
                 $0.positionX = min(1, max(0, position.x))
                 $0.positionY = min(1, max(0, position.y))
@@ -193,7 +260,7 @@ public final class EditorModel {
     }
 
     public func setPosition(x: Double, y: Double) {
-        updateStyle {
+        updateStyle(as: "position") {
             $0.positionX = min(1, max(0, x))
             $0.positionY = min(1, max(0, y))
         }
@@ -202,6 +269,7 @@ public final class EditorModel {
     public func setOffset(ms: Int) {
         let clamped = min(Self.offsetRangeMs.upperBound, max(Self.offsetRangeMs.lowerBound, ms))
         guard clamped != project.captionOffsetMs else { return }
+        record("offset")
         project.captionOffsetMs = clamped
         changed()  // the offset moves every line
     }
@@ -222,6 +290,7 @@ public final class EditorModel {
                 let transcript = try await transcriber.transcribe(
                     source: source, language: language, model: model, progress: report)
                 try Task.checkCancellation()
+                if let self { self.record(self.step()) }
                 self?.project.transcript = transcript
                 self?.transcription = .idle
                 self?.selectedLine = nil

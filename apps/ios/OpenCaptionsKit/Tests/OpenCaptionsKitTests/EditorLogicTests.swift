@@ -60,14 +60,30 @@ final class Counter { var value = 0 }
         #expect(TimelineScale.clampZoom(100, fit: 500) == 500, "a short clip fits past the limit")
     }
 
-    @Test func zoomingKeepsTheTimeUnderThePinch() {
-        // 100 s on screen at 10 pt/s, scrolled 200 pt; the pinch is at x = 300, so at 50 s.
-        let time = TimelineScale.time(atX: 300, scrollOffset: 200, pointsPerSecond: 10, span: 100)
-        #expect(time == 50)
-        let offset = TimelineScale.scrollOffset(keeping: time, at: 300, pointsPerSecond: 40)
-        #expect(TimelineScale.time(atX: 300, scrollOffset: offset, pointsPerSecond: 40, span: 100) == 50)
-        #expect(TimelineScale.scrollOffset(keeping: 1, at: 300, pointsPerSecond: 10) == 0, "never before the start")
-        #expect(TimelineScale.time(atX: 5000, scrollOffset: 0, pointsPerSecond: 10, span: 4) == 4, "clamped to the end")
+    @Test func theTrackMovesUnderThePlayheadInTheMiddle() {
+        // A 300 pt wide view at 20 pt/s: at 10 s the start of the track is 50 pt left of the view.
+        #expect(TimelineScale.trackOrigin(time: 10, pointsPerSecond: 20, viewport: 300) == -50)
+        #expect(TimelineScale.trackOrigin(time: 0, pointsPerSecond: 20, viewport: 300) == 150, "the start sits at the playhead")
+        // What is under the middle of the view is the playhead's time, and a tap elsewhere is offset from it.
+        #expect(TimelineScale.time(atX: 150, playheadTime: 10, pointsPerSecond: 20, viewport: 300, span: 60) == 10)
+        #expect(TimelineScale.time(atX: 250, playheadTime: 10, pointsPerSecond: 20, viewport: 300, span: 60) == 15)
+        #expect(TimelineScale.time(atX: 0, playheadTime: 1, pointsPerSecond: 20, viewport: 300, span: 60) == 0, "never before the start")
+        #expect(TimelineScale.time(atX: 900, playheadTime: 59, pointsPerSecond: 20, viewport: 300, span: 60) == 60, "or past the end")
+    }
+
+    @Test func draggingTheTrackLeftShowsLaterAndFitKeepsTheWholeVideoInView() {
+        #expect(TimelineScale.scrubbed(from: 10, translation: -40, pointsPerSecond: 20, span: 60) == 12)
+        #expect(TimelineScale.scrubbed(from: 10, translation: 60, pointsPerSecond: 20, span: 60) == 7)
+        #expect(TimelineScale.scrubbed(from: 1, translation: 900, pointsPerSecond: 20, span: 60) == 0)
+        #expect(TimelineScale.scrubbed(from: 59, translation: -900, pointsPerSecond: 20, span: 60) == 60)
+        // At fit the whole video spans half the view: with the playhead in the middle, all of it is in view
+        // at the start (middle to the right edge), in the middle, and at the end (left edge to the middle).
+        let fit = TimelineScale.fit(viewport: 400, span: 40)
+        #expect(fit == 5)
+        for time in [0.0, 20, 40] {
+            let start = TimelineScale.trackOrigin(time: time, pointsPerSecond: fit, viewport: 400)
+            #expect(start >= 0 && start + 40 * fit <= 400)
+        }
     }
 
     @Test func theTimecodeIsMinutesSecondsAndHundredths() {
@@ -257,6 +273,54 @@ final class Counter { var value = 0 }
         #expect(model.project.title == "Beach day")
         await model.flush()
         #expect(try store.load(model.project.id).title == "Beach day")
+    }
+
+    @Test func undoAndRedoStepThroughStyleWordsAndOffset() async throws {
+        let (model, _) = try make()
+        model.historyWindow = 0  // every change its own step
+        #expect(!model.canUndo && !model.canRedo)
+        let original = model.project.styleConfig
+        model.updateStyle { $0.fontSize = 70 }
+        model.updateStyle { $0.textColor = "#112233" }
+        model.setOffset(ms: 300)
+        model.setWord(index: 0, text: "uno")
+        await model.settled()
+        #expect(model.canUndo && !model.canRedo)
+
+        model.undo()
+        await model.settled()
+        #expect(model.transcript?.words.first?.text == "one", "the word edit is undone first")
+        #expect(model.project.captionOffsetMs == 300)
+        model.undo()
+        #expect(model.project.captionOffsetMs == 0)
+        model.undo()
+        #expect(model.project.styleConfig.textColor == original.textColor && model.project.styleConfig.fontSize == 70)
+        model.undo()
+        #expect(model.project.styleConfig == original && !model.canUndo)
+
+        model.redo()
+        model.redo()
+        #expect(model.project.styleConfig.textColor == "#112233" && model.canRedo)
+        // A new change ends what could be redone.
+        model.updateStyle { $0.fontSize = 90 }
+        #expect(!model.canRedo)
+        model.undo()
+        #expect(model.project.styleConfig.fontSize == 70 && model.project.styleConfig.textColor == "#112233")
+    }
+
+    @Test func aRunOfTheSameKindOfChangeIsOneStep() async throws {
+        let (model, _) = try make()
+        model.historyWindow = 3600  // everything of one kind merges
+        let original = model.project.styleConfig
+        for size in [50, 55, 60, 65] { model.updateStyle { $0.fontSize = size } }  // a slider drag
+        for time in [1.8, 2.0, 2.2] { model.retime(index: 2, edge: .end, time: time) }  // an edge drag
+        await model.settled()
+        model.undo()  // the edge drag, whole
+        await model.settled()
+        #expect(abs((model.transcript?.words[2].end ?? 0) - 1.7) < 1e-4, "back to where the edge was")
+        #expect(model.project.styleConfig.fontSize == 65, "the style is untouched")
+        model.undo()  // the slider drag, whole
+        #expect(model.project.styleConfig == original && !model.canUndo)
     }
 
     @Test func clearingAWordDeletesIt() async throws {
