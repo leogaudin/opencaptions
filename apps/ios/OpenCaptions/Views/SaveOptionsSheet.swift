@@ -12,12 +12,13 @@ struct SaveOptionsSheet: View {
     @AppStorage("export.quality") private var quality = ExportOptions.Quality.balanced
     @AppStorage("export.resolution") private var resolution = ExportOptions.Resolution.original
     @AppStorage("export.keepHDR") private var keepHDR = true
+    @AppStorage("export.fps") private var frameRate = ExportOptions.FrameRate.original
     @State private var contentHeight: CGFloat = 520
     @State private var freeBytes = DiskSpace.available()
 
     private var isHDR: Bool { project.hdrTransfer != nil }
     private var options: ExportOptions {
-        ExportOptions(codec: codec, quality: quality, resolution: resolution, keepHDR: keepHDR)
+        ExportOptions(codec: codec, quality: quality, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate)
     }
 
     /// The sizes this video can be saved at: its own, and each smaller.
@@ -32,6 +33,7 @@ struct SaveOptionsSheet: View {
             if isHDR { hdrSection }
             if !isHDR || !keepHDR { formatSection }
             sizeSection
+            if rates.count > 1 { frameRateSection }
             qualitySection
             estimate
             HStack(spacing: 10) {
@@ -49,6 +51,7 @@ struct SaveOptionsSheet: View {
         .onAppear {
             // What was chosen for another video may not exist for this one.
             if !sizes.contains(resolution) { resolution = .original }
+            if !rates.contains(frameRate) { frameRate = .original }
         }
     }
 
@@ -71,6 +74,21 @@ struct SaveOptionsSheet: View {
     private var sizeSection: some View {
         section("Size", note: dimensions) {
             SegmentedPills(options: sizes, selection: $resolution, label: label(for:))
+        }
+    }
+
+    /// The rates this video can be saved at: its own, and each lower one.
+    private var rates: [ExportOptions.FrameRate] {
+        ExportOptions.FrameRate.available(forSourceFps: project.videoFps ?? 30)
+    }
+
+    private var frameRateSection: some View {
+        section("Frame rate", note: frameRate == .original
+            ? "As filmed (\(Int((project.videoFps ?? 30).rounded())) fps)."
+            : "Fewer frames: a smaller file, and the cinema look at 24.") {
+            SegmentedPills(options: rates, selection: $frameRate, label: { rate in
+                rate.value.map { "\(Int($0)) fps" } ?? "Original"
+            })
         }
     }
 

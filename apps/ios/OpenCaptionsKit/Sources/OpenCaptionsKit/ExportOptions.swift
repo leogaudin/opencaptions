@@ -45,17 +45,46 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         }
     }
 
+    /// The frame rate: the source's, or a lower one. Frames are dropped evenly to reach it, never
+    /// made up, so only rates below the source's are offered.
+    public enum FrameRate: String, Codable, CaseIterable, Sendable {
+        case original, fps30, fps24
+
+        public var value: Double? {
+            switch self {
+            case .original: nil
+            case .fps30: 30
+            case .fps24: 24
+            }
+        }
+
+        /// The choices for a source at `fps`: its own rate, and each clearly lower one.
+        public static func available(forSourceFps fps: Double) -> [FrameRate] {
+            [.original] + allCases.filter { ($0.value ?? .infinity) < fps - 0.5 }
+        }
+    }
+
     public var codec: Codec
     public var quality: Quality
     public var resolution: Resolution
     /// For an HDR source: keep it HDR (always HEVC, 10-bit) or make an ordinary SDR video.
     public var keepHDR: Bool
+    public var frameRate: FrameRate
 
-    public init(codec: Codec = .h264, quality: Quality = .balanced, resolution: Resolution = .original, keepHDR: Bool = true) {
+    public init(
+        codec: Codec = .h264, quality: Quality = .balanced, resolution: Resolution = .original, keepHDR: Bool = true,
+        frameRate: FrameRate = .original
+    ) {
         self.codec = codec
         self.quality = quality
         self.resolution = resolution
         self.keepHDR = keepHDR
+        self.frameRate = frameRate
+    }
+
+    /// The saved video's frame rate for a source at `source`: never above it.
+    public func outputFps(source: Double) -> Double {
+        min(source, frameRate.value ?? source)
     }
 
     public static let standard = ExportOptions()
@@ -95,7 +124,8 @@ public struct ExportOptions: Codable, Equatable, Sendable {
             let seconds = project.videoDuration, seconds > 0
         else { return nil }
         let size = outputSize(width: width, height: height)
-        let rate = bitrate(width: size.width, height: size.height, fps: project.videoFps ?? 30, plan: plan(for: project))
+        let fps = outputFps(source: project.videoFps ?? 30)
+        let rate = bitrate(width: size.width, height: size.height, fps: fps, plan: plan(for: project))
         return Int64(Double(rate + 128_000) * seconds / 8)
     }
 
@@ -108,6 +138,9 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         case (nil, .hevc): "hevc"
         case (nil, .h264): "h264"
         }
-        return "\(format)-\(resolution.rawValue)-\(quality.rawValue)"
+        // The frame rate is named only when it is not the source's, so a file saved before the
+        // choice existed keeps its name.
+        let rate = frameRate == .original ? "" : "-\(frameRate.rawValue)"
+        return "\(format)-\(resolution.rawValue)-\(quality.rawValue)\(rate)"
     }
 }

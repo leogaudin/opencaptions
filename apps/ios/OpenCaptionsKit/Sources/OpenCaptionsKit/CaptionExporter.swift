@@ -147,7 +147,11 @@ public struct CaptionExporter: Sendable {
             width: Int(abs(shown.width).rounded()), height: Int(abs(shown.height).rounded()))
         let sourceHeight = max(2, Int(abs(shown.height).rounded()) & ~1)
         let scale = Double(height) / Double(sourceHeight)
-        let fps = nominalFps > 0 ? Double(nominalFps) : 30
+        let sourceFps = nominalFps > 0 ? Double(nominalFps) : 30
+        let fps = options.outputFps(source: sourceFps)
+        // A lower rate than the source's is reached by keeping evenly spaced frames.
+        let keepEvery: Double? = fps < sourceFps - 0.5 ? 1 / fps : nil
+        var nextKept = 0.0
         let orientation = VideoOrientation.from(transform)
         let plan = options.plan(for: project)
         // An HDR source made into an SDR video is tone-mapped down before the captions go on.
@@ -200,6 +204,13 @@ public struct CaptionExporter: Sendable {
                 try Task.checkCancellation()
                 let time = CMSampleBufferGetPresentationTimeStamp(sample)
                 try await ready(videoIn, writer: writer, reader: reader, audio: audio)
+                if let interval = keepEvery {
+                    let t = time.seconds
+                    // A tenth of a source frame of slack, so rounding in the timestamps cannot skip one.
+                    if t < nextKept - 0.1 / sourceFps { continue }
+                    nextKept += interval
+                    while nextKept <= t { nextKept += interval }  // after a gap, carry on from here
+                }
                 guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { continue }
                 // Unchanged since the last frame: the same overlay, no redraw.
                 if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }

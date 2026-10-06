@@ -74,6 +74,48 @@ extension EngineSuites {
             #expect(max(r, g, b) > 100, "the caption is there: \(r) \(g) \(b)")
         }
 
+        /// The video frames of a file, counted, and their span in seconds.
+        func frames(of url: URL) async throws -> (count: Int, span: Double) {
+            let asset = AVURLAsset(url: url)
+            let track = try #require(try await asset.loadTracks(withMediaType: .video).first)
+            let reader = try AVAssetReader(asset: asset)
+            let output = AVAssetReaderTrackOutput(track: track, outputSettings: nil)
+            reader.add(output)
+            reader.startReading()
+            var times: [Double] = []
+            while let sample = output.copyNextSampleBuffer() {
+                if CMSampleBufferGetNumSamples(sample) > 0 { times.append(CMSampleBufferGetPresentationTimeStamp(sample).seconds) }
+            }
+            return (times.count, (times.max() ?? 0) - (times.min() ?? 0))
+        }
+
+        @Test func aLowerFrameRateKeepsEvenlySpacedFrames() async throws {
+            let store = store()
+            let source = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
+            try await SampleVideo.write(to: source, width: 64, height: 48, seconds: 2, fps: 30)
+            let p = try await project(for: source, in: store)
+            let url = try await CaptionExporter(fonts: fonts).export(
+                project: p, source: store.sourceURL(for: p.id)!, in: directory(), options: ExportOptions(frameRate: .fps24),
+                progress: { _ in })
+            let (count, span) = try await frames(of: url)
+            #expect(abs(count - 48) <= 2, "\(count) frames for 2 s at 24 fps")
+            #expect(span > 1.8, "spread over the whole clip, not bunched at the start: \(span) s")
+        }
+
+        @Test func frameRatesOfferedAreOnlyLowerOnesAndNameTheFile() throws {
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 60) == [.original, .fps30, .fps24])
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 29.97) == [.original, .fps24])
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 24) == [.original])
+            #expect(ExportOptions(frameRate: .fps30).outputFps(source: 24) == 24, "never above the source")
+            let p = Project(
+                title: "x", transcript: try Repo.transcript(), styleConfig: try Repo.defaultStyle(), videoWidth: 1080,
+                videoHeight: 1920, videoFps: 60, videoDuration: 10)
+            #expect(ExportKey.hash(for: p, options: ExportOptions()) != ExportKey.hash(for: p, options: ExportOptions(frameRate: .fps30)))
+            #expect(ExportOptions().signature(for: p) == "h264-original-balanced", "the default keeps its old name")
+            let at30 = try #require(ExportOptions(frameRate: .fps30).estimatedBytes(for: p))
+            #expect(at30 < (try #require(ExportOptions().estimatedBytes(for: p))), "fewer frames, a smaller file")
+        }
+
         @Test func anOptionIsPartOfTheNameOfTheFile() async throws {
             let store = store()
             let p = try await project(for: try await clip(seconds: 1), in: store)
