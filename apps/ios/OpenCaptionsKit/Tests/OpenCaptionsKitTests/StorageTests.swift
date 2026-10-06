@@ -106,6 +106,8 @@ import Testing
         let p = try await store.importVideo(from: clip, title: "x", style: try Repo.defaultStyle())
         try Data(repeating: 7, count: 50_000).write(to: try store.rendersDirectory(for: p.id).appendingPathComponent("a.mp4"))
         let before = store.usage()
+        #expect(store.size(of: p.id) == before.projects + before.renders, "one project: everything of it")
+        #expect(store.size(of: UUID()) == 0)
         #expect(before.renders == 50_000)
         #expect(before.projects > 1_000, "the video and project file")
         store.clearRenders()

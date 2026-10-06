@@ -77,12 +77,9 @@ struct TranscribeSheet: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .task(id: onServer) { await loadServerModels() }
-        .confirmationDialog(
-            "Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData,
-            titleVisibility: .visible
-        ) {
-            Button("Download") { Task { await begin(allowMetered: true) } }
+        .alert("Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData) {
             Button("Cancel", role: .cancel) {}
+            Button("Download") { Task { await begin(allowMetered: true) } }
         } message: {
             Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
         }

@@ -208,6 +208,9 @@ struct ProjectsView: View {
 struct ProjectCard: View {
     @Environment(AppModel.self) private var app
     let project: Project
+    /// What the project takes on disk, once counted (it is off the main thread, and again when the
+    /// project changes).
+    @State private var bytes: Int64?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -232,6 +235,10 @@ struct ProjectCard: View {
             }
         }
         .contentShape(.rect)
+        .task(id: project.updatedAt) {
+            let (store, id) = (app.store, project.id)
+            bytes = await Task.detached { store.size(of: id) }.value
+        }
     }
 
     private static func length(_ seconds: Double) -> String {
@@ -248,7 +255,10 @@ struct ProjectCard: View {
                     .foregroundStyle(Theme.textSecondary)
             }
         } else if let transcript = (app.openEditor(for: project.id)?.project ?? project).transcript {
-            Text("\(transcript.words.count) words · " + project.createdAt.formatted(date: .abbreviated, time: .omitted))
+            Text(
+                [bytes.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) },
+                    project.createdAt.formatted(date: .abbreviated, time: .omitted)]
+                    .compactMap { $0 }.joined(separator: " · "))
         } else {
             Text("Not transcribed")
         }
@@ -288,10 +298,11 @@ private struct ProjectDialogs: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .confirmationDialog(
+            .alert(
                 "Delete this project?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-                titleVisibility: .visible, presenting: deleting
+                presenting: deleting
             ) { project in
+                Button("Cancel", role: .cancel) {}
                 Button("Delete “\(project.title)”", role: .destructive) { onDelete(project) }
             } message: { _ in
                 Text("The video and its captions are removed from this device.")

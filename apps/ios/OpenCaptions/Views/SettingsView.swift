@@ -39,23 +39,26 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .id(refresh)
-        .confirmationDialog(
+        .alert(
             "Delete this model?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-            titleVisibility: .visible, presenting: deleting
+            presenting: deleting
         ) { model in
+            Button("Cancel", role: .cancel) {}
             Button("Delete \(model.label)", role: .destructive) { delete(model) }
         } message: { model in
             Text("It frees \(Self.size(app.transcriber.sizeOnDisk(model.id))) and downloads again when you next choose it.")
         }
-        .confirmationDialog(
+        .alert(
             "Download on a metered connection?", isPresented: Binding(get: { meteredFor != nil }, set: { if !$0 { meteredFor = nil } }),
-            titleVisibility: .visible, presenting: meteredFor
+            presenting: meteredFor
         ) { model in
+            Button("Cancel", role: .cancel) {}
             Button("Download \(model.megabytes) MB") { startDownload(model) }
         } message: { _ in
             Text("You are on cellular or a hotspot. A Wi‑Fi connection would avoid using your data.")
         }
-        .confirmationDialog("Delete every saved video?", isPresented: $clearingSaved, titleVisibility: .visible) {
+        .alert("Delete every saved video?", isPresented: $clearingSaved) {
+            Button("Cancel", role: .cancel) {}
             Button("Delete saved videos", role: .destructive) {
                 app.store.clearRenders()
                 refresh += 1

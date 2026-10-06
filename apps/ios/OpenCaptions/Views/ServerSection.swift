@@ -177,16 +177,16 @@ struct PairingConfirmation: ViewModifier {
 
     func body(content: Content) -> some View {
         @Bindable var app = app
-        content.confirmationDialog(
+        content.alert(
             "Transcribe on \(app.pendingConnection?.displayName ?? "this server")?",
             isPresented: Binding(get: { app.pendingConnection != nil }, set: { if !$0 { app.pendingConnection = nil } }),
-            titleVisibility: .visible, presenting: app.pendingConnection
+            presenting: app.pendingConnection
         ) { connection in
+            Button("Cancel", role: .cancel) { app.pendingConnection = nil }
             Button("Use \(connection.displayName)") {
                 app.connect(connection)
                 app.pendingConnection = nil
             }
-            Button("Cancel", role: .cancel) { app.pendingConnection = nil }
         } message: { connection in
             Text("The audio of your videos will be sent to \(connection.url.host ?? "it") to be transcribed there. Only continue if you trust it.")
         }
