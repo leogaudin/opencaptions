@@ -73,6 +73,10 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var pendingTime: Double?
     private var dragStart: (x: Double, y: Double)?
     private var dragSerial = 0
+    /// Where the dragging finger went down, and the caption it went down on. UIKit reports a pan's
+    /// translation from where it recognised the pan, which can be well after the finger landed
+    /// (right after a tap, while the double tap is still possible), so a drag is measured from here.
+    private var touchDown: (point: CGPoint, caption: FrameRect?)?
 
     /// A drag or a pinch in progress. The caption layer follows the fingers by being moved and scaled
     /// (the picture the engine already drew, so nothing for the engine to do), and what the fingers
@@ -149,6 +153,15 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if gestureRecognizer is UIPanGestureRecognizer, gestureRecognizer.state == .possible,
+            gestureRecognizer.numberOfTouches == 0
+        {
+            touchDown = (touch.location(in: self), caption?.bounds)
+        }
+        return true
+    }
 
     func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
@@ -351,17 +364,22 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    /// How far the finger has gone since it went down.
+    private func travelled(_ g: UIPanGestureRecognizer) -> CGPoint {
+        guard let down = touchDown?.point else { return g.translation(in: self) }
+        return g.location(in: self) - down
+    }
+
     @objc private func panned(_ g: UIPanGestureRecognizer) {
         guard let style else { return }
         switch g.state {
         case .began:
-            // A pan is recognised after the finger has moved a few points, so the touch began
-            // where it is now less what it has travelled.
-            let now = g.location(in: self)
-            let travelled = g.translation(in: self)
-            let landed = framePoint(CGPoint(x: now.x - travelled.x, y: now.y - travelled.y))
+            // What the finger went down on, not what is showing now: a playing video may have moved
+            // on to the next caption by the time the pan is recognised.
+            let down = touchDown ?? (g.location(in: self) - g.translation(in: self), caption?.bounds)
+            let landed = framePoint(down.point)
             let region = CaptionGestures.dragRegion(
-                caption: caption?.bounds, position: (style.positionX, style.positionY), frame: frameSize,
+                caption: down.caption, position: (style.positionX, style.positionY), frame: frameSize,
                 pixelsPerPoint: frameSize.width / max(1, bounds.width))
             guard region.contains(x: landed.x, y: landed.y) else {
                 g.state = .cancelled
@@ -372,10 +390,10 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             dragStart = (style.positionX, style.positionY)
         case .changed:
             guard panning, let start = dragStart else { return }
-            follow(translation: g.translation(in: self), from: start, final: false)
+            follow(translation: travelled(g), from: start, final: false)
         case .ended:
             guard panning, let start = dragStart else { return }
-            follow(translation: g.translation(in: self), from: start, final: true)
+            follow(translation: travelled(g), from: start, final: true)
         default:
             // Cancelled (a second finger joined, which pinches) or failed: what was reached stands.
             if panning {
@@ -417,4 +435,6 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
 
 private extension CGPoint {
     var asSize: CGSize { CGSize(width: x, height: y) }
+
+    static func - (a: CGPoint, b: CGPoint) -> CGPoint { CGPoint(x: a.x - b.x, y: a.y - b.y) }
 }
