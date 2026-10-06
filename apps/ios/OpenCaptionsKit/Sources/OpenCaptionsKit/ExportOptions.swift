@@ -1,7 +1,7 @@
 import Foundation
 
-/// What a saved video is like: how it is encoded, how sharp, how large, and whether an HDR source
-/// stays HDR. The defaults keep the video as it was, in a format everything plays.
+/// What a saved video is like: how it is encoded, how large, at what frame rate, and whether an HDR
+/// source stays HDR. The defaults keep the video as it was, in a format everything plays.
 public struct ExportOptions: Codable, Equatable, Sendable {
     public enum Codec: String, Codable, CaseIterable, Sendable {
         /// Plays everywhere; larger files.
@@ -11,18 +11,10 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         case hevc
     }
 
-    public enum Quality: String, Codable, CaseIterable, Sendable {
-        case smaller, balanced, best
-
-        /// Bits per pixel per frame, for H.264. Balanced is what the app has always used.
-        var bitsPerPixel: Double {
-            switch self {
-            case .smaller: 0.08
-            case .balanced: 0.15
-            case .best: 0.28
-            }
-        }
-    }
+    /// Bits per pixel per frame, for H.264. There is no quality choice: a saved video is a second
+    /// encoding of the source, so it is made as good as it can be, and the size is chosen with the
+    /// resolution and the frame rate.
+    static let bitsPerPixel = 0.28
 
     /// The size, as the short side of the picture (so 1080 is 1080 × 1920 upright, and 1920 × 1080
     /// sideways). A video is never made larger than it was.
@@ -47,14 +39,16 @@ public struct ExportOptions: Codable, Equatable, Sendable {
 
     /// The frame rate: the source's, or a lower one. Frames are dropped evenly to reach it, never
     /// made up, so only rates below the source's are offered.
+    /// The frame rate: the source's, or a lower one. Frames are dropped evenly to reach it, never
+    /// made up, so only rates below the source's are offered.
     public enum FrameRate: String, Codable, CaseIterable, Sendable {
-        case original, fps30, fps24
+        case original, fps60, fps30
 
         public var value: Double? {
             switch self {
             case .original: nil
+            case .fps60: 60
             case .fps30: 30
-            case .fps24: 24
             }
         }
 
@@ -65,18 +59,15 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     }
 
     public var codec: Codec
-    public var quality: Quality
     public var resolution: Resolution
     /// For an HDR source: keep it HDR (always HEVC, 10-bit) or make an ordinary SDR video.
     public var keepHDR: Bool
     public var frameRate: FrameRate
 
     public init(
-        codec: Codec = .h264, quality: Quality = .balanced, resolution: Resolution = .original, keepHDR: Bool = true,
-        frameRate: FrameRate = .original
+        codec: Codec = .h264, resolution: Resolution = .original, keepHDR: Bool = true, frameRate: FrameRate = .original
     ) {
         self.codec = codec
-        self.quality = quality
         self.resolution = resolution
         self.keepHDR = keepHDR
         self.frameRate = frameRate
@@ -110,11 +101,11 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         return (even(Double(width) * scale), even(Double(height) * scale))
     }
 
-    /// The video's bitrate, from its size, rate and the quality: HEVC needs about two thirds of
+    /// The video's bitrate, from its size and rate: HEVC needs about two thirds of
     /// H.264's for the same picture, except in HDR, where the extra range uses what it saves.
     func bitrate(width: Int, height: Int, fps: Double, plan: Plan) -> Int {
         let efficiency = plan.codec == .hevc && plan.transfer == nil ? 0.65 : 1.0
-        let bits = Double(width * height) * fps * quality.bitsPerPixel * efficiency
+        let bits = Double(width * height) * fps * Self.bitsPerPixel * efficiency
         return min(80_000_000, max(2_000_000, Int(bits)))
     }
 
@@ -138,9 +129,7 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         case (nil, .hevc): "hevc"
         case (nil, .h264): "h264"
         }
-        // The frame rate is named only when it is not the source's, so a file saved before the
-        // choice existed keeps its name.
         let rate = frameRate == .original ? "" : "-\(frameRate.rawValue)"
-        return "\(format)-\(resolution.rawValue)-\(quality.rawValue)\(rate)"
+        return "\(format)-\(resolution.rawValue)\(rate)"
     }
 }

@@ -7,7 +7,7 @@
  *
  * Video download logic (multi-format, content-addressed cache):
  *   - Primary button always downloads MP4 (H.264).
- *   - Attached dropdown: the size, quality and frame rate (remembered per
+ *   - Attached dropdown: the size and frame rate (remembered per
  *     browser, lib/downloadOptions), then all four formats.
  *   - If the format is ready on the server, download triggers immediately.
  *   - If not, the server returns a job_id and lib/downloads saves the file
@@ -205,10 +205,7 @@ export function EditorToolbar() {
               >
                 {exports && exports.video.length > 0 && (
                   <>
-                    <DownloadOptions
-                      choices={exports.choices}
-                      qualityApplies={exports.video.some((f) => f.has_quality)}
-                    />
+                    <DownloadOptions choices={exports.choices} />
                     <DropdownMenu.Separator className="my-1 h-px bg-border" />
                   </>
                 )}

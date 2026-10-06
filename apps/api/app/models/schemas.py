@@ -137,28 +137,27 @@ class PasswordResetConfirm(BaseModel):
 class StyleConfig(BaseModel):
     """Caption styling parameters."""
 
-    font: str = "Inter"
-    font_size: int = Field(default=48, ge=12, le=200)
+    # The defaults are the first built-in preset, Purple Punch (tests/test_presets.py).
+    font: str = "Poppins"
+    font_size: int = Field(default=64, ge=12, le=200)
     text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
-    highlight_color: str = Field(default="#FFDD00", pattern=r"^#[0-9A-Fa-f]{6}$")
-    background: Literal["none", "solid", "pill"] = "pill"
+    highlight_color: str = Field(default="#7C3AED", pattern=r"^#[0-9A-Fa-f]{6}$")
+    background: Literal["none", "solid", "pill"] = "none"
     background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
-    background_opacity: float = Field(default=0.5, ge=0.0, le=1.0)
+    background_opacity: float = Field(default=0.0, ge=0.0, le=1.0)
     # Normalised centre of the caption block, 0..1 across the frame. Default is
     # centred horizontally and low (the usual subtitle spot); the editor drags it.
     position_x: float = Field(default=0.5, ge=0.0, le=1.0)
     position_y: float = Field(default=0.84, ge=0.0, le=1.0)
-    animation: Literal["word_highlight", "highlight_box", "word_pop", "word_fade"] = (
-        "word_highlight"
-    )
+    animation: Literal["word_highlight", "highlight_box", "word_pop", "word_fade"] = "highlight_box"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.
     word_spacing: float = Field(default=0.0, ge=0.0, le=1.0)
     stroke_width: float = Field(default=0.0, ge=0.0, le=10.0)
     stroke_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
-    shadow_blur: float = Field(default=0.0, ge=0.0, le=20.0)
+    shadow_blur: float = Field(default=10.0, ge=0.0, le=20.0)
     shadow_color: str = Field(
-        default="#00000080",
+        default="#000000A0",
         pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
         description="Optional alpha channel for shadow",
     )
@@ -269,8 +268,8 @@ class TranscribeRequest(BaseModel):
 
 
 ExportResolution = Literal["original", "2160", "1080", "720"]
-ExportQuality = Literal["smaller", "balanced", "best"]
-ExportFrameRate = Literal["original", "30", "24"]
+# Frame rates are capped at 60 (render_formats), so 30 is the one lower choice.
+ExportFrameRate = Literal["original", "30"]
 
 
 class RenderOptions(BaseModel):
@@ -278,9 +277,6 @@ class RenderOptions(BaseModel):
 
     resolution: ExportResolution = Field(
         default="original", description="The short side in pixels, or the source's size"
-    )
-    quality: ExportQuality = Field(
-        default="balanced", description="Smaller file, balanced, or best picture (not for ProRes)"
     )
     frame_rate: ExportFrameRate = Field(
         default="original", description="Frames per second, or the source's rate"
@@ -494,9 +490,6 @@ class VideoExportOption(BaseModel):
     ready: bool = Field(description="Whether the rendered file is already cached in storage")
     download_url: str = Field(description="Relative URL to download the rendered file")
     note: str | None = Field(default=None, description="Optional note about the format")
-    has_quality: bool = Field(
-        default=True, description="Whether the quality choice applies (not to ProRes)"
-    )
 
 
 class ExportChoices(BaseModel):

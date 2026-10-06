@@ -1,13 +1,12 @@
 /**
- * Size, quality and frame rate for a video download, the choices of the iOS
- * Save sheet: only what this video can offer (its own size and rate, and
- * lower ones) is shown, and a row with a single choice is left out.
+ * Size and frame rate for a video download, the choices of the iOS Save sheet:
+ * only what this video can offer (its own size and rate, and lower ones) is
+ * shown, and a row with a single choice is left out. There is no quality
+ * choice: a download is made as good as each format does well.
  */
 import { Segmented } from "@/components/StyleFields";
 import { setDownloadOptions, useDownloadOptions } from "@/lib/downloadOptions";
 import type { ExportChoices, RenderOptions } from "@/types";
-
-const QUALITIES: RenderOptions["quality"][] = ["smaller", "balanced", "best"];
 
 const SIZE_LABELS: Record<RenderOptions["resolution"], string> = {
   original: "Original",
@@ -25,14 +24,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function DownloadOptions({
-  choices,
-  qualityApplies,
-}: {
-  choices: ExportChoices;
-  /** False when every format offered ignores it (ProRes). */
-  qualityApplies: boolean;
-}) {
+export function DownloadOptions({ choices }: { choices: ExportChoices }) {
   const options = useDownloadOptions();
   // A remembered choice this video cannot offer is saved at the video's own.
   const resolution = choices.resolutions.includes(options.resolution)
@@ -52,15 +44,6 @@ export function DownloadOptions({
             value={resolution}
             onChange={(v) => setDownloadOptions({ resolution: v })}
             label={(v) => SIZE_LABELS[v]}
-          />
-        </Row>
-      )}
-      {qualityApplies && (
-        <Row label="Quality">
-          <Segmented
-            options={QUALITIES}
-            value={options.quality}
-            onChange={(v) => setDownloadOptions({ quality: v })}
           />
         </Row>
       )}

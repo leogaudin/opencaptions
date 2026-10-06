@@ -65,7 +65,7 @@ final class CaptionGestureTests: XCTestCase {
     }
 
     private func drag(_ app: XCUIApplication, to target: (x: Double, y: Double)) {
-        // From where the caption is (Classic sits at the middle, low), to somewhere off the centre lines.
+        // From where the caption is (the default sits at the middle, low), to somewhere off the centre lines.
         at(app, 0.5, 0.84).press(
             forDuration: 0.05, thenDragTo: at(app, target.x, target.y), withVelocity: .slow, thenHoldForDuration: 0.2)
     }

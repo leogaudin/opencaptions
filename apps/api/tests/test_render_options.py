@@ -1,4 +1,4 @@
-"""Download options: size, quality and frame rate, resolved in one place for every caller."""
+"""Download options: size and frame rate, resolved in one place for every caller."""
 
 from __future__ import annotations
 
@@ -52,30 +52,32 @@ def test_the_size_is_the_short_side_and_never_larger_than_the_source() -> None:
 def test_the_frame_rate_is_only_ever_lowered() -> None:
     assert resolve_render_inputs(_Project(), RenderOptions(frame_rate="30")).fps == 30
     assert resolve_render_inputs(_Project(video_fps=25), RenderOptions(frame_rate="30")).fps == 25
-    assert available_frame_rates(_Project(video_fps=29.97)) == ["original", "24"]
-    assert available_frame_rates(_Project(video_fps=24)) == ["original"]
+    assert available_frame_rates(_Project(video_fps=59.94)) == ["original", "30"]
+    assert available_frame_rates(_Project(video_fps=29.97)) == ["original"]
     assert available_resolutions(_Project()) == ["original", "1080", "720"]
     assert available_resolutions(_Project(video_width=640, video_height=360)) == ["original"]
 
 
-def test_each_codec_has_its_own_crf_per_quality_and_prores_has_none() -> None:
-    mp4, webm, mov = get_format("mp4"), get_format("webm"), get_format("mov")
-    assert mp4 and webm and mov
-    assert mp4.crf("smaller") > mp4.crf("balanced") > mp4.crf("best")  # type: ignore[operator]
-    assert webm.crf("balanced") == 28 and mp4.crf("balanced") == 18
-    assert mov.crf("best") is None and not mov.has_quality
-
-
-def test_every_option_changes_the_hash_except_quality_for_prores() -> None:
+def test_every_option_changes_the_hash() -> None:
     p = _Project()
-    base = resolve_render_inputs(p)
     hashes = {
         resolve_render_inputs(p, RenderOptions.model_validate(kw)).hash_for("mp4")
-        for kw in ({}, {"resolution": "720"}, {"quality": "best"}, {"frame_rate": "24"})
+        for kw in ({}, {"resolution": "720"}, {"frame_rate": "30"})
     }
-    assert len(hashes) == 4
-    best = resolve_render_inputs(p, RenderOptions(quality="best"))
-    assert best.hash_for("mov") == base.hash_for("mov"), "the same ProRes file either way"
+    assert len(hashes) == 3
+
+
+def test_the_encoder_settings_are_part_of_the_hash(monkeypatch: pytest.MonkeyPatch) -> None:
+    import dataclasses
+
+    from app.services import render_formats
+
+    inputs = resolve_render_inputs(_Project())
+    before = inputs.hash_for("mp4")
+    mp4 = get_format("mp4")
+    assert mp4
+    monkeypatch.setitem(render_formats.FORMATS, "mp4", dataclasses.replace(mp4, crf=mp4.crf + 1))  # type: ignore[operator]
+    assert inputs.hash_for("mp4") != before, "a changed CRF makes a new file, not a stale one"
 
 
 @pytest.mark.asyncio
@@ -104,11 +106,11 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
     choices = (await client.get(f"{base}/exports")).json()["choices"]
     assert choices == {
         "resolutions": ["original", "720"],
-        "frame_rates": ["original", "24"],
+        "frame_rates": ["original"],
         "source_fps": None,
     }
 
-    options = {"resolution": "720", "quality": "smaller", "frame_rate": "24"}
+    options = {"resolution": "720", "frame_rate": "30"}
     r = await client.post(f"{base}/download", json={"format": "mp4", **options})
     assert r.status_code == 202, r.text
     assert sent[0][2:] == ("mp4", options), "the worker gets the options"

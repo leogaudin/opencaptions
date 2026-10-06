@@ -22,7 +22,7 @@ class TestFormatRegistry:
         fmt = get_format("mp4")
         assert fmt is not None
         assert fmt.codec == "h264"
-        assert fmt.crf() == 18
+        assert fmt.crf == 15
         assert fmt.extension == ".mp4"
 
     def test_get_format_unknown_returns_none(self) -> None:
@@ -32,7 +32,7 @@ class TestFormatRegistry:
     def test_prores_has_no_crf(self) -> None:
         fmt = get_format("mov")
         assert fmt is not None
-        assert fmt.crf() is None and not fmt.has_quality
+        assert fmt.crf is None
         assert fmt.pro_res_profile == "hq"
 
     def test_vp9_extension_is_webm(self) -> None:

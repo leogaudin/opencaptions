@@ -762,7 +762,6 @@ async def get_project_exports(
                 ready=exists,
                 download_url=f"{base}/download/{fmt.id}",
                 note=fmt.note,
-                has_quality=fmt.has_quality,
             )
         )
 

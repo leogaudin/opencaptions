@@ -71,7 +71,7 @@ def render_video(  # noqa: C901
     logger.info(
         "render format resolved: codec=%s crf=%s proResProfile=%s ext=%s",
         fmt.codec,
-        fmt.crf(render_options.quality),
+        fmt.crf,
         fmt.pro_res_profile,
         fmt.extension,
     )
@@ -126,7 +126,7 @@ def render_video(  # noqa: C901
             "height": inputs.height,
             "codec": fmt.codec,
             # ProRes takes a profile instead of a CRF; the engine reads whichever is set.
-            "crf": fmt.crf(render_options.quality),
+            "crf": fmt.crf,
             "pro_res_profile": fmt.pro_res_profile,
             # Lets the engine push live progress back while it renders.
             "progress_url": f"http://api:8000/api/v1/jobs/{job_id}/progress",

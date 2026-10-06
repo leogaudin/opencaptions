@@ -1,7 +1,7 @@
 import OpenCaptionsKit
 import SwiftUI
 
-/// What the saved video is like, before it is made: the format, the size, the quality, and for an
+/// What the saved video is like, before it is made: the format, the size, the frame rate, and for an
 /// HDR video whether it stays HDR. The choice is remembered.
 struct SaveOptionsSheet: View {
     let project: Project
@@ -9,7 +9,6 @@ struct SaveOptionsSheet: View {
     let cancel: () -> Void
 
     @AppStorage("export.codec") private var codec = ExportOptions.Codec.h264
-    @AppStorage("export.quality") private var quality = ExportOptions.Quality.balanced
     @AppStorage("export.resolution") private var resolution = ExportOptions.Resolution.original
     @AppStorage("export.keepHDR") private var keepHDR = true
     @AppStorage("export.fps") private var frameRate = ExportOptions.FrameRate.original
@@ -18,7 +17,7 @@ struct SaveOptionsSheet: View {
 
     private var isHDR: Bool { project.hdrTransfer != nil }
     private var options: ExportOptions {
-        ExportOptions(codec: codec, quality: quality, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate)
+        ExportOptions(codec: codec, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate)
     }
 
     /// The sizes this video can be saved at: its own, and each smaller.
@@ -34,7 +33,6 @@ struct SaveOptionsSheet: View {
             if !isHDR || !keepHDR { formatSection }
             sizeSection
             if rates.count > 1 { frameRateSection }
-            qualitySection
             estimate
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -85,16 +83,10 @@ struct SaveOptionsSheet: View {
     private var frameRateSection: some View {
         section("Frame rate", note: frameRate == .original
             ? "As filmed (\(Int((project.videoFps ?? 30).rounded())) fps)."
-            : "Fewer frames: a smaller file, and the cinema look at 24.") {
+            : "Half the frames: a smaller file.") {
             SegmentedPills(options: rates, selection: $frameRate, label: { rate in
                 rate.value.map { "\(Int($0)) fps" } ?? "Original"
             })
-        }
-    }
-
-    private var qualitySection: some View {
-        section("Quality") {
-            SegmentedPills(options: ExportOptions.Quality.allCases, selection: $quality, label: { $0.rawValue.capitalized })
         }
     }
 
@@ -107,7 +99,7 @@ struct SaveOptionsSheet: View {
         VStack(spacing: 6) {
             estimateRow
             if !fits, let free = freeBytes {
-                Text("There is not enough room: this needs about \(Self.size(options.estimatedBytes(for: project) ?? 0)) and the phone has \(Self.size(free)) free. Choose a smaller size or quality, or free up space.")
+                Text("There is not enough room: this needs about \(Self.size(options.estimatedBytes(for: project) ?? 0)) and the phone has \(Self.size(free)) free. Choose a smaller size or frame rate, or free up space.")
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

@@ -41,10 +41,10 @@ def test_transcript_default_schema_version() -> None:
 
 def test_style_config_defaults() -> None:
     s = StyleConfig()
-    assert s.font == "Inter"
+    assert s.font == "Poppins"
     assert s.position_x == 0.5
     assert s.position_y == 0.84
-    assert s.animation == "word_highlight"
+    assert s.animation == "highlight_box"
     assert s.words_per_line == 3
 
 

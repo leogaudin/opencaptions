@@ -1,5 +1,5 @@
 /**
- * The size, quality and frame rate a viewer saves videos with, remembered in
+ * The size and frame rate a viewer saves videos with, remembered in
  * this browser as a convenience. A choice a video cannot offer (a size above
  * its own) is resolved by the server to the video's own, so a remembered
  * choice never needs clearing.
@@ -9,7 +9,6 @@ import type { RenderOptions } from "@/types";
 
 export const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   resolution: "original",
-  quality: "balanced",
   frame_rate: "original",
 };
 
@@ -18,7 +17,10 @@ const KEY = "opencaptions:download-options";
 function read(): RenderOptions {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<RenderOptions>;
-    return { ...DEFAULT_RENDER_OPTIONS, ...saved };
+    return {
+      resolution: saved.resolution ?? DEFAULT_RENDER_OPTIONS.resolution,
+      frame_rate: saved.frame_rate ?? DEFAULT_RENDER_OPTIONS.frame_rate,
+    };
   } catch {
     return DEFAULT_RENDER_OPTIONS;
   }

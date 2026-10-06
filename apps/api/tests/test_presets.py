@@ -27,7 +27,7 @@ def _presets() -> list[dict[str, object]]:
 
 def test_every_preset_is_a_valid_style() -> None:
     presets = _presets()
-    assert [p["id"] for p in presets][0] == "builtin:classic"
+    assert [p["id"] for p in presets][0] == "builtin:purple-punch"
     assert len({p["id"] for p in presets}) == len(presets)
     for p in presets:
         assert StyleConfig.model_validate(p["config"]).model_dump() == p["config"], p["id"]
@@ -36,10 +36,16 @@ def test_every_preset_is_a_valid_style() -> None:
 def test_the_cheap_looking_presets_are_gone_and_purple_punch_stays() -> None:
     ids = {p["id"] for p in _presets()}
     assert "builtin:purple-punch" in ids
-    assert not ids & {"builtin:soft-pill", "builtin:hot-take"}
-    assert len(ids) >= 8
+    assert not ids & {"builtin:soft-pill", "builtin:hot-take", "builtin:classic"}
+    assert len(ids) >= 7
 
 
 def test_the_default_preset_is_the_apis_default_style() -> None:
-    classic = _presets()[0]["config"]
-    assert classic == StyleConfig().model_dump()
+    first = _presets()[0]["config"]
+    assert first == StyleConfig().model_dump()
+
+
+def test_the_default_font_ships_with_the_engine() -> None:
+    # A new project must draw without fetching a font: the phone app works offline.
+    fonts = _PRESETS.parents[3] / "engine" / "fonts"
+    assert (fonts / "Poppins-ExtraBold.ttf").is_file() and (fonts / "Poppins-OFL.txt").is_file()

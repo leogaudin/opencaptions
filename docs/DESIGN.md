@@ -41,19 +41,21 @@ the two scale on different hardware.
    every transcript edit is one of the engine's (see below). Words are edited on
    the preview, captions are retimed on the timeline, and nothing else changes
    the transcript.
-4. **Render.** `POST /projects/{id}/download {format, resolution, quality, frame_rate}`
+4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate}`
    computes a hash of everything that decides the output (transcript, timing
-   offset, style, format, size, fps, quality). The options are the iOS Save
-   sheet's: a short side (2160, 1080, 720) and a frame rate (30, 24) only ever
-   lower the source's, never raise it, and the quality (smaller, balanced, best)
-   is a CRF per codec in `render_formats.py`; ProRes keeps its profile, so its
-   quality is left out of its hash. `resolve_render_inputs` alone turns options
-   into the output's size and rate, for every caller. If
+   offset, style, format and its encoder settings, size, fps). The options are
+   the iOS Save sheet's: a short side (2160, 1080, 720) and a frame rate (30,
+   below the 60 the server caps at) only ever lower the source's, never raise
+   it. There is no quality choice: a download is a second encoding of the
+   source, so each format is made as good as its codec does well (a CRF in
+   `render_formats.py`; ProRes takes a profile), and the size is chosen with the
+   resolution and frame rate. `resolve_render_inputs` alone turns options into
+   the output's size and rate, for every caller. If
    `projects/{id}/renders/{hash}.<ext>` exists, it is ready at once; otherwise a
    render job is queued and the SPA polls the job. The cache needs no database
    state: readiness is an existence check. `GET /projects/{id}/exports` lists
    the sizes and rates a project offers.
-5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&quality=…&frame_rate=…`.
+5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…`.
    Subtitles (SRT, VTT, JSON) are generated from the transcript, without rendering.
 
 ## The caption engine
@@ -133,8 +135,8 @@ line repeated).
 **Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
 can be changed, its size and length) before it is imported; cancelling throws the copy away.
 
-**Fonts.** Inter is bundled; it is the default and the glyph fallback, so an
-  offline install still draws. Any Google Fonts family can be chosen: the API
+**Fonts.** Inter and Poppins (ExtraBold, the default preset's) are bundled;
+  Inter is the glyph fallback, so an offline install still draws. Any Google Fonts family can be chosen: the API
   fetches it once, keeps it in the store (`fonts/`), and gives the preview and
   the engine the same file. A bundled face wins over a requested one, and
   fallback only reaches bundled faces.
@@ -298,7 +300,7 @@ controls and presets are the web's, from the same `presets.json`; the caption of
 is the engine's. Edits autosave after a quiet moment and when the app leaves the
 foreground; there is no Save button.
 
-**Fonts.** Inter is bundled with the engine's other fonts, in the same order the
+**Fonts.** Inter and Poppins are bundled with the engine's other fonts, in the same order the
 server loads them. A style that names another Google Fonts family fetches it once,
 as the server does (TrueType, the weight nearest 800), and keeps it on disk.
 
@@ -334,11 +336,11 @@ the same.
 
 **Save options.** Save opens a sheet first: the format (H.264, which plays everywhere, or HEVC, about a
 third smaller), the size (original, or 4K, 1080p, 720p by the short side, never larger than the
-source), the frame rate (the source's, or 30 or 24 when lower: evenly spaced frames are kept,
-none invented), the quality (smaller, balanced, best: bits per pixel, with HEVC needing two thirds of
-H.264's) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
+source), the frame rate (the source's, or 60 or 30 when lower: evenly spaced frames are kept,
+none invented) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
 ordinary SDR video before the captions go on. The choice is remembered, and an estimate of the
-size is shown, and when it would not fit in the free space Save is disabled with a message saying so. Everything the options decide is part of the file's name (`ExportKey`).
+size is shown (from bits per pixel, with HEVC needing two thirds of H.264's; there is no quality
+choice, a saved video is made as good as it can be), and when it would not fit in the free space Save is disabled with a message saying so. Everything the options decide is part of the file's name (`ExportKey`).
 
 **Dragging the caption.** The grab region is the caption's box made at least 48 pt across
 and 24 pt wider all round (`CaptionGestures.dragRegion`), measured from where the finger

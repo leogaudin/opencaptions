@@ -151,7 +151,7 @@ extension EngineSuites {
             #expect(ExportOptions(codec: .h264).plan(for: p) == .init(transfer: .hlg, codec: .hevc))
             #expect(ExportOptions(codec: .h264, keepHDR: false).plan(for: p) == .init(transfer: nil, codec: .h264))
             let names = [
-                ExportOptions(), ExportOptions(codec: .hevc, keepHDR: false), ExportOptions(quality: .best),
+                ExportOptions(), ExportOptions(codec: .hevc, keepHDR: false), ExportOptions(frameRate: .fps30),
                 ExportOptions(resolution: .p720), ExportOptions(keepHDR: false),
             ].map { ExportKey.hash(for: p, options: $0) }
             #expect(Set(names).count == names.count, "each choice is a different file")
@@ -171,16 +171,15 @@ extension EngineSuites {
             #expect(ExportOptions.Resolution.available(forShortSide: 540) == [.original])
         }
 
-        @Test func theEstimateFollowsQualityCodecAndSize() throws {
+        @Test func theEstimateFollowsCodecSizeAndFrameRate() throws {
             let p = Project(
                 title: "x", transcript: nil, styleConfig: try Repo.defaultStyle(), videoWidth: 1080, videoHeight: 1920,
-                videoFps: 30, videoDuration: 10)
-            let balanced = try #require(ExportOptions().estimatedBytes(for: p))
-            #expect(balanced > 10_000_000 && balanced < 14_000_000, "9.3 Mbit/s for ten seconds: \(balanced)")
-            #expect(try #require(ExportOptions(quality: .smaller).estimatedBytes(for: p)) < balanced)
-            #expect(try #require(ExportOptions(quality: .best).estimatedBytes(for: p)) > balanced)
-            #expect(try #require(ExportOptions(codec: .hevc).estimatedBytes(for: p)) < balanced)
-            #expect(try #require(ExportOptions(resolution: .p720).estimatedBytes(for: p)) < balanced)
+                videoFps: 60, videoDuration: 10)
+            let full = try #require(ExportOptions().estimatedBytes(for: p))
+            #expect(full > 40_000_000 && full < 48_000_000, "35 Mbit/s for ten seconds: \(full)")
+            #expect(try #require(ExportOptions(codec: .hevc).estimatedBytes(for: p)) < full)
+            #expect(try #require(ExportOptions(resolution: .p720).estimatedBytes(for: p)) < full)
+            #expect(try #require(ExportOptions(frameRate: .fps30).estimatedBytes(for: p)) < full)
             #expect(ExportOptions().estimatedBytes(for: Project(title: "n", styleConfig: try Repo.defaultStyle())) == nil)
         }
 

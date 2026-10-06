@@ -25,12 +25,12 @@ import Testing
         let style = try JSONSerialization.jsonObject(
             with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any]
         #expect(style?["words_per_line"] as? Int == 3)
-        #expect(style?["highlight_color"] as? String == "#FFDD00")
+        #expect(style?["highlight_color"] as? String == "#7C3AED")
     }
 
     @Test func thePresetsAreTheSharedFile() throws {
         let presets = try Presets.load(from: Repo.presets)
-        #expect(presets.map(\.id).first == "builtin:classic")
+        #expect(presets.map(\.id).first == "builtin:purple-punch")
         #expect(Set(presets.map(\.id)).count == presets.count)
         #expect(presets.count >= 3)
         let again = try JSONDecoder().decode([Preset].self, from: JSONEncoder().encode(presets))

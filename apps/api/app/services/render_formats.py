@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.models.schemas import ExportQuality, RenderOptions, StyleConfig
+from app.models.schemas import RenderOptions, StyleConfig
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +28,12 @@ class RenderFormat:
     codec: str
     extension: str
     mime: str
-    # The CRF for each quality: the scale differs per codec. None for ProRes, whose
-    # quality is its profile, the same whatever quality is asked for.
-    crf_by_quality: dict[ExportQuality, int] | None
+    # There is no quality choice: a download is a second encoding of the source, so it
+    # is made as good as each codec does well, and its size is chosen with the
+    # resolution and frame rate. The scale differs per codec; ProRes takes a profile.
+    crf: int | None
     pro_res_profile: str | None
     note: str | None
-
-    @property
-    def has_quality(self) -> bool:
-        return self.crf_by_quality is not None
-
-    def crf(self, quality: ExportQuality = "balanced") -> int | None:
-        return self.crf_by_quality[quality] if self.crf_by_quality else None
-
-    def effective_quality(self, quality: ExportQuality) -> ExportQuality:
-        """The quality as it changes the bytes: one value for a format that has no choice."""
-        return quality if self.has_quality else "balanced"
 
 
 # === Format Registry ===
@@ -59,7 +49,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="h264",
         extension=".mp4",
         mime="video/mp4",
-        crf_by_quality={"smaller": 23, "balanced": 18, "best": 15},
+        crf=15,
         pro_res_profile=None,
         note=None,
     ),
@@ -69,7 +59,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="h265",
         extension=".mp4",
         mime="video/mp4",
-        crf_by_quality={"smaller": 28, "balanced": 23, "best": 20},
+        crf=20,
         pro_res_profile=None,
         note=None,
     ),
@@ -79,7 +69,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="vp9",
         extension=".webm",
         mime="video/webm",
-        crf_by_quality={"smaller": 33, "balanced": 28, "best": 24},
+        crf=24,
         pro_res_profile=None,
         note="VP9 encoding is very slow — expect 5-10x real-time on a modern CPU.",
     ),
@@ -90,9 +80,9 @@ _FORMAT_DEFS: list[RenderFormat] = [
         extension=".mov",
         mime="video/quicktime",
         # ProRes does NOT accept crf — quality is controlled by proResProfile.
-        crf_by_quality=None,
+        crf=None,
         pro_res_profile="hq",
-        note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video); the quality choice does not change them.",
+        note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video).",
     ),
 ]
 
@@ -126,13 +116,15 @@ def compute_render_hash(
     width: int,
     height: int,
     fps: int,
-    quality: ExportQuality = "balanced",
 ) -> str:
     """Digest of every render-affecting input, as 16 hex characters.
 
     Keys are sorted so the digest is stable across dict ordering; changing that
-    invalidates every cached render.
+    invalidates every cached render. The format's encoder settings are part of it,
+    so a changed CRF makes a new file rather than serving a stale one.
     """
+    fmt = get_format(format_id)
+    encoder = {"crf": fmt.crf, "pro_res_profile": fmt.pro_res_profile} if fmt else {}
     canonical = json.dumps(
         {
             "transcript": transcript,
@@ -142,7 +134,7 @@ def compute_render_hash(
             "width": width,
             "height": height,
             "fps": fps,
-            "quality": quality,
+            "encoder": encoder,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -199,11 +191,8 @@ class RenderInputs:
     width: int
     height: int
     fps: int
-    quality: ExportQuality = "balanced"
 
     def hash_for(self, format_id: str) -> str:
-        fmt = get_format(format_id)
-        quality = fmt.effective_quality(self.quality) if fmt else self.quality
         return compute_render_hash(
             transcript=self.transcript,
             style_config=self.style_config,
@@ -212,7 +201,6 @@ class RenderInputs:
             width=self.width,
             height=self.height,
             fps=self.fps,
-            quality=quality,
         )
 
     def object_key_for(self, project_id: str, fmt: RenderFormat) -> str:
@@ -220,7 +208,7 @@ class RenderInputs:
 
 
 _SHORT_SIDES = {"2160": 2160, "1080": 1080, "720": 720}
-_FRAME_RATES = {"30": 30.0, "24": 24.0}
+_FRAME_RATES = {"30": 30.0}
 
 
 def _source_geometry(project: RenderableProject) -> tuple[int, int, float]:
@@ -277,5 +265,4 @@ def resolve_render_inputs(
         width=width,
         height=height,
         fps=int(round(fps)),
-        quality=options.quality,
     )

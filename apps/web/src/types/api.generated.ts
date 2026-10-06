@@ -966,7 +966,7 @@ export interface components {
             /** Resolutions */
             resolutions: ("original" | "2160" | "1080" | "720")[];
             /** Frame Rates */
-            frame_rates: ("original" | "30" | "24")[];
+            frame_rates: ("original" | "30")[];
             /**
              * Source Fps
              * @description The source's frame rate
@@ -1276,19 +1276,12 @@ export interface components {
              */
             resolution: "original" | "2160" | "1080" | "720";
             /**
-             * Quality
-             * @description Smaller file, balanced, or best picture (not for ProRes)
-             * @default balanced
-             * @enum {string}
-             */
-            quality: "smaller" | "balanced" | "best";
-            /**
              * Frame Rate
              * @description Frames per second, or the source's rate
              * @default original
              * @enum {string}
              */
-            frame_rate: "original" | "30" | "24";
+            frame_rate: "original" | "30";
             /**
              * Format
              * @description Format id from the format registry (mp4, mp4-hevc, webm, mov)
@@ -1323,12 +1316,12 @@ export interface components {
         StyleConfig: {
             /**
              * Font
-             * @default Inter
+             * @default Poppins
              */
             font: string;
             /**
              * Font Size
-             * @default 48
+             * @default 64
              */
             font_size: number;
             /**
@@ -1338,12 +1331,12 @@ export interface components {
             text_color: string;
             /**
              * Highlight Color
-             * @default #FFDD00
+             * @default #7C3AED
              */
             highlight_color: string;
             /**
              * Background
-             * @default pill
+             * @default none
              * @enum {string}
              */
             background: "none" | "solid" | "pill";
@@ -1354,7 +1347,7 @@ export interface components {
             background_color: string;
             /**
              * Background Opacity
-             * @default 0.5
+             * @default 0
              */
             background_opacity: number;
             /**
@@ -1369,7 +1362,7 @@ export interface components {
             position_y: number;
             /**
              * Animation
-             * @default word_highlight
+             * @default highlight_box
              * @enum {string}
              */
             animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade";
@@ -1395,13 +1388,13 @@ export interface components {
             stroke_color: string;
             /**
              * Shadow Blur
-             * @default 0
+             * @default 10
              */
             shadow_blur: number;
             /**
              * Shadow Color
              * @description Optional alpha channel for shadow
-             * @default #00000080
+             * @default #000000A0
              */
             shadow_color: string;
         };
@@ -1701,12 +1694,6 @@ export interface components {
              * @description Optional note about the format
              */
             note?: string | null;
-            /**
-             * Has Quality
-             * @description Whether the quality choice applies (not to ProRes)
-             * @default true
-             */
-            has_quality: boolean;
         };
         /**
          * Word
@@ -2508,10 +2495,8 @@ export interface operations {
             query?: {
                 /** @description The short side in pixels, or the source's size */
                 resolution?: "original" | "2160" | "1080" | "720";
-                /** @description Smaller file, balanced, or best picture (not for ProRes) */
-                quality?: "smaller" | "balanced" | "best";
                 /** @description Frames per second, or the source's rate */
-                frame_rate?: "original" | "30" | "24";
+                frame_rate?: "original" | "30";
             };
             header?: never;
             path: {
