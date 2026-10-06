@@ -71,7 +71,7 @@ public struct CaptionExporter: Sendable {
     /// How frames are decoded, composited and encoded. SDR is 8-bit H.264. An HDR source
     /// stays HDR: decoded to 10 bits so nothing is clipped, and written as 10-bit HEVC
     /// with the source's BT.2020 primaries and transfer function. Core Image works in
-    /// light relative to reference white, so the sRGB captions land at `CaptionFrame.hdrWhiteScale`
+    /// light relative to reference white, so the sRGB captions land at `CaptionFrame.hdrExportWhiteScale`
     /// times reference white in the HDR signal, not at peak brightness.
     private struct Encoding {
         var pixelFormat: OSType
@@ -125,7 +125,7 @@ public struct CaptionExporter: Sendable {
                     kCVImageBufferTransferFunctionKey: pq ? kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ : kCVImageBufferTransferFunction_ITU_R_2100_HLG,
                     kCVImageBufferYCbCrMatrixKey: kCVImageBufferYCbCrMatrix_ITU_R_2020,
                 ])
-            encoding.overlayGain = (pq ? 0.277 : 0.282) * CaptionFrame.hdrWhiteScale
+            encoding.overlayGain = (pq ? 0.277 : 0.282) * CaptionFrame.hdrExportWhiteScale
             return encoding
         }
     }

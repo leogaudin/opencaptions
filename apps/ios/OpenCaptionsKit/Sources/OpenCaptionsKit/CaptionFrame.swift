@@ -35,9 +35,15 @@ extension CaptionFrame {
     /// captions are over an HDR video. Real footage has its diffuse whites (a wall, a sky, a shirt)
     /// at about one and a half times reference white, with highlights above: a caption at twice
     /// it was no brighter than the wall behind it and read as dim grey. At four times (about 800
-    /// nits in PQ, the top of the range in HLG) it is the brightest thing in the picture. The
-    /// preview and the export use the same factor.
+    /// nits in PQ, the top of the range in HLG) it is the brightest thing in the picture.
     public static let hdrWhiteScale = 4.0
+
+    /// The same for a saved HDR video, a little brighter: watched in Photos, captions at the
+    /// preview's factor looked a touch dimmer than the preview (the preview's extended-range layer
+    /// renders brighter than the player shows the file). Five times reference white is about 1000
+    /// nits in PQ, the peak an HDR display is mastered for; HLG is at its top already and gains the
+    /// little room it has left.
+    public static let hdrExportWhiteScale = 5.0
 
     /// The overlay for an HDR video's preview: half-float, in extended linear sRGB, with white at
     /// `hdrWhiteScale` (a layer showing it must set `wantsExtendedDynamicRangeContent`).

@@ -62,7 +62,7 @@ extension EngineSuites {
             return peak
         }
 
-        @Test(arguments: [("hlg", HDRTransfer.hlg, 918), ("pq", HDRTransfer.pq, 707)])
+        @Test(arguments: [("hlg", HDRTransfer.hlg, 945), ("pq", HDRTransfer.pq, 730)])
         func anHDRSourceStaysHDRWithTheCaptionsNearItsPeak(
             name: String, transfer: HDRTransfer, captionWhite: Int
         ) async throws {
@@ -83,9 +83,9 @@ extension EngineSuites {
             let primaries = CMFormatDescriptionGetExtension(format, extensionKey: kCMFormatDescriptionExtension_ColorPrimaries) as? String
             #expect(primaries == kCMFormatDescriptionColorPrimaries_ITU_R_2020 as String)
 
-            // The caption's white is at four times reference white (PQ: 203 nits is code 573 and
-            // about 800 nits is 707; HLG: 721 and 918, near its 940 peak). A real clip's walls sit at
-            // about one and a half times reference white (code ~780 in HLG), so this is above them.
+            // A saved caption's white is at five times reference white (PQ: 203 nits is code 573 and
+            // about 1000 nits about 730; HLG: 721, and 945 at the top of its range). A real clip's
+            // walls sit at about one and a half times reference white (code ~780 in HLG).
             let peak = try await peakLuma(url, rows: 380..<430, columns: 30..<240)
             #expect(abs(peak - captionWhite) < 20, "caption white is code \(peak); expected about \(captionWhite)")
             #expect(peak <= 940 + 8, "not past the top of the range")

@@ -314,12 +314,13 @@ asks before a download.
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
 with BT.2020. Core Image puts sRGB white well above reference white in an HDR
 signal, so the captions are scaled by a measured factor per transfer function, and
-the tests read the output's luma to check where they land. They land at four times reference
-white (about 800 nits in PQ, near the top of the range in HLG): real footage has its walls and
-skies at about one and a half times reference white, so captions at twice it were no brighter
-than the wall behind them and read as dim. The preview does the same for an HDR video
-(a half-float, extended-range layer scaled by the same `CaptionFrame.hdrWhiteScale`), so
-what is seen while editing is what is saved.
+the tests read the output's luma to check where they land. A saved video's captions land at
+five times reference white (about 1000 nits in PQ, the top of the range in HLG): real footage
+has its walls and skies at about one and a half times reference white, so captions at twice it
+were no brighter than the wall behind them and read as dim. The preview draws an HDR video's
+captions on a half-float, extended-range layer at four times (`CaptionFrame.hdrWhiteScale`):
+that layer shows brighter than the player shows the file, so the two factors differ to look
+the same.
 
 **Save options.** Save opens a sheet first: the format (H.264, which plays everywhere, or HEVC, about a
 third smaller), the size (original, or 4K, 1080p, 720p by the short side, never larger than the
