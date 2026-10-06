@@ -7,7 +7,12 @@ import ImageIO
 /// unchanged project is saved again at once. Local to the phone (it is not the
 /// server's hash), but built the same way: the inputs in canonical JSON.
 public enum ExportKey {
+    /// Bumped when the pipeline changes what it makes from the same inputs (a brighter HDR caption,
+    /// a new encoder setting), so a file made by an older pipeline is not handed back as current.
+    static let pipelineVersion = 2
+
     private struct Inputs: Encodable {
+        var pipeline = ExportKey.pipelineVersion
         var transcript: Transcript
         var style: StyleConfig
         var captionOffsetMs: Int
@@ -17,24 +22,15 @@ public enum ExportKey {
         var fps: Double
 
         enum CodingKeys: String, CodingKey {
-            case transcript, style, format, width, height, fps
+            case pipeline, transcript, style, format, width, height, fps
             case captionOffsetMs = "caption_offset_ms"
         }
     }
 
-    /// The file format an export of this project is: HDR sources stay HDR.
-    public static func format(for project: Project) -> String {
-        switch project.hdrTransfer {
-        case .pq?: "mp4-hevc10-pq"
-        case .hlg?: "mp4-hevc10-hlg"
-        case nil: "mp4-h264"
-        }
-    }
-
     /// 16 hex characters; nil for a project that has nothing to export yet.
-    public static func hash(for project: Project, format: String? = nil) -> String? {
+    public static func hash(for project: Project, format: String? = nil, options: ExportOptions = .standard) -> String? {
         guard let transcript = project.transcript else { return nil }
-        let format = format ?? Self.format(for: project)
+        let format = format ?? options.signature(for: project)
         let inputs = Inputs(
             transcript: transcript, style: project.styleConfig, captionOffsetMs: project.captionOffsetMs,
             format: format, width: project.videoWidth ?? 0, height: project.videoHeight ?? 0,

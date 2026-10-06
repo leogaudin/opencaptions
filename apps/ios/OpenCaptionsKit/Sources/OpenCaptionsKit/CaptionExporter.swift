@@ -36,10 +36,10 @@ public struct CaptionExporter: Sendable {
     /// The file for this project's current state in `directory`, writing it unless an
     /// identical export is already there. `progress` gets a fraction from 0 to 1.
     public func export(
-        project: Project, source: URL, in directory: URL,
+        project: Project, source: URL, in directory: URL, options: ExportOptions = .standard,
         progress: @escaping @Sendable (Double) -> Void
     ) async throws -> URL {
-        guard let transcript = project.transcript, let key = ExportKey.hash(for: project) else {
+        guard let transcript = project.transcript, let key = ExportKey.hash(for: project, options: options) else {
             throw ExportError.nothingToExport
         }
         let final = directory.appendingPathComponent("\(key).mp4")
@@ -52,9 +52,11 @@ public struct CaptionExporter: Sendable {
         }
         let partial = directory.appendingPathComponent("\(key).partial.mp4")
 
-        Diagnostics.log("export start \(key) hdr=\(project.hdrTransfer?.rawValue ?? "no") mem=\(Diagnostics.footprintMB())MB")
+        Diagnostics.log("export start \(key) \(options.signature(for: project)) mem=\(Diagnostics.footprintMB())MB")
         do {
-            try await write(project: project, transcript: transcript, source: source, to: partial, progress: progress)
+            try await write(
+                project: project, transcript: transcript, source: source, to: partial, options: options,
+                progress: progress)
             try? FileManager.default.removeItem(at: final)
             try FileManager.default.moveItem(at: partial, to: final)
             Diagnostics.log("export done \(key) mem=\(Diagnostics.footprintMB())MB")
@@ -84,15 +86,23 @@ public struct CaptionExporter: Sendable {
         /// the system maps sRGB into HDR fails there.
         var overlayGain = 1.0
 
-        static func make(for transfer: HDRTransfer?, width: Int, height: Int, bitrate: Int, fps: Double) -> Encoding {
+        static func make(
+            for transfer: HDRTransfer?, codec: ExportOptions.Codec = .h264, width: Int, height: Int, bitrate: Int,
+            fps: Double
+        ) -> Encoding {
             var compression: [String: Any] = [
                 AVVideoAverageBitRateKey: bitrate, AVVideoExpectedSourceFrameRateKey: fps,
             ]
             guard let transfer else {
-                compression[AVVideoProfileLevelKey] = AVVideoProfileLevelH264HighAutoLevel
+                let hevc = codec == .hevc
+                compression[AVVideoProfileLevelKey] =
+                    hevc ? kVTProfileLevel_HEVC_Main_AutoLevel as String : AVVideoProfileLevelH264HighAutoLevel
                 return Encoding(
                     pixelFormat: kCVPixelFormatType_32BGRA,
-                    settings: [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: width, AVVideoHeightKey: height],
+                    settings: [
+                        AVVideoCodecKey: hevc ? AVVideoCodecType.hevc : AVVideoCodecType.h264,
+                        AVVideoWidthKey: width, AVVideoHeightKey: height,
+                    ],
                     compression: compression, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
             }
             let pq = transfer == .pq
@@ -123,7 +133,7 @@ public struct CaptionExporter: Sendable {
     // MARK: The pipeline
 
     private func write(
-        project: Project, transcript: Transcript, source: URL, to output: URL,
+        project: Project, transcript: Transcript, source: URL, to output: URL, options: ExportOptions,
         progress: @escaping @Sendable (Double) -> Void
     ) async throws {
         let asset = AVURLAsset(url: source)
@@ -131,23 +141,34 @@ public struct CaptionExporter: Sendable {
         let (size, transform, nominalFps) = try await track.load(.naturalSize, .preferredTransform, .nominalFrameRate)
         let duration = try await asset.load(.duration).seconds
         let shown = CGRect(origin: .zero, size: size).applying(transform)
-        // Encoders need even dimensions, and the engine's overlay must match exactly.
-        let width = max(2, Int(abs(shown.width).rounded()) & ~1)
-        let height = max(2, Int(abs(shown.height).rounded()) & ~1)
+        // Encoders need even dimensions, and the engine's overlay must match exactly. The picture is
+        // made at the size asked for (never larger than the source), and the captions are drawn at it.
+        let (width, height) = options.outputSize(
+            width: Int(abs(shown.width).rounded()), height: Int(abs(shown.height).rounded()))
+        let sourceHeight = max(2, Int(abs(shown.height).rounded()) & ~1)
+        let scale = Double(height) / Double(sourceHeight)
         let fps = nominalFps > 0 ? Double(nominalFps) : 30
         let orientation = VideoOrientation.from(transform)
+        let plan = options.plan(for: project)
+        // An HDR source made into an SDR video is tone-mapped down before the captions go on.
+        let toneMap = project.hdrTransfer != nil && plan.transfer == nil
 
         await engine.ensureFont(project.styleConfig.font, cache: fonts)
         try await engine.setScene(
             transcript: transcript, style: project.styleConfig, width: width, height: height,
             captionOffsetMs: project.captionOffsetMs)
 
-        let bitrate = min(50_000_000, max(2_000_000, Int(Double(width * height) * fps * 0.15)))
-        let encoding = Encoding.make(for: project.hdrTransfer, width: width, height: height, bitrate: bitrate, fps: fps)
+        let bitrate = options.bitrate(width: width, height: height, fps: fps, plan: plan)
+        let encoding = Encoding.make(
+            for: plan.transfer, codec: plan.codec, width: width, height: height, bitrate: bitrate, fps: fps)
+        // What the reader hands over: an HDR source is read at 10 bits, so nothing is clipped on the
+        // way to either an HDR file or a tone-mapped SDR one.
+        let decodeFormat =
+            project.hdrTransfer != nil ? kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange : encoding.pixelFormat
 
         let reader = try AVAssetReader(asset: asset)
         let videoOut = AVAssetReaderTrackOutput(
-            track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: encoding.pixelFormat])
+            track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: decodeFormat])
         reader.add(videoOut)
         let audio = try await audioPipeline(asset: asset, reader: reader)
 
@@ -185,7 +206,9 @@ public struct CaptionExporter: Sendable {
                 // Each frame holds tens of megabytes of pixel buffers; a pool per frame returns them
                 // at once instead of whenever the long-running task next unwinds.
                 try autoreleasepool {
-                    let picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
+                    var picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
+                    if scale < 1 { picture = picture.downscaled(by: scale).cropped(to: bounds) }
+                    if toneMap { picture = picture.toneMappedToSDR() }
                     var buffer: CVPixelBuffer?
                     CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
                     guard let buffer else { throw ExportError.failed("out of memory") }
@@ -303,5 +326,18 @@ public struct CaptionExporter: Sendable {
             feed(audio, writer: writer, reader: reader)
             if !audio.done { try await Task.sleep(for: .milliseconds(2)) }
         }
+    }
+}
+
+extension CIImage {
+    /// Resized with Lanczos resampling, the sharp way to make a picture smaller.
+    func downscaled(by scale: Double) -> CIImage {
+        applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1.0])
+    }
+
+    /// An HDR picture brought into SDR range: the highlights above reference white are compressed
+    /// rather than clipped (a 1000-nit HDR peak is about five times SDR white).
+    func toneMappedToSDR() -> CIImage {
+        applyingFilter("CIToneMapHeadroom", parameters: ["inputSourceHeadroom": 4.93, "inputTargetHeadroom": 1.0])
     }
 }

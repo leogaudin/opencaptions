@@ -11,6 +11,7 @@ struct EditorView: View {
     @State private var playback = Playback()
     @State private var showTranscribe = false
     @State private var renaming: String?
+    @State private var showSaveOptions = false
     @State private var showStyle = false
     @State private var edit: WordEdit?
     @State private var exporter: ExportController?
@@ -72,6 +73,17 @@ struct EditorView: View {
             .presentationDetents([Self.styleDetent, .large])
             .presentationBackgroundInteraction(.enabled(upThrough: Self.styleDetent))
         }
+        .sheet(isPresented: $showSaveOptions) {
+            SaveOptionsSheet(
+                project: model.project,
+                save: { options in
+                    showSaveOptions = false
+                    Task { await saveVideo(options) }
+                },
+                cancel: { showSaveOptions = false }
+            )
+            .presentationBackground(Theme.surface).presentationCornerRadius(24)
+        }
         .sheet(isPresented: $showExport) {
             if let exporter {
                 ExportSheet(controller: exporter).presentationBackground(Theme.surface).presentationCornerRadius(24)
@@ -99,6 +111,7 @@ struct EditorView: View {
             #if DEBUG
                 if ProcessInfo.processInfo.environment["OC_SHOW_STYLE"] != nil { showStyle = true }
                 if ProcessInfo.processInfo.environment["OC_SHOW_TRANSCRIBE"] != nil { showTranscribe = true }
+                if ProcessInfo.processInfo.environment["OC_SHOW_SAVE"] != nil { showSaveOptions = true }
                 if ProcessInfo.processInfo.environment["OC_EDIT_WORD"] != nil {
                     edit = WordEdit(index: 1, text: model.transcript?.words[safe: 1]?.text ?? "")
                 }
@@ -130,7 +143,7 @@ struct EditorView: View {
 
     /// Saves what is on screen: pending edits land first, and the preview lets go of the
     /// engine while the export uses it.
-    private func saveVideo() async {
+    private func saveVideo(_ options: ExportOptions) async {
         guard let source = app.store.sourceURL(for: model.project.id) else { return }
         await model.flush()
         playback.pause()
@@ -138,7 +151,7 @@ struct EditorView: View {
         guard let directory = try? app.store.rendersDirectory(for: model.project.id) else { return }
         let controller = ExportController(run: { [fonts = app.fontCache] project, source, progress in
             try await CaptionExporter(fonts: fonts).export(
-                project: project, source: source, in: directory, progress: progress)
+                project: project, source: source, in: directory, options: options, progress: progress)
         })
         exporter = controller
         controller.start(project: model.project, source: source)
@@ -209,7 +222,7 @@ struct EditorView: View {
             }
             .buttonStyle(CircleButtonStyle())
             .accessibilityLabel("More")
-            Button("Save") { Task { await saveVideo() } }
+            Button("Save") { showSaveOptions = true }
                 .buttonStyle(PillButtonStyle(prominent: true))
                 .disabled(model.transcript == nil || model.isTranscribing || exporter?.isRunning == true)
                 .opacity(model.transcript == nil || model.isTranscribing ? 0.4 : 1)

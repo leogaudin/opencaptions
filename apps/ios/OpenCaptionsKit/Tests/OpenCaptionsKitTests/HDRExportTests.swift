@@ -94,6 +94,96 @@ extension EngineSuites {
             #expect(corner < peak - 100)
         }
 
+        /// The brightest 8-bit luma in a block of the first frame of an SDR file.
+        func peakLuma8(_ url: URL, rows: Range<Int>, columns: Range<Int>) async throws -> Int {
+            let asset = AVURLAsset(url: url)
+            let track = try #require(try await asset.loadTracks(withMediaType: .video).first)
+            let reader = try AVAssetReader(asset: asset)
+            let output = AVAssetReaderTrackOutput(
+                track: track,
+                outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange])
+            reader.add(output)
+            reader.startReading()
+            let sample = try #require(output.copyNextSampleBuffer())
+            let buffer = try #require(CMSampleBufferGetImageBuffer(sample))
+            CVPixelBufferLockBaseAddress(buffer, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+            let stride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+            let base = CVPixelBufferGetBaseAddressOfPlane(buffer, 0)!
+            var peak = 0
+            for y in rows { for x in columns { peak = max(peak, Int(base.advanced(by: y * stride + x).load(as: UInt8.self))) } }
+            return peak
+        }
+
+        @Test(arguments: [("hlg", HDRTransfer.hlg), ("pq", HDRTransfer.pq)])
+        func anHDRSourceCanBeSavedAsAnOrdinarySDRVideo(name: String, transfer: HDRTransfer) async throws {
+            let store = store()
+            let p = try await project(from: fixture(name), store: store)
+            #expect(p.hdrTransfer == transfer)
+            let options = ExportOptions(codec: .h264, keepHDR: false)
+            let url = try await CaptionExporter(fonts: fonts).export(
+                project: p, source: store.sourceURL(for: p.id)!,
+                in: FileManager.default.temporaryDirectory.appendingPathComponent("oc-\(UUID())"), options: options,
+                progress: { _ in })
+            let info = try await VideoProbe.probe(url)
+            #expect(info.hdr == nil, "an SDR file")
+            #expect((info.width, info.height) == (270, 480))
+            let track = try #require(try await AVURLAsset(url: url).loadTracks(withMediaType: .video).first)
+            let format = try #require(try await track.load(.formatDescriptions).first)
+            #expect(CMFormatDescriptionGetMediaSubType(format) == kCMVideoCodecType_H264)
+            // White captions are white in SDR (video-range luma tops out at 235), over a picture that
+            // is darker than them and still there.
+            let caption = try await peakLuma8(url, rows: 380..<430, columns: 30..<240)
+            let corner = try await peakLuma8(url, rows: 10..<20, columns: 10..<20)
+            #expect(caption > 200, "caption luma \(caption)")
+            #expect(corner < caption - 40, "the picture is not blown out: corner \(corner)")
+        }
+
+        @Test func theOptionsDecideTheFormatAndTheNameButNeverGiveHDRToH264() throws {
+            var p = Project(
+                title: "x", transcript: try Repo.transcript(), styleConfig: try Repo.defaultStyle(), videoWidth: 1080,
+                videoHeight: 1920, videoFps: 30, videoDuration: 10)
+            // An SDR project: the codec is the user's.
+            #expect(ExportOptions(codec: .hevc).plan(for: p) == .init(transfer: nil, codec: .hevc))
+            #expect(ExportOptions().plan(for: p) == .init(transfer: nil, codec: .h264))
+            // An HDR one kept as HDR is HEVC whatever codec was chosen, and SDR when asked.
+            p.hdrTransfer = .hlg
+            #expect(ExportOptions(codec: .h264).plan(for: p) == .init(transfer: .hlg, codec: .hevc))
+            #expect(ExportOptions(codec: .h264, keepHDR: false).plan(for: p) == .init(transfer: nil, codec: .h264))
+            let names = [
+                ExportOptions(), ExportOptions(codec: .hevc, keepHDR: false), ExportOptions(quality: .best),
+                ExportOptions(resolution: .p720), ExportOptions(keepHDR: false),
+            ].map { ExportKey.hash(for: p, options: $0) }
+            #expect(Set(names).count == names.count, "each choice is a different file")
+            // A choice that changes nothing for this source does not make another file: codec is moot in HDR.
+            #expect(ExportKey.hash(for: p, options: ExportOptions(codec: .h264)) == ExportKey.hash(for: p, options: ExportOptions(codec: .hevc)))
+        }
+
+        @Test func sizesAreNeverLargerThanTheSourceAndAlwaysEven() {
+            let options = { (r: ExportOptions.Resolution) in ExportOptions(resolution: r) }
+            #expect(options(.original).outputSize(width: 1080, height: 1920) == (1080, 1920))
+            #expect(options(.p720).outputSize(width: 1080, height: 1920) == (720, 1280))
+            #expect(options(.p720).outputSize(width: 1920, height: 1080) == (1280, 720), "sideways")
+            #expect(options(.p1080).outputSize(width: 720, height: 1280) == (720, 1280), "never upscaled")
+            #expect(options(.p720).outputSize(width: 1000, height: 1777) == (720, 1278), "even")
+            #expect(ExportOptions.Resolution.available(forShortSide: 1080) == [.original, .p720])
+            #expect(ExportOptions.Resolution.available(forShortSide: 2160) == [.original, .p1080, .p720])
+            #expect(ExportOptions.Resolution.available(forShortSide: 540) == [.original])
+        }
+
+        @Test func theEstimateFollowsQualityCodecAndSize() throws {
+            let p = Project(
+                title: "x", transcript: nil, styleConfig: try Repo.defaultStyle(), videoWidth: 1080, videoHeight: 1920,
+                videoFps: 30, videoDuration: 10)
+            let balanced = try #require(ExportOptions().estimatedBytes(for: p))
+            #expect(balanced > 10_000_000 && balanced < 14_000_000, "9.3 Mbit/s for ten seconds: \(balanced)")
+            #expect(try #require(ExportOptions(quality: .smaller).estimatedBytes(for: p)) < balanced)
+            #expect(try #require(ExportOptions(quality: .best).estimatedBytes(for: p)) > balanced)
+            #expect(try #require(ExportOptions(codec: .hevc).estimatedBytes(for: p)) < balanced)
+            #expect(try #require(ExportOptions(resolution: .p720).estimatedBytes(for: p)) < balanced)
+            #expect(ExportOptions().estimatedBytes(for: Project(title: "n", styleConfig: try Repo.defaultStyle())) == nil)
+        }
+
         @Test func anSDRSourceStillMakesAnSDRFile() async throws {
             let store = store()
             let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")

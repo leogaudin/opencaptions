@@ -271,6 +271,15 @@ the text beside an HDR picture's highlights. The preview does the same for an HD
 (a half-float, extended-range layer scaled by the same `CaptionFrame.hdrWhiteScale`), so
 what is seen while editing is what is saved.
 
+**Save options.** Save opens a sheet first: the format (H.264, which plays everywhere, or HEVC, about a
+third smaller), the size (original, or 4K, 1080p, 720p by the short side, never larger than the
+source), the quality (smaller, balanced, best: bits per pixel, with HEVC needing two thirds of
+H.264's) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
+ordinary SDR video before the captions go on. The choice is remembered, and an estimate of the
+size is shown. Everything the options decide is part of the file's name (`ExportKey`), with a
+pipeline version that is bumped whenever the pipeline changes what it makes from the same
+inputs, so a file made by an older pipeline is never handed back as current.
+
 **Dragging the caption.** The grab region is the caption's box made at least 48 pt across
 and 24 pt wider all round (`CaptionGestures.dragRegion`), measured from where the finger
 landed (a pan is only recognised after it has moved a little), and it works while the

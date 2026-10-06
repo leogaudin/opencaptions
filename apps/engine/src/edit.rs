@@ -363,7 +363,10 @@ mod tests {
         assert_eq!(w[2].0, "two", "the rest follows untouched");
         assert_eq!(t.segments[0].rest["text"], "a bbbb two");
         let v = serde_json::to_value(&t).unwrap();
-        assert_eq!(v["segments"][0]["words"][1]["confidence"], 0.9f32, "fields kept");
+        assert_eq!(
+            v["segments"][0]["words"][1]["confidence"], 0.9f32,
+            "fields kept"
+        );
     }
 
     #[test]

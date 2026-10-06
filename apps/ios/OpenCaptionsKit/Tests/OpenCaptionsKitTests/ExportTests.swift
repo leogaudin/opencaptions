@@ -54,6 +54,42 @@ extension EngineSuites {
             return (Int(rgba[0]), Int(rgba[1]), Int(rgba[2]))
         }
 
+        func codec(of url: URL) async throws -> FourCharCode {
+            let track = try #require(try await AVURLAsset(url: url).loadTracks(withMediaType: .video).first)
+            return CMFormatDescriptionGetMediaSubType(try #require(try await track.load(.formatDescriptions).first))
+        }
+
+        @Test func aSmallerSizeAndHEVCAreWhatWasAskedFor() async throws {
+            let store = store()
+            let p = try await project(for: try await clip(width: 1080, height: 1920, seconds: 1), in: store)
+            let options = ExportOptions(codec: .hevc, quality: .smaller, resolution: .p720)
+            let url = try await CaptionExporter(fonts: fonts).export(
+                project: p, source: store.sourceURL(for: p.id)!, in: directory(), options: options, progress: { _ in })
+            let info = try await VideoProbe.probe(url)
+            #expect((info.width, info.height) == (720, 1280), "the short side is 720")
+            #expect(try await codec(of: url) == kCMVideoCodecType_HEVC)
+            #expect(info.hdr == nil)
+            // The captions were drawn at the new size, so they are in the picture.
+            let (r, g, b) = try await pixel(url, at: 0.2, x: 360, y: Int(0.84 * 1280))
+            #expect(max(r, g, b) > 100, "the caption is there: \(r) \(g) \(b)")
+        }
+
+        @Test func anOptionIsPartOfTheNameOfTheFile() async throws {
+            let store = store()
+            let p = try await project(for: try await clip(seconds: 1), in: store)
+            let dir = directory()
+            let exporter = CaptionExporter(fonts: fonts)
+            let source = store.sourceURL(for: p.id)!
+            let standard = try await exporter.export(project: p, source: source, in: dir, progress: { _ in })
+            let again = try await exporter.export(project: p, source: source, in: dir, progress: { _ in })
+            let hevc = try await exporter.export(
+                project: p, source: source, in: dir, options: ExportOptions(codec: .hevc), progress: { _ in })
+            #expect(standard == again, "the same options reuse the file")
+            #expect(standard != hevc, "other options make another")
+            #expect(try await codec(of: standard) == kCMVideoCodecType_H264)
+            #expect(try await codec(of: hevc) == kCMVideoCodecType_HEVC)
+        }
+
         @Test func theExportIsTheSizeRateAndLengthOfTheClipWithItsAudio() async throws {
             let store = store()
             let source = try await clip(audio: true)
