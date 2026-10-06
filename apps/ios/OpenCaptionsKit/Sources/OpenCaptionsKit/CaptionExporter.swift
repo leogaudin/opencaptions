@@ -149,9 +149,12 @@ public struct CaptionExporter: Sendable {
         let scale = Double(height) / Double(sourceHeight)
         let sourceFps = nominalFps > 0 ? Double(nominalFps) : 30
         let fps = options.outputFps(source: sourceFps)
-        // A lower rate than the source's is reached by keeping evenly spaced frames.
-        let keepEvery: Double? = fps < sourceFps - 0.5 ? 1 / fps : nil
-        var nextKept = 0.0
+        // Another rate than the source's: output frames sit on a grid of 1/fps, each showing the
+        // latest source frame at or before it. Otherwise every source frame is kept as it is.
+        let resampling = options.frameRate != .original && abs(fps - sourceFps) > 0.5
+        var nextSlot: Double?
+        var held: CMSampleBuffer?
+        var lastSourceTime = 0.0
         let orientation = VideoOrientation.from(transform)
         let plan = options.plan(for: project)
         // An HDR source made into an SDR video is tone-mapped down before the captions go on.
@@ -199,38 +202,52 @@ public struct CaptionExporter: Sendable {
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
         var overlay: CIImage?
         var logged = 0
+        /// Draws the captions for `time` over `sample`'s picture and writes the frame there.
+        func write(_ sample: CMSampleBuffer, at time: CMTime) async throws {
+            try Task.checkCancellation()
+            try await ready(videoIn, writer: writer, reader: reader, audio: audio)
+            guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { return }
+            // Unchanged since the last frame: the same overlay, no redraw.
+            if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }
+            // Each frame holds tens of megabytes of pixel buffers; a pool per frame returns them
+            // at once instead of whenever the long-running task next unwinds.
+            try autoreleasepool {
+                var picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
+                if scale < 1 { picture = picture.downscaled(by: scale).cropped(to: bounds) }
+                if toneMap { picture = picture.toneMappedToSDR() }
+                var buffer: CVPixelBuffer?
+                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
+                guard let buffer else { throw ExportError.failed("out of memory") }
+                for (key, value) in encoding.attachments { CVBufferSetAttachment(buffer, key, value, .shouldPropagate) }
+                context.render(
+                    overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds,
+                    colorSpace: encoding.colorSpace)
+                // Calling into a writer that has failed raises an exception, which ends the app.
+                guard writer.status == .writing, adaptor.append(buffer, withPresentationTime: time) else {
+                    throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
+                }
+            }
+        }
+        /// The frames for every slot before `until`, showing `held`.
+        func fillSlots(before until: Double) async throws {
+            guard let held, var slot = nextSlot else { return }
+            while slot < until {
+                try await write(held, at: CMTime(seconds: slot, preferredTimescale: 60_000))
+                slot += 1 / fps
+            }
+            nextSlot = slot
+        }
         do {
             while let sample = videoOut.copyNextSampleBuffer() {
-                try Task.checkCancellation()
                 let time = CMSampleBufferGetPresentationTimeStamp(sample)
-                try await ready(videoIn, writer: writer, reader: reader, audio: audio)
-                if let interval = keepEvery {
-                    let t = time.seconds
+                lastSourceTime = time.seconds
+                if resampling {
+                    if nextSlot == nil { nextSlot = time.seconds }
                     // A tenth of a source frame of slack, so rounding in the timestamps cannot skip one.
-                    if t < nextKept - 0.1 / sourceFps { continue }
-                    nextKept += interval
-                    while nextKept <= t { nextKept += interval }  // after a gap, carry on from here
-                }
-                guard let decoded = CMSampleBufferGetImageBuffer(sample), let pool = adaptor.pixelBufferPool else { continue }
-                // Unchanged since the last frame: the same overlay, no redraw.
-                if let frame = await engine.render(at: time.seconds) { overlay = frame.ciImage.scaled(by: encoding.overlayGain) }
-                // Each frame holds tens of megabytes of pixel buffers; a pool per frame returns them
-                // at once instead of whenever the long-running task next unwinds.
-                try autoreleasepool {
-                    var picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
-                    if scale < 1 { picture = picture.downscaled(by: scale).cropped(to: bounds) }
-                    if toneMap { picture = picture.toneMappedToSDR() }
-                    var buffer: CVPixelBuffer?
-                    CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
-                    guard let buffer else { throw ExportError.failed("out of memory") }
-                    for (key, value) in encoding.attachments { CVBufferSetAttachment(buffer, key, value, .shouldPropagate) }
-                    context.render(
-                        overlay.map { $0.composited(over: picture) } ?? picture, to: buffer, bounds: bounds,
-                        colorSpace: encoding.colorSpace)
-                    // Calling into a writer that has failed raises an exception, which ends the app.
-                    guard writer.status == .writing, adaptor.append(buffer, withPresentationTime: time) else {
-                        throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
-                    }
+                    try await fillSlots(before: time.seconds - 0.1 / sourceFps)
+                    held = sample
+                } else {
+                    try await write(sample, at: time)
                 }
                 if duration > 0 {
                     let fraction = min(1, time.seconds / duration)
@@ -241,6 +258,8 @@ public struct CaptionExporter: Sendable {
                     }
                 }
             }
+            // The last source frame lasts until the end of the video.
+            if resampling { try await fillSlots(before: lastSourceTime + 1 / sourceFps - 0.1 / fps) }
             try await drain(audio, writer: writer, reader: reader)
         } catch {
             reader.cancelReading()

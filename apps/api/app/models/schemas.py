@@ -268,8 +268,8 @@ class TranscribeRequest(BaseModel):
 
 
 ExportResolution = Literal["original", "2160", "1080", "720"]
-# Frame rates are capped at 60 (render_formats), so 30 is the one lower choice.
-ExportFrameRate = Literal["original", "30"]
+# Capped at 60 (render_formats): a pathological rate would make a render take unbounded time.
+ExportFrameRate = Literal["original", "30", "60"]
 
 
 class RenderOptions(BaseModel):

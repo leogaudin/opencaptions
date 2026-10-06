@@ -80,10 +80,16 @@ struct SaveOptionsSheet: View {
         ExportOptions.FrameRate.available(forSourceFps: project.videoFps ?? 30)
     }
 
+    private var frameRateNote: String {
+        let source = project.videoFps ?? 30
+        guard let rate = frameRate.value else { return "As filmed (\(Int(source.rounded())) fps)." }
+        return rate > source
+            ? "The picture stays as filmed; the captions animate at \(Int(rate)) fps, smoother."
+            : "Fewer frames: a smaller file."
+    }
+
     private var frameRateSection: some View {
-        section("Frame rate", note: frameRate == .original
-            ? "As filmed (\(Int((project.videoFps ?? 30).rounded())) fps)."
-            : "Half the frames: a smaller file.") {
+        section("Frame rate", note: frameRateNote) {
             SegmentedPills(options: rates, selection: $frameRate, label: { rate in
                 rate.value.map { "\(Int($0)) fps" } ?? "Original"
             })

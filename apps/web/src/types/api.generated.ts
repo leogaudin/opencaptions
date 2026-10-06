@@ -966,7 +966,7 @@ export interface components {
             /** Resolutions */
             resolutions: ("original" | "2160" | "1080" | "720")[];
             /** Frame Rates */
-            frame_rates: ("original" | "30")[];
+            frame_rates: ("original" | "30" | "60")[];
             /**
              * Source Fps
              * @description The source's frame rate
@@ -1281,7 +1281,7 @@ export interface components {
              * @default original
              * @enum {string}
              */
-            frame_rate: "original" | "30";
+            frame_rate: "original" | "30" | "60";
             /**
              * Format
              * @description Format id from the format registry (mp4, mp4-hevc, webm, mov)
@@ -2496,7 +2496,7 @@ export interface operations {
                 /** @description The short side in pixels, or the source's size */
                 resolution?: "original" | "2160" | "1080" | "720";
                 /** @description Frames per second, or the source's rate */
-                frame_rate?: "original" | "30";
+                frame_rate?: "original" | "30" | "60";
             };
             header?: never;
             path: {

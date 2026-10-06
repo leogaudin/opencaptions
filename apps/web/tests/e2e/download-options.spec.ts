@@ -12,15 +12,15 @@ const format = (id: string, label: string) => ({
 test.describe("Download options", () => {
   test.beforeEach(async ({ page }) => {
     await mockTranscribedProject(page, "Options");
-    // Registered after the helper's, so it wins: a 1080 × 1920, 60 fps video.
+    // Registered after the helper's, so it wins: a 1080 × 1920, 30 fps video.
     await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/exports`, (route) =>
       route.fulfill({
         json: {
           video: [format("mp4", "MP4 (H.264)"), format("mov", "MOV (ProRes)")],
           choices: {
             resolutions: ["original", "720"],
-            frame_rates: ["original", "30"],
-            source_fps: 60,
+            frame_rates: ["original", "60"],
+            source_fps: 30,
           },
           subtitles: { srt: "", vtt: "", json_url: "" },
         },
@@ -47,10 +47,10 @@ test.describe("Download options", () => {
     const options = page.getByTestId("download-options");
     await expect(options.getByRole("button", { name: "Original" })).toBeVisible();
     await expect(options.getByRole("button", { name: "4K" })).toHaveCount(0);
-    await expect(options.getByRole("button", { name: "60 fps" })).toBeVisible();
+    await expect(options.getByRole("button", { name: "30 fps" })).toBeVisible();
     await expect(options.getByRole("button", { name: /best|balanced/i })).toHaveCount(0);
     await options.getByRole("button", { name: "720p" }).click();
-    await options.getByRole("button", { name: "30 fps" }).click();
+    await options.getByRole("button", { name: "60 fps" }).click();
     const saved = page.waitForEvent("download");
     await page.getByRole("menuitem", { name: /MP4 \(H\.264\)/ }).click();
     const download = await saved;
@@ -58,12 +58,12 @@ test.describe("Download options", () => {
     expect(requested[0]).toEqual({
       format: "mp4",
       resolution: "720",
-      frame_rate: "30",
+      frame_rate: "60",
     });
     const query = new URL(download.url()).searchParams;
     expect(Object.fromEntries(query)).toEqual({
       resolution: "720",
-      frame_rate: "30",
+      frame_rate: "60",
     });
 
     await page.reload();

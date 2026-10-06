@@ -37,24 +37,23 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         }
     }
 
-    /// The frame rate: the source's, or a lower one. Frames are dropped evenly to reach it, never
-    /// made up, so only rates below the source's are offered.
-    /// The frame rate: the source's, or a lower one. Frames are dropped evenly to reach it, never
-    /// made up, so only rates below the source's are offered.
+    /// The frame rate: the source's, or another. A higher rate than the source's repeats its frames
+    /// but draws the captions at each, so their animation is smoother; a lower one keeps evenly
+    /// spaced frames.
     public enum FrameRate: String, Codable, CaseIterable, Sendable {
-        case original, fps60, fps30
+        case original, fps30, fps60
 
         public var value: Double? {
             switch self {
             case .original: nil
-            case .fps60: 60
             case .fps30: 30
+            case .fps60: 60
             }
         }
 
-        /// The choices for a source at `fps`: its own rate, and each clearly lower one.
+        /// The choices for a source at `fps`: its own rate, and the others (not one it already is).
         public static func available(forSourceFps fps: Double) -> [FrameRate] {
-            [.original] + allCases.filter { ($0.value ?? .infinity) < fps - 0.5 }
+            [.original] + allCases.filter { rate in rate.value.map { abs($0 - fps) > 0.5 } ?? false }
         }
     }
 
@@ -73,9 +72,9 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         self.frameRate = frameRate
     }
 
-    /// The saved video's frame rate for a source at `source`: never above it.
+    /// The saved video's frame rate for a source at `source`.
     public func outputFps(source: Double) -> Double {
-        min(source, frameRate.value ?? source)
+        frameRate.value ?? source
     }
 
     public static let standard = ExportOptions()

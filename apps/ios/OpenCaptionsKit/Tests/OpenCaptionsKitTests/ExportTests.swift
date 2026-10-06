@@ -89,30 +89,34 @@ extension EngineSuites {
             return (times.count, (times.max() ?? 0) - (times.min() ?? 0))
         }
 
-        @Test func aLowerFrameRateKeepsEvenlySpacedFrames() async throws {
-            let store = store()
-            let source = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
-            try await SampleVideo.write(to: source, width: 64, height: 48, seconds: 2, fps: 60)
-            let p = try await project(for: source, in: store)
-            let url = try await CaptionExporter(fonts: fonts).export(
-                project: p, source: store.sourceURL(for: p.id)!, in: directory(), options: ExportOptions(frameRate: .fps30),
-                progress: { _ in })
-            let (count, span) = try await frames(of: url)
-            #expect(abs(count - 60) <= 2, "\(count) frames for 2 s at 30 fps")
-            #expect(span > 1.8, "spread over the whole clip, not bunched at the start: \(span) s")
+        @Test func anotherFrameRateGivesTheFramesOfThatRateOverTheWholeClip() async throws {
+            // 60 → 30 keeps every other frame; 10 → 30 repeats each source frame three times.
+            for (source, rate, expected) in [(60, ExportOptions.FrameRate.fps30, 60), (10, .fps30, 60)] {
+                let store = store()
+                let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
+                try await SampleVideo.write(to: clip, width: 64, height: 48, seconds: 2, fps: source)
+                let p = try await project(for: clip, in: store)
+                let url = try await CaptionExporter(fonts: fonts).export(
+                    project: p, source: store.sourceURL(for: p.id)!, in: directory(), options: ExportOptions(frameRate: rate),
+                    progress: { _ in })
+                let (count, span) = try await frames(of: url)
+                #expect(abs(count - expected) <= 2, "\(count) frames for 2 s at 30 fps from \(source) fps")
+                #expect(span > 1.9 - 1 / 30, "spread over the whole clip: \(span) s")
+            }
         }
 
-        @Test func frameRatesOfferedAreOnlyLowerOnesAndNameTheFile() throws {
-            #expect(ExportOptions.FrameRate.available(forSourceFps: 120) == [.original, .fps60, .fps30])
+        @Test func frameRatesOfferedAreTheOtherOnesAndNameTheFile() throws {
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 120) == [.original, .fps30, .fps60])
             #expect(ExportOptions.FrameRate.available(forSourceFps: 59.94) == [.original, .fps30])
-            #expect(ExportOptions.FrameRate.available(forSourceFps: 30) == [.original])
-            #expect(ExportOptions(frameRate: .fps60).outputFps(source: 24) == 24, "never above the source")
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 30) == [.original, .fps60])
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 24) == [.original, .fps30, .fps60])
+            #expect(ExportOptions(frameRate: .fps60).outputFps(source: 24) == 60, "above the source's is allowed")
             let p = Project(
                 title: "x", transcript: try Repo.transcript(), styleConfig: try Repo.defaultStyle(), videoWidth: 1080,
-                videoHeight: 1920, videoFps: 60, videoDuration: 10)
-            #expect(ExportKey.hash(for: p, options: ExportOptions()) != ExportKey.hash(for: p, options: ExportOptions(frameRate: .fps30)))
-            let at30 = try #require(ExportOptions(frameRate: .fps30).estimatedBytes(for: p))
-            #expect(at30 < (try #require(ExportOptions().estimatedBytes(for: p))), "fewer frames, a smaller file")
+                videoHeight: 1920, videoFps: 30, videoDuration: 10)
+            #expect(ExportKey.hash(for: p, options: ExportOptions()) != ExportKey.hash(for: p, options: ExportOptions(frameRate: .fps60)))
+            let at60 = try #require(ExportOptions(frameRate: .fps60).estimatedBytes(for: p))
+            #expect(at60 > (try #require(ExportOptions().estimatedBytes(for: p))), "more frames, a larger file")
         }
 
         @Test func anOptionIsPartOfTheNameOfTheFile() async throws {

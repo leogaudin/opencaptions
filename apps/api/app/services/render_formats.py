@@ -208,7 +208,7 @@ class RenderInputs:
 
 
 _SHORT_SIDES = {"2160": 2160, "1080": 1080, "720": 720}
-_FRAME_RATES = {"30": 30.0}
+_FRAME_RATES = {"30": 30.0, "60": 60.0}
 
 
 def _source_geometry(project: RenderableProject) -> tuple[int, int, float]:
@@ -226,9 +226,10 @@ def available_resolutions(project: RenderableProject) -> list[str]:
 
 
 def available_frame_rates(project: RenderableProject) -> list[str]:
-    """Its own frame rate, and each clearly lower one: frames are dropped, never made up."""
+    """Its own frame rate, and the others. A higher one repeats frames but draws the captions
+    at each, so their animation is smoother; a lower one drops frames."""
     _, _, fps = _source_geometry(project)
-    return ["original"] + [r for r, value in _FRAME_RATES.items() if value < fps - 0.5]
+    return ["original"] + [r for r, value in _FRAME_RATES.items() if abs(value - fps) > 0.5]
 
 
 def _even(value: float) -> int:
@@ -243,8 +244,9 @@ def resolve_render_inputs(
 
     The transcript stays as stored and the caption offset travels beside it: the
     engine applies the offset, so its draw and the hash see the same two inputs.
-    The size and frame rate are those of the output; a choice above the source's
-    falls back to the source's, so asking for more never upscales or invents frames.
+    The size and frame rate are those of the output. A size above the source's falls back to
+    the source's (never upscaled); a frame rate may be above it, repeating frames while the
+    captions are drawn at the higher rate.
     """
     options = options or RenderOptions()
     width, height, fps = _source_geometry(project)
@@ -252,7 +254,7 @@ def resolve_render_inputs(
     if target and target < min(width, height):
         scale = target / min(width, height)
         width, height = _even(width * scale), _even(height * scale)
-    fps = min(fps, _FRAME_RATES.get(options.frame_rate, fps))
+    fps = _FRAME_RATES.get(options.frame_rate, fps)
 
     style_config = (
         dict(project.style_config) if project.style_config else StyleConfig().model_dump()

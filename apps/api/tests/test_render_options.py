@@ -49,11 +49,12 @@ def test_the_size_is_the_short_side_and_never_larger_than_the_source() -> None:
     assert odd.width % 2 == 0 and odd.height % 2 == 0
 
 
-def test_the_frame_rate_is_only_ever_lowered() -> None:
+def test_the_frame_rate_may_be_above_the_sources() -> None:
     assert resolve_render_inputs(_Project(), RenderOptions(frame_rate="30")).fps == 30
-    assert resolve_render_inputs(_Project(video_fps=25), RenderOptions(frame_rate="30")).fps == 25
+    assert resolve_render_inputs(_Project(video_fps=25), RenderOptions(frame_rate="60")).fps == 60
     assert available_frame_rates(_Project(video_fps=59.94)) == ["original", "30"]
-    assert available_frame_rates(_Project(video_fps=29.97)) == ["original"]
+    assert available_frame_rates(_Project(video_fps=29.97)) == ["original", "60"]
+    assert available_frame_rates(_Project(video_fps=24)) == ["original", "30", "60"]
     assert available_resolutions(_Project()) == ["original", "1080", "720"]
     assert available_resolutions(_Project(video_width=640, video_height=360)) == ["original"]
 
@@ -106,11 +107,11 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
     choices = (await client.get(f"{base}/exports")).json()["choices"]
     assert choices == {
         "resolutions": ["original", "720"],
-        "frame_rates": ["original"],
+        "frame_rates": ["original", "60"],
         "source_fps": None,
     }
 
-    options = {"resolution": "720", "frame_rate": "30"}
+    options = {"resolution": "720", "frame_rate": "60"}
     r = await client.post(f"{base}/download", json={"format": "mp4", **options})
     assert r.status_code == 202, r.text
     assert sent[0][2:] == ("mp4", options), "the worker gets the options"
