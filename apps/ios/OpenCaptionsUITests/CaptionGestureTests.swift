@@ -161,6 +161,8 @@ final class CaptionGestureTests: XCTestCase {
         while shownTime(app) <= 1.5, Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
         XCTAssertGreaterThan(shownTime(app), 1.5, "the drag moved the time on")
         // And it stays put when the finger is up (the coast has ended).
+        // The timeline coasts to a stop for a moment after the finger lifts: let it finish first.
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
         let rested = shownTime(app)
         RunLoop.current.run(until: Date().addingTimeInterval(1.0))
         XCTAssertEqual(shownTime(app), rested, accuracy: 0.05)
