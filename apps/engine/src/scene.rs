@@ -369,8 +369,10 @@ fn overlaps(a: IntRect, b: IntRect) -> bool {
 fn unpremultiply(src: &[u8], out: &mut [u8], r: IntRect, width: u32) {
     for span in rows(r, width) {
         for (o, p) in out[span.clone()]
-            .chunks_exact_mut(4)
-            .zip(src[span].chunks_exact(4))
+            .as_chunks_mut::<4>()
+            .0
+            .iter_mut()
+            .zip(src[span].as_chunks::<4>().0.iter())
         {
             let a = u32::from(p[3]);
             if a == 0 {
@@ -1123,7 +1125,7 @@ mod tests {
     }
 
     fn inked(rgba: &[u8]) -> usize {
-        rgba.chunks_exact(4).filter(|p| p[3] != 0).count()
+        rgba.as_chunks::<4>().0.iter().filter(|p| p[3] != 0).count()
     }
 
     #[test]
@@ -1139,7 +1141,7 @@ mod tests {
         let ink = inked(&first);
         assert!(ink > 100, "a mark is drawn: {ink} pixels");
         // Top right quarter only.
-        for (i, p) in first.chunks_exact(4).enumerate() {
+        for (i, p) in first.as_chunks::<4>().0.iter().enumerate() {
             if p[3] != 0 {
                 let (x, y) = (i % 1080, i / 1080);
                 assert!(x > 540 && y < 480, "inked at {x},{y}");
@@ -1181,7 +1183,7 @@ mod tests {
         r.render(100.0);
         let (x, y, w, h) = r.watermark_rect().expect("a rectangle");
         let (fw, fh) = (r.scene.width as usize, r.scene.height as usize);
-        for (i, p) in r.rgba().chunks_exact(4).enumerate() {
+        for (i, p) in r.rgba().as_chunks::<4>().0.iter().enumerate() {
             let (px, py) = ((i % fw) as f32, (i / fw) as f32);
             let inside = px >= x && px < x + w && py >= y && py < y + h;
             assert!(
@@ -1248,7 +1250,12 @@ mod tests {
                     input("word_highlight", &[(t, 0.0, 1.0)], 3),
                 ));
                 r.render(0.5);
-                r.rgba().chunks_exact(4).filter(|p| p[3] != 0).count()
+                r.rgba()
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .filter(|p| p[3] != 0)
+                    .count()
             };
             assert!(ink(text) > 500, "{text} is drawn, not left out");
         }

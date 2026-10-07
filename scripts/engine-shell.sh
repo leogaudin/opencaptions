@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   docker build -q -t "$IMAGE" - >/dev/null <<DOCKERFILE
-FROM rust:1.94-slim-bookworm
+FROM rust:1.99-slim-bookworm
 RUN rustup component add rustfmt clippy
 RUN rustup target add wasm32-unknown-unknown aarch64-apple-ios
 DOCKERFILE

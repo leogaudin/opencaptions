@@ -5,7 +5,7 @@
 # Needs the engine as a named build context:
 #   docker build --build-context engine=apps/engine apps/web
 
-FROM rust:1.94-slim-bookworm AS wasm
+FROM rust:1.99-slim-bookworm AS wasm
 RUN rustup target add wasm32-unknown-unknown
 WORKDIR /src
 COPY --from=engine Cargo.toml Cargo.lock ./
@@ -23,7 +23,7 @@ RUN cargo build --release --locked --lib --target wasm32-unknown-unknown \
 FROM scratch AS preview-assets
 COPY --from=wasm /out /
 
-FROM node:24-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./

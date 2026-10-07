@@ -43,10 +43,10 @@ GPU_INPUTS="apps/api/Dockerfile apps/api/pyproject.toml apps/api/uv.lock"
 KEEP_BUILD_CACHE="6GB"
 
 # Pinned toolchain, matching ci.yml and the Dockerfiles.
-NODE_IMAGE="node:24-bookworm"
+NODE_IMAGE="node:26-bookworm"
 UV_IMAGE="ghcr.io/astral-sh/uv:python3.14-bookworm-slim"
 ACTIONLINT_IMAGE="rhysd/actionlint:1.7.12"
-RUST_IMAGE="rust:1.94-slim-bookworm"
+RUST_IMAGE="rust:1.99-slim-bookworm"
 ENGINE_TOOLS_IMAGE="opencaptions-ci-engine:local"
 # Built locally from NODE_IMAGE + uv (see "combined toolchain image" below).
 TOOLS_IMAGE="opencaptions-ci-tools:local"

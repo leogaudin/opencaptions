@@ -23,7 +23,7 @@ jobs:
     name: Build and test the iOS app
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Rust targets
         run: rustup update stable && rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin
       - name: XcodeGen
