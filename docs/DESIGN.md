@@ -290,7 +290,7 @@ app over three things it does not reimplement.
 describes the app target, which is SwiftUI views and wiring. Everything testable
 lives in the local package `OpenCaptionsKit`: models in the API's shapes, the engine
 actor, project storage, the editor's logic, the exporter. The minimum is iOS 18, for
-the app's scroll and gesture APIs; the app is universal (iPhone and iPad). iOS is not
+the app's scroll and gesture APIs; the app is universal (iPhone and iPad), and the iPhone stays in portrait: the layout is not drawn for landscape yet, which the iPad has. iOS is not
 part of `make ci`: it has its own macOS workflow, and nobody without a Mac is blocked.
 
 **The editor** mirrors the web one. The preview is an `AVPlayer` with the engine's
@@ -334,8 +334,9 @@ Subtitle files (SRT, VTT) are only exported by the Docker product.
 Tiny, Base, Small, Large v3 Turbo and Large v3 (no English-only or superseded ones).
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection
-asks before a download. Loading a model into memory is the longest wait, so it starts as soon as
-the model is chosen in the Transcribe sheet (while the language is picked) and runs beside the
+asks before a download. Loading a model into memory is the longest wait, so the default one, when
+it is downloaded, starts loading as the app opens, any other as soon as it is chosen in the Transcribe
+sheet (while the language is picked), and it runs beside the
 reading of the audio; the loaded model stays for the next transcription and is let go on a memory
 warning or when the app leaves the screen.
 

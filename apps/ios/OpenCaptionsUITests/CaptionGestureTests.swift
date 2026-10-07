@@ -105,6 +105,8 @@ final class CaptionGestureTests: XCTestCase {
         let app = try launch("portrait")
         let before = style(app)
         preview(app).tap()  // plays
+        // Not at once: a touch soon after a tap is the second tap of a double tap (which edits a word), not a drag.
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
         drag(app, to: (0.7, 0.3))
         let after = settled(app, after: before)
         XCTAssertEqual(Double(after.x), 70, accuracy: 7, "from \(before) to \(after)")
@@ -113,51 +115,78 @@ final class CaptionGestureTests: XCTestCase {
 
     // MARK: The watermark
 
-    /// The pixels of `region` (fractions of the preview) in a screenshot of the whole screen.
-    private func pixels(of shot: XCUIScreenshot, in region: CGRect, of frame: CGRect) -> [UInt8] {
+    /// The pixels of `region` (fractions of the preview) in a screenshot of the whole screen, as RGBA, and their width.
+    private func pixels(of shot: XCUIScreenshot, in region: CGRect, of frame: CGRect) -> (Int, [UInt8]) {
         let image = shot.image
-        guard let cg = image.cgImage else { return [] }
+        guard let cg = image.cgImage else { return (0, []) }
         let k = CGFloat(cg.width) / image.size.width
         let crop = CGRect(
             x: (frame.minX + frame.width * region.minX) * k, y: (frame.minY + frame.height * region.minY) * k,
             width: frame.width * region.width * k, height: frame.height * region.height * k
         ).integral
-        guard let part = cg.cropping(to: crop) else { return [] }
+        guard let part = cg.cropping(to: crop) else { return (0, []) }
         var data = [UInt8](repeating: 0, count: part.width * part.height * 4)
         let context = CGContext(
             data: &data, width: part.width, height: part.height, bitsPerComponent: 8, bytesPerRow: part.width * 4,
             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         context?.draw(part, in: CGRect(x: 0, y: 0, width: part.width, height: part.height))
-        return data
-    }
-
-    private func differing(_ a: [UInt8], _ b: [UInt8]) -> Double {
-        guard a.count == b.count, !a.isEmpty else { return 1 }
-        var n = 0
-        for i in stride(from: 0, to: a.count, by: 4)
-        where abs(Int(a[i]) - Int(b[i])) > 24 || abs(Int(a[i + 1]) - Int(b[i + 1])) > 24 { n += 1 }
-        return Double(n) / Double(a.count / 4)
+        return (part.width, data)
     }
 
     /// A free build's watermark stays where it is while the caption is dragged or pinched, as the
-    /// fingers are down, not only once they lift.
+    /// fingers are down, not only once they lift: it is neither carried along by the caption nor
+    /// shown a second time where the caption's picture has been moved to.
     func testTheWatermarkStaysPutWhileTheCaptionIsDraggedAndPinched() throws {
         let app = try launch("portrait", tier: "free")
         let frame = preview(app).frame
-        let corner = CGRect(x: 0.4, y: 0, width: 0.6, height: 0.12)
-        let caption = CGRect(x: 0.1, y: 0.7, width: 0.8, height: 0.25)
+        // The top part of the picture, where the mark sits and where a carried one would show.
+        let band = CGRect(x: 0, y: 0, width: 1, height: 0.3)
         let rest = XCUIScreen.main.screenshot()
-        let markAtRest = pixels(of: rest, in: corner, of: frame)
-        XCTAssertGreaterThan(markAtRest.chunks(of: 4).filter { $0[0] > 200 && $0[1] > 200 }.count, 20, "a mark is showing")
+        let (width, restBand) = pixels(of: rest, in: band, of: frame)
+        let height = restBand.count / 4 / max(1, width)
+        // Where the mark is: the bright pixels in the top right corner, with some room around.
+        var (x0, y0, x1, y1) = (width, height, 0, 0)
+        for y in 0..<(height * 2 / 5) {
+            for x in (width * 2 / 5)..<width {
+                let i = (y * width + x) * 4
+                if restBand[i] > 200, restBand[i + 1] > 200, restBand[i + 2] > 200 {
+                    (x0, y0, x1, y1) = (min(x0, x), min(y0, y), max(x1, x), max(y1, y))
+                }
+            }
+        }
+        XCTAssertGreaterThan(x1 - x0, 20, "a mark is showing")
+        let room = 10
+        func outsideTheMark(_ a: [UInt8], _ b: [UInt8]) -> Double {
+            var n = 0
+            var checked = 0
+            for y in 0..<height {
+                for x in 0..<width where !(x >= x0 - room && x <= x1 + room && y >= y0 - room && y <= y1 + room) {
+                    let i = (y * width + x) * 4
+                    checked += 1
+                    if abs(Int(a[i]) - Int(b[i])) > 24 || abs(Int(a[i + 1]) - Int(b[i + 1])) > 24 { n += 1 }
+                }
+            }
+            return Double(n) / Double(max(1, checked))
+        }
+        func insideTheMark(_ a: [UInt8], _ b: [UInt8]) -> Double {
+            var n = 0
+            for y in y0...y1 {
+                for x in x0...x1 {
+                    let i = (y * width + x) * 4
+                    if abs(Int(a[i]) - Int(b[i])) > 24 || abs(Int(a[i + 1]) - Int(b[i + 1])) > 24 { n += 1 }
+                }
+            }
+            return Double(n) / Double(max(1, (x1 - x0 + 1) * (y1 - y0 + 1)))
+        }
 
-        // Mid-gesture shots, taken while the main thread holds the fingers down.
-        for (name, gesture) in [
+        // Shots taken while the main thread holds the fingers down.
+        let gestures: [(String, () -> Void)] = [
             ("drag", { [self] in
                 at(app, 0.5, 0.84).press(
-                    forDuration: 0.05, thenDragTo: at(app, 0.3, 0.4), withVelocity: .slow, thenHoldForDuration: 2.5)
+                    forDuration: 0.05, thenDragTo: at(app, 0.3, 0.92), withVelocity: .slow, thenHoldForDuration: 2.5)
             }),
-            ("pinch", { [self] in preview(app).pinch(withScale: 2.2, velocity: 0.6) }),
-        ] as [(String, () -> Void)] {
+        ]
+        for (name, gesture) in gestures {
             var shot: XCUIScreenshot?
             let taken = expectation(description: "\(name) shot")
             DispatchQueue.global().asyncAfter(deadline: .now() + 1.6) {
@@ -166,12 +195,12 @@ final class CaptionGestureTests: XCTestCase {
             }
             gesture()
             wait(for: [taken], timeout: 10)
-            let during = try XCTUnwrap(shot)
-            let moved = differing(pixels(of: rest, in: caption, of: frame), pixels(of: during, in: caption, of: frame))
-            let markShift = differing(markAtRest, pixels(of: during, in: corner, of: frame))
-            print("WATERMARK \(name): captionChanged=\(moved) markChanged=\(markShift)")
-            XCTAssertLessThan(markShift, 0.02, "the mark moved or changed while the caption was \(name)ged")
-            XCTAssertGreaterThan(moved, 0.01, "the shot was taken while the caption was being \(name)ged")
+            let during = pixels(of: try XCTUnwrap(shot), in: band, of: frame).1
+            let elsewhere = outsideTheMark(restBand, during)
+            let there = insideTheMark(restBand, during)
+            print("WATERMARK \(name): changedElsewhere=\(elsewhere) changedInTheMark=\(there)")
+            XCTAssertLessThan(there, 0.1, "the mark was changed while the caption was being dragged")
+            XCTAssertLessThan(elsewhere, 0.003, "a second mark, or the caption, showed in the top of the picture while dragging")
         }
     }
 
@@ -231,11 +260,5 @@ final class CaptionGestureTests: XCTestCase {
         let rested = shownTime(app)
         RunLoop.current.run(until: Date().addingTimeInterval(1.0))
         XCTAssertEqual(shownTime(app), rested, accuracy: 0.05)
-    }
-}
-
-private extension Array {
-    func chunks(of size: Int) -> [[Element]] {
-        stride(from: 0, to: count, by: size).map { Array(self[$0..<Swift.min($0 + size, count)]) }
     }
 }

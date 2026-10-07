@@ -73,12 +73,12 @@ final class PreviewArea: UIView {
 
 final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private let playerLayer: AVPlayerLayer
-    /// What holds the caption's picture. A layer of its own and still, with the watermark's place cut out of
-    /// it, so that moving or scaling the caption (the layer in it) leaves the watermark where it is.
-    private let host = CALayer()
+    /// The caption's picture, which moves and scales with the fingers. The watermark's place is cut out of it
+    /// by a mask that moves with it, so the picture carries no mark and the one on `markLayer`, still, is
+    /// the only one: moving or scaling the caption leaves the watermark where it is.
     private let overlay = CALayer()
     private let markLayer = CALayer()
-    private let hostMask = CAShapeLayer()
+    private let hole = CAShapeLayer()
     private var markRect: FrameRect?
     private let player: AVPlayer
     private let engine = CaptionEngine.shared
@@ -167,13 +167,12 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         layer.addSublayer(playerLayer)
         overlay.contentsGravity = .resize
         overlay.magnificationFilter = .trilinear
-        host.addSublayer(overlay)
-        host.mask = hostMask
-        hostMask.fillRule = .evenOdd
-        hostMask.fillColor = UIColor.black.cgColor
+        overlay.mask = hole
+        hole.fillRule = .evenOdd
+        hole.fillColor = UIColor.black.cgColor
         markLayer.contentsGravity = .resize
         markLayer.magnificationFilter = .trilinear
-        layer.addSublayer(host)
+        layer.addSublayer(overlay)
         layer.addSublayer(markLayer)
         for guide in [verticalGuide, horizontalGuide] {
             guide.backgroundColor = UIColor.white.withAlphaComponent(0.9).cgColor
@@ -236,8 +235,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         super.layoutSubviews()
         playerLayer.frame = bounds
         // Not `frame`, which means nothing while the layer is being transformed.
-        host.frame = bounds
-        hostMask.frame = bounds
+        hole.frame = CGRect(origin: .zero, size: bounds.size)
         overlay.bounds = CGRect(origin: .zero, size: bounds.size)
         overlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         placeMark()
@@ -252,6 +250,9 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var lastProject: Project?
     private var lastFonts: FontCache?
     private var lastWatermark: String?
+    private var lastFallbacks: [String] = []
+    private var rescening = false
+    private var wantedSize: Int?
 
     @MainActor
     func configure(project: Project, fonts: FontCache, suspended: Bool, isPlaying: Bool, watermark: String?) {
@@ -298,12 +299,43 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         Task { [engine] in
             let fallbacks = await engine.ensureFonts(for: transcript, style: style, cache: fonts)
             guard mine == generation else { return }
+            lastFallbacks = fallbacks
             try? await engine.setScene(
                 transcript: transcript, style: style, width: width, height: height, captionOffsetMs: offsetMs,
                 watermark: watermark, fallbackFonts: fallbacks)
             guard mine == generation else { return }
             ready = true
             requestDraw(at: player.currentTime().seconds)
+        }
+    }
+
+    /// While a pinch is going on, lays the caption out again at the size it asks for, so that what is on
+    /// screen is the engine's own picture of that size (where it wraps, how it is kept inside the frame),
+    /// not only the old picture scaled, which is what the caption would jump away from when released.
+    /// The scaled picture still bridges the moments the engine takes. The newest size wins.
+    @MainActor
+    private func layOutAgain(fontSize: Int) {
+        wantedSize = fontSize
+        guard !rescening, let project = lastProject else { return }
+        rescening = true
+        Task { [engine] in
+            defer { rescening = false }
+            while let size = wantedSize, pinching, let transcript = project.transcript {
+                wantedSize = nil
+                var style = project.styleConfig
+                style.fontSize = size
+                if let position = live.position { (style.positionX, style.positionY) = position }
+                generation += 1
+                let mine = generation
+                placements[mine] = Placement(x: style.positionX, y: style.positionY, fontSize: size)
+                placements = placements.filter { $0.key > mine - 6 }
+                try? await engine.setScene(
+                    transcript: transcript, style: style, width: Int(frameSize.width), height: Int(frameSize.height),
+                    captionOffsetMs: project.captionOffsetMs, watermark: lastWatermark, fallbackFonts: lastFallbacks)
+                guard mine == generation else { continue }
+                ready = true
+                requestDraw(at: player.currentTime().seconds)
+            }
         }
     }
 
@@ -391,8 +423,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         defer { CATransaction.commit() }
         guard let r = markRect, frameSize.width > 0, frameSize.height > 0, bounds.width > 0 else {
             markLayer.isHidden = true
-            hostMask.path = nil
-            host.mask = nil
+            hole.path = nil
+            overlay.mask = nil
             return
         }
         let k = CGSize(width: bounds.width / frameSize.width, height: bounds.height / frameSize.height)
@@ -405,8 +437,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         let path = CGMutablePath()
         path.addRect(bounds)
         path.addRect(rect)
-        hostMask.path = path
-        host.mask = hostMask
+        hole.path = path
+        overlay.mask = hole
     }
 
     /// The middle of the caption as drawn, in points: where a pinch scales from.
@@ -462,10 +494,23 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             guard pinching, pinchStartSize > 0 else { return }
             live.fontSize = CaptionGestures.pinchedFontSize(from: pinchStartSize, scale: g.scale)
             applyLive()
+            if let size = live.fontSize { layOutAgain(fontSize: size) }
         default:
             if pinching {
                 pinching = false
+                wantedSize = nil
+                // The engine holds the pinch's last size; whatever the project now says is laid out again,
+                // and if nothing changed, a moment from now, as it was.
+                sceneKey = nil
                 settleIfIdle()
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    if sceneKey == nil, let project = lastProject, let fonts = lastFonts {
+                        configure(
+                            project: project, fonts: fonts, suspended: suspended, isPlaying: isPlaying,
+                            watermark: lastWatermark)
+                    }
+                }
             }
         }
     }

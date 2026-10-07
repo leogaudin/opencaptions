@@ -118,6 +118,10 @@ final class AppModel {
         #if DEBUG
             await seedForScreenshots()
         #endif
+        // The default model is read into memory now, in the background, so that the first transcription
+        // does not wait for it (the longest wait there is). A model not downloaded yet is not touched, and
+        // the system takes it back, with the model's memory, if it needs the room.
+        if transcriber.isDownloaded(WhisperModels.defaultID) { transcriber.preload(WhisperModels.defaultID) }
     }
 
     func editor(for project: Project) -> EditorModel {
