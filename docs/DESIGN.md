@@ -55,7 +55,8 @@ the two scale on different hardware.
    `projects/{id}/renders/{hash}.<ext>` exists, it is ready at once; otherwise a
    render job is queued and the SPA polls the job. The cache needs no database
    state: readiness is an existence check. `GET /projects/{id}/exports` lists
-   the sizes and rates a project offers.
+   the sizes and rates a project offers. The web editor has one Download button
+   that opens a dialog (format, size, frame rate), as the iOS Save sheet does.
 5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…`.
    Subtitles (SRT, VTT, JSON) are generated from the transcript, without rendering.
 

@@ -117,7 +117,6 @@ struct CaptionTimeline: View {
             Circle()
                 .fill(Theme.mark)
                 .overlay(Circle().stroke(Theme.background, lineWidth: 2))
-                .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
                 .frame(width: 12, height: 12)
         }
         .frame(width: 16, height: height)

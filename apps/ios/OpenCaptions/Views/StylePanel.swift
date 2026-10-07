@@ -33,8 +33,8 @@ struct StylePanel: View {
                     LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
                 }
                 section("Background") {
-                    SegmentedPills(
-                        options: Background.allCases, selection: model.binding(\.background),
+                    InlinePicker(
+                        title: "Shape", options: Background.allCases, selection: model.binding(\.background),
                         label: { $0.rawValue.capitalized })
                     if style.background != .none {
                         Row("Color") { ColorPicker("Background color", selection: color(\.backgroundColor), supportsOpacity: false).labelsHidden() }
@@ -42,8 +42,8 @@ struct StylePanel: View {
                     }
                 }
                 section("Animation") {
-                    SegmentedPills(
-                        options: CaptionAnimation.allCases, selection: model.binding(\.animation),
+                    InlinePicker(
+                        title: "Effect", options: CaptionAnimation.allCases, selection: model.binding(\.animation),
                         label: animationName)
                 }
                 section("Outline & shadow") {

@@ -3,28 +3,25 @@
  *
  * Left section: transcription progress / Cancel (real-time feedback).
  * Right section: the transcript's language, the autosave status, Re-transcribe,
- * Download video (primary + format dropdown), Download subtitles.
+ * Download video (one button, opening DownloadDialog), Download subtitles.
  *
  * Video download logic (multi-format, content-addressed cache):
- *   - Primary button always downloads MP4 (H.264).
- *   - Attached dropdown: the size and frame rate (remembered per
- *     browser, lib/downloadOptions), then all four formats.
+ *   - The dialog holds the format, then the size and frame rate (remembered per
+ *     browser, lib/downloadOptions); its Download button starts the download.
  *   - If the format is ready on the server, download triggers immediately.
  *   - If not, the server returns a job_id and lib/downloads saves the file
  *     when that render finishes, whichever page the user is on by then.
  *
- * All video download entries (primary MP4 button + every dropdown format)
- * share one code path: requestVideoDownload(format) in the store. That
- * function always POSTs /projects/{id}/download first — no code path may
- * navigate the browser to the GET streaming endpoint unless the POST
- * confirmed ready=true.
+ * Every video download shares one code path: requestVideoDownload(format) in
+ * the store. That function always POSTs /projects/{id}/download first — no
+ * code path may navigate the browser to the GET streaming endpoint unless the
+ * POST confirmed ready=true.
  */
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Download, FileText, Loader2 } from "lucide-react";
-import type { MouseEvent } from "react";
+import { Download, FileText, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AutosaveIndicator } from "@/components/AutosaveIndicator";
-import { DownloadOptions } from "@/components/DownloadOptions";
+import { DownloadDialog } from "@/components/DownloadDialog";
 import { RetranscribeDialog } from "@/components/RetranscribeDialog";
 import * as api from "@/lib/api";
 import { usePendingDownload } from "@/lib/downloads";
@@ -50,6 +47,7 @@ export function EditorToolbar() {
   const cancelActiveJob = useEditorStore((s) => s.cancelActiveJob);
 
   const [exports, setExports] = useState<api.ExportLinks | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // Store objects (project) get new identities on every Zustand write; key on
   // the primitive fields that actually determine when exports should be refetched.
@@ -89,12 +87,6 @@ export function EditorToolbar() {
 
   /** Format label for the in-progress download indicator. */
   const preparingFormatLabel = downloadFormat?.toUpperCase() ?? "video";
-
-  async function handlePrimaryDownload(e: MouseEvent<HTMLButtonElement>): Promise<void> {
-    e.preventDefault();
-    if (!project) return;
-    await requestVideoDownload("mp4");
-  }
 
   async function handleFormatDownload(format: string): Promise<void> {
     if (!project) return;
@@ -164,76 +156,30 @@ export function EditorToolbar() {
             <RetranscribeDialog current={transcript.language} />
           </>
         )}
-        {/* Download video: primary filled accent button + format dropdown */}
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={handlePrimaryDownload}
-            disabled={preparingNow || saving || !transcript}
-            data-testid="dl-mp4"
-            title="Download MP4 (H.264)"
-            aria-label="Download MP4"
-            className="relative inline-flex h-7 items-center justify-center rounded-l-xl bg-primary px-3 text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {preparingNow ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Download className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </button>
-          {/* Attached dropdown for all video formats.
-           * Radix DropdownMenu.Trigger `disabled` blocks keyboard and pointer
-           * activation at the Radix layer; the inner button's `disabled`
-           * provides the visual disabled state (opacity). Both are needed. */}
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger disabled={preparingNow || saving || !transcript} asChild>
-              <button
-                type="button"
-                disabled={preparingNow || saving || !transcript}
-                aria-label="Choose video format"
-                title="Choose video format"
-                className="inline-flex h-7 w-6 items-center justify-center rounded-r-xl border-l border-primary-foreground/20 bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-              >
-                <ChevronDown className="h-3 w-3" aria-hidden />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="z-50 w-[260px] rounded-md border border-border bg-card p-1 shadow-md"
-                sideOffset={4}
-                align="end"
-              >
-                {exports && exports.video.length > 0 && (
-                  <>
-                    <DownloadOptions choices={exports.choices} />
-                    <DropdownMenu.Separator className="my-1 h-px bg-border" />
-                  </>
-                )}
-                {(exports?.video ?? []).map((fmt) => (
-                  <DropdownMenu.Item
-                    key={fmt.format}
-                    onSelect={() => handleFormatDownload(fmt.format)}
-                    className="flex cursor-pointer flex-col gap-0.5 rounded-sm px-2 py-1.5 text-xs outline-hidden hover:bg-accent focus:bg-accent"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{fmt.label}</span>
-                    </div>
-                    {/* Notes shown inline (not hover-only) so the ProRes size
-                        warning is visible before the user clicks. */}
-                    {fmt.note && (
-                      <span className="text-[11px] text-muted-foreground">{fmt.note}</span>
-                    )}
-                  </DropdownMenu.Item>
-                ))}
-                {(!exports?.video || exports.video.length === 0) && (
-                  <DropdownMenu.Item disabled className="px-2 py-1.5 text-xs text-muted-foreground">
-                    No formats available
-                  </DropdownMenu.Item>
-                )}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        </div>
+        {/* Download video: one button, which opens the dialog where format, size and
+            frame rate are chosen (the iOS Save sheet's counterpart). */}
+        <button
+          type="button"
+          onClick={() => setDownloading(true)}
+          disabled={preparingNow || saving || !transcript}
+          data-testid="download-open"
+          title="Download video"
+          aria-label="Download video"
+          className="inline-flex h-7 items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+        >
+          {preparingNow ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          ) : (
+            <Download className="h-3.5 w-3.5" aria-hidden />
+          )}
+          Download
+        </button>
+        <DownloadDialog
+          open={downloading}
+          onOpenChange={setDownloading}
+          exports={exports}
+          onDownload={handleFormatDownload}
+        />
 
         {/* Download subtitles dropdown (transparent bg, outline, matches header buttons) */}
         <DropdownMenu.Root>

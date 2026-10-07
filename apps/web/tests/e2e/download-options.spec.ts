@@ -43,7 +43,7 @@ test.describe("Download options", () => {
     );
 
     await page.goto(`/projects/${MOCK_PROJECT_ID}`);
-    await page.getByRole("button", { name: "Choose video format" }).click();
+    await page.getByTestId("download-open").click();
     const options = page.getByTestId("download-options");
     await expect(options.getByRole("button", { name: "Original" })).toBeVisible();
     await expect(options.getByRole("button", { name: "4K" })).toHaveCount(0);
@@ -52,7 +52,8 @@ test.describe("Download options", () => {
     await options.getByRole("button", { name: "720p" }).click();
     await options.getByRole("button", { name: "60 fps" }).click();
     const saved = page.waitForEvent("download");
-    await page.getByRole("menuitem", { name: /MP4 \(H\.264\)/ }).click();
+    await page.getByRole("radio", { name: /MP4 \(H\.264\)/ }).check({ force: true });
+    await page.getByTestId("download-confirm").click();
     const download = await saved;
 
     expect(requested[0]).toEqual({
@@ -67,7 +68,7 @@ test.describe("Download options", () => {
     });
 
     await page.reload();
-    await page.getByRole("button", { name: "Choose video format" }).click();
+    await page.getByTestId("download-open").click();
     await expect(
       page.getByTestId("download-options").getByRole("button", { name: "720p" }),
     ).toHaveClass(/bg-primary/);

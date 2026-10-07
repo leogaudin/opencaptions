@@ -119,7 +119,7 @@ struct SettingsView: View {
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Appearance")
-            SegmentedPills(options: Appearance.allCases, selection: $appearance, label: \.label)
+            InlinePicker(title: "Theme", options: Appearance.allCases, selection: $appearance, label: \.label).card()
         }
     }
 

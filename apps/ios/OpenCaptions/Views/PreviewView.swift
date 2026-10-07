@@ -92,6 +92,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var live = Live()
     private var panning = false
     private var pinching = false
+    private var pinchRecogniser: UIPinchGestureRecognizer?
+    private var waitingForFingers = false
     private var pinchStartSize = 0
     /// Committed, and waiting for the engine to draw the caption where it now is, to let go of the layer.
     private var awaitingScene = false
@@ -145,6 +147,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         // Two fingers anywhere on the video change the font size: pinching out is bigger. It
         // works while the video plays, like the drag.
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinched))
+        pinchRecogniser = pinch
         // A finger already dragging can be joined by a second to pinch: the pinch is not held back
         // by the drag that began first.
         pan.delegate = self
@@ -321,6 +324,21 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     /// When the last finger is up, commit what they settled on, once.
     private func settleIfIdle() {
         guard !panning, !pinching else { return }
+        // The drag ends the moment a second finger lands, a little before the pinch is recognised.
+        // Committing then would redraw the caption where the drag left it while the pinch scales it
+        // about the old place: it would jump and come back. The pinch commits both when it ends.
+        if (pinchRecogniser?.numberOfTouches ?? 0) >= 2 {
+            guard !waitingForFingers else { return }
+            waitingForFingers = true
+            Task { @MainActor in
+                while (pinchRecogniser?.numberOfTouches ?? 0) >= 2, !pinching {
+                    try? await Task.sleep(for: .milliseconds(40))
+                }
+                waitingForFingers = false
+                settleIfIdle()
+            }
+            return
+        }
         dragSerial += 1
         verticalGuide.isHidden = true
         horizontalGuide.isHidden = true

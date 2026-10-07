@@ -17,7 +17,7 @@ const SIZE_LABELS: Record<RenderOptions["resolution"], string> = {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
       {children}
     </div>
@@ -36,7 +36,7 @@ export function DownloadOptions({ choices }: { choices: ExportChoices }) {
   const sourceFps = choices.source_fps ? `${Math.round(choices.source_fps)} fps` : "Original";
 
   return (
-    <div className="flex flex-col gap-2 px-2 pt-1.5 pb-2" data-testid="download-options">
+    <div className="flex flex-col gap-4" data-testid="download-options">
       {choices.resolutions.length > 1 && (
         <Row label="Size">
           <Segmented

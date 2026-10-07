@@ -7,7 +7,8 @@ struct SourcePicker: View {
     @Binding var useServer: Bool
 
     var body: some View {
-        SegmentedPills(options: [false, true], selection: $useServer, label: { $0 ? "My server" : "On this phone" })
+        InlinePicker(title: "Where", options: [false, true], selection: $useServer, label: { $0 ? "My server" : "On this phone" })
+            .card()
     }
 }
 

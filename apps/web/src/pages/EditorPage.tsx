@@ -142,7 +142,7 @@ export function EditorPage() {
         id="dock"
         defaultSize="32%"
         minSize={140}
-        className="overflow-hidden rounded-t-3xl border-t border-border bg-card"
+        className="overflow-hidden border-t border-border bg-card"
       >
         <TimelineDock />
       </Panel>

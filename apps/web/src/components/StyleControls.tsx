@@ -38,12 +38,10 @@ export function StyleControls() {
 
       <PresetStrip activeId={activePresetId} onPick={(config) => setStyle(presetLook(config))} />
 
-      <FontPicker value={style.font} onChange={(font) => setStyle({ font })} />
-
       <Disclosure
         label="Customize"
         openLabel="Hide custom controls"
-        className="mt-3 border-t border-border pt-3"
+        className="mt-3 border-t border-border pt-4"
       >
         <CustomPanel style={style} setStyle={setStyle} setStyleThrottled={setStyleThrottled} />
       </Disclosure>
@@ -62,6 +60,8 @@ function CustomPanel({
 }) {
   return (
     <div className="space-y-4 text-xs">
+      <FontPicker value={style.font} onChange={(font) => setStyle({ font })} />
+
       <SliderField
         label="Font size"
         unit="px"

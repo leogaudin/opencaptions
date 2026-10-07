@@ -3,14 +3,7 @@
 
 API         := cd apps/api && uv run
 WEB         := cd apps/web && npm run
-# Built on first use (with a cargo cache volume chowned to the caller, as ci-local.sh does): the stock image lacks clippy, rustfmt and the WebAssembly and iOS targets.
-ENGINE_IMG  := opencaptions-ci-engine:local
-ENGINE      := (docker image inspect $(ENGINE_IMG) >/dev/null 2>&1 || printf '%s\n' \
-	'FROM rust:1.94-slim-bookworm' 'RUN rustup component add rustfmt clippy' \
-	'RUN rustup target add wasm32-unknown-unknown aarch64-apple-ios' | docker build -q -t $(ENGINE_IMG) - >/dev/null) \
-	&& docker run --rm -v opencaptions-ci-cargo:/cargo $(ENGINE_IMG) chown "$$(id -u):$$(id -g)" /cargo \
-	&& docker run --rm --user "$$(id -u):$$(id -g)" -e CARGO_HOME=/cargo \
-	-v opencaptions-ci-cargo:/cargo -v "$$PWD/apps/engine":/w -w /w $(ENGINE_IMG)
+ENGINE      := ./scripts/engine-shell.sh
 
 .DEFAULT_GOAL := help
 

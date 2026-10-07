@@ -27,3 +27,24 @@ struct SegmentedPills<Value: Hashable>: View {
         .animation(.easeOut(duration: 0.15), value: selection)
     }
 }
+
+/// A choice among a few options as one line: the title, and the chosen option on the right with the
+/// chevrons of a menu, the way a form's select looks. Quieter than `SegmentedPills`, which colours
+/// a whole row in the accent.
+struct InlinePicker<Value: Hashable>: View {
+    let title: String
+    let options: [Value]
+    @Binding var selection: Value
+    let label: (Value) -> String
+
+    var body: some View {
+        HStack {
+            Text(title).font(.system(size: 15, weight: .medium))
+            Spacer()
+            Picker(title, selection: $selection) {
+                ForEach(options, id: \.self) { Text(label($0)).tag($0) }
+            }
+            .labelsHidden().pickerStyle(.menu).tint(Theme.textPrimary)
+        }
+    }
+}

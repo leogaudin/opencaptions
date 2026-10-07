@@ -189,15 +189,22 @@ struct SectionLabel: View {
 }
 
 extension View {
-    /// Lets what scrolls dissolve into the page just above the tab bar, instead of being cut off
-    /// at its edge: a fade from clear to the page's colour, under the bar.
+    /// Lets what scrolls dissolve into the page just above the tab bar, instead of being cut off at
+    /// its edge: a short fade from clear to the page's colour, ending where the bar begins, and
+    /// plain page colour behind the bar itself, so there is one fade and not two.
     func fadesIntoTabBar() -> some View {
         overlay(alignment: .bottom) {
-            LinearGradient(
-                colors: [Theme.background.opacity(0), Theme.background.opacity(0.92), Theme.background],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: 96)
+            GeometryReader { screen in
+                let bar = 49 + screen.safeAreaInsets.bottom
+                VStack(spacing: 0) {
+                    LinearGradient(
+                        colors: [Theme.background.opacity(0), Theme.background], startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: 44)
+                    Theme.background.frame(height: bar)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            }
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
         }

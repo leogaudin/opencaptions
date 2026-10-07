@@ -45,7 +45,7 @@ export function PresetStrip({
       <div
         ref={strip}
         data-testid="preset-strip"
-        className="flex snap-x gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x gap-2.5 overflow-x-auto px-4 pt-1 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {BUILTIN_PRESETS.map((p) => {
           const active = p.id === activeId;
