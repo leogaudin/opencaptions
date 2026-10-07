@@ -123,6 +123,9 @@ impl OutlineBuilder for Sink {
 fn shape(face: &Face, text: &str, size: f32) -> (Option<Path>, f32) {
     let mut buf = UnicodeBuffer::new();
     buf.push_str(text);
+    // Direction, script and language from the text itself: Arabic and Hebrew run right to left,
+    // and Arabic and the Indic scripts join and reorder their letters.
+    buf.guess_segment_properties();
     let glyphs = rustybuzz::shape(face, &[], buf);
     let scale = size / face.units_per_em() as f32;
     let mut sink = Sink {
@@ -344,6 +347,20 @@ fn watermark(book: &FontBook, text: &str, width: u32, height: u32) -> Option<Mar
     Some(Mark { rect, pixmap })
 }
 
+/// Whether the words read right to left: most of their letters are Hebrew or Arabic.
+fn is_right_to_left<'a>(words: impl Iterator<Item = &'a str>) -> bool {
+    let (mut rtl, mut letters) = (0u32, 0u32);
+    for c in words.flat_map(str::chars).filter(|c| c.is_alphabetic()) {
+        letters += 1;
+        if matches!(c as u32,
+            0x0590..=0x05FF | 0x0600..=0x06FF | 0x0750..=0x077F | 0x08A0..=0x08FF | 0xFB1D..=0xFDFF | 0xFE70..=0xFEFF)
+        {
+            rtl += 1;
+        }
+    }
+    rtl * 2 > letters
+}
+
 fn overlaps(a: IntRect, b: IntRect) -> bool {
     a.x() < b.right() && b.x() < a.right() && a.y() < b.bottom() && b.y() < a.bottom()
 }
@@ -452,10 +469,17 @@ impl Scene {
                 let x0 = place(style.position_x, block_w, width as f32);
                 let y0 = place(style.position_y, block_h, height as f32);
                 let mut placed: Vec<Option<Placed>> = (0..chunk.len()).map(|_| None).collect();
+                let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
                 for (r, (row, row_w)) in rows.iter().enumerate() {
                     let top = y0 + pad_by + r as f32 * row_h;
                     let mut x = x0 + pad_bx + (inner_w - row_w) / 2.0;
-                    for &i in row {
+                    // In a right-to-left line the first word is the rightmost.
+                    let order: Vec<usize> = if right_to_left {
+                        row.iter().rev().copied().collect()
+                    } else {
+                        row.clone()
+                    };
+                    for i in order {
                         let (glyphs, adv) = &shaped[i];
                         let slot_w = adv + 2.0 * pad_wx;
                         let at = Transform::from_translate(x + pad_wx, top + baseline_in_row);
@@ -1133,6 +1157,58 @@ mod tests {
         let mut r = Renderer::new(Scene::new(&book(), i));
         r.render(100.0);
         assert_eq!(inked(r.rgba()), 0);
+    }
+
+    fn book_with_scripts() -> FontBook<'static> {
+        let mut b = book();
+        for font in [
+            &include_bytes!("../fonts/NotoSansArabic.ttf")[..],
+            include_bytes!("../fonts/NotoSansHebrew.ttf"),
+            include_bytes!("../fonts/NotoSansDevanagari.ttf"),
+            include_bytes!("../fonts/NotoSansThai.ttf"),
+        ] {
+            b.add(font).unwrap();
+        }
+        b
+    }
+
+    fn word_xs(words: &[(&str, f32, f32)]) -> Vec<f32> {
+        let mut r = Renderer::new(Scene::new(
+            &book_with_scripts(),
+            input("word_pop", words, 3),
+        ));
+        r.render(0.5);
+        assert!(r.rgba().iter().any(|&b| b != 0), "something is drawn");
+        r.active_word_rects().iter().map(|rect| rect.0).collect()
+    }
+
+    #[test]
+    fn right_to_left_lines_run_from_the_right_and_left_to_right_ones_do_not() {
+        let latin = word_xs(&[("one", 0.0, 0.4), ("two", 0.4, 0.8), ("three", 0.8, 1.2)]);
+        assert!(latin[0] < latin[1] && latin[1] < latin[2], "{latin:?}");
+        let arabic = word_xs(&[("مرحبا", 0.0, 0.4), ("بكم", 0.4, 0.8), ("جميعا", 0.8, 1.2)]);
+        assert!(arabic[0] > arabic[1] && arabic[1] > arabic[2], "{arabic:?}");
+        let hebrew = word_xs(&[("שלום", 0.0, 0.4), ("לכולם", 0.4, 0.8), ("היום", 0.8, 1.2)]);
+        assert!(hebrew[0] > hebrew[1] && hebrew[1] > hebrew[2], "{hebrew:?}");
+    }
+
+    #[test]
+    fn scripts_the_default_face_lacks_are_drawn_with_the_bundled_ones() {
+        let book = book_with_scripts();
+        let inter = book.primary("Inter");
+        for text in ["مرحبا", "שלום", "नमस्ते", "สวัสดี"] {
+            let face = book.for_text(inter, text);
+            assert_ne!(face, inter, "{text} needs another face");
+            let ink = |t: &str| {
+                let mut r = Renderer::new(Scene::new(
+                    &book,
+                    input("word_highlight", &[(t, 0.0, 1.0)], 3),
+                ));
+                r.render(0.5);
+                r.rgba().chunks_exact(4).filter(|p| p[3] != 0).count()
+            };
+            assert!(ink(text) > 500, "{text} is drawn, not left out");
+        }
     }
 
     #[test]

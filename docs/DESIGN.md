@@ -347,7 +347,11 @@ English. On iOS, SwiftUI text and `String(localized:)` are collected in the app'
 (`Localizable.xcstrings`, `InfoPlist.xcstrings`), and the Kit has its own for the words it
 produces (errors, what a long job says). Tests fail on a text missing in any language or a
 translation that loses a placeholder (`i18n.spec.ts`, `LocalizationTests`). What the server
-says (its errors, a job's progress) is not translated, and neither is the watermark. Adding a
+says (its errors, a job's progress) is not translated, and neither is the watermark. Captions in
+other scripts: the engine shapes each word with its own direction and script, lays a right-to-left
+line (Hebrew, Arabic) out from the right, and falls back to the bundled Noto Sans faces for
+Arabic, Hebrew, Devanagari and Thai; Chinese, Japanese and Korean are not covered yet (their
+fonts are too large to bundle). Adding a
 language means a file or a column of translations in each of those, and its code in the list.
 
 **Free and Pro.** `Entitlements` (in the Kit) is the one place the tier's limits are written: a free
