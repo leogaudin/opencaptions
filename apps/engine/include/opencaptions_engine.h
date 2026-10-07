@@ -58,6 +58,11 @@ uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
  * (pixels). Leaves four f32: snapped x, snapped y, then 1.0/0.0 for whether each snapped. */
 uint32_t oc_snap_position(float x, float y, float width, float height, float threshold);
 
+/* The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese, Korean, other
+ * Asian scripts), as a JSON array of Google Fonts names. The host fetches them, registers each with
+ * oc_add_requested_font, and names them in the scene's fallback_fonts. 0 on failure. */
+uint32_t oc_fallback_fonts(uint8_t *json_ptr, size_t json_len);
+
 /* Editing: pure functions of a transcript (JSON); 0 on failure with the reason. */
 /* Leaves a JSON array of {from, count, start, end, text}; times are as shown, with
  * offset_ms (the caption offset) applied. */

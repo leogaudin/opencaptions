@@ -231,8 +231,10 @@ struct EditorView: View {
             }
             .buttonStyle(CircleButtonStyle())
             .accessibilityLabel("More")
-            Button("Save") { showSaveOptions = true }
-                .buttonStyle(PillButtonStyle(prominent: true))
+            // An icon, not a word: "Save" is long in some languages and must not wrap.
+            Button { showSaveOptions = true } label: { Image(systemName: "square.and.arrow.down") }
+                .buttonStyle(CircleButtonStyle(prominent: true))
+                .accessibilityLabel("Save")
                 .disabled(model.transcript == nil || model.isTranscribing || exporter?.isRunning == true)
                 .opacity(model.transcript == nil || model.isTranscribing ? 0.4 : 1)
         }

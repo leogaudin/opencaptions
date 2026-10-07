@@ -416,6 +416,11 @@ impl Scene {
             (fs * 0.6, fs * 0.3)
         };
         let primary = book.primary(&style.font);
+        let fallbacks: Vec<usize> = input
+            .fallback_fonts
+            .iter()
+            .filter_map(|family| book.find(family))
+            .collect();
         let face = book.face(primary);
         let em = fs / face.units_per_em() as f32;
         let (ascent, descent) = (
@@ -443,7 +448,13 @@ impl Scene {
             .map(|chunk| {
                 let shaped: Vec<_> = chunk
                     .iter()
-                    .map(|w| shape(book.face(book.for_text(primary, &w.text)), &w.text, fs))
+                    .map(|w| {
+                        shape(
+                            book.face(book.for_text(primary, &fallbacks, &w.text)),
+                            &w.text,
+                            fs,
+                        )
+                    })
                     .collect();
                 let mut rows: Vec<(Vec<usize>, f32)> = vec![];
                 for (i, (_, adv)) in shaped.iter().enumerate() {
@@ -865,8 +876,8 @@ mod tests {
             "falls back to the default face"
         );
         // The Anton subset cannot draw Cyrillic and Inter can, so the word moves to Inter.
-        assert_eq!(b.for_text(0, "hello"), 0);
-        assert_eq!(b.for_text(0, "привет"), 1);
+        assert_eq!(b.for_text(0, &[], "hello"), 0);
+        assert_eq!(b.for_text(0, &[], "привет"), 1);
     }
 
     #[test]
@@ -877,7 +888,7 @@ mod tests {
         assert_eq!(b.primary("lobster"), 2);
         assert_eq!(b.families(), ["Anton", "Inter"]);
         assert_eq!(
-            b.for_text(0, "привет"),
+            b.for_text(0, &[], "привет"),
             1,
             "falls back to bundled Inter, not the request"
         );
@@ -1197,7 +1208,7 @@ mod tests {
         let book = book_with_scripts();
         let inter = book.primary("Inter");
         for text in ["مرحبا", "שלום", "नमस्ते", "สวัสดี"] {
-            let face = book.for_text(inter, text);
+            let face = book.for_text(inter, &[], text);
             assert_ne!(face, inter, "{text} needs another face");
             let ink = |t: &str| {
                 let mut r = Renderer::new(Scene::new(
@@ -1209,6 +1220,40 @@ mod tests {
             };
             assert!(ink(text) > 500, "{text} is drawn, not left out");
         }
+    }
+
+    #[test]
+    fn a_named_fallback_font_draws_what_the_style_font_lacks() {
+        // Only what the scene names is tried before the bundled faces: here the Arabic face is
+        // registered the way a fetched font is, not bundled.
+        let arabic: &'static [u8] = include_bytes!("../fonts/NotoSansArabic.ttf");
+        let mut b = book();
+        assert!(b.add_requested("Noto Sans Arabic", arabic));
+        let named = b.find("Noto Sans Arabic").unwrap();
+        let primary = b.primary("Anton");
+        assert_eq!(
+            b.for_text(primary, &[], "مرحبا"),
+            primary,
+            "nothing names it"
+        );
+        assert_eq!(b.for_text(primary, &[named], "مرحبا"), named);
+        assert_eq!(
+            b.for_text(primary, &[named], "helo"),
+            primary,
+            "the style's font still wins"
+        );
+        let frame = |fallbacks: &[&str]| {
+            let mut i = input("word_highlight", &[("مرحبا", 0.0, 1.0)], 3);
+            i.fallback_fonts = fallbacks.iter().map(|f| f.to_string()).collect();
+            let mut r = Renderer::new(Scene::new(&b, i));
+            r.render(0.5);
+            r.rgba().to_vec()
+        };
+        assert_ne!(
+            frame(&["Noto Sans Arabic"]),
+            frame(&[]),
+            "the named font is the one drawn with"
+        );
     }
 
     #[test]

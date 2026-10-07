@@ -339,7 +339,8 @@ the model is chosen in the Transcribe sheet (while the language is picked) and r
 reading of the audio; the loaded model stays for the next transcription and is let go on a memory
 warning or when the app leaves the screen.
 
-**Languages.** The interface is in English, French, Spanish and German (the browser's or the
+**Languages.** The interface is in English, French, Spanish, German, Polish, Portuguese (Brazil), Italian,
+Russian, Turkish, Japanese, Korean, Simplified Chinese and Indonesian (the browser's or the
 phone's language is used; the web has a choice in the account menu and on the sign-in screens).
 On the web the English text in the code is the key: `t("Download")`, with `{name}` for values, and
 `locales/<code>.json` holds the others (`lib/i18n.ts`); a text without a translation shows in
@@ -350,8 +351,12 @@ translation that loses a placeholder (`i18n.spec.ts`, `LocalizationTests`). What
 says (its errors, a job's progress) is not translated, and neither is the watermark. Captions in
 other scripts: the engine shapes each word with its own direction and script, lays a right-to-left
 line (Hebrew, Arabic) out from the right, and falls back to the bundled Noto Sans faces for
-Arabic, Hebrew, Devanagari and Thai; Chinese, Japanese and Korean are not covered yet (their
-fonts are too large to bundle). Adding a
+Arabic, Hebrew, Devanagari and Thai. Chinese, Japanese, Korean and the other Asian scripts need
+fonts too large to bundle, so the engine says which families a transcript needs
+(`scripts.rs`, `oc_fallback_fonts`: Han is drawn in the Japanese, Korean or Chinese face by the
+kana, hangul or language) and the host fetches them from Google Fonts as it does a style's own
+font, naming them in the scene's `fallback_fonts`. The render server gets them from the API,
+which holds a Python copy of the rule held to the same cases (`testdata/script_fonts.json`). Adding a
 language means a file or a column of translations in each of those, and its code in the list.
 
 **Free and Pro.** `Entitlements` (in the Kit) is the one place the tier's limits are written: a free
@@ -363,7 +368,10 @@ Turbo is free). The screens lock what the tier lacks and show `ProSheet`; the sa
 options through `Entitlements.limit`, so a remembered choice cannot get past a screen. Nothing
 else is gated: the engine and the rest are open source. A build from source is Pro; an App Store
 build (compiled with `APPSTORE`) starts free until a purchase (StoreKit, not built yet) says
-otherwise. A debug build picks the tier in Settings or with `OC_TIER=free|pro`.
+otherwise. Pro is a one-time purchase (`Purchases.swift`, StoreKit 2, only in an App Store
+build; `Config/Pro.storekit` is the test configuration the scheme runs with, so a purchase can
+be tried in Xcode with a test price); the Pro sheet shows the store's price. A debug build
+picks the tier in Settings or with `OC_TIER=free|pro`, and shows a test price.
 
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
 with BT.2020. Core Image puts sRGB white well above reference white in an HDR

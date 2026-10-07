@@ -10,17 +10,48 @@ import { useSyncExternalStore } from "react";
 import de from "@/locales/de.json";
 import es from "@/locales/es.json";
 import fr from "@/locales/fr.json";
+import id from "@/locales/id.json";
+import it from "@/locales/it.json";
+import ja from "@/locales/ja.json";
+import ko from "@/locales/ko.json";
+import pl from "@/locales/pl.json";
+import pt from "@/locales/pt.json";
+import ru from "@/locales/ru.json";
+import tr from "@/locales/tr.json";
+import zh from "@/locales/zh.json";
 
 export const LANGUAGES = [
   { code: "en", name: "English" },
   { code: "fr", name: "Français" },
   { code: "es", name: "Español" },
   { code: "de", name: "Deutsch" },
+  { code: "pl", name: "Polski" },
+  { code: "pt", name: "Português" },
+  { code: "it", name: "Italiano" },
+  { code: "ru", name: "Русский" },
+  { code: "tr", name: "Türkçe" },
+  { code: "ja", name: "日本語" },
+  { code: "ko", name: "한국어" },
+  { code: "zh", name: "简体中文" },
+  { code: "id", name: "Bahasa Indonesia" },
 ] as const;
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
-const DICTIONARIES: Record<Exclude<LanguageCode, "en">, Record<string, string>> = { fr, es, de };
+const DICTIONARIES: Record<Exclude<LanguageCode, "en">, Record<string, string>> = {
+  fr,
+  es,
+  de,
+  pl,
+  pt,
+  it,
+  ru,
+  tr,
+  ja,
+  ko,
+  zh,
+  id,
+};
 
 const STORAGE_KEY = "language";
 

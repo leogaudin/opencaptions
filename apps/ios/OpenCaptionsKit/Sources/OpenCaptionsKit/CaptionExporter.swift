@@ -160,10 +160,10 @@ public struct CaptionExporter: Sendable {
         // An HDR source made into an SDR video is tone-mapped down before the captions go on.
         let toneMap = project.hdrTransfer != nil && plan.transfer == nil
 
-        await engine.ensureFont(project.styleConfig.font, cache: fonts)
+        let fallbacks = await engine.ensureFonts(for: transcript, style: project.styleConfig, cache: fonts)
         try await engine.setScene(
             transcript: transcript, style: project.styleConfig, width: width, height: height,
-            captionOffsetMs: project.captionOffsetMs, watermark: options.watermark)
+            captionOffsetMs: project.captionOffsetMs, watermark: options.watermark, fallbackFonts: fallbacks)
 
         let bitrate = options.bitrate(width: width, height: height, fps: fps, plan: plan)
         let encoding = Encoding.make(
@@ -198,10 +198,13 @@ public struct CaptionExporter: Sendable {
         writer.startSession(atSourceTime: .zero)
 
         // Half-float working precision, so HDR values above reference white survive.
-        let context = CIContext(options: [.workingFormat: CIFormat.RGBAh])
+        // Nothing kept between frames: every frame is new, and a cache of each one's intermediate
+        // pictures (a resized 4K frame is several megabytes) grows until the system ends the app.
+        let context = CIContext(options: [.workingFormat: CIFormat.RGBAh, .cacheIntermediates: false])
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
         var overlay: CIImage?
         var logged = 0
+        var framesWritten = 0
         /// Draws the captions for `time` over `sample`'s picture and writes the frame there.
         func write(_ sample: CMSampleBuffer, at time: CMTime) async throws {
             try Task.checkCancellation()
@@ -226,6 +229,8 @@ public struct CaptionExporter: Sendable {
                 guard writer.status == .writing, adaptor.append(buffer, withPresentationTime: time) else {
                     throw ExportError.failed(writer.error?.localizedDescription ?? "cannot encode")
                 }
+                framesWritten += 1
+                if framesWritten % 30 == 0 { context.clearCaches() }
             }
         }
         /// The frames for every slot before `until`, showing `held`.

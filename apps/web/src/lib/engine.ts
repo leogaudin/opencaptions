@@ -30,6 +30,7 @@ interface Exports {
   oc_active_bounds(): number;
   oc_active_word_rects(): number;
   oc_snap_position(x: number, y: number, width: number, height: number, threshold: number): number;
+  oc_fallback_fonts(ptr: number, len: number): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
   oc_retime_word(
     ptr: number,
@@ -55,6 +56,8 @@ export interface SceneInput {
   height: number;
   /** The global caption timing offset in ms (positive = later); the engine applies it. */
   caption_offset_ms: number;
+  /** Fonts to draw with where the style's lacks a letter, already loaded (`loadFallbackFonts`). */
+  fallback_fonts?: string[];
 }
 
 /** A rectangle in frame pixels (the engine's own coordinates). */
@@ -138,6 +141,12 @@ export interface CaptionRenderer {
    * rule the engine applies to an export, so both draw with the same file.
    */
   loadFont(family: string): Promise<void>;
+  /**
+   * Load the fonts a transcript's scripts need that are not bundled (Chinese, Japanese,
+   * Korean...), as the engine names them, and return their families for the scene's
+   * `fallback_fonts`. The server's render reads the same families from the same place.
+   */
+  loadFallbackFonts(transcript: Transcript): Promise<string[]>;
   /** Lay out captions for a new transcript, style or size. */
   setScene(input: SceneInput): void;
   /**
@@ -226,7 +235,7 @@ function requestedFont(family: string): Promise<Uint8Array | null> {
 
 export async function createCaptionRenderer(): Promise<CaptionRenderer> {
   const { x } = await instantiate();
-  return {
+  const renderer: CaptionRenderer = {
     async loadFont(family) {
       const name = encoder.encode(family);
       if (x.oc_has_font(...copyIn(x, name))) return;
@@ -235,6 +244,14 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
       if (font && !x.oc_has_font(...copyIn(x, name))) {
         x.oc_add_requested_font(...copyIn(x, name), ...copyIn(x, font));
       }
+    },
+    async loadFallbackFonts(transcript) {
+      if (!x.oc_fallback_fonts(...copyIn(x, encoder.encode(JSON.stringify(transcript))))) {
+        throw new Error(`caption engine rejected the transcript: ${result(x)}`);
+      }
+      const families = JSON.parse(result(x)) as string[];
+      await Promise.all(families.map((family) => renderer.loadFont(family)));
+      return families;
     },
     setScene(input) {
       if (!x.oc_set_scene(...copyIn(x, encoder.encode(JSON.stringify(input))))) {
@@ -266,6 +283,7 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
       return { bounds: { x: bx!, y: by!, w: bw!, h: bh! }, index, words };
     },
   };
+  return renderer;
 }
 
 /** The bundled families, as declared by the font files themselves. */

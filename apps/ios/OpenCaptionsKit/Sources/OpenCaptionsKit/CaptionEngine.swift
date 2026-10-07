@@ -147,9 +147,11 @@ public actor CaptionEngine {
         var height: Int
         var captionOffsetMs: Int
         var watermark: String?
+        var fallbackFonts: [String] = []
 
         enum CodingKeys: String, CodingKey {
             case transcript, style, width, height, watermark
+            case fallbackFonts = "fallback_fonts"
             case captionOffsetMs = "caption_offset_ms"
         }
     }
@@ -158,11 +160,11 @@ public actor CaptionEngine {
     /// engine in a corner of every frame, so the preview and the export carry the same one.
     public func setScene(
         transcript: Transcript, style: StyleConfig, width: Int, height: Int, captionOffsetMs: Int,
-        watermark: String? = nil
+        watermark: String? = nil, fallbackFonts: [String] = []
     ) throws {
         let input = SceneInput(
             transcript: transcript, style: style, width: width, height: height,
-            captionOffsetMs: captionOffsetMs, watermark: watermark
+            captionOffsetMs: captionOffsetMs, watermark: watermark, fallbackFonts: fallbackFonts
         )
         try apply(input)
     }
@@ -285,6 +287,23 @@ extension CaptionEngine {
     /// Makes `family` drawable: nothing to do for a bundled face, otherwise the font is
     /// fetched (once) and registered, the rule the server applies to an export, so both
     /// draw with the same file. Offline and uncached, the engine draws the default face.
+    /// The fonts a transcript's scripts need that the engine does not bundle (Chinese, Japanese,
+    /// Korean and other Asian scripts), by the engine's own rule: the same families the preview
+    /// in the browser and the server's export ask for.
+    public func fallbackFamilies(for transcript: Transcript) throws -> [String] {
+        let (ptr, len) = try put(json: transcript)
+        return try decoded(oc_fallback_fonts(ptr, len), as: [String].self)
+    }
+
+    /// Makes the style's font and those fallbacks available, and returns the fallbacks' names for
+    /// the scene's `fallbackFonts`.
+    public func ensureFonts(for transcript: Transcript, style: StyleConfig, cache: FontCache) async -> [String] {
+        await ensureFont(style.font, cache: cache)
+        let families = (try? fallbackFamilies(for: transcript)) ?? []
+        for family in families { await ensureFont(family, cache: cache) }
+        return families
+    }
+
     public func ensureFont(_ family: String, cache: FontCache) async {
         guard !hasFont(family) else { return }
         guard let data = await cache.data(for: family) else { return }

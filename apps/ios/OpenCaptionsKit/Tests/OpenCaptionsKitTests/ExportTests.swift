@@ -74,6 +74,27 @@ extension EngineSuites {
             #expect(max(r, g, b) > 100, "the caption is there: \(r) \(g) \(b)")
         }
 
+        @Test func savingSmallerDoesNotGrowMemoryFrameAfterFrame() async throws {
+            let store = store()
+            let clip = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).mov")
+            try await SampleVideo.write(to: clip, width: 1080, height: 1920, seconds: 3, fps: 30)
+            let p = try await project(for: clip, in: store)
+            let samples = Samples()
+            _ = try await CaptionExporter(fonts: fonts).export(
+                project: p, source: store.sourceURL(for: p.id)!, in: directory(),
+                options: ExportOptions(codec: .hevc, resolution: .p720),
+                progress: { _ in samples.add(Diagnostics.footprintMB()) })
+            let all = samples.values
+            #expect((all.max() ?? 0) - (all.first ?? 0) < 400, "memory held while saving: \(all.first ?? 0) to \(all.max() ?? 0) MB")
+        }
+
+        final class Samples: @unchecked Sendable {
+            private let lock = NSLock()
+            private var storage: [Int] = []
+            func add(_ value: Int) { lock.lock(); storage.append(value); lock.unlock() }
+            var values: [Int] { lock.lock(); defer { lock.unlock() }; return storage }
+        }
+
         /// The video frames of a file, counted, and their span in seconds.
         func frames(of url: URL) async throws -> (count: Int, span: Double) {
             let asset = AVURLAsset(url: url)

@@ -141,20 +141,23 @@ function CaptionCanvas({
     v.addEventListener("play", sync);
     v.addEventListener("pause", sync);
     sync();
-    renderer.loadFont(scene.style.font).then(
-      () => {
-        if (!live) return;
-        renderer.setScene(scene);
-        if (ctx.canvas.width !== scene.width || ctx.canvas.height !== scene.height) {
-          ctx.canvas.width = scene.width;
-          ctx.canvas.height = scene.height;
-        }
-        ready = true;
-        draw();
-        if (!v.paused) start();
-      },
-      (e: unknown) => console.error(e),
-    );
+    renderer
+      .loadFont(scene.style.font)
+      .then(() => renderer.loadFallbackFonts(scene.transcript))
+      .then(
+        (fallback_fonts) => {
+          if (!live) return;
+          renderer.setScene({ ...scene, fallback_fonts });
+          if (ctx.canvas.width !== scene.width || ctx.canvas.height !== scene.height) {
+            ctx.canvas.width = scene.width;
+            ctx.canvas.height = scene.height;
+          }
+          ready = true;
+          draw();
+          if (!v.paused) start();
+        },
+        (e: unknown) => console.error(e),
+      );
     return () => {
       live = false;
       cancelAnimationFrame(frame);

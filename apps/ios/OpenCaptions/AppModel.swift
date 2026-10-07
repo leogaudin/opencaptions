@@ -27,6 +27,10 @@ final class AppModel {
     /// (compiled with `APPSTORE`) starts free until a purchase says otherwise. A debug build can be
     /// set to either from Settings, or with `OC_TIER=free|pro`, to try both.
     var entitlements = AppModel.startingEntitlements()
+    #if APPSTORE
+        /// Pro as a purchase: what is owned decides `entitlements`.
+        let purchases = Purchases()
+    #endif
     /// One model per open project, kept for the life of the app: a transcription or an
     /// autosave in progress must not end because the user went back to the list.
     @ObservationIgnored private var editors: [UUID: EditorModel] = [:]
@@ -44,6 +48,10 @@ final class AppModel {
         serverConnection = serverSettings.connection
         useServer = serverSettings.useServer
         presets = (try? Presets.builtin()) ?? []
+        #if APPSTORE
+            purchases.onChange = { [weak self] owned in self?.entitlements = owned ? .pro : .free }
+            purchases.start()
+        #endif
         Diagnostics.recordUncaughtExceptions()
         Diagnostics.log("launch")
     }

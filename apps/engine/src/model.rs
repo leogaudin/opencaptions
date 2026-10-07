@@ -122,4 +122,8 @@ pub struct SceneInput {
     /// the engine so the preview and the export carry the same one. None or empty draws nothing.
     #[serde(default)]
     pub watermark: Option<String>,
+    /// Families, already registered with the font book, to draw with where the style's font lacks a
+    /// letter (see `scripts::fallback_families`), tried in this order before the bundled faces.
+    #[serde(default)]
+    pub fallback_fonts: Vec<String>,
 }

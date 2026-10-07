@@ -46,13 +46,15 @@ struct InlinePicker<Value: Hashable>: View {
     let label: (Value) -> LocalizedStringKey
 
     var body: some View {
-        HStack {
-            Text(title).font(.system(size: 15, weight: .medium))
-            Spacer()
+        HStack(spacing: 12) {
+            Text(title).font(.system(size: 15, weight: .medium)).lineLimit(2)
+            Spacer(minLength: 8)
+            // The choice is never broken over two lines, whatever the language: the title gives way.
             Picker(title, selection: $selection) {
                 ForEach(options, id: \.self) { Text(label($0)).tag($0) }
             }
             .labelsHidden().pickerStyle(.menu).tint(Theme.textPrimary)
+            .fixedSize()
         }
     }
 }

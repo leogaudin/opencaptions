@@ -1,0 +1,33 @@
+{
+  "identifier" : "3C0E5E7D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6740000001",
+      "localizations" : [
+        {
+          "description" : "Videos above 1080p and 30 fps, HDR, every caption style, the Large v3 model, no watermark.",
+          "displayName" : "OpenCaptions Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "org.leogaudin.opencaptions.pro",
+      "referenceName" : "OpenCaptions Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

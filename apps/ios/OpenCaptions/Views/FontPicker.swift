@@ -134,7 +134,7 @@ struct FontPickerSheet: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(matches) { row($0.family, category: $0.category) }
+                        ForEach(matches) { row($0.family) }
                         if matches.isEmpty {
                             Text("No font matches “\(query)”.").font(.footnote).foregroundStyle(Theme.textSecondary).padding(24)
                         }
@@ -155,7 +155,7 @@ struct FontPickerSheet: View {
         loadedCatalog = true
     }
 
-    private func row(_ family: String, category: String = "") -> some View {
+    private func row(_ family: String) -> some View {
         Button {
             onSelect(family)
             dismiss()
@@ -163,9 +163,6 @@ struct FontPickerSheet: View {
             HStack(spacing: 10) {
                 FontName(family: family, size: 19)
                 Spacer(minLength: 8)
-                if !category.isEmpty {
-                    Text(category).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-                }
                 if family == current {
                     Image(systemName: "checkmark").font(.system(size: 14, weight: .heavy)).foregroundStyle(Theme.textPrimary)
                 }

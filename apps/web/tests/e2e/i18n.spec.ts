@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
  * that is gone. No browser: this reads the source.
  */
 const SRC = fileURLToPath(new URL("../../src", import.meta.url));
-const LANGUAGES = ["fr", "es", "de"];
+const LANGUAGES = ["fr", "es", "de", "pl", "pt", "it", "ru", "tr", "ja", "ko", "zh", "id"];
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

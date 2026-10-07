@@ -21,6 +21,60 @@
             "state": "translated",
             "value": "Verbindet sich mit einem OpenCaptions-Server in deinem Netzwerk, um deine Videos dort zu transkribieren."
           }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Łączy się z serwerem OpenCaptions w Twojej sieci, aby tam transkrybować Twoje wideo."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecta-se a um servidor OpenCaptions da sua rede para transcrever seus vídeos lá."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si collega a un server OpenCaptions della tua rete per trascrivere lì i tuoi video."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключается к серверу OpenCaptions в вашей сети, чтобы расшифровывать там ваши видео."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videolarınızı orada çevirmek için ağınızdaki bir OpenCaptions sunucusuna bağlanır."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ネットワーク上のOpenCaptionsサーバーに接続し、動画をそこで文字起こしします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "네트워크의 OpenCaptions 서버에 연결해 그곳에서 동영상을 받아씁니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接到您网络中的 OpenCaptions 服务器，在那里转写您的视频。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terhubung ke server OpenCaptions di jaringan Anda untuk mentranskripsi video Anda di sana."
+          }
         }
       }
     },
@@ -43,6 +97,60 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sichert deine Videos mit Untertiteln in Fotos."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisuje Twoje wideo z napisami w Zdjęciach."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva seus vídeos com legendas em Fotos."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva in Foto i tuoi video con i sottotitoli."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохраняет ваши видео с субтитрами в «Фото»."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılı videolarınızı Fotoğraflar'a kaydeder."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字幕付きの動画を写真に保存します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자막이 포함된 동영상을 사진에 저장합니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将带字幕的视频存入“照片”。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menyimpan video Anda yang bersubjudul ke Foto."
           }
         }
       }

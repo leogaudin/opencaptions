@@ -56,6 +56,19 @@ extension EngineSuites {
             #expect(corner > 100)
         }
 
+        @Test func theFontsAScriptNeedsAreNamedByTheEnginesOwnRule() async throws {
+            func transcript(_ language: String, _ words: [String]) -> Transcript {
+                let spoken = words.enumerated().map { Word(text: $1, start: Double($0), end: Double($0) + 1) }
+                return Transcript(
+                    language: language, languageDetection: .manual, duration: Double(words.count),
+                    segments: [TranscriptSegment(id: "a", words: spoken, start: 0, end: Double(words.count), text: words.joined(separator: " "))])
+            }
+            #expect(try await engine.fallbackFamilies(for: try Repo.transcript()) == [])
+            #expect(try await engine.fallbackFamilies(for: transcript("ja", ["こんにちは", "世界"])) == ["Noto Sans JP"])
+            #expect(try await engine.fallbackFamilies(for: transcript("zh", ["你好", "世界"])) == ["Noto Sans SC"])
+            #expect(try await engine.fallbackFamilies(for: transcript("ko", ["안녕하세요"])) == ["Noto Sans KR"])
+        }
+
         @Test func bundledFontsRegisterOnceAndInterIsOne() async throws {
             let families = try await engine.registerBundledFonts(in: Repo.fonts)
             #expect(families.contains("Inter"))

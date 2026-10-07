@@ -24,6 +24,10 @@ struct RenderRequest {
     output_key: String,
     /// The style's font, when it is not bundled.
     font_url: Option<String>,
+    /// The fallback families the scene names (`fallback_fonts`) that are not bundled, each with
+    /// where to read it.
+    #[serde(default)]
+    fallback_font_urls: std::collections::HashMap<String, String>,
     #[serde(flatten)]
     scene: SceneInput,
     fps: u32,
@@ -283,6 +287,23 @@ fn render(
         Some(url) if !book.has(&req.scene.style.font) => Some(fetch_font(url)?),
         _ => None,
     };
+    // The families the transcript's scripts need, in the order the scene names them. One that
+    // cannot be fetched is left out and its letters are drawn as far as the other faces can.
+    let mut fallbacks: Vec<(&String, Vec<u8>)> = Vec::new();
+    for family in &req.scene.fallback_fonts {
+        if book.has(family) {
+            continue;
+        }
+        if let Some(url) = req.fallback_font_urls.get(family) {
+            match fetch_font(url) {
+                Ok(data) => fallbacks.push((family, data)),
+                Err(e) => log(
+                    "fallback_font_failed",
+                    json!({ "family": family, "error": e }),
+                ),
+            }
+        }
+    }
     let mut book = book.clone();
     if let Some(data) = &font
         && !book.add_requested(&req.scene.style.font, data)
@@ -291,6 +312,11 @@ fn render(
             "{} is not a usable font file",
             req.scene.style.font
         ));
+    }
+    for (family, data) in &fallbacks {
+        if !book.add_requested(family, data) {
+            log("fallback_font_rejected", json!({ "family": family }));
+        }
     }
     let mut renderer = Renderer::new(Scene::new(&book, req.scene.clone()));
     let (w, h) = (renderer.scene().width(), renderer.scene().height());

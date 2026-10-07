@@ -7,7 +7,7 @@ struct SourcePicker: View {
     @Binding var useServer: Bool
 
     var body: some View {
-        InlinePicker(title: "Where", options: [false, true], selection: $useServer, label: { $0 ? "My server" : "On this phone" })
+        InlinePicker(title: "Where", options: [false, true], selection: $useServer, label: { $0 ? "Remote server" : "On this phone" })
             .card()
     }
 }
@@ -27,7 +27,7 @@ struct ServerSection: View {
             if app.useServer, let connection = app.serverConnection {
                 connected(connection)
             } else if app.serverConnection == nil {
-                Text("Choose “My server” to transcribe on another OpenCaptions server instead, which is faster on a computer with a graphics card.")
+                Text("Choose “Remote server” to transcribe on another OpenCaptions server instead, which is faster on a computer with a graphics card.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             }
         }

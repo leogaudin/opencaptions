@@ -110,7 +110,6 @@ export function FontPicker({ value, onChange }: { value: string; onChange: (f: s
         className="flex w-full items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left hover:bg-accent aria-[current=true]:bg-accent"
       >
         <FontName family={r.family} />
-        <span className="shrink-0 text-[11px] text-muted-foreground">{r.category}</span>
       </button>
     </li>
   );

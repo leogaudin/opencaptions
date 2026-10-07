@@ -5,7 +5,7 @@ import Testing
 /// middle of a French screen, and a translation that lost a placeholder would show the wrong number, so
 /// both are checked here for every language the app claims.
 @Suite struct LocalizationTests {
-    static let languages = ["fr", "es", "de"]
+    static let languages = ["fr", "es", "de", "pl", "pt-BR", "it", "ru", "tr", "ja", "ko", "zh-Hans", "id"]
     static let catalogs = [
         "apps/ios/OpenCaptions/Resources/Localizable.xcstrings",
         "apps/ios/OpenCaptions/Resources/InfoPlist.xcstrings",

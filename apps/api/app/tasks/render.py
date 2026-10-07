@@ -41,6 +41,15 @@ def _font_url(family: str) -> str | None:
         return None
 
 
+def _fallback_fonts(transcript: dict[str, Any]) -> dict[str, str]:
+    """Family -> read URL for the fonts the transcript's scripts need; one that is unavailable is left out."""
+    from app.services.script_fonts import fallback_families, transcript_words
+
+    families = fallback_families(transcript_words(transcript), str(transcript.get("language", "")))
+    urls = {family: _font_url(family) for family in families}
+    return {family: url for family, url in urls.items() if url}
+
+
 @celery_app.task(name="app.tasks.render.render_video", bind=True)
 # The suppression is load-bearing: this is a linear render pipeline whose steps
 # share too much local state to split without passing a bag of variables around.
@@ -113,10 +122,15 @@ def render_video(  # noqa: C901
         # Step 2: presigned URL for the source video, valid for 1h.
         video_url = s3.presigned_url(video_key, expires_in=3600)
         font_url = _font_url(str(inputs.style_config.get("font", "")))
+        fallbacks = _fallback_fonts(inputs.transcript)
 
         body: dict[str, Any] = {
             "video_url": video_url,
             "font_url": font_url,
+            # The families the transcript's scripts need that the engine does not bundle (Chinese,
+            # Japanese, Korean...), and where to read each: drawn with when the style's font lacks a letter.
+            "fallback_fonts": list(fallbacks),
+            "fallback_font_urls": fallbacks,
             "transcript": inputs.transcript,
             "style": inputs.style_config,
             "caption_offset_ms": inputs.caption_offset_ms,

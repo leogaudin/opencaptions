@@ -1,0 +1,16 @@
+[
+  { "words": ["hello", "world"], "language": "en", "families": [] },
+  { "words": ["مرحبا", "שלום", "नमस्ते", "สวัสดี"], "language": "ar", "families": [] },
+  { "words": ["Привет", "Γειά"], "language": "ru", "families": [] },
+  { "words": ["こんにちは", "世界"], "language": "ja", "families": ["Noto Sans JP"] },
+  { "words": ["世界", "你好"], "language": "ja", "families": ["Noto Sans JP"] },
+  { "words": ["你好", "世界"], "language": "zh", "families": ["Noto Sans SC"] },
+  { "words": ["你好", "世界"], "language": "zh-TW", "families": ["Noto Sans TC"] },
+  { "words": ["你好", "世界"], "language": "auto", "families": ["Noto Sans SC"] },
+  { "words": ["안녕하세요", "세계"], "language": "ko", "families": ["Noto Sans KR"] },
+  { "words": ["世界", "안녕"], "language": "auto", "families": ["Noto Sans KR"] },
+  { "words": ["こんにちは", "안녕"], "language": "auto", "families": ["Noto Sans JP", "Noto Sans KR"] },
+  { "words": ["AI", "世界"], "language": "zh", "families": ["Noto Sans SC"] },
+  { "words": ["নমস্কার", "வணக்கம்"], "language": "bn", "families": ["Noto Sans Bengali", "Noto Sans Tamil"] },
+  { "words": ["ជំរាបសួរ", "ສະບາຍດີ", "မင်္ဂလာပါ"], "language": "km", "families": ["Noto Sans Khmer", "Noto Sans Lao", "Noto Sans Myanmar"] }
+]

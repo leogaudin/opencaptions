@@ -67,8 +67,9 @@ struct ExportSheet: View {
                 ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
                     .buttonStyle(PrimaryButtonStyle())
                 Button { Task { await saveToPhotos(url) } } label: {
-                    Label("Save to Photos", systemImage: "photo.on.rectangle")
+                    Label("Photos", systemImage: "photo.on.rectangle")
                 }
+                .accessibilityLabel("Save to Photos")
                 .buttonStyle(SecondaryButtonStyle())
             }
             if let photosMessage { Text(photosMessage).font(.footnote).foregroundStyle(.secondary) }

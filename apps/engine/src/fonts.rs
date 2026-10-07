@@ -102,7 +102,7 @@ impl<'a> FontBook<'a> {
         self.faces.is_empty()
     }
 
-    fn find(&self, family: &str) -> Option<usize> {
+    pub fn find(&self, family: &str) -> Option<usize> {
         self.faces
             .iter()
             .position(|e| e.family.eq_ignore_ascii_case(family))
@@ -115,9 +115,11 @@ impl<'a> FontBook<'a> {
             .unwrap_or(0)
     }
 
-    /// `primary` when it can draw every character of `text`, else the first
-    /// bundled face that can, else `primary` so the missing glyphs show as such.
-    pub fn for_text(&self, primary: usize, text: &str) -> usize {
+    /// `primary` when it can draw every character of `text`, else the first of the scene's
+    /// `fallbacks` (in the order it names them) that can, else the first bundled face that can,
+    /// else `primary` so the missing glyphs show as such. Only what the scene names or ships with
+    /// the engine is ever tried, so a font another style happened to load changes no frame.
+    pub fn for_text(&self, primary: usize, fallbacks: &[usize], text: &str) -> usize {
         let covers = |i: usize| {
             let face = &self.faces[i].face;
             text.chars()
@@ -126,6 +128,9 @@ impl<'a> FontBook<'a> {
         };
         if covers(primary) {
             return primary;
+        }
+        if let Some(&named) = fallbacks.iter().find(|&&i| covers(i)) {
+            return named;
         }
         (0..self.faces.len())
             .find(|&i| self.faces[i].bundled && covers(i))

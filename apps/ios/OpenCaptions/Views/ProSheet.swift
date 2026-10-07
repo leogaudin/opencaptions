@@ -23,8 +23,24 @@ struct ProSheet: View {
                 benefit("drop.degreesign.slash", "No watermark on your videos")
             }
             .card()
-            #if DEBUG
-                Button("Unlock Pro (this debug build)") {
+            HStack {
+                Text("One-time purchase").font(.system(size: 15, weight: .medium))
+                Spacer()
+                Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+            }
+            .padding(.horizontal, 4)
+            #if APPSTORE
+                if let message = app.purchases.message {
+                    Text(message).font(.system(size: 13)).foregroundStyle(Theme.danger)
+                }
+                Button("Unlock Pro") { Task { await app.purchases.buy() } }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(app.purchases.product == nil || app.purchases.isBusy)
+                Button("Restore purchases") { Task { await app.purchases.restore() } }
+                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+                    .disabled(app.purchases.isBusy)
+            #elseif DEBUG
+                Button("Unlock Pro (debug)") {
                     app.setTier(.pro)
                     dismiss()
                 }
@@ -34,11 +50,21 @@ struct ProSheet: View {
         }
         .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
         .frame(maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.8)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.background)
         .presentationCornerRadius(24)
         .tint(Theme.accent)
+    }
+
+    /// What it costs, as the store shows it. A build that is not from the App Store has no store to ask:
+    /// a debug build shows a test price, so the sheet can be seen as it will be.
+    private var price: String {
+        #if APPSTORE
+            return app.purchases.displayPrice ?? "…"
+        #else
+            return String(localized: "4.99 € (test price)")
+        #endif
     }
 
     private func benefit(_ icon: String, _ text: LocalizedStringKey) -> some View {

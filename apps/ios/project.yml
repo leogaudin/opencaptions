@@ -30,6 +30,8 @@ schemes:
         OpenCaptions: all
     run:
       config: Debug
+      # Purchases can be tried in Xcode, with a test price, without App Store Connect.
+      storeKitConfiguration: Config/Pro.storekit
     test:
       config: Debug
       targets:

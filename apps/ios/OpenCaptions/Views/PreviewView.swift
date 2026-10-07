@@ -245,11 +245,11 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         placements = placements.filter { $0.key > mine - 6 }
         let offsetMs = project.captionOffsetMs
         Task { [engine] in
-            await engine.ensureFont(style.font, cache: fonts)
+            let fallbacks = await engine.ensureFonts(for: transcript, style: style, cache: fonts)
             guard mine == generation else { return }
             try? await engine.setScene(
                 transcript: transcript, style: style, width: width, height: height, captionOffsetMs: offsetMs,
-                watermark: watermark)
+                watermark: watermark, fallbackFonts: fallbacks)
             guard mine == generation else { return }
             ready = true
             requestDraw(at: player.currentTime().seconds)

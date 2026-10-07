@@ -9,6 +9,7 @@ pub mod edit;
 pub mod fonts;
 pub mod model;
 pub mod scene;
+pub mod scripts;
 
 pub use fonts::FontBook;
 pub use model::SceneInput;
@@ -278,6 +279,26 @@ mod abi {
         }
     }
 
+    /// The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese,
+    /// Korean, the other Indic and southeast Asian scripts), as a JSON array of Google Fonts
+    /// family names, by the transcript's language. The host fetches and registers them and names
+    /// them in the scene's `fallback_fonts`. Returns 0 on failure with the reason.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_fallback_fonts(ptr: *mut u8, len: usize) -> u32 {
+        respond(unsafe { read_transcript(ptr, len) }.map(|t| {
+            let language = t
+                .rest
+                .get("language")
+                .and_then(|l| l.as_str())
+                .unwrap_or("")
+                .to_string();
+            crate::scripts::fallback_families(t.words().map(|w| w.text.as_str()), &language)
+        }))
+    }
+
     /// The captions of a transcript (JSON) as a JSON array of
     /// `{from, count, start, end, text}`, times shown with `offset_ms` (the caption
     /// offset). Returns 0 on failure with the reason.
@@ -415,7 +436,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 20);
+        assert_eq!(exported.len(), 21);
         assert_eq!(exported, declared);
     }
 }
