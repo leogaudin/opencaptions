@@ -124,6 +124,11 @@ open (no background upload yet); plain `http` is allowed only to local-network a
 drawing as the preview and the export, in a phone-shaped frame, cropped to the band around the
 caption), so each shows its real font, colours and highlight; the scene in use is put back after.
 The row scrolls sideways, with a fade and an arrow at its right edge until it has been scrolled.
+The style panel, on iOS and the web alike, is in tabs (Presets, Text, Background, Animation,
+Outline, Timing) so that no page is long. The Background and Animation tabs show their choices
+as tiles drawn the same way, in the caption's current look (a background with no opacity is
+given a visible one when chosen). On iOS the style sheet stops at a little over half the
+screen, so the video stays in view while it is edited.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.

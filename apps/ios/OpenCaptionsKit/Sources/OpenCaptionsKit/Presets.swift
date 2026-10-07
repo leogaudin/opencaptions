@@ -35,4 +35,15 @@ extension StyleConfig {
             && abs(backgroundOpacity - p.backgroundOpacity) < 0.001
             && animation == p.animation && wordsPerLine == p.wordsPerLine
     }
+
+    /// The style with another background. A background with no opacity would show nothing, so choosing
+    /// one gives it a visible opacity; the tiles that show each choice are drawn the same way.
+    public func withBackground(_ choice: Background) -> StyleConfig {
+        var style = self
+        style.background = choice
+        if choice != .none, style.backgroundOpacity < 0.05 { style.backgroundOpacity = Self.visibleBackgroundOpacity }
+        return style
+    }
+
+    public static let visibleBackgroundOpacity = 0.7
 }

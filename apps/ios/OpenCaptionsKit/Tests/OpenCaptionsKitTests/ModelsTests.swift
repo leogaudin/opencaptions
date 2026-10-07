@@ -51,6 +51,15 @@ import Testing
         #expect(!style.matches(presets[1]))
     }
 
+    @Test func aBackgroundChosenIsVisible() throws {
+        var style = try Repo.defaultStyle()
+        style.backgroundOpacity = 0
+        #expect(style.withBackground(.pill).backgroundOpacity == StyleConfig.visibleBackgroundOpacity)
+        #expect(style.withBackground(.none).backgroundOpacity == 0)
+        style.backgroundOpacity = 0.3
+        #expect(style.withBackground(.solid).backgroundOpacity == 0.3, "a chosen opacity stays")
+    }
+
     @Test func aProjectIsInTheAPIsShapeAndRoundTrips() throws {
         let project = Project(
             title: "clip", transcript: try Repo.transcript(), styleConfig: try Repo.defaultStyle(),

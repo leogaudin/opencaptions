@@ -7,65 +7,47 @@ struct StylePanel: View {
     let presets: [Preset]
 
     @State private var choosingFont = false
+    @State private var tab = Tab.presets
+    /// The background and animation choices, each drawn in the caption's current look.
+    @State private var backgroundTiles: [Background: CGImage] = [:]
+    @State private var animationTiles: [CaptionAnimation: CGImage] = [:]
+    @Environment(AppModel.self) private var app
+
+    /// The style sheet's pages, so that no one page is long and the video stays in view.
+    private enum Tab: String, CaseIterable, Identifiable {
+        case presets = "Presets", text = "Text", background = "Background", animation = "Animation"
+        case outline = "Outline", timing = "Timing"
+        var id: Self { self }
+        var icon: String {
+            switch self {
+            case .presets: "sparkles"
+            case .text: "textformat"
+            case .background: "rectangle.inset.filled"
+            case .animation: "wand.and.stars"
+            case .outline: "pencil.and.outline"
+            case .timing: "clock"
+            }
+        }
+    }
     private var style: StyleConfig { model.project.styleConfig }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                section("Presets") {
-                    PresetStrip(presets: presets, active: { style.matches($0) }, apply: { model.apply($0) })
-                }
-                section("Text") {
-                    Row("Font") {
-                        Button { choosingFont = true } label: {
-                            HStack(spacing: 6) {
-                                FontName(family: style.font, size: 16)
-                                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold))
-                            }
-                            .foregroundStyle(Theme.textPrimary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    LabeledSlider("Size", value: intBinding(\.fontSize), range: CaptionGestures.fontSizeRange, step: 1)
-                    Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
-                    Row("Highlight color") { ColorPicker("Highlight color", selection: color(\.highlightColor), supportsOpacity: false).labelsHidden() }
-                    LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
-                    LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
-                }
-                section("Background") {
-                    InlinePicker(
-                        title: "Shape", options: Background.allCases, selection: model.binding(\.background),
-                        label: { $0.rawValue.capitalized })
-                    if style.background != .none {
-                        Row("Color") { ColorPicker("Background color", selection: color(\.backgroundColor), supportsOpacity: false).labelsHidden() }
-                        LabeledSlider("Opacity", value: model.binding(\.backgroundOpacity), range: 0...1, step: 0.05)
-                    }
-                }
-                section("Animation") {
-                    InlinePicker(
-                        title: "Effect", options: CaptionAnimation.allCases, selection: model.binding(\.animation),
-                        label: animationName)
-                }
-                section("Outline & shadow") {
-                    LabeledSlider("Outline", value: model.binding(\.strokeWidth), range: 0...10, step: 0.5)
-                    if style.strokeWidth > 0 {
-                        Row("Outline color") { ColorPicker("Outline color", selection: color(\.strokeColor), supportsOpacity: false).labelsHidden() }
-                    }
-                    LabeledSlider("Shadow", value: model.binding(\.shadowBlur), range: 0...20, step: 1)
-                    if style.shadowBlur > 0 {
-                        Row("Shadow color") { ColorPicker("Shadow color", selection: color(\.shadowColor, alpha: true), supportsOpacity: true).labelsHidden() }
-                    }
-                }
-                section("Timing", footer: "Moves every caption against the audio, without transcribing again.") {
-                    OffsetControl(model: model)
-                }
+        VStack(spacing: 0) {
+            tabBar
+            ScrollView {
+                VStack(spacing: 24) { content }
+                    .padding(16)
             }
-            .padding(16)
         }
         .background(Theme.background)
         .tint(Theme.accent)
+        .task(id: TileKey(tab: tab, look: tileLook)) { await drawTiles() }
         #if DEBUG
-            .task { if ProcessInfo.processInfo.environment["OC_SHOW_FONTS"] != nil { choosingFont = true } }
+            .task {
+                let env = ProcessInfo.processInfo.environment
+                if env["OC_SHOW_FONTS"] != nil { choosingFont = true }
+                if let name = env["OC_STYLE_TAB"], let shown = Tab(rawValue: name) { tab = shown }
+            }
         #endif
         .sheet(isPresented: $choosingFont) {
             FontPickerSheet(current: style.font, suggested: fonts) { family in
@@ -77,13 +59,134 @@ struct StylePanel: View {
         }
     }
 
+
+    @ViewBuilder private var content: some View {
+        switch tab {
+        case .presets:
+            section("Presets") {
+                PresetStrip(presets: presets, active: { style.matches($0) }, apply: { model.apply($0) })
+            }
+        case .text:
+            section("Text") {
+                Row("Font") {
+                    Button { choosingFont = true } label: {
+                        HStack(spacing: 6) {
+                            FontName(family: style.font, size: 16)
+                            Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundStyle(Theme.textPrimary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                LabeledSlider("Size", value: intBinding(\.fontSize), range: CaptionGestures.fontSizeRange, step: 1)
+                Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
+                Row("Highlight color") { ColorPicker("Highlight color", selection: color(\.highlightColor), supportsOpacity: false).labelsHidden() }
+                LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
+                LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
+            }
+        case .background:
+            section("Background") {
+                ChoiceStrip(
+                    options: Background.allCases, selection: style.background, title: { $0.rawValue.capitalized },
+                    images: backgroundTiles, pick: { choice in model.updateStyle { $0 = $0.withBackground(choice) } })
+                if style.background != .none {
+                    Row("Color") { ColorPicker("Background color", selection: color(\.backgroundColor), supportsOpacity: false).labelsHidden() }
+                    LabeledSlider("Opacity", value: model.binding(\.backgroundOpacity), range: 0...1, step: 0.05)
+                }
+            }
+        case .animation:
+            section("Animation") {
+                ChoiceStrip(
+                    options: CaptionAnimation.allCases, selection: style.animation, title: animationName,
+                    images: animationTiles, pick: { choice in model.updateStyle { $0.animation = choice } })
+            }
+        case .outline:
+            section("Outline & shadow") {
+                LabeledSlider("Outline", value: model.binding(\.strokeWidth), range: 0...10, step: 0.5)
+                if style.strokeWidth > 0 {
+                    Row("Outline color") { ColorPicker("Outline color", selection: color(\.strokeColor), supportsOpacity: false).labelsHidden() }
+                }
+                LabeledSlider("Shadow", value: model.binding(\.shadowBlur), range: 0...20, step: 1)
+                if style.shadowBlur > 0 {
+                    Row("Shadow color") { ColorPicker("Shadow color", selection: color(\.shadowColor, alpha: true), supportsOpacity: true).labelsHidden() }
+                }
+            }
+        case .timing:
+            section("Timing", footer: "Moves every caption against the audio, without transcribing again.") {
+                OffsetControl(model: model)
+            }
+        }
+    }
+
+    /// Icons with names, as a row that scrolls if the width is short: the chosen one on a raised pill.
+    private var tabBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 4) {
+                ForEach(Tab.allCases) { item in
+                    let chosen = item == tab
+                    Button { tab = item } label: {
+                        VStack(spacing: 3) {
+                            Image(systemName: item.icon).font(.system(size: 17, weight: .semibold))
+                            Text(item.rawValue).font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(chosen ? Theme.textPrimary : Theme.textSecondary)
+                        .frame(minWidth: 62).padding(.vertical, 7).padding(.horizontal, 6)
+                        .background(chosen ? Theme.raised : .clear, in: .rect(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(chosen ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 12).padding(.vertical, 6)
+        }
+    }
+
+    /// What the tiles in view depend on: the look without the choice they offer (picking one must not
+    /// redraw them) and without where and how big the caption is, which the tiles ignore.
+    private var tileLook: StyleConfig {
+        var look = style
+        look.positionX = 0
+        look.positionY = 0
+        look.fontSize = 0
+        if tab == .background { look.background = .none }
+        if tab == .animation { look.animation = .wordHighlight }
+        return look
+    }
+
+    private struct TileKey: Equatable {
+        let tab: Tab
+        let look: StyleConfig
+    }
+
+    /// Draws the choices of the tab in view, in the look the caption has now.
+    private func drawTiles() async {
+        let base = style
+        switch tab {
+        case .background:
+            let looks = Background.allCases.map { ("bg-\($0.rawValue)", base.withBackground($0)) }
+            let drawn = await PresetPreviews.draw(looks, fonts: app.fontCache)
+            backgroundTiles = Dictionary(uniqueKeysWithValues: Background.allCases.compactMap { c in
+                drawn["bg-\(c.rawValue)"].map { (c, $0) } })
+        case .animation:
+            let looks = CaptionAnimation.allCases.map { choice -> (String, StyleConfig) in
+                var look = base
+                look.animation = choice
+                return ("an-\(choice.rawValue)", look)
+            }
+            let drawn = await PresetPreviews.draw(looks, fonts: app.fontCache)
+            animationTiles = Dictionary(uniqueKeysWithValues: CaptionAnimation.allCases.compactMap { c in
+                drawn["an-\(c.rawValue)"].map { (c, $0) } })
+        default: break
+        }
+    }
+
     // MARK: Layout
 
     private func section<Content: View>(
         _ title: String, footer: String? = nil, @ViewBuilder content: () -> Content
     ) -> some View {
+        // The tab names the section, so there is no title over it.
         VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(title)
             VStack(alignment: .leading, spacing: 16, content: content).card()
             if let footer {
                 Text(footer).font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)

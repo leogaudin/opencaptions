@@ -56,8 +56,8 @@ test.describe("Hosted mode", () => {
     await expect(page.getByTestId("model-select")).toHaveCount(0);
 
     await page.goto(`/projects/${PROJECT_ID}`);
-    // The timing offset lives inside the collapsed Customize panel.
-    await page.getByRole("button", { name: "Customize" }).click();
+    // The timing offset is on the style panel's Timing tab.
+    await page.getByTestId("style-tab-timing").click();
     await expect(page.getByTestId("caption-offset-control")).toBeVisible();
     await page.getByTestId("retranscribe").click();
     await expect(page.getByTestId("retranscribe-dialog")).toBeVisible();

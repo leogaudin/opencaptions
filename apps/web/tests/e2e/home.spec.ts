@@ -39,13 +39,13 @@ test.describe("Home: size and rename", () => {
     });
     await page.goto("/");
 
-    await page.getByTestId("rename-project").click();
+    await page.getByTestId("project-title").click();
     await page.getByTestId("rename-input").fill("Cancelled name");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("project-title")).toHaveText("Beach day");
     expect(bodies).toHaveLength(0);
 
-    await page.getByTestId("rename-project").click();
+    await page.getByTestId("project-title").click();
     await page.getByTestId("rename-input").fill("  Summer trip ");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("project-title")).toHaveText("Summer trip");

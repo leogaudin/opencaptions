@@ -79,34 +79,6 @@ export function SliderField({
   );
 }
 
-export function SelectField<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: readonly T[];
-  onChange: (v: T) => void;
-}) {
-  return (
-    <Field label={label}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    </Field>
-  );
-}
-
 export function Segmented<T extends string>({
   options,
   value,

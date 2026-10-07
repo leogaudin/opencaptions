@@ -8,7 +8,6 @@ import SwiftUI
 final class PresetPreviews {
     private(set) var images: [String: CGImage] = [:]
     @ObservationIgnored private var loading = false
-    @ObservationIgnored private let context = CIContext()
 
     /// Draws the tiles that are missing. Fonts a preset needs are fetched first (once).
     func load(_ presets: [Preset], fonts: FontCache, engine: CaptionEngine = .shared) async {
@@ -16,8 +15,17 @@ final class PresetPreviews {
         loading = true
         defer { loading = false }
         let missing = presets.filter { images[$0.id] == nil }
+        let drawn = await Self.draw(missing.map { ($0.id, $0.config) }, fonts: fonts, engine: engine)
+        images.merge(drawn) { _, new in new }
+    }
+
+    /// Tiles for any looks, by id: the engine draws a sample caption in each, at one size so that
+    /// they compare the looks and not how big each happened to be.
+    static func draw(
+        _ looks: [(id: String, config: StyleConfig)], fonts: FontCache, engine: CaptionEngine = .shared
+    ) async -> [String: CGImage] {
         // Downloaded side by side (and kept), then registered one after another.
-        let families = Set(missing.map(\.config.font))
+        let families = Set(looks.map(\.config.font))
         await withTaskGroup(of: Void.self) { group in
             for family in families { group.addTask { _ = await fonts.data(for: family) } }
         }
@@ -27,18 +35,17 @@ final class PresetPreviews {
         let (width, height) = (540, 960)
         let crop = CGRect(x: 90, y: (height - 200) / 2, width: 360, height: 200)  // a closer look: 1.5x
         let frames = await engine.samples(
-            of: missing.map { preset in
-                // The same size for every tile: applying a preset keeps the user's size, so the
-                // tiles compare looks, not how big each preset happened to be.
-                var look = preset.config
-                look.fontSize = 64
-                return look
+            of: looks.map { look in
+                var config = look.config
+                config.fontSize = 64
+                return config
             }, words: ["Make", "it", "pop"], width: width, height: height)
-        for (preset, frame) in zip(missing, frames) {
-            guard let full = frame?.cgImage(using: context),
-                let tile = full.cropping(to: crop)
-            else { continue }
-            images[preset.id] = tile
+        let context = CIContext()
+        var images: [String: CGImage] = [:]
+        for (look, frame) in zip(looks, frames) {
+            guard let full = frame?.cgImage(using: context), let tile = full.cropping(to: crop) else { continue }
+            images[look.id] = tile
         }
+        return images
     }
 }

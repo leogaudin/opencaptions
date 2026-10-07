@@ -18,6 +18,7 @@ struct EditorView: View {
 
     /// What the style sheet rests at: low enough to leave the caption (low in the frame) in view.
     private static let styleDetent = PresentationDetent.fraction(0.3)
+    private static let styleDetentTall = PresentationDetent.fraction(0.55)
 
     private struct WordEdit: Identifiable {
         let index: Int
@@ -67,9 +68,10 @@ struct EditorView: View {
             }
             .presentationBackground(Theme.background)
             .presentationCornerRadius(24)
-            // The video stays live behind it at the low detent, to see a change as it is made.
-            .presentationDetents([Self.styleDetent, .large])
-            .presentationBackgroundInteraction(.enabled(upThrough: Self.styleDetent))
+            // The video stays live behind it at the low detent, to see a change as it is made, and
+            // the sheet does not go higher than the middle of the screen: the video stays in view.
+            .presentationDetents([Self.styleDetent, Self.styleDetentTall])
+            .presentationBackgroundInteraction(.enabled(upThrough: Self.styleDetentTall))
         }
         .sheet(isPresented: $showSaveOptions) {
             SaveOptionsSheet(

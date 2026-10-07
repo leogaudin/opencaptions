@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 /**
  * HomePage:
  *   - Empty state: a single primary "New project" action (to the upload page,
@@ -227,39 +227,33 @@ function ProjectRow({
               </button>
             </span>
           ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  settled.current = false;
-                  setDraft(item.title);
-                }}
-                aria-label={`Rename ${item.title}`}
-                title="Rename project"
-                data-testid="rename-project"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-black/80 group-hover:opacity-100"
-              >
-                <Pencil className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(true)}
-                aria-label={`Delete ${item.title}`}
-                title="Delete project"
-                data-testid="delete-project"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
-              >
-                <Trash2 className="h-4 w-4" aria-hidden />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              aria-label={`Delete ${item.title}`}
+              title="Delete project"
+              data-testid="delete-project"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </button>
           )}
         </div>
       </div>
       <div className="mt-2 min-w-0">
         {draft === null ? (
-          <div className="truncate font-semibold" data-testid="project-title">
+          <button
+            type="button"
+            onClick={() => {
+              settled.current = false;
+              setDraft(item.title);
+            }}
+            title="Click to rename"
+            data-testid="project-title"
+            className="-mx-2 block w-[calc(100%+1rem)] cursor-text truncate rounded-md px-2 py-1 text-left font-semibold hover:bg-muted"
+          >
             {item.title}
-          </div>
+          </button>
         ) : (
           <input
             // biome-ignore lint/a11y/noAutofocus: the field replaces the title just clicked to rename
@@ -275,7 +269,7 @@ function ProjectRow({
             aria-label="Project name"
             data-testid="rename-input"
             maxLength={255}
-            className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold"
+            className="-mx-2 w-[calc(100%+1rem)] rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold"
           />
         )}
         <div

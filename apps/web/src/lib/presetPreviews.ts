@@ -8,9 +8,9 @@
  * is drawn at one size: applying a preset keeps the user's own size, so the tiles compare looks.
  */
 import { useEffect, useState } from "react";
-import { createCaptionRenderer } from "@/lib/engine";
+import { type CaptionRenderer, createCaptionRenderer } from "@/lib/engine";
 import type { BuiltinPreset } from "@/lib/presets";
-import type { Transcript } from "@/types";
+import type { StyleConfig, Transcript } from "@/types";
 
 /**
  * The plain card a tile sits on, the same dark in light and dark mode: captions are mostly white,
@@ -41,10 +41,28 @@ function sample(): Transcript {
   };
 }
 
-async function draw(presets: readonly BuiltinPreset[]): Promise<Record<string, string>> {
-  const renderer = await createCaptionRenderer();
+let shared: Promise<CaptionRenderer> | null = null;
+
+/** One engine for every tile; the scenes it draws are set and drawn without waiting in between. */
+function renderer(): Promise<CaptionRenderer> {
+  shared ??= createCaptionRenderer();
+  shared.catch(() => {
+    shared = null;
+  });
+  return shared;
+}
+
+/** A look to draw a tile of, by the id its tile is known by. */
+export interface Look {
+  id: string;
+  config: StyleConfig;
+}
+
+/** Tiles for any looks, by id: a sample caption drawn in each by the engine. */
+export async function drawLooks(looks: readonly Look[]): Promise<Record<string, string>> {
+  const engine = await renderer();
   const transcript = sample();
-  await Promise.all(presets.map((p) => renderer.loadFont(p.config.font)));
+  await Promise.all([...new Set(looks.map((l) => l.config.font))].map((f) => engine.loadFont(f)));
   const full = document.createElement("canvas");
   full.width = FRAME.width;
   full.height = FRAME.height;
@@ -57,11 +75,11 @@ async function draw(presets: readonly BuiltinPreset[]): Promise<Record<string, s
   if (!fullCtx || !cropCtx) return out;
   // The middle word is being spoken: the highlight and the animation are in view.
   const at = STEP * 1.5;
-  for (const preset of presets) {
-    renderer.setScene({
+  for (const look of looks) {
+    engine.setScene({
       transcript,
       style: {
-        ...preset.config,
+        ...look.config,
         font_size: TILE_FONT_SIZE,
         position_x: 0.5,
         position_y: 0.5,
@@ -72,13 +90,13 @@ async function draw(presets: readonly BuiltinPreset[]): Promise<Record<string, s
       caption_offset_ms: 0,
     });
     // A new scene's first frame is the whole frame.
-    const update = renderer.render(at);
+    const update = engine.render(at);
     if (!update) continue;
     fullCtx.clearRect(0, 0, FRAME.width, FRAME.height);
     fullCtx.putImageData(update.image, 0, update.top);
     cropCtx.clearRect(0, 0, CROP.width, CROP.height);
     cropCtx.drawImage(full, CROP.x, CROP.y, CROP.width, CROP.height, 0, 0, CROP.width, CROP.height);
-    out[preset.id] = crop.toDataURL("image/png");
+    out[look.id] = crop.toDataURL("image/png");
   }
   return out;
 }
@@ -87,7 +105,7 @@ let cached: Promise<Record<string, string>> | null = null;
 
 /** The tiles, drawn once per page load. A failure is not remembered, so the next ask tries again. */
 export function presetPreviews(presets: readonly BuiltinPreset[]): Promise<Record<string, string>> {
-  cached ??= draw(presets);
+  cached ??= drawLooks(presets.map((p) => ({ id: p.id, config: p.config })));
   cached.catch(() => {
     cached = null;
   });
@@ -109,5 +127,30 @@ export function usePresetPreviews(
       live = false;
     };
   }, [presets]);
+  return previews;
+}
+
+/**
+ * Tiles for looks that change as the style does (the choices of one setting, each in the
+ * caption's current look). `key` names what the looks depend on, so they are drawn again only
+ * when it changes. Null until drawn.
+ */
+export function useLookPreviews(
+  looks: readonly Look[],
+  key: string,
+): Record<string, string> | null {
+  const [previews, setPreviews] = useState<Record<string, string> | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the looks
+  useEffect(() => {
+    let live = true;
+    drawLooks(looks).then(
+      (tiles) => live && setPreviews(tiles),
+      (e: unknown) => console.error("style previews failed", e),
+    );
+    return () => {
+      live = false;
+    };
+  }, [key]);
+  // The tiles of the last look stay until the new ones are drawn, so they do not blink.
   return previews;
 }

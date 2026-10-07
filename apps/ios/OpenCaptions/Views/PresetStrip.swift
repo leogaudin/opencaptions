@@ -54,6 +54,18 @@ private struct PresetTile: View {
     let action: () -> Void
 
     var body: some View {
+        StyleTile(title: preset.name, image: image, active: active, action: action)
+    }
+}
+
+/// A picture the engine drew on a plain card, with its name under it, and a ring when chosen.
+struct StyleTile: View {
+    let title: String
+    let image: CGImage?
+    let active: Bool
+    let action: () -> Void
+
+    var body: some View {
         Button(action: action) {
             VStack(spacing: 7) {
                 ZStack {
@@ -68,13 +80,33 @@ private struct PresetTile: View {
                 .frame(width: 156, height: 87)
                 .clipShape(.rect(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
-                Text(preset.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             }
             .padding(6)
             .overlay { RoundedRectangle(cornerRadius: 17).stroke(Theme.accent, lineWidth: active ? 2.5 : 0) }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(preset.name)
+        .accessibilityLabel(title)
         .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}
+
+/// The choices of one setting, each drawn in the caption's current look: a row that scrolls sideways.
+struct ChoiceStrip<Value: Hashable>: View {
+    let options: [Value]
+    let selection: Value
+    let title: (Value) -> String
+    let images: [Value: CGImage]
+    let pick: (Value) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(options, id: \.self) { option in
+                    StyleTile(title: title(option), image: images[option], active: option == selection) { pick(option) }
+                }
+            }
+            .padding(.vertical, 4)
+        }
     }
 }

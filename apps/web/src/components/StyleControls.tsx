@@ -1,28 +1,41 @@
 /**
- * StyleControls: pick a preset, then optionally tweak it in a Customize panel.
+ * StyleControls: the caption's look, in tabs as on iOS so that no one page is long: the
+ * presets, the text, the background and the animation (each a row of tiles the engine drew,
+ * in the caption's current look), the outline and shadow, and the timing.
  *
  * Continuous controls (colours, most sliders) route through a rAF-throttled
  * setter so dragging re-lays out the preview at most once a frame.
  * Discrete controls dispatch immediately — there is nothing to coalesce.
  */
 
+import { Clock, PenLine, Sparkles, Square, Type, Wand2 } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
-import { Disclosure } from "@/components/Disclosure";
 import { FontPicker } from "@/components/FontPicker";
-import { PresetStrip } from "@/components/PresetStrip";
-import { ColorField, Field, Segmented, SelectField, SliderField } from "@/components/StyleFields";
+import { PresetStrip, TileStrip } from "@/components/PresetStrip";
+import { ColorField, SliderField } from "@/components/StyleFields";
+import { useLookPreviews } from "@/lib/presetPreviews";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
+import { ANIMATION_NAMES, ANIMATIONS, BACKGROUNDS, withBackground } from "@/lib/styleLooks";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
-import type { Animation, CaptionBackground, StyleConfig } from "@/types";
+import type { StyleConfig } from "@/types";
 
-const BACKGROUNDS: CaptionBackground[] = ["none", "solid", "pill"];
-const ANIMATIONS: Animation[] = ["word_highlight", "highlight_box", "word_pop", "word_fade"];
+const TABS = [
+  { id: "presets", label: "Presets", icon: Sparkles },
+  { id: "text", label: "Text", icon: Type },
+  { id: "background", label: "Background", icon: Square },
+  { id: "animation", label: "Animation", icon: Wand2 },
+  { id: "outline", label: "Outline", icon: PenLine },
+  { id: "timing", label: "Timing", icon: Clock },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
 
 export function StyleControls() {
   const style = useEditorStore((s) => s.style);
   const setStyle = useEditorStore((s) => s.setStyle);
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
+  const [tab, setTab] = useState<TabId>("presets");
 
   // The active preset is whichever built-in's config matches the current style,
   // so the picked one can be highlighted in the strip.
@@ -30,38 +43,72 @@ export function StyleControls() {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Caption style
-        </h2>
+      <div
+        role="tablist"
+        aria-label="Caption style"
+        className="-mx-1 mb-4 flex gap-1 overflow-x-auto"
+      >
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            data-testid={`style-tab-${id}`}
+            onClick={() => setTab(id)}
+            className={`flex min-w-16 flex-1 flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors ${
+              tab === id ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            <Icon className="h-[18px] w-[18px]" aria-hidden />
+            {label}
+          </button>
+        ))}
       </div>
 
-      <PresetStrip activeId={activePresetId} onPick={(config) => setStyle(presetLook(config))} />
-
-      <Disclosure
-        label="Customize"
-        openLabel="Hide custom controls"
-        className="mt-3 border-t border-border pt-4"
-      >
-        <CustomPanel style={style} setStyle={setStyle} setStyleThrottled={setStyleThrottled} />
-      </Disclosure>
+      {tab === "presets" && (
+        <PresetStrip activeId={activePresetId} onPick={(config) => setStyle(presetLook(config))} />
+      )}
+      {tab === "text" && (
+        <TextPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
+      )}
+      {tab === "background" && (
+        <BackgroundPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
+      )}
+      {tab === "animation" && <AnimationPanel style={style} setStyle={setStyle} />}
+      {tab === "outline" && <OutlinePanel style={style} throttled={setStyleThrottled} />}
+      {tab === "timing" && <CaptionOffsetControl />}
     </div>
   );
 }
 
-function CustomPanel({
+type Setter = (s: Partial<StyleConfig>) => void;
+
+function Panel({ children }: { children: ReactNode }) {
+  return <div className="space-y-4 text-xs">{children}</div>;
+}
+
+/** What the tiles of one setting depend on: the look, less the choice they offer and the place. */
+function lookKey(style: StyleConfig, without: keyof StyleConfig): string {
+  const { position_x, position_y, font_size, ...look } = style;
+  void position_x;
+  void position_y;
+  void font_size;
+  return JSON.stringify({ ...look, [without]: null });
+}
+
+function TextPanel({
   style,
   setStyle,
-  setStyleThrottled,
+  throttled,
 }: {
   style: StyleConfig;
-  setStyle: (s: Partial<StyleConfig>) => void;
-  setStyleThrottled: (s: Partial<StyleConfig>) => void;
+  setStyle: Setter;
+  throttled: Setter;
 }) {
   return (
-    <div className="space-y-4 text-xs">
+    <Panel>
       <FontPicker value={style.font} onChange={(font) => setStyle({ font })} />
-
       <SliderField
         label="Font size"
         unit="px"
@@ -69,55 +116,18 @@ function CustomPanel({
         min={20}
         max={120}
         step={1}
-        onChange={(font_size) => setStyleThrottled({ font_size })}
+        onChange={(font_size) => throttled({ font_size })}
       />
-
       <ColorField
         label="Text color"
         value={style.text_color}
-        onChange={(text_color) => setStyleThrottled({ text_color })}
+        onChange={(text_color) => throttled({ text_color })}
       />
-
       <ColorField
         label="Highlight color"
         value={style.highlight_color}
-        onChange={(highlight_color) => setStyleThrottled({ highlight_color })}
+        onChange={(highlight_color) => throttled({ highlight_color })}
       />
-
-      <Field label="Background">
-        <Segmented
-          options={BACKGROUNDS}
-          value={style.background}
-          onChange={(background) => setStyle({ background })}
-        />
-      </Field>
-
-      {style.background !== "none" && (
-        <>
-          <ColorField
-            label="Background color"
-            value={style.background_color}
-            onChange={(background_color) => setStyleThrottled({ background_color })}
-          />
-          <SliderField
-            label="Background opacity"
-            value={style.background_opacity}
-            min={0}
-            max={1}
-            step={0.05}
-            decimals={2}
-            onChange={(background_opacity) => setStyleThrottled({ background_opacity })}
-          />
-        </>
-      )}
-
-      <SelectField
-        label="Animation"
-        value={style.animation}
-        options={ANIMATIONS}
-        onChange={(animation) => setStyle({ animation })}
-      />
-
       {/* Discrete: one dispatch per step, so it is not throttled. */}
       <SliderField
         label="Words per line"
@@ -127,7 +137,6 @@ function CustomPanel({
         step={1}
         onChange={(words_per_line) => setStyle({ words_per_line })}
       />
-
       <SliderField
         label="Word spacing"
         value={style.word_spacing}
@@ -135,9 +144,91 @@ function CustomPanel({
         max={0.6}
         step={0.02}
         decimals={2}
-        onChange={(word_spacing) => setStyleThrottled({ word_spacing })}
+        onChange={(word_spacing) => throttled({ word_spacing })}
       />
+    </Panel>
+  );
+}
 
+function BackgroundPanel({
+  style,
+  setStyle,
+  throttled,
+}: {
+  style: StyleConfig;
+  setStyle: Setter;
+  throttled: Setter;
+}) {
+  const tiles = useLookPreviews(
+    BACKGROUNDS.map((b) => ({ id: b, config: withBackground(style, b) })),
+    lookKey(style, "background"),
+  );
+  return (
+    <Panel>
+      <TileStrip
+        testIdPrefix="background"
+        tiles={BACKGROUNDS.map((b) => ({
+          id: b,
+          label: b.charAt(0).toUpperCase() + b.slice(1),
+          image: tiles?.[b],
+          swatch: withBackground(style, b),
+        }))}
+        activeId={style.background}
+        onPick={(id) => {
+          const choice = BACKGROUNDS.find((b) => b === id);
+          if (choice) setStyle(withBackground(style, choice));
+        }}
+      />
+      {style.background !== "none" && (
+        <>
+          <ColorField
+            label="Background color"
+            value={style.background_color}
+            onChange={(background_color) => throttled({ background_color })}
+          />
+          <SliderField
+            label="Background opacity"
+            value={style.background_opacity}
+            min={0}
+            max={1}
+            step={0.05}
+            decimals={2}
+            onChange={(background_opacity) => throttled({ background_opacity })}
+          />
+        </>
+      )}
+    </Panel>
+  );
+}
+
+function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Setter }) {
+  const tiles = useLookPreviews(
+    ANIMATIONS.map((animation) => ({ id: animation, config: { ...style, animation } })),
+    lookKey(style, "animation"),
+  );
+  return (
+    <Panel>
+      <TileStrip
+        testIdPrefix="animation"
+        tiles={ANIMATIONS.map((a) => ({
+          id: a,
+          label: ANIMATION_NAMES[a],
+          image: tiles?.[a],
+          swatch: { ...style, animation: a },
+        }))}
+        activeId={style.animation}
+        onPick={(id) => {
+          const animation = ANIMATIONS.find((a) => a === id);
+          if (animation) setStyle({ animation });
+        }}
+      />
+    </Panel>
+  );
+}
+
+function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Setter }) {
+  return (
+    <Panel>
       <SliderField
         label="Stroke width"
         value={style.stroke_width}
@@ -145,19 +236,16 @@ function CustomPanel({
         max={10}
         step={0.5}
         decimals={1}
-        onChange={(stroke_width) => setStyleThrottled({ stroke_width })}
+        onChange={(stroke_width) => throttled({ stroke_width })}
       />
-
       <SliderField
         label="Shadow blur"
         value={style.shadow_blur}
         min={0}
         max={20}
         step={1}
-        onChange={(shadow_blur) => setStyleThrottled({ shadow_blur })}
+        onChange={(shadow_blur) => throttled({ shadow_blur })}
       />
-
-      <CaptionOffsetControl />
-    </div>
+    </Panel>
   );
 }
