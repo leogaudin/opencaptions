@@ -21,7 +21,7 @@ final class CaptionGestureTests: XCTestCase {
         try XCTUnwrap(Bundle(for: Self.self).url(forResource: name, withExtension: ext), "\(name).\(ext) is missing").path
     }
 
-    private func launch(_ clip: String) throws -> XCUIApplication {
+    private func launch(_ clip: String, tier: String? = nil) throws -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment = [
             "OC_RESET": "1",
@@ -30,6 +30,7 @@ final class CaptionGestureTests: XCTestCase {
             "OC_OPEN_FIRST": "1",
             "OC_SEEK": "1.0",  // a moment where a caption is showing
         ]
+        if let tier { app.launchEnvironment["OC_TIER"] = tier }
         app.launch()
         XCTAssertTrue(preview(app).waitForExistence(timeout: 30), "the editor did not open")
         XCTAssertTrue(readout(app).waitForExistence(timeout: 10))
@@ -110,6 +111,70 @@ final class CaptionGestureTests: XCTestCase {
         XCTAssertEqual(Double(after.y), 30, accuracy: 7, "from \(before) to \(after)")
     }
 
+    // MARK: The watermark
+
+    /// The pixels of `region` (fractions of the preview) in a screenshot of the whole screen.
+    private func pixels(of shot: XCUIScreenshot, in region: CGRect, of frame: CGRect) -> [UInt8] {
+        let image = shot.image
+        guard let cg = image.cgImage else { return [] }
+        let k = CGFloat(cg.width) / image.size.width
+        let crop = CGRect(
+            x: (frame.minX + frame.width * region.minX) * k, y: (frame.minY + frame.height * region.minY) * k,
+            width: frame.width * region.width * k, height: frame.height * region.height * k
+        ).integral
+        guard let part = cg.cropping(to: crop) else { return [] }
+        var data = [UInt8](repeating: 0, count: part.width * part.height * 4)
+        let context = CGContext(
+            data: &data, width: part.width, height: part.height, bitsPerComponent: 8, bytesPerRow: part.width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        context?.draw(part, in: CGRect(x: 0, y: 0, width: part.width, height: part.height))
+        return data
+    }
+
+    private func differing(_ a: [UInt8], _ b: [UInt8]) -> Double {
+        guard a.count == b.count, !a.isEmpty else { return 1 }
+        var n = 0
+        for i in stride(from: 0, to: a.count, by: 4)
+        where abs(Int(a[i]) - Int(b[i])) > 24 || abs(Int(a[i + 1]) - Int(b[i + 1])) > 24 { n += 1 }
+        return Double(n) / Double(a.count / 4)
+    }
+
+    /// A free build's watermark stays where it is while the caption is dragged or pinched, as the
+    /// fingers are down, not only once they lift.
+    func testTheWatermarkStaysPutWhileTheCaptionIsDraggedAndPinched() throws {
+        let app = try launch("portrait", tier: "free")
+        let frame = preview(app).frame
+        let corner = CGRect(x: 0.4, y: 0, width: 0.6, height: 0.12)
+        let caption = CGRect(x: 0.1, y: 0.7, width: 0.8, height: 0.25)
+        let rest = XCUIScreen.main.screenshot()
+        let markAtRest = pixels(of: rest, in: corner, of: frame)
+        XCTAssertGreaterThan(markAtRest.chunks(of: 4).filter { $0[0] > 200 && $0[1] > 200 }.count, 20, "a mark is showing")
+
+        // Mid-gesture shots, taken while the main thread holds the fingers down.
+        for (name, gesture) in [
+            ("drag", { [self] in
+                at(app, 0.5, 0.84).press(
+                    forDuration: 0.05, thenDragTo: at(app, 0.3, 0.4), withVelocity: .slow, thenHoldForDuration: 2.5)
+            }),
+            ("pinch", { [self] in preview(app).pinch(withScale: 2.2, velocity: 0.6) }),
+        ] as [(String, () -> Void)] {
+            var shot: XCUIScreenshot?
+            let taken = expectation(description: "\(name) shot")
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.6) {
+                shot = XCUIScreen.main.screenshot()
+                taken.fulfill()
+            }
+            gesture()
+            wait(for: [taken], timeout: 10)
+            let during = try XCTUnwrap(shot)
+            let moved = differing(pixels(of: rest, in: caption, of: frame), pixels(of: during, in: caption, of: frame))
+            let markShift = differing(markAtRest, pixels(of: during, in: corner, of: frame))
+            print("WATERMARK \(name): captionChanged=\(moved) markChanged=\(markShift)")
+            XCTAssertLessThan(markShift, 0.02, "the mark moved or changed while the caption was \(name)ged")
+            XCTAssertGreaterThan(moved, 0.01, "the shot was taken while the caption was being \(name)ged")
+        }
+    }
+
     // MARK: Landscape
 
     func testPinchingOnALandscapeVideo() throws {
@@ -166,5 +231,11 @@ final class CaptionGestureTests: XCTestCase {
         let rested = shownTime(app)
         RunLoop.current.run(until: Date().addingTimeInterval(1.0))
         XCTAssertEqual(shownTime(app), rested, accuracy: 0.05)
+    }
+}
+
+private extension Array {
+    func chunks(of size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map { Array(self[$0..<Swift.min($0 + size, count)]) }
     }
 }

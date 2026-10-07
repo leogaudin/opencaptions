@@ -248,8 +248,8 @@ services:
       api:
         condition: service_healthy
     # The only published port: nginx proxies /api, /ws and the OpenAPI docs, so
-    # nothing else needs one. Every interface, and signup is open: see the README's
-    # security note before putting this anywhere untrusted.
+    # nothing else needs one. Every interface, and signup is open: read the security
+    # section of docs/SELF-HOSTING.md before putting this anywhere untrusted.
     ports:
       - "0.0.0.0:5173:5173"
 

@@ -29,7 +29,7 @@ chance to land before publishing details.
 
 OpenCaptions has per-account authentication (server-side sessions). Its single
 published port listens on every interface, so a stock install is reachable from
-the local network (see the [security note in the README](README.md#security)).
+the local network (see the [security note in the self-hosting guide](docs/SELF-HOSTING.md#security)).
 Putting it on a public host is the operator's responsibility, and reports about
 such an instance's own configuration are configuration issues, not
 vulnerabilities.

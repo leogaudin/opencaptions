@@ -99,7 +99,7 @@ images, which is what an end user does.
     host port, do not add one back for convenience. Reach a service with
     `docker compose exec`, and the API through the web origin
     (`localhost:5173/api/v1/...`). The bind address is a documented security
-    property (README, SECURITY.md); changing it is an edit to that line, not a variable.
+    property (docs/SELF-HOSTING.md, SECURITY.md); changing it is an edit to that line, not a variable.
 
 13. **Transcription between OpenCaptions components uses the transcription API and
     the shared `Transcript` schema** (`app/api/transcriptions.py`; the `opencaptions`
