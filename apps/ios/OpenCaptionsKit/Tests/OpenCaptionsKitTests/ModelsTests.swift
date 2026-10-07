@@ -46,7 +46,8 @@ import Testing
         #expect(style.matches(presets[1]), "stroke and shadow are tweakable within a preset")
         style.fontSize += 1
         style.positionY = 0.1
-        #expect(style.matches(presets[1]), "size and place are the video's, not the look's")
+        style.wordsPerLine += 1
+        #expect(style.matches(presets[1]), "size, place and words per line are the video's, not the look's")
         style.highlightColor = "#010203"
         #expect(!style.matches(presets[1]))
     }

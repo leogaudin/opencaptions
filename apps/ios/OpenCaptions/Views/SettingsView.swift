@@ -31,12 +31,12 @@ struct SettingsView: View {
                     aboutSection
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 32)
                 .containerRelativeFrame(.horizontal)
             }
             .clipped()
             .scrollIndicators(.hidden)
             // Under the tab bar, which the content dissolves into (`fadesIntoTabBar`).
+            .contentMargins(.bottom, tabBarClearance, for: .scrollContent)
             .ignoresSafeArea(.container, edges: .bottom)
         }
         .background(Theme.background.ignoresSafeArea())

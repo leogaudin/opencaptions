@@ -334,7 +334,10 @@ Subtitle files (SRT, VTT) are only exported by the Docker product.
 Tiny, Base, Small, Large v3 Turbo and Large v3 (no English-only or superseded ones).
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection
-asks before a download.
+asks before a download. Loading a model into memory is the longest wait, so it starts as soon as
+the model is chosen in the Transcribe sheet (while the language is picked) and runs beside the
+reading of the audio; the loaded model stays for the next transcription and is let go on a memory
+warning or when the app leaves the screen.
 
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
 with BT.2020. Core Image puts sRGB white well above reference white in an HDR

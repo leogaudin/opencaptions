@@ -234,14 +234,14 @@ public final class EditorModel {
             set: { value in self.updateStyle { $0[keyPath: keyPath] = value } })
     }
 
-    /// Applies a preset's look. The position and the size stay as the user set them: a preset is
-    /// a look (font, colours, background, animation), and changing it must not move the caption
-    /// the user placed or resize what they sized.
+    /// Applies a preset's look. The position, the size and the words per line stay as the user set
+    /// them: a preset is a look (font, colours, background, animation), and changing it must not move
+    /// the caption the user placed, resize what they sized or cut the lines differently.
     public func apply(_ preset: Preset) {
         updateStyle(as: step()) {
-            let (x, y, size) = ($0.positionX, $0.positionY, $0.fontSize)
+            let (x, y, size, words) = ($0.positionX, $0.positionY, $0.fontSize, $0.wordsPerLine)
             $0 = preset.config
-            ($0.positionX, $0.positionY, $0.fontSize) = (x, y, size)
+            ($0.positionX, $0.positionY, $0.fontSize, $0.wordsPerLine) = (x, y, size, words)
         }
     }
 

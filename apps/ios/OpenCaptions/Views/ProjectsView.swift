@@ -103,10 +103,10 @@ struct ProjectsView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
-            .padding(.bottom, 32)
         }
         // Under the tab bar, which the content dissolves into (`fadesIntoTabBar`): the scroll view
         // keeps its own inset, so the last row can still be scrolled clear of the bar.
+        .contentMargins(.bottom, tabBarClearance, for: .scrollContent)
         .ignoresSafeArea(.container, edges: .bottom)
     }
 

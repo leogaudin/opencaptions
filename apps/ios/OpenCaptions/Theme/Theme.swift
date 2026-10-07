@@ -188,6 +188,11 @@ struct SectionLabel: View {
     }
 }
 
+/// How far the end of a scrolling page stays above the screen's bottom edge, so that the last row can be
+/// scrolled clear of the tab bar and the fade over it: the bar (49 and the home indicator, about 34), the
+/// fade (44) and a little air.
+let tabBarClearance: CGFloat = 49 + 34 + 44 + 8
+
 extension View {
     /// Lets what scrolls dissolve into the page just above the tab bar, instead of being cut off at
     /// its edge: a short fade from clear to the page's colour, ending where the bar begins, and

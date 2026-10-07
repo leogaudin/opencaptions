@@ -26,14 +26,15 @@ extension StyleConfig {
     /// Compares only what a preset defines as its identity (stroke and shadow can be
     /// tweaked without leaving it), as the web does.
     /// Whether this style is the preset's look. Where the caption is and how big it is belong to
-    /// the video, not to a look, so they are not compared (see `EditorModel.apply`).
+    /// the video, not to a look, and neither is how many words a line holds, so they are not compared
+    /// (see `EditorModel.apply`).
     public func matches(_ preset: Preset) -> Bool {
         let p = preset.config
         return font == p.font && textColor == p.textColor
             && highlightColor == p.highlightColor && background == p.background
             && backgroundColor == p.backgroundColor
             && abs(backgroundOpacity - p.backgroundOpacity) < 0.001
-            && animation == p.animation && wordsPerLine == p.wordsPerLine
+            && animation == p.animation
     }
 
     /// The style with another background. A background with no opacity would show nothing, so choosing

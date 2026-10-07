@@ -81,6 +81,11 @@ struct TranscribeSheet: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .task(id: onServer) { await loadServerModels() }
+        // The longest wait is loading the model: start it as soon as it is the one chosen, while the
+        // language is picked.
+        .task(id: "\(modelID) \(downloaded) \(onServer)") {
+            if !onServer, downloaded { app.transcriber.preload(modelID) }
+        }
         .alert("Download \(chosen.megabytes) MB on a metered connection?", isPresented: $askAboutData) {
             Button("Cancel", role: .cancel) {}
             Button("Download") { Task { await begin(allowMetered: true) } }

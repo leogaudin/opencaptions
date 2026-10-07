@@ -2,15 +2,47 @@ import AVFoundation
 import Foundation
 import OpenCaptionsKit
 import WhisperKit
+#if canImport(UIKit)
+    import UIKit
+#endif
 
 /// On-device transcription with WhisperKit (Core ML, the Neural Engine). Models are
 /// fetched on demand into `modelsDirectory` (the caller excludes it from backup) and
 /// never bundled.
 public final class WhisperKitTranscriber: Transcriber {
     public let modelsDirectory: URL
+    private let pipelines = PipelineCache()
 
     public init(modelsDirectory: URL) {
         self.modelsDirectory = modelsDirectory
+        #if canImport(UIKit)
+            // A loaded model is a few hundred MB to a GB: it is let go when memory is wanted, and when
+            // the app leaves the screen, where a big one is what gets it killed.
+            for name in [UIApplication.didReceiveMemoryWarningNotification, UIApplication.didEnterBackgroundNotification] {
+                NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [pipelines] _ in
+                    Task { await pipelines.release() }
+                }
+            }
+        #endif
+    }
+
+    /// Starts loading a downloaded model into memory, so that it is ready (or nearly) by the time
+    /// someone has picked a language and asked to transcribe. Loading is the longest wait there is,
+    /// and the model stays loaded for the next transcription.
+    public func preload(_ id: String) {
+        guard let info = WhisperModels.model(id), let folder = folder(for: id) else { return }
+        Task { _ = try? await pipeline(info, folder: folder) }
+    }
+
+    private func pipeline(_ info: WhisperModel, folder: URL) async throws -> WhisperKit {
+        let base = modelsDirectory
+        return try await pipelines.pipeline(for: info.id) {
+            Loaded(
+                pipe: try await WhisperKit(
+                    WhisperKitConfig(
+                        model: info.variant, downloadBase: base, modelFolder: folder.path,
+                        verbose: false, load: true, download: false)))
+        }.pipe
     }
 
     /// Where a downloaded model lives, if it is there.
@@ -102,15 +134,22 @@ public final class WhisperKitTranscriber: Transcriber {
         guard let info = WhisperModels.model(model) else { throw TranscriptionError.unknownModel(model) }
         guard let folder = folder(for: model) else { throw TranscriptionError.modelNotDownloaded(model) }
 
+        // The model loads while the audio is read (and may already be loaded, or loading, from
+        // `preload`).
+        let loading = Task { Loaded(pipe: try await pipeline(info, folder: folder)) }
         progress(0, "Reading the audio…")
-        let samples = try await AudioExtractor.samples(from: source)
-        let duration = try await AVURLAsset(url: source).load(.duration).seconds
+        let samples: [Float]
+        let duration: Double
+        do {
+            samples = try await AudioExtractor.samples(from: source)
+            duration = try await AVURLAsset(url: source).load(.duration).seconds
+        } catch {
+            loading.cancel()
+            throw error
+        }
 
         progress(0, "Loading the model into memory…")
-        let pipe = try await WhisperKit(
-            WhisperKitConfig(
-                model: info.variant, downloadBase: modelsDirectory, modelFolder: folder.path,
-                verbose: false, load: true, download: false))
+        let pipe = try await loading.value.pipe
 
         var lang = language.flatMap { $0 == "auto" ? nil : $0 }
         // Judge the language from where the speech is, not from the first 30 seconds. An
@@ -174,4 +213,33 @@ public final class WhisperKitTranscriber: Transcriber {
         }
         return TranscriptGaps.merge(transcript, fills: fills)
     }
+}
+
+/// A loaded pipeline, which WhisperKit does not mark as sendable. It is used by one transcription at
+/// a time, which the app guarantees (a second one is refused while one runs).
+private struct Loaded: @unchecked Sendable { let pipe: WhisperKit }
+
+/// The one model that is loaded, shared by whoever asks for it while it loads and afterwards, so
+/// that a model is loaded once and not for every transcription.
+private actor PipelineCache {
+    private var current: (id: String, task: Task<Loaded, Error>)?
+
+    func pipeline(for id: String, load: @escaping @Sendable () async throws -> Loaded) async throws -> Loaded {
+        if let current, current.id == id { return try await value(of: current.task, id: id) }
+        let task = Task { try await load() }
+        current = (id, task)
+        return try await value(of: task, id: id)
+    }
+
+    private func value(of task: Task<Loaded, Error>, id: String) async throws -> Loaded {
+        do {
+            return try await task.value
+        } catch {
+            // A failed load is not kept: the next one tries again.
+            if current?.id == id { current = nil }
+            throw error
+        }
+    }
+
+    func release() { current = nil }
 }

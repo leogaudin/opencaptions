@@ -229,11 +229,12 @@ final class Counter { var value = 0 }
         #expect(model.saveState == .saved)
     }
 
-    @Test func aPresetChangesTheLookButNotWhereOrHowBigTheCaptionIs() async throws {
+    @Test func aPresetChangesTheLookButNotWhereHowBigOrHowManyWords() async throws {
         let (model, _) = try make()
         model.setPosition(x: 0.3, y: 0.2)
-        model.updateStyle { $0.fontSize = 77 }
+        model.updateStyle { $0.fontSize = 77; $0.wordsPerLine = 5 }
         var look = try Repo.defaultStyle()
+        look.wordsPerLine = 2
         look.font = "Anton"
         look.highlightColor = "#123456"
         look.fontSize = 104
@@ -244,6 +245,7 @@ final class Counter { var value = 0 }
         let style = model.project.styleConfig
         #expect(style.font == "Anton" && style.highlightColor == "#123456", "the look")
         #expect(style.fontSize == 77 && style.positionX == 0.3 && style.positionY == 0.2, "not the placement")
+        #expect(style.wordsPerLine == 5, "nor how the lines are cut")
         #expect(style.matches(preset), "and it still reads as that preset")
     }
 
