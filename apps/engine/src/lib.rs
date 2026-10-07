@@ -227,6 +227,34 @@ mod abi {
         1
     }
 
+    /// `oc_snap_position`, with the four f32 written to `out` instead of the result buffer. It
+    /// touches no state the engine holds, so a caller may ask from any thread at any moment, as
+    /// a drag does on every touch.
+    ///
+    /// # Safety
+    /// `out` must point to room for four f32.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_snap_position_into(
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        threshold: f32,
+        out: *mut f32,
+    ) {
+        let s = edit::snap_to_centre(x, y, width, height, threshold);
+        let values = [
+            s.x,
+            s.y,
+            f32::from(u8::from(s.on_x)),
+            f32::from(u8::from(s.on_y)),
+        ];
+        for (i, v) in values.into_iter().enumerate() {
+            // SAFETY: the caller gave room for four.
+            unsafe { out.add(i).write(v) };
+        }
+    }
+
     /// Index of the active line, or -1 when no caption shows.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_index() -> i32 {
@@ -454,7 +482,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 22);
+        assert_eq!(exported.len(), 23);
         assert_eq!(exported, declared);
     }
 }

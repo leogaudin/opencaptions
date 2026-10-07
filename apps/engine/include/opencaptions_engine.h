@@ -57,6 +57,9 @@ uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
 /* Dragging the caption: pulls the block's normalised centre (x, y) to 0.5 on an axis when it
  * is within threshold of it; width and height are the preview's size in threshold's unit
  * (pixels). Leaves four f32: snapped x, snapped y, then 1.0/0.0 for whether each snapped. */
+/* The same, written to out (four floats) rather than the result buffer; touches no engine state,
+ * so it is safe to call from any thread at any time. */
+void oc_snap_position_into(float x, float y, float width, float height, float threshold, float *out);
 uint32_t oc_snap_position(float x, float y, float width, float height, float threshold);
 
 /* The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese, Korean, other

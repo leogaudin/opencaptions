@@ -11,6 +11,8 @@ struct PreviewView: UIViewRepresentable {
     let playback: Playback
     let project: Project
     let fonts: FontCache
+    /// The video's width over its height: the preview takes this shape in the room it is given.
+    let ratio: Double
     /// Held while an export owns the engine.
     var suspended = false
     /// A mark drawn on the picture by the engine (a free tier's), as in the saved video.
@@ -20,20 +22,52 @@ struct PreviewView: UIViewRepresentable {
     let onAdjust: (_ position: (x: Double, y: Double)?, _ fontSize: Int?) -> Void
     let onEditWord: (_ index: Int) -> Void
 
-    func makeUIView(context: Context) -> PreviewUIView {
-        let view = PreviewUIView(player: playback.player)
+    func makeUIView(context: Context) -> PreviewArea {
+        let area = PreviewArea(player: playback.player)
+        let view = area.preview
         view.onTogglePlay = onTogglePlay
         view.onAdjust = onAdjust
         view.onEditWord = onEditWord
-        return view
+        return area
     }
 
-    func updateUIView(_ view: PreviewUIView, context: Context) {
+    func updateUIView(_ area: PreviewArea, context: Context) {
+        area.ratio = ratio
+        let view = area.preview
         view.onTogglePlay = onTogglePlay
         view.onAdjust = onAdjust
         view.onEditWord = onEditWord
         view.configure(
             project: project, fonts: fonts, suspended: suspended, isPlaying: playback.isPlaying, watermark: watermark)
+    }
+}
+
+/// All the room the preview is given, with the video fitted in the middle of it. A pinch anywhere in
+/// it, over the video or the black around it, changes the caption's size: a thumb and finger rarely
+/// land on the picture itself. A drag, a tap and a double tap stay on the picture.
+final class PreviewArea: UIView {
+    let preview: PreviewUIView
+    var ratio = 9.0 / 16.0 { didSet { setNeedsLayout() } }
+
+    init(player: AVPlayer) {
+        preview = PreviewUIView(player: player)
+        super.init(frame: .zero)
+        backgroundColor = .black
+        addSubview(preview)
+        addGestureRecognizer(preview.pinchRecogniser)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard bounds.width > 0, bounds.height > 0, ratio > 0 else { return }
+        let size = bounds.width / bounds.height > ratio
+            ? CGSize(width: bounds.height * ratio, height: bounds.height)
+            : CGSize(width: bounds.width, height: bounds.width / ratio)
+        preview.frame = CGRect(
+            x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2,
+            width: size.width, height: size.height)
     }
 }
 
@@ -82,7 +116,6 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var drawing = false
     private var pendingTime: Double?
     private var dragStart: (x: Double, y: Double)?
-    private var dragSerial = 0
     /// Where the dragging finger went down, and the caption it went down on. UIKit reports a pan's
     /// translation from where it recognised the pan, which can be well after the finger landed
     /// (right after a tap, while the double tap is still possible), so a drag is measured from here.
@@ -100,7 +133,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var live = Live()
     private var panning = false
     private var pinching = false
-    private var pinchRecogniser: UIPinchGestureRecognizer?
+    /// Added by the area around the picture, so that it reaches past it.
+    let pinchRecogniser = UIPinchGestureRecognizer()
     private var waitingForFingers = false
     /// Where the dragging finger last was, relative to where it went down, while it was alone.
     private var lastTravel = CGPoint.zero
@@ -167,13 +201,13 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         pan.maximumNumberOfTouches = 1
         // Two fingers anywhere on the video change the font size: pinching out is bigger. It
         // works while the video plays, like the drag.
-        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinched))
-        pinchRecogniser = pinch
+        let pinch = pinchRecogniser
+        pinch.addTarget(self, action: #selector(pinched))
         // A finger already dragging can be joined by a second to pinch: the pinch is not held back
         // by the drag that began first.
         pan.delegate = self
         pinch.delegate = self
-        [single, double, pan, pinch].forEach(addGestureRecognizer)
+        [single, double, pan].forEach(addGestureRecognizer)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -391,11 +425,11 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         // The drag ends the moment a second finger lands, a little before the pinch is recognised.
         // Committing then would redraw the caption where the drag left it while the pinch scales it
         // about the old place: it would jump and come back. The pinch commits both when it ends.
-        if (pinchRecogniser?.numberOfTouches ?? 0) >= 2 {
+        if pinchRecogniser.numberOfTouches >= 2 {
             guard !waitingForFingers else { return }
             waitingForFingers = true
             Task { @MainActor in
-                while (pinchRecogniser?.numberOfTouches ?? 0) >= 2, !pinching {
+                while pinchRecogniser.numberOfTouches >= 2, !pinching {
                     try? await Task.sleep(for: .milliseconds(40))
                 }
                 waitingForFingers = false
@@ -403,7 +437,6 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             }
             return
         }
-        dragSerial += 1
         verticalGuide.isHidden = true
         horizontalGuide.isHidden = true
         let (position, size) = (live.position, live.fontSize)
@@ -438,7 +471,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func secondFingerDown(_ pan: UIPanGestureRecognizer) -> Bool {
-        pan.numberOfTouches > 1 || (pinchRecogniser?.numberOfTouches ?? 0) > 1
+        pan.numberOfTouches > 1 || pinchRecogniser.numberOfTouches > 1
     }
 
     /// How far the finger has gone since it went down.
@@ -489,27 +522,24 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     /// answer comes back asynchronously and only the newest is used; the last one is what is committed.
     private func follow(translation: CGPoint, from start: (x: Double, y: Double), final: Bool) {
         let raw = CaptionGestures.draggedPosition(from: start, translation: translation.asSize, size: bounds.size)
-        dragSerial += 1
-        let serial = dragSerial
-        let size = bounds.size
-        Task { [engine] in
-            let snapped = await engine.snapPosition(
-                x: raw.x, y: raw.y, width: size.width, height: size.height, threshold: Self.snapPull)
-            if final {
-                panning = false
-                dragStart = nil
-            } else {
-                guard serial == dragSerial, panning else { return }
-                if (snapped.onX && verticalGuide.isHidden) || (snapped.onY && horizontalGuide.isHidden) {
-                    haptic.selectionChanged()
-                }
-                verticalGuide.isHidden = !snapped.onX
-                horizontalGuide.isHidden = !snapped.onY
+        // At once, on this touch: asked of the engine's actor, the answer waited behind the frames it
+        // was drawing, and the caption trailed the finger or stayed behind until it was lifted.
+        let snapped = CaptionEngine.snappedPosition(
+            x: raw.x, y: raw.y, width: bounds.width, height: bounds.height, threshold: Self.snapPull)
+        if final {
+            panning = false
+            dragStart = nil
+        } else {
+            guard panning else { return }
+            if (snapped.onX && verticalGuide.isHidden) || (snapped.onY && horizontalGuide.isHidden) {
+                haptic.selectionChanged()
             }
-            live.position = (snapped.x, snapped.y)
-            applyLive()
-            if final { settleIfIdle() }
+            verticalGuide.isHidden = !snapped.onX
+            horizontalGuide.isHidden = !snapped.onY
         }
+        live.position = (snapped.x, snapped.y)
+        applyLive()
+        if final { settleIfIdle() }
     }
 }
 

@@ -242,17 +242,16 @@ public actor CaptionEngine {
         return f.count == 4 ? FrameRect(x: f[0], y: f[1], width: f[2], height: f[3]) : nil
     }
 
-    /// Magnetism for dragging the caption block: each axis snaps to the video's centre
-    /// when the block's centre is within `threshold` of it. `width` and `height` are the
-    /// preview's size in the unit of `threshold` (points), so the pull feels the same at
-    /// any size. The rule is the engine's, so the web editor snaps identically.
-    public func snapPosition(
+    /// Magnetism for dragging the caption block: each axis snaps to the video's centre when the block's
+    /// centre is within `threshold` of it. `width` and `height` are the preview's size in the unit of
+    /// `threshold` (points), so the pull feels the same at any size. Touches nothing the engine holds, so
+    /// a drag asks on every touch without waiting for the actor.
+    public nonisolated static func snappedPosition(
         x: Double, y: Double, width: Double, height: Double, threshold: Double
     ) -> SnappedPosition {
-        _ = oc_snap_position(Float(x), Float(y), Float(width), Float(height), Float(threshold))
-        let v = floats(result())
-        guard v.count == 4 else { return SnappedPosition(x: x, y: y, onX: false, onY: false) }
-        return SnappedPosition(x: v[0], y: v[1], onX: v[2] == 1, onY: v[3] == 1)
+        var v = [Float](repeating: 0, count: 4)
+        oc_snap_position_into(Float(x), Float(y), Float(width), Float(height), Float(threshold), &v)
+        return SnappedPosition(x: Double(v[0]), y: Double(v[1]), onX: v[2] == 1, onY: v[3] == 1)
     }
 
     // MARK: Edits

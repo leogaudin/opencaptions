@@ -168,7 +168,7 @@ struct EditorView: View {
         ZStack {
             Color.black
             PreviewView(
-                playback: playback, project: model.project, fonts: app.fontCache,
+                playback: playback, project: model.project, fonts: app.fontCache, ratio: ratio,
                 suspended: exporter?.isRunning == true, watermark: app.entitlements.watermark,
                 onTogglePlay: { playback.toggle() },
                 onAdjust: { position, size in model.adjustCaption(position: position, fontSize: size) },
@@ -178,7 +178,6 @@ struct EditorView: View {
                     edit = WordEdit(index: index, text: text)
                 }
             )
-            .aspectRatio(ratio, contentMode: .fit)
         }
         #if DEBUG
             // What the UI tests read: the caption's size and place, as an invisible label.
