@@ -51,6 +51,7 @@ uint32_t oc_changed_bottom(void);
 /* The caption showing at the last rendered time. */
 int32_t oc_active_index(void);      /* line index, or -1 */
 uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
+uint32_t oc_watermark_rect(void);   /* one quad; 0 without a watermark */
 uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
 
 /* Dragging the caption: pulls the block's normalised centre (x, y) to 0.5 on an axis when it

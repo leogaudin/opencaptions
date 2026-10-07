@@ -14,7 +14,7 @@
   "Another OpenCaptions server ({host})": "Server OpenCaptions lain ({host})",
   "Another OpenCaptions server, set TRANSCRIPTION_REMOTE_URL first": "Server OpenCaptions lain, atur TRANSCRIPTION_REMOTE_URL terlebih dahulu",
   "At least {n} characters.": "Minimal {n} karakter.",
-  "Auto-detect": "Deteksi otomatis",
+  "Auto-detect": "Otomatis",
   "Back to sign in": "Kembali ke halaman masuk",
   "Background": "Latar",
   "Background color": "Warna latar",

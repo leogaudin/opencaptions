@@ -123,7 +123,7 @@ function TextPanel({
         unit="px"
         value={style.font_size}
         min={20}
-        max={120}
+        max={300}
         step={1}
         onChange={(font_size) => throttled({ font_size })}
       />

@@ -18,6 +18,9 @@ struct SettingsView: View {
     private let languages = TranscriptionLanguages.all
 
     var body: some View {
+        // Read here so that a change of `refresh` draws the sizes again, without remaking the page
+        // (which would scroll it to the top).
+        let _ = refresh
         VStack(spacing: 0) {
             Text("Settings").font(.system(size: 28, weight: .heavy))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -46,9 +49,7 @@ struct SettingsView: View {
         .background(Theme.background.ignoresSafeArea())
         .fadesIntoTabBar()
         .sheet(isPresented: $showPro) { ProSheet() }
-        .id(refresh)
         // Sizes (saved videos, models) are read when the tab is shown, so a save made since is counted.
-        // Outside the id: inside it, each refresh would remake the view and appear again, for ever.
         .onAppear { refresh += 1 }
         .alert(
             alertTitle, isPresented: Binding(get: { prompt != nil }, set: { if !$0 { dismissPrompts() } }),
@@ -278,7 +279,10 @@ struct SettingsView: View {
             defer { UIApplication.shared.isIdleTimerDisabled = false }
             do {
                 try await app.transcriber.download(model.id) { fraction in
-                    Task { @MainActor in downloading[model.id] = fraction }
+                    Task { @MainActor in
+                        // A late report must not bring the row back after the download is over.
+                        if downloading[model.id] != nil { downloading[model.id] = fraction }
+                    }
                 }
             } catch {
                 failure = String(localized: "\(model.label) could not be downloaded: \(error.localizedDescription)")

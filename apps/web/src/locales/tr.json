@@ -14,7 +14,7 @@
   "Another OpenCaptions server ({host})": "Başka bir OpenCaptions sunucusu ({host})",
   "Another OpenCaptions server, set TRANSCRIPTION_REMOTE_URL first": "Başka bir OpenCaptions sunucusu, önce TRANSCRIPTION_REMOTE_URL ayarlayın",
   "At least {n} characters.": "En az {n} karakter.",
-  "Auto-detect": "Otomatik algıla",
+  "Auto-detect": "Otomatik",
   "Back to sign in": "Girişe dön",
   "Background": "Arka plan",
   "Background color": "Arka plan rengi",

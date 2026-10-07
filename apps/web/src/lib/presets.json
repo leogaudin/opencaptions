@@ -66,6 +66,28 @@
     }
   },
   {
+    "id": "builtin:subtle",
+    "name": "Subtle",
+    "config": {
+      "font": "Inter",
+      "font_size": 46,
+      "text_color": "#FFFFFF",
+      "highlight_color": "#FFFFFF",
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0.5,
+      "position_x": 0.5,
+      "position_y": 0.9,
+      "animation": "word_fade",
+      "words_per_line": 6,
+      "word_spacing": 0,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 12,
+      "shadow_color": "#000000C0"
+    }
+  },
+  {
     "id": "builtin:cinema",
     "name": "Cinema",
     "pro": true,
@@ -155,28 +177,6 @@
       "stroke_color": "#000000",
       "shadow_blur": 8,
       "shadow_color": "#000000A0"
-    }
-  },
-  {
-    "id": "builtin:subtle",
-    "name": "Subtle",
-    "config": {
-      "font": "Inter",
-      "font_size": 46,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FFFFFF",
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0.5,
-      "position_x": 0.5,
-      "position_y": 0.9,
-      "animation": "word_fade",
-      "words_per_line": 6,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 12,
-      "shadow_color": "#000000C0"
     }
   },
   {

@@ -170,7 +170,7 @@ final class Counter { var value = 0 }
         #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 1.5) == 72)
         #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 0.5) == 24)
         #expect(CaptionGestures.pinchedFontSize(from: 48, scale: 0.1) == 20, "not smaller than the range")
-        #expect(CaptionGestures.pinchedFontSize(from: 100, scale: 9) == 160, "not larger")
+        #expect(CaptionGestures.pinchedFontSize(from: 100, scale: 9) == 300, "not larger")
         #expect(CaptionGestures.pinchedFontSize(from: 48, scale: .nan) == 48)
     }
 }

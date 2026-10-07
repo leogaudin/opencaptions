@@ -17,7 +17,7 @@ public enum CaptionGestures {
     }
 
     /// The font sizes a pinch and the size slider can reach.
-    public static let fontSizeRange = 20.0...160.0
+    public static let fontSizeRange = 20.0...300.0
 
     /// The font size after a pinch of `scale` (1 = no change) from `start`.
     public static func pinchedFontSize(from start: Int, scale: Double) -> Int {

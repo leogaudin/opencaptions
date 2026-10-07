@@ -361,7 +361,7 @@ language means a file or a column of translations in each of those, and its code
 
 **Free and Pro.** `Entitlements` (in the Kit) is the one place the tier's limits are written: a free
 app puts a small watermark on the picture and the saved video (drawn by the engine, `watermark` in the
-scene, so the preview and the save carry the same one, and part of the saved file's name), saves
+scene, so the preview and the save carry the same one, and part of the saved file's name; the iOS preview asks the engine where it is, `oc_watermark_rect`, and keeps it on a layer of its own so that dragging or pinching a caption never moves it), saves
 at up to 1080p and 30 fps, turns an HDR video into an ordinary one, locks the styles marked
 `"pro": true` in `presets.json` (the web ignores the flag) and the Large v3 speech model (Large v3
 Turbo is free). The screens lock what the tier lacks and show `ProSheet`; the save also passes its

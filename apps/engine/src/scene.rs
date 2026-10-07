@@ -779,6 +779,18 @@ impl Renderer {
         Some((r.x(), r.y(), r.width(), r.height()))
     }
 
+    /// Where the watermark sits as (x, y, w, h) in frame pixels, for an editor that moves the
+    /// captions about and must keep the mark in place. `None` without one.
+    pub fn watermark_rect(&self) -> Option<(f32, f32, f32, f32)> {
+        let r = self.scene.mark.as_ref()?.rect;
+        Some((
+            r.x() as f32,
+            r.y() as f32,
+            r.width() as f32,
+            r.height() as f32,
+        ))
+    }
+
     /// Index of the active line among all lines, so the editor can map a word
     /// back to the transcript (word N of line L is flat word `L * words_per_line + N`).
     pub fn active_index(&self) -> Option<usize> {
@@ -1158,6 +1170,26 @@ mod tests {
         );
         r.render(100.0);
         assert_eq!(alone, r.rgba(), "and the mark alone again, not thickened");
+    }
+
+    #[test]
+    fn the_watermarks_rectangle_is_reported_and_holds_all_its_ink() {
+        let plain = Renderer::new(Scene::new(&book(), input("word_pop", WORDS, 3)));
+        assert_eq!(plain.watermark_rect(), None);
+
+        let mut r = Renderer::new(Scene::new(&book(), marked("word_pop", 0.5, 0.2)));
+        r.render(100.0);
+        let (x, y, w, h) = r.watermark_rect().expect("a rectangle");
+        let (fw, fh) = (r.scene.width as usize, r.scene.height as usize);
+        for (i, p) in r.rgba().chunks_exact(4).enumerate() {
+            let (px, py) = ((i % fw) as f32, (i / fw) as f32);
+            let inside = px >= x && px < x + w && py >= y && py < y + h;
+            assert!(
+                inside || p[3] == 0,
+                "ink outside the rectangle at {px},{py}"
+            );
+        }
+        assert!(x + w <= fw as f32 && y + h <= fh as f32);
     }
 
     #[test]

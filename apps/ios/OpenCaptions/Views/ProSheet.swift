@@ -4,6 +4,7 @@ import SwiftUI
 /// What Pro adds, shown when a free build runs into one of its limits. Builds from source are Pro
 /// already and never show it; a debug build can unlock to try both sides.
 struct ProSheet: View {
+    @State private var contentHeight: CGFloat = 520
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
 
@@ -49,8 +50,9 @@ struct ProSheet: View {
             Button("Not now") { dismiss() }.buttonStyle(SecondaryButtonStyle())
         }
         .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 + 16 }
         .frame(maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.fraction(0.8)])
+        .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.background)
         .presentationCornerRadius(24)

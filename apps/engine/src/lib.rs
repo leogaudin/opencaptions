@@ -182,6 +182,24 @@ mod abi {
         }
     }
 
+    /// The watermark's rectangle as four little-endian f32 (x, y, w, h) in frame pixels,
+    /// left in the result buffer. Returns 0 when there is no watermark.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_watermark_rect() -> u32 {
+        let rect = lock(&RENDERER).as_ref().and_then(|r| r.watermark_rect());
+        match rect {
+            Some((x, y, w, h)) => {
+                let mut out = Vec::with_capacity(16);
+                for v in [x, y, w, h] {
+                    out.extend_from_slice(&v.to_le_bytes());
+                }
+                set_result(out);
+                1
+            }
+            None => 0,
+        }
+    }
+
     /// Magnetism for dragging the caption block toward the video's centre lines. The
     /// block's normalised centre (`x`, `y`) is pulled to 0.5 on an axis when it is
     /// within `threshold` of it, with `width` and `height` the preview's size in the
@@ -436,7 +454,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 21);
+        assert_eq!(exported.len(), 22);
         assert_eq!(exported, declared);
     }
 }

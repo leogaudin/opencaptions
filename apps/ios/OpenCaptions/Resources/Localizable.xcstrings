@@ -1393,49 +1393,49 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Détection auto"
+            "value": "Auto"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Detectar automáticamente"
+            "value": "Auto"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatisch erkennen"
+            "value": "Auto"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wykryj automatycznie"
+            "value": "Auto"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Detectar automaticamente"
+            "value": "Auto"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rileva automaticamente"
+            "value": "Auto"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Определять автоматически"
+            "value": "Авто"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Otomatik algıla"
+            "value": "Otomatik"
           }
         },
         "ja": {
@@ -1459,7 +1459,7 @@
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deteksi otomatis"
+            "value": "Otomatis"
           }
         }
       }

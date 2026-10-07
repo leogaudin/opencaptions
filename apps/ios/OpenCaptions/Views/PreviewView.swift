@@ -39,7 +39,13 @@ struct PreviewView: UIViewRepresentable {
 
 final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private let playerLayer: AVPlayerLayer
+    /// What holds the caption's picture. A layer of its own and still, with the watermark's place cut out of
+    /// it, so that moving or scaling the caption (the layer in it) leaves the watermark where it is.
+    private let host = CALayer()
     private let overlay = CALayer()
+    private let markLayer = CALayer()
+    private let hostMask = CAShapeLayer()
+    private var markRect: FrameRect?
     private let player: AVPlayer
     private let engine = CaptionEngine.shared
     private let ciContext = CIContext()
@@ -127,7 +133,14 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         layer.addSublayer(playerLayer)
         overlay.contentsGravity = .resize
         overlay.magnificationFilter = .trilinear
-        layer.addSublayer(overlay)
+        host.addSublayer(overlay)
+        host.mask = hostMask
+        hostMask.fillRule = .evenOdd
+        hostMask.fillColor = UIColor.black.cgColor
+        markLayer.contentsGravity = .resize
+        markLayer.magnificationFilter = .trilinear
+        layer.addSublayer(host)
+        layer.addSublayer(markLayer)
         for guide in [verticalGuide, horizontalGuide] {
             guide.backgroundColor = UIColor.white.withAlphaComponent(0.9).cgColor
             guide.shadowColor = UIColor.black.cgColor
@@ -189,8 +202,11 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         super.layoutSubviews()
         playerLayer.frame = bounds
         // Not `frame`, which means nothing while the layer is being transformed.
+        host.frame = bounds
+        hostMask.frame = bounds
         overlay.bounds = CGRect(origin: .zero, size: bounds.size)
         overlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        placeMark()
         verticalGuide.frame = CGRect(x: bounds.midX - 0.5, y: 0, width: 1, height: bounds.height)
         horizontalGuide.frame = CGRect(x: 0, y: bounds.midY - 0.5, width: bounds.width, height: 1)
         // The scene is sized to the view, so a new size lays it out again.
@@ -216,6 +232,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         if isHDR != hdr {
             hdr = isHDR
             overlay.wantsExtendedDynamicRangeContent = isHDR
+            markLayer.wantsExtendedDynamicRangeContent = isHDR
             sceneKey = nil  // draw it again in the new format
         }
         style = project.styleConfig
@@ -273,10 +290,17 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
                 let sceneOfFrame = generation
                 let frame = await engine.render(at: t)
                 let active = await engine.activeCaption()
+                let mark = await engine.watermarkRect()
                 if !suspended {
                     caption = active
                     drawnGeneration = sceneOfFrame
-                    if let frame { overlay.contents = hdr ? frame.hdrCGImage(using: ciContext) : frame.cgImage(using: ciContext) }
+                    if let frame {
+                        let image = hdr ? frame.hdrCGImage(using: ciContext) : frame.cgImage(using: ciContext)
+                        overlay.contents = image
+                        markLayer.contents = image
+                    }
+                    markRect = mark
+                    placeMark()
                     #if DEBUG
                         if frame != nil { accessibilityValue = "drawn" }  // the UI tests wait for this
                     #endif
@@ -324,6 +348,31 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         CATransaction.setDisableActions(true)
         overlay.setAffineTransform(transform)
         CATransaction.commit()
+    }
+
+    /// The watermark on its own layer, showing its part of the picture, and the hole for it in the caption's.
+    private func placeMark() {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        defer { CATransaction.commit() }
+        guard let r = markRect, frameSize.width > 0, frameSize.height > 0, bounds.width > 0 else {
+            markLayer.isHidden = true
+            hostMask.path = nil
+            host.mask = nil
+            return
+        }
+        let k = CGSize(width: bounds.width / frameSize.width, height: bounds.height / frameSize.height)
+        let rect = CGRect(x: r.x * k.width, y: r.y * k.height, width: r.width * k.width, height: r.height * k.height)
+        markLayer.frame = rect
+        markLayer.contentsRect = CGRect(
+            x: r.x / frameSize.width, y: r.y / frameSize.height,
+            width: r.width / frameSize.width, height: r.height / frameSize.height)
+        markLayer.isHidden = false
+        let path = CGMutablePath()
+        path.addRect(bounds)
+        path.addRect(rect)
+        hostMask.path = path
+        host.mask = hostMask
     }
 
     /// The middle of the caption as drawn, in points: where a pinch scales from.

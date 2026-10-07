@@ -235,6 +235,13 @@ public actor CaptionEngine {
         )
     }
 
+    /// Where the watermark sits in the frame, or nil without one.
+    public func watermarkRect() -> FrameRect? {
+        guard oc_watermark_rect() == 1 else { return nil }
+        let f = floats(result())
+        return f.count == 4 ? FrameRect(x: f[0], y: f[1], width: f[2], height: f[3]) : nil
+    }
+
     /// Magnetism for dragging the caption block: each axis snaps to the video's centre
     /// when the block's centre is within `threshold` of it. `width` and `height` are the
     /// preview's size in the unit of `threshold` (points), so the pull feels the same at

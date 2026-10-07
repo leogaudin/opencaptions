@@ -46,7 +46,10 @@ extension EngineSuites {
             }
             let plain = try await frame(nil)
             #expect(!plain.rgba.contains { $0 != 0 })
+            #expect(await engine.watermarkRect() == nil)
             let marked = try await frame(Entitlements.watermarkText)
+            let rect = try #require(await engine.watermarkRect(), "the preview keeps the mark in place by this")
+            #expect(rect.x > 200 && rect.y < 120 && rect.x + rect.width <= 540)
             var corner = 0
             for (i, byte) in marked.rgba.enumerated() where i % 4 == 3 && byte != 0 {
                 let (x, y) = ((i / 4) % 540, (i / 4) / 540)

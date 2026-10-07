@@ -99,6 +99,9 @@ public final class WhisperKitTranscriber: Transcriber {
         }
         defer { watcher.cancel() }
         let folder = try await WhisperKit.download(variant: model.variant, downloadBase: modelsDirectory) { _ in }
+        // Stopped before the last report, or one more of "99%" could follow it.
+        watcher.cancel()
+        _ = await watcher.result
         progress(1)
         var excluded = modelsDirectory
         var values = URLResourceValues()

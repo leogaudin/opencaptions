@@ -139,7 +139,7 @@ class StyleConfig(BaseModel):
 
     # The defaults are the first built-in preset, Purple Punch (tests/test_presets.py).
     font: str = "Poppins"
-    font_size: int = Field(default=64, ge=12, le=200)
+    font_size: int = Field(default=64, ge=12, le=300)
     text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
     highlight_color: str = Field(default="#7C3AED", pattern=r"^#[0-9A-Fa-f]{6}$")
     background: Literal["none", "solid", "pill"] = "none"

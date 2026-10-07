@@ -14,7 +14,7 @@
   "Another OpenCaptions server ({host})": "Другой сервер OpenCaptions ({host})",
   "Another OpenCaptions server, set TRANSCRIPTION_REMOTE_URL first": "Другой сервер OpenCaptions, сначала задайте TRANSCRIPTION_REMOTE_URL",
   "At least {n} characters.": "Не менее {n} символов.",
-  "Auto-detect": "Определять автоматически",
+  "Auto-detect": "Авто",
   "Back to sign in": "Назад ко входу",
   "Background": "Фон",
   "Background color": "Цвет фона",
