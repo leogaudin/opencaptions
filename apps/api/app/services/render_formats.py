@@ -38,7 +38,7 @@ class RenderFormat:
 
 # === Format Registry ===
 # The complete set of export formats.
-# Do not hardcode codec/crf/extension at call sites — always go through this registry.
+# Do not hardcode codec/crf/extension at call sites, always go through this registry.
 
 FORMATS: dict[str, RenderFormat] = {}
 
@@ -71,7 +71,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         mime="video/webm",
         crf=24,
         pro_res_profile=None,
-        note="VP9 encoding is very slow — expect 5-10x real-time on a modern CPU.",
+        note="VP9 encoding is very slow, expect 5-10x real-time on a modern CPU.",
     ),
     RenderFormat(
         id="mov",
@@ -79,7 +79,7 @@ _FORMAT_DEFS: list[RenderFormat] = [
         codec="prores",
         extension=".mov",
         mime="video/quicktime",
-        # ProRes does NOT accept crf — quality is controlled by proResProfile.
+        # ProRes does NOT accept crf, quality is controlled by proResProfile.
         crf=None,
         pro_res_profile="hq",
         note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video).",

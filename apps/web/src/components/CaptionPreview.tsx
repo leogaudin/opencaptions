@@ -404,7 +404,7 @@ export function CaptionPreview() {
           <>
             <p className="font-medium text-foreground">This browser cannot preview this video.</p>
             <p className="mt-1">
-              You can still download it from the toolbar above — the MP4 (H.264) download plays in
+              You can still download it from the toolbar above, the MP4 (H.264) download plays in
               every browser, or open any format in a desktop player like VLC.
             </p>
           </>,

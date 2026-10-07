@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-version-sync.sh — Fail if the package manifests disagree on the
+# check-version-sync.sh. Fail if the package manifests disagree on the
 # project version.
 #
 # Each component derives its version from its OWN manifest at build/run time:
@@ -43,7 +43,7 @@ if [ -z "$api_version" ] || [ -z "$web_version" ] || [ -z "$engine_version" ] ||
 fi
 
 if [ "$api_version" != "$web_version" ] || [ "$api_version" != "$engine_version" ] || [ "$api_version" != "$ios_version" ]; then
-  echo "ERROR: manifest versions disagree — bump them all to the same value" >&2
+  echo "ERROR: manifest versions disagree, bump them all to the same value" >&2
   exit 1
 fi
 

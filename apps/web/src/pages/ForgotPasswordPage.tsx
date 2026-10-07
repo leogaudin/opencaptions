@@ -4,7 +4,7 @@
  *
  * Only reachable when reset is available (SMTP configured); otherwise it bounces
  * to sign in, mirroring how SignupPage bounces when registration is closed. The
- * confirmation is deliberately NEUTRAL — it never reveals whether the email is
+ * confirmation is deliberately NEUTRAL: it never reveals whether the email is
  * registered, matching the backend's no-enumeration guarantee.
  */
 import { type FormEvent, useEffect, useRef, useState } from "react";
@@ -29,7 +29,7 @@ export function ForgotPasswordPage() {
     emailRef.current?.focus();
   }, []);
 
-  // Feature off on this instance — there is nowhere to go here. Send to sign in.
+  // Feature off on this instance, there is nowhere to go here. Send to sign in.
   if (!resetAvailable) {
     return <Navigate to="/login" replace state={location.state} />;
   }

@@ -13,7 +13,7 @@ interface ProjectThumbnailProps {
  * GET /api/v1/projects/{id}/thumbnail (auth via the same-origin session
  * cookie). That endpoint returns an image or 404 when the project has none, so
  * on error we swap to a tasteful film-frame placeholder rather than showing the
- * browser's broken-image icon. Decorative (alt="") — the row's title link is
+ * browser's broken-image icon. Decorative (alt=""), the row's title link is
  * the accessible name.
  */
 export function ProjectThumbnail({ projectId, className }: ProjectThumbnailProps) {

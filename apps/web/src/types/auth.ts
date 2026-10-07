@@ -1,10 +1,10 @@
 /**
- * Auth types — DERIVED from the generated OpenAPI schema (api.generated.ts).
+ * Auth types. DERIVED from the generated OpenAPI schema (api.generated.ts).
  *
  * These were declared locally when the backend had not yet regenerated the
  * schema. It has since done so, so each type below aliases its generated
- * `components["schemas"][...]` counterpart — exactly as the domain types in
- * ./index.ts do — so the TypeScript compiler catches any drift between the
+ * `components["schemas"][...]` counterpart: exactly as the domain types in
+ * ./index.ts do: so the TypeScript compiler catches any drift between the
  * backend auth models and the frontend.
  *
  * The exported names (`AuthUser`, `AuthSession`, `AuthStatus`) are kept as-is so

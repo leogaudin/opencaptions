@@ -35,7 +35,7 @@ export function presetLook(config: StyleConfig): Partial<StyleConfig> {
 
 /**
  * Whether a preset's config is the style currently applied, so the picker can
- * highlight it. Compares only the fields a preset defines as its identity —
+ * highlight it. Compares only the fields a preset defines as its identity,
  * stroke, shadow, size and place are tweakable without leaving the preset.
  */
 export function presetMatches(a: StyleConfig, b: StyleConfig): boolean {

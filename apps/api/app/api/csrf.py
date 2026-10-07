@@ -7,16 +7,16 @@ matters for a future multi-tenant hosted deployment. So every unsafe method
 the token bound to the caller's server-side session.
 
 Implemented as a pure-ASGI middleware (not BaseHTTPMiddleware) so it never
-buffers or wraps response bodies — the app streams video via HTTP Range
+buffers or wraps response bodies, the app streams video via HTTP Range
 responses, and wrapping those would break seeking. WebSocket upgrades never pass
 through here (the 'websocket' scope is skipped; WS does its own cookie auth).
 
 Exemptions:
-  * /auth/register, /auth/login — no session exists yet, so there is no token
+  * /auth/register, /auth/login: no session exists yet, so there is no token
     to present; these are what create the session.
-  * /auth/password-reset, /auth/password-reset/confirm — the caller is logged
+  * /auth/password-reset, /auth/password-reset/confirm, the caller is logged
     out (they forgot their password), so there is no session token to present.
-  * /jobs/{id}/progress — the engine's service callback, authorized by its
+  * /jobs/{id}/progress: the engine's service callback, authorized by its
     per-job token instead (see app.core.job_tokens); browsers can't reach it.
 """
 
@@ -40,7 +40,7 @@ def _is_exempt(path: str) -> bool:
     if path in _EXEMPT_PATHS:
         return True
     # Password reset request + confirm: the caller is logged out, so there is no
-    # session and no CSRF token to present — like register/login. Covers both
+    # session and no CSRF token to present, like register/login. Covers both
     # /auth/password-reset and /auth/password-reset/confirm.
     if path.startswith("/api/v1/auth/password-reset"):
         return True

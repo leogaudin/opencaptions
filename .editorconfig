@@ -7,13 +7,13 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
 
-# Python — mirrors apps/api/pyproject.toml [tool.ruff] (line-length 100; ruff's
+# Python, mirrors apps/api/pyproject.toml [tool.ruff] (line-length 100; ruff's
 # default 4-space indent is not overridden).
 [*.py]
 indent_size = 4
 max_line_length = 100
 
-# TypeScript/JS/JSON — mirrors apps/web/biome.json
+# TypeScript/JS/JSON, mirrors apps/web/biome.json
 # (indentStyle space, indentWidth 2, lineWidth 100).
 [*.{ts,tsx,js,json}]
 indent_size = 2

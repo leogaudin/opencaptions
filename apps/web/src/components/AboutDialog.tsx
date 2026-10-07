@@ -87,7 +87,7 @@ function TranscriptionRuntime({ info: t }: { info: NonNullable<HealthResponse["t
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   const [fetchState, setFetchState] = useState<FetchState>({ status: "idle" });
 
-  // Fetch health lazily when the dialog opens — no network cost while closed.
+  // Fetch health lazily when the dialog opens, no network cost while closed.
   const fetchHealth = useCallback(async () => {
     setFetchState({ status: "loading" });
     try {
@@ -119,7 +119,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           <Dialog.Title className="text-lg font-semibold">OpenCaptions</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted-foreground">
             {/* Version comes from apps/web/package.json, bundled by Vite at build
-                time (the single source of truth) — never hardcode a literal here. */}
+                time (the single source of truth), never hardcode a literal here. */}
             v{APP_VERSION} · Open-source video captioning
           </Dialog.Description>
 
@@ -209,7 +209,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
 /**
  * Header trigger button for the About dialog.
  * Uses the shared icon-button hierarchy (transparent bg, outline, high-contrast
- * foreground, accent on hover) — matching the theme-toggle and logout buttons.
+ * foreground, accent on hover): matching the theme-toggle and logout buttons.
  */
 export function AboutTrigger({ onClick }: { onClick: () => void }) {
   return (

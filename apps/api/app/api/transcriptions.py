@@ -154,7 +154,7 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
                 out.write(chunk)
         try:
             duration: float | None = await asyncio.to_thread(probe_duration, path)
-        except Exception:  # noqa: BLE001 — a probe that fails is not a reason to refuse
+        except Exception:  # noqa: BLE001, a probe that fails is not a reason to refuse
             duration = None
     except BaseException:
         pathlib.Path(path).unlink(missing_ok=True)

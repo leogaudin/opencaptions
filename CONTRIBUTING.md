@@ -12,7 +12,7 @@ docker compose watch           # live reload (or: make watch)
 
 `make logs` tails everything, `make down` stops it, `make rebuild` forces a
 no-cache rebuild without touching your data, and `make clean` is the destructive
-reset. Migrations run automatically on API boot — never add a manual step.
+reset. Migrations run automatically on API boot, never add a manual step.
 
 ## A change is done when `make ci` passes
 
@@ -46,7 +46,7 @@ cd apps/web && npx playwright test -g "your spec" --ui
 Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
 `fix:`, `docs:`, `refactor:`, `chore:`, `ci:`, `test:`), scoped where it helps.
 
-`AGENTS.md` lists the invariants that are easy to break and expensive to debug —
+`AGENTS.md` lists the invariants that are easy to break and expensive to debug,
 generated files you must not hand-edit, the one engine that draws both the
 preview and the export, the content-addressed render cache. Read it before a first
 non-trivial change. It is written for AI agents but applies to everyone.

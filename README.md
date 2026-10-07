@@ -10,7 +10,7 @@ OpenCaptions generates word-level transcriptions of local video files using Whis
 
 ⚠️ **Status:** Pre-v0.1, under active construction. APIs and schemas may change without notice until the first tagged release.
 
-![OpenCaptions editor — a video preview with word-level animated captions next to the style panel, over the caption timeline](docs/screenshot.png)
+![OpenCaptions editor, a video preview with word-level animated captions next to the style panel, over the caption timeline](docs/screenshot.png)
 
 ## Why OpenCaptions
 
@@ -20,18 +20,18 @@ No existing OSS tool combines automatic transcription with **animated styled cap
 
 - 🎙 **Word-level transcription** via faster-whisper (local), the OpenAI Whisper API (BYOA), or another OpenCaptions server (for example a GPU box at home), which the iOS app can use too
 - 🎨 **Animated styled captions** with 3 built-in presets + full custom panel
-- ✏️ **Built-in editor** — a timeline to retime captions, fix a misheard word right on the video, customize style with live preview
-- 📤 **Multi-format export** — burned-in MP4, SRT, VTT, JSON
-- 📱 **iPhone and iPad app** — the same engine and editor on the phone, with on-device Whisper (WhisperKit): no server, no account (or point it at your own server to transcribe faster)
-- 🐳 **Docker Compose first** — one command to run the whole stack
-- 🔒 **Privacy by design** — no telemetry, no tracking, no phone-home; accounts are local to your instance
-- 🍎 **Apple Silicon** — images are multi-arch and run natively on M-series Macs. Local
+- ✏️ **Built-in editor**: a timeline to retime captions, fix a misheard word right on the video, customize style with live preview
+- 📤 **Multi-format export**: burned-in MP4, SRT, VTT, JSON
+- 📱 **iPhone and iPad app**: the same engine and editor on the phone, with on-device Whisper (WhisperKit): no server, no account (or point it at your own server to transcribe faster)
+- 🐳 **Docker Compose first**: one command to run the whole stack
+- 🔒 **Privacy by design**: no telemetry, no tracking, no phone-home; accounts are local to your instance
+- 🍎 **Apple Silicon**: images are multi-arch and run natively on M-series Macs. Local
   transcription is CPU-only there: faster-whisper runs on CTranslate2, which has no
   Metal or CoreML backend. Use the OpenAI provider, another OpenCaptions server with a GPU (`TRANSCRIPTION_PROVIDER=opencaptions`, `TRANSCRIPTION_REMOTE_URL`, `TRANSCRIPTION_REMOTE_KEY`), or a small model, if speed matters.
 
 ## Quick Start
 
-**Run it** — you need only one file. Put [`docker-compose.yml`](docker-compose.yml)
+**Run it**: you need only one file. Put [`docker-compose.yml`](docker-compose.yml)
 in an empty directory and start it:
 
 ```bash
@@ -42,7 +42,7 @@ docker compose up -d
 
 > ⚠️ Pre-built images will be available after the first tagged release and once GHCR packages are set to public. Until then, use a checkout.
 
-**Develop it** — the same file, with `--build` so every image is built from
+**Develop it**: the same file, with `--build` so every image is built from
 source instead of pulled:
 
 ```bash
@@ -67,12 +67,12 @@ only what a container cannot infer: the credentials Postgres and the object stor
 share with the app, the service topology, and per-service overrides.
 
 To change a setting, add it to the `environment:` block of the services that read
-it — committed, visible in a diff, and impossible for an untracked file to shadow.
+it, committed, visible in a diff, and impossible for an untracked file to shadow.
 
 ### Verifying a change
 
 `make ci` is the acceptance criterion. It runs everything GitHub CI runs except
-publishing — workflow lint, repository guards, backend lint/types/tests, the
+publishing, workflow lint, repository guards, backend lint/types/tests, the
 generated-types gate, frontend and engine checks, all four image builds
 (including the GPU target) and the end-to-end suite.
 
@@ -83,7 +83,7 @@ make ci-static    # fast: skips image builds and e2e
 ```
 
 It validates a clean snapshot of committed source in pinned containers, under its
-own project name so none of your volumes are reachable, on an off-default port —
+own project name so none of your volumes are reachable, on an off-default port,
 safe to run while your own stack is up. It needs Docker Compose **v2.24+**.
 
 ## API
@@ -118,9 +118,9 @@ page.
 
 > ⚠️ **The web UI listens on every interface, and signup is open.** Anyone who can reach port 5173 on this machine can create an account and spend its CPU/GPU on transcription and rendering. On a shared network or a public host, close registration by adding `REGISTRATION_ENABLED: "false"` to the `api` service's `environment:` block, firewall the port, or bind it to `127.0.0.1` on the `web` service's `ports:` line.
 
-The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` and the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file. Change them before running anywhere that matters — in every service that names them, which `scripts/check-compose.sh` verifies.
+The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` and the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file. Change them before running anywhere that matters, in every service that names them, which `scripts/check-compose.sh` verifies.
 
-The stack publishes exactly one host port — the web UI, on `0.0.0.0:5173`, so
+The stack publishes exactly one host port, the web UI, on `0.0.0.0:5173`, so
 other devices on your network can use it. Everything else (database, cache, object
 store, API, engine) is reachable only over the compose network, because nginx
 proxies `/api`, `/ws` and the OpenAPI docs through that single origin.
@@ -132,7 +132,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and how to report a vulnerab
 
 ## GPU Acceleration
 
-GPU mode is not a separate command. Both switches are Compose variables — they
+GPU mode is not a separate command. Both switches are Compose variables, they
 choose which services run, so they are set on the command line rather than in the
 compose file:
 
@@ -158,7 +158,7 @@ To switch back to CPU, run `docker compose up -d` without them.
 ## Architecture
 
 - **API:** Python + FastAPI + Celery + Postgres + Redis
-- **Engine:** Rust — rustybuzz shaping and tiny-skia drawing. Natively it draws every frame of an
+- **Engine:** Rust, rustybuzz shaping and tiny-skia drawing. Natively it draws every frame of an
   export and FFmpeg encodes it; compiled to WebAssembly it draws the editor preview, so the
   preview is the export
 - **Frontend:** React + TypeScript + Tailwind, built with Vite; Radix for accessible overlays,
@@ -179,10 +179,10 @@ apps/
 
 ## Documentation
 
-- [Contributing](CONTRIBUTING.md) — dev setup and the acceptance gate
-- [Design](docs/DESIGN.md) — how it works, including the iOS app
-- [Security policy](SECURITY.md) — threat model and vulnerability reporting
-- [Third-party notices](NOTICE) — bundled components and their licences
+- [Contributing](CONTRIBUTING.md), dev setup and the acceptance gate
+- [Design](docs/DESIGN.md), how it works, including the iOS app
+- [Security policy](SECURITY.md), threat model and vulnerability reporting
+- [Third-party notices](NOTICE), bundled components and their licences
 
 ## Self-Hosting
 
@@ -197,7 +197,7 @@ If you offer a hosted version of OpenCaptions, AGPL requires you to publish your
 
 Contributors accept a [CLA](CLA.md) so the maintainer can also ship the code where the AGPL cannot go, such as the App Store.
 
-Third-party components ship under their own licences — see [NOTICE](NOTICE).
+Third-party components ship under their own licences, see [NOTICE](NOTICE).
 
 ## Donations
 

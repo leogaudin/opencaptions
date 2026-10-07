@@ -1,4 +1,4 @@
-"""/api/v1/fonts — the Google Fonts catalog, font files and name previews."""
+"""/api/v1/fonts: the Google Fonts catalog, font files and name previews."""
 
 from __future__ import annotations
 

@@ -29,7 +29,7 @@ export function App() {
   const started = useRef(false);
 
   // Resolve session state exactly once on first mount (StrictMode double-invokes
-  // effects in dev — the ref guard keeps it to a single status+me probe).
+  // effects in dev, the ref guard keeps it to a single status+me probe).
   useEffect(() => {
     if (started.current) return;
     started.current = true;
@@ -43,7 +43,7 @@ export function App() {
     return () => api.setUnauthorizedHandler(null);
   }, []);
 
-  // Until the session resolves, render a neutral splash — no shell, no login.
+  // Until the session resolves, render a neutral splash, no shell, no login.
   if (phase === "bootstrapping") {
     return <BootstrapSplash />;
   }
@@ -108,7 +108,7 @@ function BootstrapSplash() {
 
 /**
  * Guard for protected routes. Unauthenticated visitors are redirected to the
- * right auth screen — signup on a first-run instance, otherwise login —
+ * right auth screen: signup on a first-run instance, otherwise login,
  * preserving the intended destination so a deep link survives the round trip.
  */
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -171,7 +171,7 @@ function Header() {
           the page content below it. */}
       <div className={`flex h-14 w-full items-center justify-between ${shellX}`}>
         {/* Wordmark styled as a native burned-in subtitle cue: pure monochrome
-            block with square corners — no rounding, no tint, no accent colour. */}
+            block with square corners, no rounding, no tint, no accent colour. */}
         <Link
           to="/"
           className="inline-flex items-baseline bg-black px-2 py-0.5 text-base font-bold leading-none tracking-tight text-white dark:bg-white dark:text-black"
@@ -211,7 +211,7 @@ function Header() {
           {/* Identity + sign-out collapsed into one silhouette icon button that
               opens a menu (see UserMenu): shows who you're signed in as and a way
               out, with room to hang future account actions. Follows the non-accent
-              icon-button hierarchy — never accent. */}
+              icon-button hierarchy, never accent. */}
           <UserMenu />
         </nav>
       </div>

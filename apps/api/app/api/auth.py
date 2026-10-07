@@ -1,4 +1,4 @@
-"""/api/v1/auth — registration, login, logout, current user, bootstrap status.
+"""/api/v1/auth: registration, login, logout, current user, bootstrap status.
 
 Sessions are server-side and opaque; the cookie holds only a random id. Login
 rotates that id (session fixation) and rehashes the password if Argon2
@@ -85,7 +85,7 @@ def _invalid_credentials() -> HTTPException:
 
 
 # Only genuine credential-guessing feeds the failure counter, and that lives
-# solely at /login — so there is a single throttle scope. See register() for
+# solely at /login, so there is a single throttle scope. See register() for
 # why registration rejections deliberately do not count.
 _LOGIN_SCOPE = "login"
 
@@ -125,7 +125,7 @@ def _client_ip(request: Request) -> str:
     """Best-effort source address for the per-source ceiling.
 
     uvicorn does not run with --proxy-headers, so request.client.host is the
-    socket peer — nginx, identical for every caller. nginx sets X-Real-IP with
+    socket peer, nginx, identical for every caller. nginx sets X-Real-IP with
     proxy_set_header, which REPLACES any client-supplied value, so the header is
     trustworthy through the proxy and only through it.
     """
@@ -229,7 +229,7 @@ async def login(
     session: Annotated[AsyncSession, Depends(db_session)],
 ) -> AuthResponse:
     # Coarse per-source-IP ceiling first (see _AUTH_IP_SCOPE): a blunt anti-DoS
-    # cap on expensive hashing per address, SEPARATE from — and additive to — the
+    # cap on expensive hashing per address, SEPARATE from, and additive to, the
     # per-identifier failure throttle below, which is left fully intact.
     await _enforce_ip_ceiling(request)
 
@@ -406,7 +406,7 @@ def _reset_email_body(link: str) -> str:
         "Someone requested a password reset for your OpenCaptions account.\n\n"
         "To choose a new password, open this link (it expires in one hour):\n\n"
         f"{link}\n\n"
-        "If you did not request this, you can ignore this email — your password "
+        "If you did not request this, you can ignore this email, your password "
         "will not change."
     )
 
@@ -414,13 +414,13 @@ def _reset_email_body(link: str) -> str:
 def _send_reset_email(to: str, link: str) -> None:
     """Send the reset email. Runs in a background task, OFF the request path, so
     a slow or failing relay never changes the response the user already received.
-    A failure is swallowed and logged by exception type only — never the
+    A failure is swallowed and logged by exception type only, never the
     recipient, the link, or the token."""
     try:
         mailer.resolve_mailer().send(
             to=to, subject=_RESET_EMAIL_SUBJECT, body=_reset_email_body(link)
         )
-    except Exception as exc:  # noqa: BLE001 — a broken relay must not surface to the user
+    except Exception as exc:  # noqa: BLE001, a broken relay must not surface to the user
         logger.warning("password reset email failed to send: %s", type(exc).__name__)
 
 

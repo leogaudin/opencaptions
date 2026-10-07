@@ -60,7 +60,7 @@ async def test_status_reports_reset_available_with_smtp(
 ) -> None:
     r = await client.get("/api/v1/auth/status")
     assert r.status_code == 200
-    # The boolean is all that leaks — never the host, port, or credentials.
+    # The boolean is all that leaks, never the host, port, or credentials.
     body = r.json()
     assert body["reset_available"] is True
     assert not any("smtp" in k.lower() for k in body)
@@ -86,7 +86,7 @@ async def test_request_response_identical_for_known_and_unknown_email(
     first_client: AsyncClient, make_client: Any, smtp_enabled: _RecordingMailer
 ) -> None:
     # No enumeration oracle: the same status and empty body whether or not the
-    # email names an account — but a link is sent ONLY for the real account.
+    # email names an account, but a link is sent ONLY for the real account.
     c = await make_client()
     known = await c.post("/api/v1/auth/password-reset", json={"email": "admin@example.com"})
     unknown = await c.post("/api/v1/auth/password-reset", json={"email": "nobody@example.com"})
@@ -189,7 +189,7 @@ async def test_confirm_enforces_registration_password_policy(
     await c.post("/api/v1/auth/password-reset", json={"email": "admin@example.com"})
     token = _token_from(smtp_enabled.sent[0]["body"])
 
-    # Below the 8-char registration minimum — rejected server-side (422) before
+    # Below the 8-char registration minimum, rejected server-side (422) before
     # the handler runs, so a client-side check is never the only control.
     too_short = await c.post(
         "/api/v1/auth/password-reset/confirm",

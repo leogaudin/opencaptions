@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/authStore";
  * Why a menu and not the old email-text + logout-icon pair: it collapses the
  * identity affordance to one button and gives us a place to hang future
  * account actions (settings, profile, …) by dropping another
- * <DropdownMenu.Item> into the list below — no header surgery required.
+ * <DropdownMenu.Item> into the list below: no header surgery required.
  *
  * Built on @radix-ui/react-dropdown-menu, so the accessibility comes for free:
  * the trigger gets aria-haspopup/aria-expanded, the surface is role="menu" with
@@ -19,7 +19,7 @@ import { useAuthStore } from "@/store/authStore";
  * aria-label names the signed-in account so a screen reader announces it.
  *
  * Zustand identity rule: only primitives / the stable action ref are selected
- * (s.user?.email, s.logout) — never a store object/array.
+ * (s.user?.email, s.logout): never a store object/array.
  */
 export function UserMenu() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export function UserMenu() {
         <button
           type="button"
           // The non-accent icon-button hierarchy (transparent, outlined,
-          // high-contrast foreground, accent-on-hover) — identical to the Info
+          // high-contrast foreground, accent-on-hover), identical to the Info
           // and theme-toggle buttons. Never a filled accent: that is reserved
           // for the primary action.
           className={iconButtonClass}

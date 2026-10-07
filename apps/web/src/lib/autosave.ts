@@ -2,7 +2,7 @@
  * Debounced autosave that only saves when something actually changed.
  *
  * "Changed" is judged against a snapshot of the last saved state, not a dirty
- * flag, because a save's own response updates the store — a flag would retrigger
+ * flag, because a save's own response updates the store, a flag would retrigger
  * forever. A save can also be held while `isBlocked()` (a render in flight must
  * not have its inputs changed under it) and runs once `release()` is called.
  */

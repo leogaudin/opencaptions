@@ -29,7 +29,7 @@ celery_app.conf.update(
     accept_content=["json"],
     timezone="UTC",
     enable_utc=True,
-    # Time limits — render and transcribe can take minutes.
+    # Time limits, render and transcribe can take minutes.
     task_soft_time_limit=900,  # 15 min soft
     task_time_limit=1200,  # 20 min hard
     # Result backend

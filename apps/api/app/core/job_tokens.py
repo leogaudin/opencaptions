@@ -34,7 +34,7 @@ def job_token_key(job_id: str) -> str:
 
 
 def mint_job_token(job_id: str) -> str:
-    """Mint + store a per-job token. Sync — called from the Celery render task."""
+    """Mint + store a per-job token. Sync: called from the Celery render task."""
     token = secrets.token_urlsafe(_TOKEN_BYTES)
     client = redis_sync.Redis.from_url(settings.redis_url, decode_responses=True)
     try:

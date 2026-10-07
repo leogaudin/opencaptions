@@ -123,7 +123,7 @@ open (no background upload yet); plain `http` is allowed only to local-network a
 **Presets and fonts.** The preset tiles are drawn by the engine (`CaptionEngine.samples`: the same
 drawing as the preview and the export, in a phone-shaped frame, cropped to the band around the
 caption), so each shows its real font, colours and highlight; the scene in use is put back after.
-The row scrolls sideways, with a fade and an arrow at its right edge until it has been scrolled.
+The tiles are a grid that fills the width and wraps, on iOS and the web alike.
 The style panel, on iOS and the web alike, is in tabs (Presets, Text, Background, Animation,
 Outline, Timing) so that no page is long. The Background and Animation tabs show their choices
 as tiles drawn the same way, in the caption's current look (a background with no opacity is

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# generate-api-types.sh — Derive TypeScript types from the API's OpenAPI schema.
+# generate-api-types.sh. Derive TypeScript types from the API's OpenAPI schema.
 #
 # This script dumps the OpenAPI document OFFLINE (no running server, no
 # Postgres/Redis/object storage required) and pipes it through openapi-typescript to
@@ -19,8 +19,8 @@ cleanup() { rm -f "$SCHEMA_TMP"; }
 trap cleanup EXIT
 
 # --- Step 1: Offline OpenAPI dump ---
-# Resolve python: the uv-managed venv that `uv sync` creates — what both
-# `make ci` and GitHub CI use — falling back to system python3.
+# Resolve python: the uv-managed venv that `uv sync` creates, what both
+# `make ci` and GitHub CI use, falling back to system python3.
 if [ -x "$API_DIR/.venv/bin/python" ]; then
   PYTHON="$API_DIR/.venv/bin/python"
 else

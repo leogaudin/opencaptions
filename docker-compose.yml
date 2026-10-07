@@ -11,7 +11,7 @@
 name: opencaptions
 
 # Scaling: transcription and rendering consume separate Celery queues, so they
-# scale independently — OC_CPU_TRANSCRIBERS and OC_RENDERERS set their replica
+# scale independently. OC_CPU_TRANSCRIBERS and OC_RENDERERS set their replica
 # counts. The api holds no per-process state (sessions live in Redis) so it scales
 # too, but migrations run on its boot, so bring one up before adding more. `web`
 # publishes the only host port and cannot be replicated as-is.

@@ -14,7 +14,7 @@ test.describe("OpenCaptions UI", () => {
     await page.goto("/");
     // The header is always present.
     await expect(page.getByRole("link", { name: "OpenCaptions" })).toBeVisible();
-    // Either we see the empty-state primary action or a project list — both are
+    // Either we see the empty-state primary action or a project list, both are
     // valid depending on whether this account owns any projects.
     const emptyCta = page.getByTestId("empty-new-project");
     const heading = page.getByRole("heading", { name: "Your projects" });
@@ -60,7 +60,7 @@ test.describe("OpenCaptions UI", () => {
 
   test("privacy disclosure shows when OpenAI provider is selected", async ({ page }) => {
     await page.goto("/upload");
-    // OpenAI option may be disabled if the server has no key configured —
+    // OpenAI option may be disabled if the server has no key configured,
     // we still verify it renders. We try to select it; if disabled, the
     // disclosure won't appear and that's expected.
     const select = page.locator("select#provider");

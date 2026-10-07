@@ -26,7 +26,7 @@ async def test_login_throttled_after_limit(
     attacker = await make_client()
     for _ in range(3):
         assert await _login(attacker, "admin@example.com", "wrong-pw") == 401
-    # The budget is spent — further attempts are refused generically with 429,
+    # The budget is spent, further attempts are refused generically with 429,
     # even a would-be correct one.
     r = await attacker.post("/api/v1/auth/login", json=WRONG)
     assert r.status_code == 429
@@ -43,7 +43,7 @@ async def test_throttle_is_generic_for_unknown_email(
     first_client: AsyncClient, make_client: Any, monkeypatch: Any
 ) -> None:
     # An email that names no account throttles on the SAME schedule and with the
-    # SAME status codes as a real one — so the throttle reveals nothing about
+    # SAME status codes as a real one, so the throttle reveals nothing about
     # whether the account exists.
     monkeypatch.setattr(settings, "auth_throttle_max_attempts", 3)
     c = await make_client()
@@ -67,7 +67,7 @@ async def test_throttle_is_per_identifier(
     for _ in range(3):
         assert await _login(c, "victim@example.com", "wrong") == 401
     assert await _login(c, "victim@example.com", "wrong") == 429
-    # A DIFFERENT identifier is unaffected — one user's failures can't lock out
+    # A DIFFERENT identifier is unaffected, one user's failures can't lock out
     # everyone.
     assert await _login(c, "someone-else@example.com", "wrong") == 401
 
@@ -78,7 +78,7 @@ async def test_successful_login_resets_counter(
 ) -> None:
     monkeypatch.setattr(settings, "auth_throttle_max_attempts", 3)
     c = await make_client()
-    # Two failures — still under the limit.
+    # Two failures, still under the limit.
     for _ in range(2):
         assert await _login(c, "admin@example.com", "wrong-pw") == 401
     # A success clears the counter.
@@ -162,7 +162,7 @@ async def test_record_attempt_sets_ttl_from_window(fake_redis: Any) -> None:
 async def test_per_ip_ceiling_engages_regardless_of_identifier(
     first_client: AsyncClient, make_client: Any, monkeypatch: Any
 ) -> None:
-    # A single address is capped even when it varies the email on every attempt —
+    # A single address is capped even when it varies the email on every attempt,
     # proving it is the ADDRESS being throttled, not the identifier (so the
     # per-identifier throttle, which such an attacker sidesteps, never fires).
     monkeypatch.setattr(settings, "auth_ip_throttle_max_attempts", 3)
@@ -249,7 +249,7 @@ async def test_per_ip_ceiling_counts_successful_logins_too(
     first_client: AsyncClient, make_client: Any, monkeypatch: Any
 ) -> None:
     # Unlike the per-identifier failure throttle, the per-IP ceiling caps
-    # expensive WORK — so it counts successes and a success does not refund the
+    # expensive WORK, so it counts successes and a success does not refund the
     # budget. Two good logins from one address then a third trips a limit of 2.
     monkeypatch.setattr(settings, "auth_ip_throttle_max_attempts", 2)
     ip = {"X-Real-IP": "203.0.113.30"}

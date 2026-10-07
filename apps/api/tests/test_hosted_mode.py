@@ -132,7 +132,7 @@ async def test_transcribe_rejects_provider_override_in_hosted_mode(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The provider decides whose compute runs and where the audio goes, so it
-    is gated exactly like the model — even with no model in the request."""
+    is gated exactly like the model, even with no model in the request."""
     calls = _stub_celery(monkeypatch)
     monkeypatch.setattr(settings, "hosted_mode", True)
     monkeypatch.setattr(settings, "transcription_provider", "local")

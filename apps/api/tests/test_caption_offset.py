@@ -57,7 +57,7 @@ _TRANSCRIPT: dict[str, Any] = {
 
 class TestApplyCaptionOffset:
     def test_zero_offset_returns_same_object(self) -> None:
-        """offset 0 is the identity — same object, so hashing is byte-identical."""
+        """offset 0 is the identity: same object, so hashing is byte-identical."""
         assert apply_caption_offset(_TRANSCRIPT, 0) is _TRANSCRIPT
 
     def test_positive_offset_delays_captions(self) -> None:
@@ -264,7 +264,7 @@ async def test_offset_changes_export_readiness_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Every format's content-addressed readiness key must change with the
-    offset — proving the offset reaches the readiness/cache path, not just the
+    offset, proving the offset reaches the readiness/cache path, not just the
     render task."""
     from app.storage import s3
 

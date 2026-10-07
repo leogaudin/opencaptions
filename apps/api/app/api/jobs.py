@@ -1,4 +1,4 @@
-"""/api/v1/jobs router — get + cancel + internal progress callback."""
+"""/api/v1/jobs router: get + cancel + internal progress callback."""
 
 from __future__ import annotations
 
@@ -68,14 +68,14 @@ async def report_progress(
     """Internal endpoint: the engine posts intermediate progress.
 
     Authorized by a per-job token (require_job_token / X-Job-Token header), NOT a
-    user session — the engine is a service, and a static shared secret would
+    user session, the engine is a service, and a static shared secret would
     ship the same weak credential to every install. Updates the job row in
     Postgres and broadcasts on the project's pub/sub channel so the WebSocket
     subscribers see the progress bar advance.
     """
     job = await session.get(Job, job_id)
     if job is None:
-        # Idempotent — the engine might race with a cancellation/cleanup.
+        # Idempotent, the engine might race with a cancellation/cleanup.
         return
     if job.status in {"completed", "failed", "cancelled"}:
         return

@@ -1,11 +1,11 @@
-"""OpenAIWhisperProvider — calls api.openai.com /v1/audio/transcriptions (BYOA path).
+"""OpenAIWhisperProvider: calls api.openai.com /v1/audio/transcriptions (BYOA path).
 
 The API enforces a 25 MB file ceiling, so we expect the audio service layer to
 have already produced a 16 kHz mono WAV. If that is still over the limit, we
 re-encode to opus@32 kbps in a temp file (~10× smaller for speech) before upload.
 
 Privacy: audio leaves the machine, so the UI MUST display a disclosure when this provider
-is selected. The provider itself does not enforce that — the UI is responsible.
+is selected. The provider itself does not enforce that, the UI is responsible.
 """
 
 from __future__ import annotations
@@ -106,9 +106,7 @@ class OpenAIWhisperProvider(TranscriptionProvider):
             return audio_path
 
         if on_progress:
-            on_progress(
-                0.05, f"Audio is {size / 1024 / 1024:.1f} MB — re-encoding for OpenAI limit"
-            )
+            on_progress(0.05, f"Audio is {size / 1024 / 1024:.1f} MB, re-encoding for OpenAI limit")
         out_path = str(Path(tempfile.gettempdir()) / f"opencaptions-{uuid4().hex}.ogg")
         cmd = [
             "ffmpeg",
@@ -150,7 +148,7 @@ class OpenAIWhisperProvider(TranscriptionProvider):
         segments_raw: list[dict[str, Any]] = payload.get("segments") or []
         duration = float(payload.get("duration") or 0.0)
         detected_lang = payload.get("language") or "en"
-        # OpenAI returns "english" — collapse to ISO 639-1 best-effort.
+        # OpenAI returns "english", collapse to ISO 639-1 best-effort.
         detected_lang = _normalize_language(detected_lang)
 
         # Build Word objects from the flat word list.

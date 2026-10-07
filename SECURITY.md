@@ -3,7 +3,7 @@
 ## Supported versions
 
 OpenCaptions is pre-1.0 and under active development. Only the **latest
-released version** receives security fixes — there are no backports to older
+released version** receives security fixes, there are no backports to older
 tags, and unreleased commits on `main` are not covered.
 
 | Version         | Supported |
@@ -22,7 +22,7 @@ Report privately through GitHub's private vulnerability reporting:
 
 This is a single-maintainer project, so triage is best-effort. You will get an
 acknowledgement when the report is picked up and a follow-up when a fix or
-mitigation ships. Coordinated disclosure is appreciated — please give a fix a
+mitigation ships. Coordinated disclosure is appreciated, please give a fix a
 chance to land before publishing details.
 
 ## Scope
@@ -54,6 +54,6 @@ If a user forgets their password, recovery depends on whether SMTP is configured
 (see the `SMTP_*` variables in the env examples). With SMTP set up, self-service
 reset is offered from the login page: request a link by email, set a new
 password, and every existing session for that account is revoked. Without SMTP
-the flow is not offered at all — and no reset link or token is ever written to a
-log — so recovery is the host operation `scripts/reset_password.py` (run inside
+the flow is not offered at all, and no reset link or token is ever written to a
+log, so recovery is the host operation `scripts/reset_password.py` (run inside
 the `api` container).

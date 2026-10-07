@@ -2,7 +2,7 @@
  * UploadPage: drop a video, pick provider, show a privacy disclosure when audio leaves the machine.
  *
  * Two-mode input: "Upload file" (local file via dropzone) or "From URL"
- * (direct link to a video file — page links like YouTube are NOT supported).
+ * (direct link to a video file: page links like YouTube are NOT supported).
  *
  * After upload + transcription kickoff, navigate to the editor.
  */
@@ -141,7 +141,7 @@ export function UploadPage() {
           </button>
         </div>
 
-        {/* File drop zone (shown in file mode) — shared with the home empty state */}
+        {/* File drop zone (shown in file mode), shared with the home empty state */}
         {mode === "file" && (
           <VideoDropzone
             onFile={onPickFile}
@@ -208,12 +208,12 @@ export function UploadPage() {
             >
               <option value="local">Local (faster-whisper, no upload)</option>
               <option value="openai" disabled={!openaiConfigured}>
-                OpenAI Whisper API{!openaiConfigured && " — set OPENAI_API_KEY first"}
+                OpenAI Whisper API{!openaiConfigured && ", set OPENAI_API_KEY first"}
               </option>
               <option value="opencaptions" disabled={!remoteConfigured}>
                 {remoteConfigured
                   ? `Another OpenCaptions server (${remoteHost})`
-                  : "Another OpenCaptions server — set TRANSCRIPTION_REMOTE_URL first"}
+                  : "Another OpenCaptions server, set TRANSCRIPTION_REMOTE_URL first"}
               </option>
             </select>
             {provider !== "local" && <PrivacyDisclosure provider={provider} host={remoteHost} />}

@@ -93,6 +93,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var panning = false
     private var pinching = false
     private var pinchRecogniser: UIPinchGestureRecognizer?
+    /// Where the dragging finger last was, relative to where it went down, while it was alone.
+    private var lastTravel = CGPoint.zero
     private var waitingForFingers = false
     private var pinchStartSize = 0
     /// Committed, and waiting for the engine to draw the caption where it now is, to let go of the layer.
@@ -380,6 +382,10 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    private func secondFingerDown(_ pan: UIPanGestureRecognizer) -> Bool {
+        pan.numberOfTouches > 1 || (pinchRecogniser?.numberOfTouches ?? 0) > 1
+    }
+
     /// How far the finger has gone since it went down.
     private func travelled(_ g: UIPanGestureRecognizer) -> CGPoint {
         guard let down = touchDown?.point else { return g.translation(in: self) }
@@ -403,13 +409,18 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             }
             if awaitingScene { clearLive() }
             panning = true
+            lastTravel = .zero
             dragStart = (style.positionX, style.positionY)
         case .changed:
-            guard panning, let start = dragStart else { return }
-            follow(translation: travelled(g), from: start, final: false)
+            // With a second finger down the pan's location is between the two, which is where the
+            // pinch is, not where the caption was taken: the caption would jump there.
+            guard panning, let start = dragStart, !secondFingerDown(g) else { return }
+            lastTravel = travelled(g)
+            follow(translation: lastTravel, from: start, final: false)
         case .ended:
             guard panning, let start = dragStart else { return }
-            follow(translation: travelled(g), from: start, final: true)
+            // A drag that ends because a second finger landed ends where the first finger was.
+            follow(translation: secondFingerDown(g) ? lastTravel : travelled(g), from: start, final: true)
         default:
             // Cancelled (a second finger joined, which pinches) or failed: what was reached stands.
             if panning {

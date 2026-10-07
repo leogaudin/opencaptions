@@ -28,7 +28,7 @@ class TestLanguageRegistry:
         assert len(codes) == len(set(codes))
 
     def test_no_auto_entry(self) -> None:
-        """'auto' is a mode, not a language — must not appear in the registry."""
+        """'auto' is a mode, not a language, must not appear in the registry."""
         assert "auto" not in LANGUAGE_CODES
         for lang in LANGUAGES:
             assert lang.code != "auto"
@@ -62,7 +62,7 @@ class TestIsValidLanguage:
         assert is_valid_language("zh") is True
 
     def test_rejects_auto(self) -> None:
-        """is_valid_language does NOT accept 'auto' — callers check that separately."""
+        """is_valid_language does NOT accept 'auto': callers check that separately."""
         assert is_valid_language("auto") is False
 
     def test_rejects_unknown_code(self) -> None:

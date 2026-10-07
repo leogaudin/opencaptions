@@ -55,7 +55,7 @@ class AuthStatus(BaseModel):
     """Unauthenticated bootstrap probe for the SPA (GET /auth/status)."""
 
     setup_required: bool = Field(
-        description="True when no account exists yet — the SPA should offer first-run signup."
+        description="True when no account exists yet, the SPA should offer first-run signup."
     )
     registration_enabled: bool = Field(
         description="Whether self-service signup is allowed beyond the first account."
@@ -68,7 +68,7 @@ class AuthStatus(BaseModel):
     reset_available: bool = Field(
         description="Whether self-service password reset is available (SMTP is configured). "
         "When false the SPA hides the flow and recovery is the host CLI script. Reveals no "
-        "SMTP settings — only this boolean."
+        "SMTP settings, only this boolean."
     )
 
 
@@ -109,7 +109,7 @@ class AuthResponse(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    """POST /auth/password-reset body — request a reset link by email."""
+    """POST /auth/password-reset body: request a reset link by email."""
 
     email: str = Field(min_length=3, max_length=320)
 
@@ -205,7 +205,7 @@ class ProjectStatus(BaseModel):
         "fixed audio track; does not re-transcribe.",
     )
     video_storage_key: str | None = None
-    # rendered_storage_key and rendered_at removed — render cache is now
+    # rendered_storage_key and rendered_at removed, render cache is now
     # content-addressed in storage; freshness is a HEAD request, not a DB column.
     # Source-video metadata, probed at upload.
     video_width: int | None = None
@@ -284,7 +284,7 @@ class RenderOptions(BaseModel):
 
 
 class RenderRequest(RenderOptions):
-    """POST /projects/{id}/download body — request a render in a specific format."""
+    """POST /projects/{id}/download body: request a render in a specific format."""
 
     format: str = Field(description="Format id from the format registry (mp4, mp4-hevc, webm, mov)")
 
@@ -358,7 +358,7 @@ class ModelOption(BaseModel):
     id: str = Field(description="faster-whisper model identifier (e.g. large-v3-turbo)")
     label: str = Field(description="Human-readable label")
     note: str = Field(
-        description="Size/speed tradeoff hint — a bigger model means a larger "
+        description="Size/speed tradeoff hint, a bigger model means a larger "
         "first-run download and slower CPU transcription."
     )
 
@@ -419,12 +419,12 @@ class TranscriptionSettings(BaseModel):
     )
     openai_configured: bool = Field(
         description="Whether an OpenAI API key is configured, i.e. whether the OpenAI "
-        "provider can be chosen. The key itself is never exposed — only this boolean. "
+        "provider can be chosen. The key itself is never exposed, only this boolean. "
         "Always false in hosted mode, where the provider is fixed and not selectable."
     )
     supported_languages: list[LanguageOption] = Field(
         description="Languages the transcription engine supports, sorted by label. "
-        "Does not include 'auto' — that is a mode, not a language."
+        "Does not include 'auto', that is a mode, not a language."
     )
     available_models: list[ModelOption] = Field(
         description="Local Whisper model sizes faster-whisper accepts, in ascending-size "
@@ -604,7 +604,7 @@ _409_EMAIL_TAKEN = _err(409, "Email already registered (`error: email_taken`)")
 _429_RATE_LIMITED = _err(429, "Too many attempts; try again later (`error: rate_limited`)")
 
 _404_RESET_UNAVAILABLE = _err(
-    404, "Password reset is not available — SMTP is not configured (`error: reset_unavailable`)"
+    404, "Password reset is not available. SMTP is not configured (`error: reset_unavailable`)"
 )
 
 _400_INVALID_RESET_TOKEN = _err(

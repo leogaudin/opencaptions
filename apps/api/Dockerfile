@@ -1,4 +1,4 @@
-# OpenCaptions API — multi-stage Dockerfile
+# OpenCaptions API, multi-stage Dockerfile
 # Builder + runtime separation; final image ~600 MB with ffmpeg + Python deps.
 # GPU target adds CUDA runtime wheels (~4 GB).
 
@@ -48,7 +48,7 @@ RUN uv pip install --python /app/.venv/bin/python \
     "nvidia-cublas-cu12>=12.4" \
     "nvidia-cudnn-cu12>=9.1"
 
-# ===== Runtime (GPU) — named target for docker-compose.gpu.yml =====
+# ===== Runtime (GPU), named target for docker-compose.gpu.yml =====
 # Inherits from the CPU runtime base but copies the venv from builder-gpu,
 # which includes nvidia-cublas-cu12 and nvidia-cudnn-cu12 wheels.
 # LD_LIBRARY_PATH points the dynamic linker at the nvidia wheel shared objects
@@ -80,7 +80,7 @@ EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-# ===== Runtime (CPU — default) =====
+# ===== Runtime (CPU, default) =====
 # This is the LAST stage so `docker build` without --target produces the CPU image.
 FROM python:3.14-slim AS runtime
 

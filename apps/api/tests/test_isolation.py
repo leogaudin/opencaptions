@@ -1,7 +1,7 @@
 """Cross-user isolation: user B must never reach user A's project.
 
 Every id-addressed route funnels through get_owned_project / get_owned_job, so a
-project the caller does not own is a 404 — never 403 (which would disclose the id
+project the caller does not own is a 404, never 403 (which would disclose the id
 exists) and never 200.
 """
 

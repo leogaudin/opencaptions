@@ -48,7 +48,7 @@ export function EditorPage() {
   useProjectWebSocket(projectId, (msg) => {
     if (msg.type === "job_progress" || msg.type === "job_started") {
       // Resolve job type defensively: a job_progress event without a stage field
-      // must not be re-bucketed as transcription — prefer the stage the backend
+      // must not be re-bucketed as transcription, prefer the stage the backend
       // sent, then the type already known for this job, then fall back.
       const jobId = String(msg.payload.job_id);
       const existingJob = useEditorStore.getState().jobs.find((j) => j.id === jobId);

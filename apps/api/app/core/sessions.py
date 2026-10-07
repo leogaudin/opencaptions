@@ -3,7 +3,7 @@
 Why server-side (rather than a signed client-side cookie / Starlette's
 SessionMiddleware): the session id is an opaque cryptographically-random token,
 and all state lives in Redis keyed by that id. That means a session can be
-revoked instantly — logout REALLY logs out — and there is no signing secret to
+revoked instantly, logout REALLY logs out, and there is no signing secret to
 generate or persist. A signed client cookie cannot be revoked per-session.
 
 Each session carries a per-session CSRF token, returned to the SPA by

@@ -5,7 +5,7 @@
  *
  * Continuous controls (colours, most sliders) route through a rAF-throttled
  * setter so dragging re-lays out the preview at most once a frame.
- * Discrete controls dispatch immediately — there is nothing to coalesce.
+ * Discrete controls dispatch immediately: there is nothing to coalesce.
  */
 
 import { Clock, PenLine, Sparkles, Square, Type, Wand2 } from "lucide-react";

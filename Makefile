@@ -1,4 +1,4 @@
-# OpenCaptions — lifecycle targets. Run `make` for the list.
+# OpenCaptions, lifecycle targets. Run `make` for the list.
 # Plain `docker compose` works too: every stack target is a thin alias.
 
 API         := cd apps/api && uv run

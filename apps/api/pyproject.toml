@@ -1,7 +1,7 @@
 [project]
 name = "opencaptions-api"
 version = "0.1.0"
-description = "OpenCaptions backend — FastAPI + Celery + faster-whisper"
+description = "OpenCaptions backend. FastAPI + Celery + faster-whisper"
 license = { text = "AGPL-3.0-only" }
 authors = [{ name = "Leo Gaudin" }]
 readme = "README.md"
@@ -32,7 +32,7 @@ dependencies = [
 gpu = [
     # CUDA 12 runtime libraries for CTranslate2 4.x GPU inference.
     # These pip wheels provide cublas and cuDNN shared objects under
-    # site-packages/nvidia/*/lib/ — LD_LIBRARY_PATH must point there.
+    # site-packages/nvidia/*/lib/. LD_LIBRARY_PATH must point there.
     "nvidia-cublas-cu12>=12.4",
     "nvidia-cudnn-cu12>=9.1",
 ]
@@ -43,7 +43,7 @@ dev = [
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",
     # Test-only: in-memory DB + fake Redis so auth/session/isolation tests run
-    # without Postgres or a live Redis (the production code path is unchanged —
+    # without Postgres or a live Redis (the production code path is unchanged,
     # tests swap the client, not the logic).
     "aiosqlite>=0.20",
     "fakeredis>=2.26",

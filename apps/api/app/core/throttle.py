@@ -58,5 +58,5 @@ async def record_attempt(scope: str, identifier: str, *, window_s: int) -> int:
 
 
 async def reset(scope: str, identifier: str) -> None:
-    """Clear the counter for an identifier — called after a successful auth."""
+    """Clear the counter for an identifier: called after a successful auth."""
     await get_redis().delete(_key(scope, identifier))

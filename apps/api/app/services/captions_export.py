@@ -13,7 +13,7 @@ from app.models.schemas import Transcript
 def to_srt(transcript: Transcript) -> str:
     """Return a SubRip (.srt) document for the given transcript.
 
-    One cue per segment. Word timing is dropped — most players don't honor
+    One cue per segment. Word timing is dropped, most players don't honor
     word-level timestamps in SRT, and the rendered MP4 already has them baked in.
     """
     lines: list[str] = []

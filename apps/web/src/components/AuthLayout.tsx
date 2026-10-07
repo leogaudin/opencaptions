@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
  * OpenCaptions wordmark, a title/subtitle, the form slot and an optional footer.
  *
  * Theme tokens only. The wordmark reuses the header's intentional monochrome
- * "burned-in subtitle cue" treatment — pure black/white that flips with dark
+ * "burned-in subtitle cue" treatment: pure black/white that flips with dark
  * mode, so it stays visible in both themes (this is the one deliberate
  * hardcoded-colour exception already established in App.tsx).
  */

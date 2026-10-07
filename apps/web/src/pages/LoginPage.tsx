@@ -1,7 +1,7 @@
 /**
  * Login screen. Shares layout + validation with the signup screen.
  *
- * Failure is surfaced GENERICALLY — never revealing whether the email exists.
+ * Failure is surfaced GENERICALLY: never revealing whether the email exists.
  * On success, phase flips to "authenticated" and the RedirectIfAuthenticated
  * guard wrapping this page navigates to the intended destination.
  */
@@ -32,7 +32,7 @@ export function LoginPage() {
     emailRef.current?.focus();
   }, []);
 
-  // On a first-run instance there is no account to sign into — send them to signup.
+  // On a first-run instance there is no account to sign into, send them to signup.
   if (setupRequired) {
     return <Navigate to="/signup" replace state={location.state} />;
   }

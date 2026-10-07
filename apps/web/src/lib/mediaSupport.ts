@@ -2,7 +2,7 @@
  * Playback-capability detection for the preview.
  *
  * A browser can be unable to PLAY a video the user can still download and open
- * elsewhere — WebM on Apple platforms is the sharp case. So a negative verdict
+ * elsewhere. WebM on Apple platforms is the sharp case. So a negative verdict
  * must offer the download rather than present the video as broken, and an
  * absent or throwing API must never block playback.
  */
@@ -15,7 +15,7 @@ export interface CodecQuery {
   videoCodec: string;
   /**
    * Audio codec string, e.g. "opus", "vorbis", "mp4a.40.2". Optional, but
-   * strongly recommended — the audio track is the WebM-on-Safari failure mode.
+   * strongly recommended: the audio track is the WebM-on-Safari failure mode.
    */
   audioCodec?: string;
 }
@@ -52,12 +52,12 @@ export async function probePlaybackSupport(query: CodecQuery): Promise<PlaybackS
       const info = await caps.decodingInfo(config);
       return info.supported ? "supported" : "unsupported";
     } catch {
-      // decodingInfo rejects on a malformed configuration — fall through to the
+      // decodingInfo rejects on a malformed configuration, fall through to the
       // canPlayType fallback rather than treating that as "unsupported".
     }
   }
 
-  // Fallback: canPlayType. Unreliable (see file header) — used only when Media
+  // Fallback: canPlayType. Unreliable (see file header), used only when Media
   // Capabilities is absent. "" is a definite no; "maybe"/"probably" a weak yes.
   if (typeof document !== "undefined") {
     const verdict = document.createElement("video").canPlayType(videoContentType(query));

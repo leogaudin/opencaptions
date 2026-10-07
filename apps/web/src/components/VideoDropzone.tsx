@@ -27,7 +27,7 @@ interface VideoDropzoneProps {
  * root is focusable and opens the file picker on Enter/Space, so the click
  * fallback works without a mouse. Non-video files are rejected via `accept`.
  *
- * Presentation only — the caller decides what to do with the file. Used by both
+ * Presentation only: the caller decides what to do with the file. Used by both
  * the /upload form and the home empty state so their affordances stay identical.
  */
 export function VideoDropzone({

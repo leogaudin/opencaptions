@@ -1,4 +1,4 @@
-"""Alembic environment — async-aware, reads DATABASE_URL from app settings."""
+"""Alembic environment: async-aware, reads DATABASE_URL from app settings."""
 
 import asyncio
 from logging.config import fileConfig

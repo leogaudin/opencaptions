@@ -132,7 +132,7 @@ def render_video(  # noqa: C901
             "progress_url": f"http://api:8000/api/v1/jobs/{job_id}/progress",
             # Per-job token authorizing that callback: the engine is a service
             # (no user session), and this avoids a shared static secret. Scoped
-            # to this one job and short-lived — see app.core.job_tokens.
+            # to this one job and short-lived, see app.core.job_tokens.
             "progress_token": mint_job_token(job_id),
         }
 
@@ -152,7 +152,7 @@ def render_video(  # noqa: C901
             rendered_key,
         )
 
-        # Step 5: PRUNE stale renders — delete any object under
+        # Step 5: PRUNE stale renders, delete any object under
         # projects/{id}/renders/ that has the SAME format extension but a
         # different hash. This prevents unbounded storage growth as users
         # iterate on their transcript/style.
@@ -163,7 +163,7 @@ def render_video(  # noqa: C901
                 logger.info("pruning stale render: %s", key)
                 s3.delete_object(key)
 
-        # Mark project status as done (no rendered_storage_key column — the
+        # Mark project status as done (no rendered_storage_key column, the
         # content-addressed object in storage IS the source of truth).
         with session_local() as session:
             project = session.get(Project, UUID(project_id))

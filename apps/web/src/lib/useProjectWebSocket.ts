@@ -1,5 +1,5 @@
 /**
- * useProjectWebSocket — subscribe to /ws/v1/projects/{id} and surface messages.
+ * useProjectWebSocket: subscribe to /ws/v1/projects/{id} and surface messages.
  *
  * The hook auto-reconnects with exponential backoff (max 10s).
  * Caller passes a handler invoked for every message except `ping`.

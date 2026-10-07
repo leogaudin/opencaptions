@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 # Constants
 
-# Maximum redirect hops to follow — keeps an attacker from bouncing through
+# Maximum redirect hops to follow, keeps an attacker from bouncing through
 # many public hosts before landing on an internal one.
 _MAX_REDIRECTS = 5
 
 # Status codes treated as redirects when following hops manually.
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
-# Download chunk size (256 KiB) — balances memory usage against syscall count.
+# Download chunk size (256 KiB), balances memory usage against syscall count.
 _CHUNK_SIZE = 256 * 1024
 
 # Connect + read timeouts (seconds).
@@ -87,7 +87,7 @@ def _is_ip_allowed(ip_str: str) -> bool:
     except ValueError:
         return False
 
-    # Check the env-driven allowlist first — self-hosters may explicitly
+    # Check the env-driven allowlist first, self-hosters may explicitly
     # permit specific private IPs (e.g., a LAN NAS hosting videos).
     if settings.ssrf_allowed_hosts:
         allowed = {h.strip() for h in settings.ssrf_allowed_hosts.split(",") if h.strip()}
@@ -105,7 +105,7 @@ def validate_url(url: str) -> str:
     # Only http and https schemes are allowed.
     if parsed.scheme not in ("http", "https"):
         raise UnsafeURLError(
-            f"Unsupported URL scheme '{parsed.scheme}' — only http and https are allowed"
+            f"Unsupported URL scheme '{parsed.scheme}', only http and https are allowed"
         )
 
     hostname = parsed.hostname
@@ -134,7 +134,7 @@ def validate_url(url: str) -> str:
         ip_str = str(sockaddr[0])
         if not _is_ip_allowed(ip_str):
             raise UnsafeURLError(
-                f"URL resolves to non-public address {ip_str} — "
+                f"URL resolves to non-public address {ip_str}, "
                 "requests to private/loopback/link-local networks are blocked"
             )
 
@@ -259,7 +259,7 @@ def _resolve_final_url(url: str) -> str:
 
             response.close()
             if hop >= _MAX_REDIRECTS:
-                raise FetchFailedError(f"Too many redirects ({hop + 1}) — aborting")
+                raise FetchFailedError(f"Too many redirects ({hop + 1}), aborting")
             location = response.headers.get("location")
             if not location:
                 raise FetchFailedError("Redirect response missing Location header")
@@ -271,7 +271,7 @@ def _resolve_final_url(url: str) -> str:
             except UnsafeURLError as e:
                 raise UnsafeURLError(f"Redirect to disallowed address: {e}") from e
 
-    raise FetchFailedError("Too many redirects — aborting")
+    raise FetchFailedError("Too many redirects, aborting")
 
 
 def _validate_media_headers(response: httpx.Response, url: str, max_bytes: int) -> str:
@@ -285,7 +285,7 @@ def _validate_media_headers(response: httpx.Response, url: str, max_bytes: int) 
         try:
             declared_size = int(content_length)
         except ValueError:
-            pass  # Malformed Content-Length — enforce during streaming instead.
+            pass  # Malformed Content-Length, enforce during streaming instead.
         else:
             if declared_size > max_bytes:
                 raise FileTooLargeError(
@@ -324,7 +324,7 @@ def _stream_to_tempfile(response: httpx.Response, extension: str, max_bytes: int
 def fetch_video_to_tempfile(url: str) -> tuple[str, str]:
     """Download a URL to a temp file, returning (path, extension).
 
-    BLOCKING — call via asyncio.to_thread. Raises UnsafeURLError,
+    BLOCKING, call via asyncio.to_thread. Raises UnsafeURLError,
     FetchFailedError, UnsupportedMediaError or FileTooLargeError.
     """
     validate_url(url)

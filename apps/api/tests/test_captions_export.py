@@ -111,7 +111,7 @@ def test_srt_timestamp_carries_past_minutes_and_hours() -> None:
     """A rounded-up millisecond must carry all the way, not leave 60 in a field.
 
     Splitting into h/m/s before rounding the milliseconds let the carry stop at
-    seconds, emitting `00:00:60,000` — which is not a valid SRT timestamp.
+    seconds, emitting `00:00:60,000`, which is not a valid SRT timestamp.
     """
     t = Transcript(
         schema_version=1,

@@ -1,4 +1,4 @@
-"""/api/v1/projects router — CRUD + transcribe + render endpoints."""
+"""/api/v1/projects router. CRUD + transcribe + render endpoints."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ async def list_projects(
 ) -> ProjectList:
     """Paginated project list for the current user, newest first.
 
-    Scoped to the caller's own projects — never lists other users' projects.
+    Scoped to the caller's own projects, never lists other users' projects.
     """
     offset = (page - 1) * per_page
     rows = (
@@ -142,7 +142,7 @@ async def _ingest_video(
     key = f"projects/{project.id}/source{extension}"
     project.video_size_bytes = os.path.getsize(tmp_path)
 
-    # Probe before upload — best-effort, never fail the upload over it.
+    # Probe before upload, best-effort, never fail the upload over it.
     try:
         meta = await asyncio.to_thread(probe_video_metadata, tmp_path)
         project.video_width = meta["width"]
@@ -171,7 +171,7 @@ async def _ingest_video(
     project.video_storage_key = key
 
     # Generate a poster frame while the file is still local. Best-effort only:
-    # see _generate_and_store_thumbnail — a failed thumbnail must never break
+    # see _generate_and_store_thumbnail, a failed thumbnail must never break
     # the upload.
     await _generate_and_store_thumbnail(project, tmp_path)
 
@@ -198,7 +198,7 @@ async def _generate_and_store_thumbnail(project: Project, video_path: str) -> No
             s3.upload_file, f"projects/{project.id}/thumbnail.jpg", thumb_path, "image/jpeg"
         )
     except Exception as e:  # noqa: BLE001
-        # Never fatal — a missing thumbnail is cosmetic, a lost video is not.
+        # Never fatal, a missing thumbnail is cosmetic, a lost video is not.
         _log.warning("thumbnail generation skipped for project %s: %s", project.id, e)
     finally:
         with contextlib.suppress(OSError):
@@ -270,11 +270,11 @@ async def _ingest_remote_url(project: Project, video_url: str) -> None:
         status_code, error = next(
             (code, name) for exc, code, name in error_map if isinstance(e, exc)
         )
-        logger.warning("video_url rejected (%s): %s — %s", error, url, e)
+        logger.warning("video_url rejected (%s): %s, %s", error, url, e)
         raise http_error(status_code, error, str(e)) from e
 
     try:
-        # Content-Type is not reliably known from the remote — pass None and
+        # Content-Type is not reliably known from the remote, pass None and
         # let storage default to application/octet-stream.
         await _ingest_video(project, tmp_path, ext, None)
     finally:
@@ -348,7 +348,7 @@ async def update_project(
     body: ProjectUpdate,
     session: Annotated[AsyncSession, Depends(db_session)],
 ) -> ProjectStatus:
-    """Partial update — set title, transcript, style_config, or caption offset independently."""
+    """Partial update: set title, transcript, style_config, or caption offset independently."""
     if body.title is not None:
         proj.title = body.title
     if body.transcript is not None:
@@ -467,7 +467,7 @@ async def start_transcription(
     responses={
         202: {
             "model": DownloadResponse,
-            "description": "Render job queued — `ready` is false, `job_id` is populated",
+            "description": "Render job queued, `ready` is false, `job_id` is populated",
         },
         **_404_PROJECT,
         **_400_UNKNOWN_FORMAT,
@@ -553,7 +553,7 @@ async def request_download(
                 content=DownloadResponse(ready=False, job_id=str(existing_job.id)).model_dump(),
             )
 
-    # Only where a NEW render is enqueued — not on a cache hit or a dedup, where
+    # Only where a NEW render is enqueued, not on a cache hit or a dedup, where
     # no fresh work begins.
     from app.services.entitlements import KIND_RENDER, resolve_policy
 
@@ -630,7 +630,7 @@ async def download_render(
         raise http_error(404, "unknown_format", f"Unknown format '{format_id}'")
 
     if proj.transcript is None:
-        raise http_error(404, "not_rendered", "No transcript — cannot have a render")
+        raise http_error(404, "not_rendered", "No transcript, cannot have a render")
 
     render_hash = resolve_render_inputs(proj, options).hash_for(fmt.id)
 

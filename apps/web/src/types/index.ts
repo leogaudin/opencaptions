@@ -7,7 +7,7 @@ import presets from "@/lib/presets.json";
 import type { components } from "./api.generated";
 
 // Codegen emits nullable fields as optional, but the API always sends them as
-// explicit null — so make them required-but-nullable and drop the `?` guards.
+// explicit null, so make them required-but-nullable and drop the `?` guards.
 /**
  * Given a type T, returns the same type but with every optional property
  * made required (preserving its `| null` union if present).

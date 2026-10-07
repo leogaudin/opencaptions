@@ -1,4 +1,4 @@
-"""LocalWhisperProvider — runs faster-whisper in-process on CPU or GPU.
+"""LocalWhisperProvider: runs faster-whisper in-process on CPU or GPU.
 
 Loads the model once per worker process (lazy), reuses for subsequent jobs.
 Reports progress via the supplied callback as segments stream in.
@@ -40,7 +40,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             compute_result = resolve_compute_type()
             device = device_result.resolved
             compute_type = compute_result.resolved
-            # faster-whisper expects 'cuda' or 'cpu', not 'cuda:0' — normalize.
+            # faster-whisper expects 'cuda' or 'cpu', not 'cuda:0', normalize.
             fw_device = "cuda" if device.startswith("cuda") else "cpu"
             device_index = 0
             if device.startswith("cuda:"):
@@ -75,7 +75,7 @@ class LocalWhisperProvider(TranscriptionProvider):
                 local_files_only=True,
                 cache_dir=settings_resolve_model_dir(),
             )
-        except Exception:  # noqa: BLE001 — any failure to resolve locally means not cached
+        except Exception:  # noqa: BLE001, any failure to resolve locally means not cached
             return False
         return True
 
@@ -102,7 +102,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             no_speech_threshold=settings.whisper_no_speech_threshold,
             beam_size=5,
             # Whisper otherwise feeds its own previous output back as context, and
-            # once that drifts it can stay drifted — emitting near-empty output for
+            # once that drifts it can stay drifted, emitting near-empty output for
             # the rest of a long file. Off costs a little cross-sentence coherence
             # and buys back the second half of the video.
             condition_on_previous_text=False,
@@ -172,7 +172,7 @@ class LocalWhisperProvider(TranscriptionProvider):
         )
         if duration > 0 and last_word_end < duration * 0.75:
             logger.warning(
-                "transcript stops at %.1fs of %.1fs — the tail produced no words. If there is "
+                "transcript stops at %.1fs of %.1fs, the tail produced no words. If there is "
                 "speech there, try WHISPER_VAD_FILTER=false, a lower WHISPER_VAD_THRESHOLD, or a "
                 "larger model",
                 last_word_end,

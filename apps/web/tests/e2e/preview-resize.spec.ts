@@ -6,11 +6,11 @@ import { expect, test } from "@playwright/test";
  * The CaptionPreview component clamps its height to MAX_VIEWPORT_FRACTION of
  * the viewport. A previous bug caused the preview to shrink when the viewport
  * shrank (e.g. docking dev tools) but never grow back when the viewport was
- * restored — a one-directional ratchet caused by `window.innerHeight` being
+ * restored: a one-directional ratchet caused by `window.innerHeight` being
  * read during render without being tracked as state.
  *
  * This test opens the editor at a large viewport, shrinks the viewport height
- * (simulating bottom-docked dev tools), then restores it — twice — and asserts
+ * (simulating bottom-docked dev tools), then restores it, twice, and asserts
  * the preview returns to its original bounding box within ±2px each time.
  */
 test.describe("CaptionPreview resize", () => {
@@ -30,7 +30,7 @@ test.describe("CaptionPreview resize", () => {
     const resp = await page.request.get("/api/v1/projects");
     const body = await resp.json();
     const items = body.items ?? body;
-    test.skip(!items.length, "No projects available — cannot test preview resize");
+    test.skip(!items.length, "No projects available, cannot test preview resize");
     const projectId = items[0].id;
 
     await page.setViewportSize(LARGE_VP);
@@ -60,7 +60,7 @@ test.describe("CaptionPreview resize", () => {
       // The preview should have shrunk.
       expect(small!.height).toBeLessThan(large!.height);
 
-      // 3. Restore viewport — this is where the bug manifested.
+      // 3. Restore viewport, this is where the bug manifested.
       await page.setViewportSize(LARGE_VP);
       const restored = await measurePreview();
       expect(restored, `cycle ${cycle}: preview visible at restored VP`).not.toBeNull();

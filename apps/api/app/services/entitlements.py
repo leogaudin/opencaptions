@@ -5,7 +5,7 @@ to refuse before the work starts. The policy belongs to whoever operates the
 deployment; only the seam lives here.
 
 ``UnlimitedEntitlementPolicy`` is the default that keeps self-hosting unmetered.
-It looks unused — it is not, and deleting it starts denying everything.
+It looks unused, it is not, and deleting it starts denying everything.
 """
 
 from __future__ import annotations

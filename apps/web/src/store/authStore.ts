@@ -3,7 +3,7 @@
  *
  * WHY A SEPARATE STORE (not editorStore): the session is an app-lifetime,
  * cross-cutting concern, orthogonal to editing one project. editorStore is
- * `reset()` every time the editor unmounts — folding auth into it would risk
+ * `reset()` every time the editor unmounts: folding auth into it would risk
  * wiping the session on navigation, and would couple the editor's autosave
  * machinery to auth. The CSRF token itself lives in the api client's memory
  * (single source of truth, never localStorage); this store holds only the user
@@ -36,7 +36,7 @@ interface AuthState {
   register: (email: string, password: string) => Promise<void>;
   /** Log out (best-effort server call) and drop local session state. */
   logout: () => Promise<void>;
-  /** Drop local session state without a server call — used by the central 401 handler. */
+  /** Drop local session state without a server call, used by the central 401 handler. */
   clearSession: () => void;
   /** Replace the held user after the account page changes it. */
   setUser: (user: AuthUser) => void;
@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   bootstrap: async () => {
     set({ phase: "bootstrapping" });
-    // Public status first — tells us first-run vs returning, and whether open
+    // Public status first, tells us first-run vs returning, and whether open
     // registration is available. Non-fatal if it fails (backend still starting):
     // guards then fall back to the login screen rather than an infinite spinner.
     try {

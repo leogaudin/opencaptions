@@ -44,7 +44,7 @@ def test_is_ip_allowed_rejects_private_rfc1918() -> None:
 
 
 def test_is_ip_allowed_rejects_link_local() -> None:
-    """Link-local (169.254.x.x, fe80::) must be rejected — includes cloud metadata."""
+    """Link-local (169.254.x.x, fe80::) must be rejected, includes cloud metadata."""
     assert _is_ip_allowed("169.254.169.254") is False  # AWS metadata
     assert _is_ip_allowed("169.254.0.1") is False
     assert _is_ip_allowed("fe80::1") is False
@@ -178,7 +178,7 @@ def test_derive_extension_fallback_mp4() -> None:
 
 def test_derive_extension_ignores_non_video_url_extensions() -> None:
     """URL extensions that aren't video types are ignored."""
-    # .html is not a video extension — falls to Content-Type or .mp4
+    # .html is not a video extension, falls to Content-Type or .mp4
     assert derive_extension("https://example.com/page.html", "video/mp4") == ".mp4"
     assert derive_extension("https://example.com/page.html", None) == ".mp4"
 
@@ -244,7 +244,7 @@ def test_size_cap_rejects_during_streaming(
     mock_response.url = MagicMock()
     mock_response.url.join = lambda x: x
 
-    # Each chunk is 512 KB — third chunk pushes past 1 MB
+    # Each chunk is 512 KB, third chunk pushes past 1 MB
     chunk_512k = b"x" * (512 * 1024)
     mock_response.iter_bytes.return_value = iter([chunk_512k, chunk_512k, chunk_512k])
 
@@ -310,8 +310,8 @@ def test_redirect_into_private_network_is_blocked(
     The redirect is the bypass: validating only the first URL is not enough.
     """
 
-    # First call to validate_url (initial URL) — public IP, passes
-    # Second call to validate_url (redirect target) — metadata IP, blocked
+    # First call to validate_url (initial URL), public IP, passes
+    # Second call to validate_url (redirect target), metadata IP, blocked
     def gai_side_effect(hostname, *args, **kwargs):
         if hostname == "evil.com":
             return [(2, 1, 6, "", ("93.184.216.34", 443))]

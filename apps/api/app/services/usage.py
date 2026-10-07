@@ -1,7 +1,7 @@
 """Durable per-job usage records, and a reader that sums them per owner.
 
-Each job performs a countable amount of work — frames rendered, seconds
-transcribed — recorded here so an entitlement policy can read history rather
+Each job performs a countable amount of work, frames rendered, seconds
+transcribed, recorded here so an entitlement policy can read history rather
 than re-deriving it from job payloads.
 """
 

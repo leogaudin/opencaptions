@@ -1,7 +1,7 @@
 """Mailer seam: a one-method interface, a no-op default, and an SMTP sender.
 
 Password reset needs exactly one kind of email, and only when the operator has
-configured SMTP — so this is a registry and two implementations rather than a
+configured SMTP, so this is a registry and two implementations rather than a
 notification framework. Mirrors the transcription and entitlement registries.
 """
 
@@ -29,7 +29,7 @@ class Mailer(ABC):
 class NoOpMailer(Mailer):
     """The default when SMTP is unconfigured: sends nothing.
 
-    Not dead code — it is what lets the reset call site exist unchanged on a
+    Not dead code, it is what lets the reset call site exist unchanged on a
     stock install. Logs no recipient or content.
     """
 
@@ -80,8 +80,8 @@ def get_mailer(name: str) -> Mailer:
 
 def resolve_mailer() -> Mailer:
     """Return the configured mailer: SMTP when SMTP is configured, else the
-    no-op. Resolving through configuration — rather than importing a concrete
-    mailer at the call site — keeps the reset endpoint agnostic to whether email
+    no-op. Resolving through configuration, rather than importing a concrete
+    mailer at the call site, keeps the reset endpoint agnostic to whether email
     is set up."""
     return get_mailer("smtp" if settings.smtp_configured else "noop")
 

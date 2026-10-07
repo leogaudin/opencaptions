@@ -3,8 +3,8 @@
 #
 # A `${VAR:-literal}` fallback is the configuration a plain `up` receives. The
 # credentials postgres and garage bootstrap are repeated in every service that
-# connects with them, so every copy must carry the same literal — one edited copy
-# means 403s with nothing in the logs naming config — and where the variable is
+# connects with them, so every copy must carry the same literal, one edited copy
+# means 403s with nothing in the logs naming config, and where the variable is
 # also an application setting, the literal must equal its default in config.py.
 # LOG_LEVEL is exempt: Python wants INFO, pino wants info.
 #
@@ -38,7 +38,7 @@ problems="$(awk '
       k = substr(tok, 1, sep - 1)
       fb = substr(tok, sep + 2)
       if (k in seen && seen[k] != fb)
-        printf "  %s: two different fallbacks — %s and %s\n", k, seen[k], fb
+        printf "  %s: two different fallbacks, %s and %s\n", k, seen[k], fb
       seen[k] = fb
       if (k != "LOG_LEVEL" && k in code && code[k] != fb)
         printf "  %s: compose fallback %s != config.py default %s\n", k, fb, code[k]

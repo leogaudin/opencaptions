@@ -1,8 +1,8 @@
 """Poster-frame thumbnail extraction via ffmpeg.
 
 Extracts a single small JPEG poster frame from a source video. Uses the ffmpeg
-binary already present in the image (same approach as app.services.audio) — no
-extra dependency — while the uploaded file is still local on disk.
+binary already present in the image (same approach as app.services.audio), no
+extra dependency, while the uploaded file is still local on disk.
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ def extract_thumbnail(
         "-loglevel",
         "warning",
         "-ss",
-        f"{timestamp:.3f}",  # input seek (before -i) — fast even on long files
+        f"{timestamp:.3f}",  # input seek (before -i), fast even on long files
         "-i",
         str(video_path),
         "-frames:v",

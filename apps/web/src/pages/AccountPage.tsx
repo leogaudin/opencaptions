@@ -42,13 +42,13 @@ export function AccountPage() {
         <dl className="mt-3 grid grid-cols-3 gap-3" data-testid="usage">
           <Stat
             label="Transcribed"
-            value={usage ? formatSeconds(usage.transcription_seconds) : "—"}
+            value={usage ? formatSeconds(usage.transcription_seconds) : "-"}
           />
           <Stat
             label="Frames rendered"
-            value={usage ? usage.render_frames.toLocaleString() : "—"}
+            value={usage ? usage.render_frames.toLocaleString() : "-"}
           />
-          <Stat label="Projects" value={usage ? String(usage.projects) : "—"} />
+          <Stat label="Projects" value={usage ? String(usage.projects) : "-"} />
         </dl>
       </section>
 

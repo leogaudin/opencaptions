@@ -115,7 +115,7 @@ def probe_video_metadata(video_path: str | Path) -> VideoMetadata:
     """Return source-video metadata via ffprobe, as it will be displayed.
 
     Keys: width (int|None), height (int|None), fps (float|None), duration (float|None).
-    Any missing field is None — the caller should accept partial data.
+    Any missing field is None, the caller should accept partial data.
     """
     import json as _json
 
@@ -144,7 +144,7 @@ def probe_video_metadata(video_path: str | Path) -> VideoMetadata:
     width = _to_int(s0.get("width"))
     height = _to_int(s0.get("height"))
     # A quarter-turn swaps the axes. Report what will be on screen, because these
-    # dimensions drive the preview, the render geometry and the render hash — and
+    # dimensions drive the preview, the render geometry and the render hash, and
     # getting them from the stream alone shows a portrait phone clip as landscape.
     if _display_rotation(s0) in {90, 270}:
         width, height = height, width

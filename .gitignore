@@ -41,7 +41,7 @@ DerivedData/
 .env.local
 .env.*.local
 
-# Data + persistent volumes (anchored to repo root — do NOT remove the leading
+# Data + persistent volumes (anchored to repo root, do NOT remove the leading
 # slash or git will ignore any nested directory with the same name, e.g.
 # apps/api/app/models/ which holds tracked source code)
 /data/
@@ -75,7 +75,7 @@ apps/web/playwright/.auth/
 *.log
 logs/
 
-# Generated types — intentionally TRACKED (not ignored).
+# Generated types, intentionally TRACKED (not ignored).
 # The CI gate regenerates this file and diffs against the committed version,
 # so it must be checked in. Run `npm run generate-types` in apps/web (or
 # `bash scripts/generate-api-types.sh` from the repo root) to refresh it.

@@ -3,8 +3,8 @@ import { Trash2 } from "lucide-react";
  * HomePage:
  *   - Empty state: a single primary "New project" action (to the upload page,
  *     the one place that collects title/language/provider), plus a lightweight
- *     three-step explanation of the flow. No dropzone here — the only real
- *     dropzone lives on the New project page — and no bundled-sample shortcut.
+ *     three-step explanation of the flow. No dropzone here, the only real
+ *     dropzone lives on the New project page: and no bundled-sample shortcut.
  *   - With projects: a scannable list with poster thumbnails, relative "updated"
  *     time, live progress for active work, and per-row delete.
  */
@@ -83,7 +83,7 @@ export function HomePage() {
   );
 }
 
-/** The three-step flow shown under the empty-state CTA. Copy only — the steps
+/** The three-step flow shown under the empty-state CTA. Copy only, the steps
  *  are context, not actions, so they carry no icon or link of their own. */
 const FLOW_STEPS = [
   { label: "Upload", detail: "Drop or pick a video" },
@@ -109,7 +109,7 @@ function EmptyState() {
       {/* One unmistakable next action: a large, labelled button that says exactly
           where it leads (the New project page, the only place that also collects
           the title, language and provider). It intentionally repeats the header's
-          New project button — on an otherwise empty screen there is nothing else
+          New project button, on an otherwise empty screen there is nothing else
           to anchor to, unlike the populated list whose header button sits beside
           content. A labelled button, deliberately not an arrow the reader must
           decode. */}
@@ -122,7 +122,7 @@ function EmptyState() {
       </Link>
 
       {/* The 1-2-3 flow, restyled: it explains how the app works, so it must read
-          as quiet context — not three panels competing with the button above.
+          as quiet context, not three panels competing with the button above.
           The old bordered cards are gone; each step is now a small numbered badge
           with a short label, sitting well below the primary action and laid out
           left-to-right as a sequence. */}
@@ -326,7 +326,7 @@ function LiveProgress({ projectId }: { projectId: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   // Semantic status colours use light+dark pairs (matching AboutDialog's
-  // convention) so they stay legible in BOTH themes — never a single hardcoded
+  // convention) so they stay legible in BOTH themes, never a single hardcoded
   // shade that vanishes in light mode.
   const cls =
     {

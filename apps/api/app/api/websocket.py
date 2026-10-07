@@ -1,4 +1,4 @@
-"""/ws/v1/projects/{project_id} — multiplexed WebSocket for job progress.
+"""/ws/v1/projects/{project_id}: multiplexed WebSocket for job progress.
 
 Celery workers publish progress events to Redis; this router relays them to the
 browser over a WebSocket.
@@ -37,7 +37,7 @@ async def _authorize_handshake(websocket: WebSocket, project_id: UUID) -> str | 
 
     Authenticates and authorizes BEFORE accepting. Cookies ARE sent on the WS
     handshake, so this reuses the same opaque server-side session as the HTTP
-    API. A rejected handshake (close before accept) leaks nothing — no data
+    API. A rejected handshake (close before accept) leaks nothing, no data
     frame is ever sent to an unauthenticated or non-owning client.
     """
     session_id = websocket.cookies.get(SESSION_COOKIE_NAME)

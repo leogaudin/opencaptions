@@ -70,7 +70,7 @@ def test_display_rotation_swaps_the_reported_dimensions(monkeypatch: pytest.Monk
     """A phone records portrait as landscape frames plus a rotation.
 
     Reading the stream dimensions alone shows such a clip as landscape, which then
-    drives the preview, the render geometry and the render hash — so the video is
+    drives the preview, the render geometry and the render hash, so the video is
     letterboxed into the wrong aspect and overflows its container.
     """
     landscape_frames = {

@@ -1,7 +1,7 @@
 """The local provider's handling of what faster-whisper hands back.
 
 Whisper can transcribe a segment and still fail to align word timestamps for it.
-Dropping those segments loses real speech — and does it silently, which is how a
+Dropping those segments loses real speech, and does it silently, which is how a
 long video ends up transcribed for its first half only.
 """
 

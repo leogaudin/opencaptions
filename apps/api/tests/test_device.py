@@ -151,7 +151,7 @@ class TestResolveComputeType:
         assert result.reason is None
 
     def test_float16_on_cpu_falls_back(self, monkeypatch) -> None:  # noqa: ANN001
-        """float16 is not supported on CPU — must fall back."""
+        """float16 is not supported on CPU: must fall back."""
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cpu")

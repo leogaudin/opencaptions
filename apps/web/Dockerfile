@@ -1,4 +1,4 @@
-# OpenCaptions web — multi-stage Dockerfile producing a static-served SPA.
+# OpenCaptions web, multi-stage Dockerfile producing a static-served SPA.
 # Preview assets: the caption engine compiled to WebAssembly, plus its fonts.
 # Builder: vite build. Runtime: nginx serving /usr/share/nginx/html.
 #

@@ -7,11 +7,11 @@ import type { Page } from "@playwright/test";
  * which calls `authenticate` and saves the resulting browser storage state (the
  * httpOnly session cookie) to STORAGE_STATE. The test project loads that state
  * via `use.storageState`, so individual specs start already authenticated and
- * never perform their own auth round trip — the old per-worker approach raced on
+ * never perform their own auth round trip: the old per-worker approach raced on
  * a single shared account and tripped the throttle.
  *
- * `authenticate` registers the account via the API — which sets the httpOnly
- * session cookie on the page's browser context — and, if it already exists (the
+ * `authenticate` registers the account via the API, which sets the httpOnly
+ * session cookie on the page's browser context: and, if it already exists (the
  * DB isn't fresh, e.g. a second local run), falls back to logging in with the
  * same credentials. Either way the page context ends up authenticated. We
  * authenticate at the API layer rather than driving the login form so setup is

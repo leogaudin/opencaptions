@@ -4,13 +4,13 @@
 
 ## Definition of Done
 
-**A change is done when `make ci` passes.** That is the acceptance criterion —
+**A change is done when `make ci` passes.** That is the acceptance criterion,
 it runs every validation GitHub CI runs except publishing, so a green run means
 the push is expected to be green. Before that:
 
 - [ ] Added or updated tests covering what you touched
 - [ ] `make ci` passes (or `make ci-staged` before committing)
-- [ ] Checked whether your change invalidates anything in `docs/DESIGN.md`, the app READMEs, or this file — and updated it
+- [ ] Checked whether your change invalidates anything in `docs/DESIGN.md`, the app READMEs, or this file, and updated it
 
 `make ci` is safe to run while your own stack is up: it validates a clean
 snapshot of committed source in pinned containers, and its end-to-end stack runs
@@ -66,9 +66,9 @@ images, which is what an end user does.
 
 1. **Migrations run automatically on API boot** (in the FastAPI lifespan hook via Alembic `upgrade head`). Never add a manual migration step or tell users to run one. The lifespan handles it.
 
-2. **`apps/web/src/types/api.generated.ts` is generated — never hand-edit it.** After changing `apps/api/app/models/schemas.py`, regenerate with `bash scripts/generate-api-types.sh` from the repo root. CI runs `git diff --exit-code` on this file. The hand-written types in `apps/web/src/types/index.ts` deliberately derive from the generated file so `tsc` catches API drift at compile time.
+2. **`apps/web/src/types/api.generated.ts` is generated, never hand-edit it.** After changing `apps/api/app/models/schemas.py`, regenerate with `bash scripts/generate-api-types.sh` from the repo root. CI runs `git diff --exit-code` on this file. The hand-written types in `apps/web/src/types/index.ts` deliberately derive from the generated file so `tsc` catches API drift at compile time.
 
-3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic — integer blur, no platform maths — so both builds produce byte-identical frames. See `docs/DESIGN.md`.
+3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic, integer blur, no platform maths, so both builds produce byte-identical frames. See `docs/DESIGN.md`.
 
 4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format and its encoder settings + dimensions + fps) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
 
@@ -76,9 +76,9 @@ images, which is what an end user does.
 
 6. **"Rendering" is not a user-facing concept.** The UI has a single Download button. No user-visible string may mention rendering. `render` remains correct in backend code and logs.
 
-7. **Containers must not invoke `uv`** — it exists only in the builder stage of `apps/api/Dockerfile`. The dev overlay uses `/app/.venv/bin/` binaries directly (`uvicorn`, `celery`, `watchmedo`, `pytest`). If you break this, the dev overlay fails at runtime.
+7. **Containers must not invoke `uv`**: it exists only in the builder stage of `apps/api/Dockerfile`. The dev overlay uses `/app/.venv/bin/` binaries directly (`uvicorn`, `celery`, `watchmedo`, `pytest`). If you break this, the dev overlay fails at runtime.
 
-8. **`POST /projects` accepts a user-supplied `video_url` — the SSRF guard in `apps/api/app/services/video_fetch.py` is load-bearing.** It validates scheme, resolves DNS, blocks private/link-local IPs, and re-validates on every redirect hop. Do not weaken it to simplify a test.
+8. **`POST /projects` accepts a user-supplied `video_url`, the SSRF guard in `apps/api/app/services/video_fetch.py` is load-bearing.** It validates scheme, resolves DNS, blocks private/link-local IPs, and re-validates on every redirect hop. Do not weaken it to simplify a test.
 
 9. **Editor autosaves on debounce.** There is no Save button. Do not reintroduce one.
 
@@ -96,7 +96,7 @@ images, which is what an end user does.
 
 12. **Exactly one host port is published: the web UI, on `0.0.0.0:5173`.**
     nginx proxies `/api`, `/ws` and the OpenAPI docs, so no other service needs a
-    host port — do not add one back for convenience. Reach a service with
+    host port, do not add one back for convenience. Reach a service with
     `docker compose exec`, and the API through the web origin
     (`localhost:5173/api/v1/...`). The bind address is a documented security
     property (README, SECURITY.md); changing it is an edit to that line, not a variable.

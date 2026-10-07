@@ -1,4 +1,4 @@
-"""/api/v1/api-keys — mint, list and revoke the caller's API keys.
+"""/api/v1/api-keys: mint, list and revoke the caller's API keys.
 
 Session-only: a key cannot be used to manage keys, so a leaked one can be
 revoked from the browser and cannot mint a replacement for itself.

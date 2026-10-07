@@ -1,7 +1,7 @@
 """Shared test fixtures for the API suite.
 
 There is deliberately one code path in the app, so the tests exercise the REAL
-auth/session/ownership logic — they only swap the backing stores:
+auth/session/ownership logic, they only swap the backing stores:
 
   * the DB is an in-memory SQLite bound to the ``db_session`` dependency, and
   * Redis is an in-memory fake wired into ``app.core.redis`` (sessions + job

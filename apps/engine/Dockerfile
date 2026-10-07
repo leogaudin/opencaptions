@@ -1,4 +1,4 @@
-# OpenCaptions engine — the render server.
+# OpenCaptions engine, the render server.
 # Builder: a static release binary. Runtime: Debian with FFmpeg, nothing else.
 
 FROM rust:1.94-slim-bookworm AS builder

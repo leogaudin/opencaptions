@@ -133,7 +133,7 @@ def _build_registry() -> list[Language]:
 
         codes: tuple[str, ...] = _LANGUAGE_CODES
     except ImportError:
-        logger.warning("faster-whisper not importable — falling back to hardcoded language codes")
+        logger.warning("faster-whisper not importable, falling back to hardcoded language codes")
         codes = tuple(_CODE_TO_LABEL.keys())
 
     languages: list[Language] = []
@@ -143,7 +143,7 @@ def _build_registry() -> list[Language]:
             # Defensive fallback: new code added upstream but not in our table.
             label = code.title()
             logger.warning(
-                "Language code %r has no label in the registry — using %r. "
+                "Language code %r has no label in the registry, using %r. "
                 "Please update _CODE_TO_LABEL in app/services/languages.py.",
                 code,
                 label,
@@ -155,7 +155,7 @@ def _build_registry() -> list[Language]:
     return languages
 
 
-# Module-level singleton — built once at import time.
+# Module-level singleton, built once at import time.
 LANGUAGES: list[Language] = _build_registry()
 
 # Fast O(1) lookup set for validation.
@@ -165,7 +165,7 @@ LANGUAGE_CODES: frozenset[str] = frozenset(lang.code for lang in LANGUAGES)
 def is_valid_language(code: str) -> bool:
     """Return True if *code* is a known Whisper language code.
 
-    Does NOT accept "auto" — callers must check for that separately.
+    Does NOT accept "auto", callers must check for that separately.
     """
     return code in LANGUAGE_CODES
 

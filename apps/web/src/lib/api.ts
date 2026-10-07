@@ -26,7 +26,7 @@ const API_BASE = "/api/v1";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 /**
- * CSRF token for non-safe requests. In memory only, never localStorage — the
+ * CSRF token for non-safe requests. In memory only, never localStorage, the
  * session cookie is httpOnly, so this is the only client-visible half.
  */
 let csrfToken: string | null = null;
@@ -129,7 +129,7 @@ export async function register(email: string, password: string): Promise<AuthSes
 }
 
 /**
- * Log in. Failure is deliberately generic on the server — callers must not
+ * Log in. Failure is deliberately generic on the server, callers must not
  * imply whether the email exists.
  */
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -318,7 +318,7 @@ export function changeEmail(email: string, currentPassword: string): Promise<Use
     method: "PATCH",
     json: { email, current_password: currentPassword },
     // A 401 here means the password was wrong, not that the session expired, so
-    // it must not reach the global handler — which would log the user out for a
+    // it must not reach the global handler, which would log the user out for a
     // typo and lose the form they were filling in.
     skipAuthRedirect: true,
   });

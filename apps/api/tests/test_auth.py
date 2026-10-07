@@ -28,7 +28,7 @@ async def test_status_is_public_and_reports_setup(client: AsyncClient) -> None:
 async def test_first_account_bootstraps_a_closed_instance(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With registration off, only the first account gets in — which is what lets
+    """With registration off, only the first account gets in, which is what lets
     an operator create their own account on an instance they deploy closed."""
     monkeypatch.setattr(settings, "registration_enabled", False)
 
@@ -55,8 +55,8 @@ async def test_second_registration_open_by_default(
     first_client: AsyncClient, make_client: Any
 ) -> None:
     # The core of open signup: once the first account exists, a second visitor
-    # self-registers with NO privileged action — no setting toggled, no special
-    # endpoint used — and is an ordinary account like any other.
+    # self-registers with NO privileged action, no setting toggled, no special
+    # endpoint used, and is an ordinary account like any other.
     c = await make_client()
     r = await c.post(
         "/api/v1/auth/register",
@@ -108,7 +108,7 @@ async def test_login_unknown_email_is_generic_401(
         "/api/v1/auth/login",
         json={"email": "nobody@example.com", "password": "whatever12345"},
     )
-    # Same shape/status as a wrong password — existence must not be disclosed.
+    # Same shape/status as a wrong password, existence must not be disclosed.
     assert r.status_code == 401
     assert r.json()["error"] == "invalid_credentials"
 
@@ -148,7 +148,7 @@ async def test_logout_invalidates_session_server_side(
 async def test_unsafe_request_without_csrf_header_is_rejected(
     first_client: AsyncClient, make_client: Any
 ) -> None:
-    # A client with the session cookie but WITHOUT the X-CSRF-Token header —
+    # A client with the session cookie but WITHOUT the X-CSRF-Token header,
     # exactly the shape of a cross-site forged request.
     bare = await make_client()
     bare.cookies.update(first_client.cookies)

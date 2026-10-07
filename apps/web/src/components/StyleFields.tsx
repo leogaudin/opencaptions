@@ -5,7 +5,7 @@ import type { StyleConfig } from "@/types";
 
 /**
  * Presentational primitives for the caption style panel. No store access and no
- * style semantics — each one renders a labelled control and reports changes.
+ * style semantics: each one renders a labelled control and reports changes.
  */
 
 export function Field({ label, children }: { label: ReactNode; children: ReactNode }) {

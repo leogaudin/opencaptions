@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Full local CI — the repository's acceptance gate.
+# Full local CI, the repository's acceptance gate.
 #
 # Runs every validation .github/workflows/ci.yml runs except publishing, from a
 # `git archive` snapshot of committed source in pinned containers, so local build
@@ -191,7 +191,7 @@ in_tools . '
   bash scripts/generate-api-types.sh
 ' || fail "type generation failed"
 git -C "$WORKTREE" diff --exit-code -- apps/web/src/types/api.generated.ts \
-  || fail "apps/web/src/types/api.generated.ts is stale — run 'make generate-types' and commit"
+  || fail "apps/web/src/types/api.generated.ts is stale, run 'make generate-types' and commit"
 
 step "Frontend lint, typecheck and production build"
 in_node apps/web '
@@ -245,7 +245,7 @@ bad="$(printf '%s\n' "$resolved" | awk '
 ')"
 if [ -n "$bad" ]; then
   printf 'mounts outside the CI project:\n%s\n' "$bad" >&2
-  fail "the CI stack would touch host state — refusing to run e2e"
+  fail "the CI stack would touch host state, refusing to run e2e"
 fi
 
 compose_ci up -d --wait --wait-timeout 240 || {
@@ -264,4 +264,4 @@ docker run --rm --network host \
   sh -euc 'npm ci --no-audit --no-fund >/dev/null && npm run test:e2e' \
   || fail "end-to-end tests failed"
 
-bold $'\n✓ Full local CI passed — this commit is expected to pass GitHub CI'
+bold $'\n✓ Full local CI passed, this commit is expected to pass GitHub CI'

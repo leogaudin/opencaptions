@@ -32,7 +32,7 @@ async def test_get_settings_requires_authentication(client: AsyncClient) -> None
 @pytest.mark.asyncio
 async def test_get_settings_exposes_available_models(first_client: AsyncClient) -> None:
     """The transcription block advertises selectable local Whisper models,
-    each with an id, label and tradeoff note — mirroring supported_languages."""
+    each with an id, label and tradeoff note, mirroring supported_languages."""
     r = await first_client.get("/api/v1/settings")
     assert r.status_code == 200
     models = r.json()["transcription"]["available_models"]

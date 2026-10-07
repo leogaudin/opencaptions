@@ -43,7 +43,7 @@ def _cuda_device_count() -> int:
 def _supported_compute_types(device: str) -> set[str]:
     """Get compute types ctranslate2 supports for a device.
 
-    For 'cuda', this RAISES RuntimeError when CUDA is unusable — callers must
+    For 'cuda', this RAISES RuntimeError when CUDA is unusable, callers must
     guard accordingly.
     """
     return set(ctranslate2.get_supported_compute_types(device))
@@ -69,7 +69,7 @@ def resolve_device() -> DeviceResolution:
         logger.info("WHISPER_DEVICE=auto resolved to cpu (no CUDA devices visible)")
         return DeviceResolution(requested="auto", resolved="cpu")
 
-    # Explicit cuda or cuda:N — validate that the device actually exists.
+    # Explicit cuda or cuda:N, validate that the device actually exists.
     if requested.startswith("cuda"):
         count = _cuda_device_count()
         if count == 0:
@@ -79,7 +79,7 @@ def resolve_device() -> DeviceResolution:
                 "or the image lacks CUDA runtime libraries (use the GPU image target)."
             )
             logger.error(
-                "WHISPER_DEVICE=%s requested but no CUDA device available — falling back to cpu. %s",
+                "WHISPER_DEVICE=%s requested but no CUDA device available, falling back to cpu. %s",
                 requested,
                 reason,
             )
@@ -111,14 +111,14 @@ def resolve_compute_type() -> ComputeTypeResolution:
     try:
         supported = _supported_compute_types(ct2_device)
     except RuntimeError:
-        # CUDA query failed — device resolved to cuda but libs are broken.
+        # CUDA query failed, device resolved to cuda but libs are broken.
         # Fall back to safe CPU defaults.
         supported = _supported_compute_types("cpu")
 
     if explicit in supported:
         return ComputeTypeResolution(requested=explicit, resolved=explicit)
 
-    # Requested type not supported — pick a safe default.
+    # Requested type not supported, pick a safe default.
     fallback = "int8" if ct2_device == "cpu" else "float16"
     if fallback not in supported:
         # Last resort: pick any supported type.

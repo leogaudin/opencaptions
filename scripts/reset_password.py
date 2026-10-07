@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Reset a password directly against a running stack — no HTTP, no session.
+r"""Reset a password directly against a running stack, no HTTP, no session.
 
 The recovery path when SMTP is unconfigured and nobody can sign in. Hashes with
 the same Argon2 parameters the API uses, so the result is indistinguishable from
@@ -39,7 +39,7 @@ def _die(message: str, code: int = 1) -> None:
 
 def _read_new_password() -> str:
     """Resolve the new password from OC_NEW_PASSWORD, an interactive prompt, or a
-    piped stdin line — in that order — so the tool works for both a human at a
+    piped stdin line, in that order, so the tool works for both a human at a
     terminal and an automated invocation."""
     env_password = os.environ.get("OC_NEW_PASSWORD")
     if env_password:

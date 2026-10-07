@@ -56,7 +56,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         )
         raise
 
-    # Best-effort: ensure storage bucket exists. Non-fatal if unreachable at startup —
+    # Best-effort: ensure storage bucket exists. Non-fatal if unreachable at startup,
     # a healthcheck will surface the issue.
     try:
         from app.storage import s3

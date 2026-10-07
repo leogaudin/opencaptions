@@ -70,8 +70,8 @@ async def get_session_user(
 ) -> User:
     """Resolve the caller from the session cookie, or raise 401.
 
-    For what only the signed-in browser may do — the account itself and its API
-    keys — so a leaked key can neither mint keys nor take over the account.
+    For what only the signed-in browser may do, the account itself and its API
+    keys, so a leaked key can neither mint keys nor take over the account.
     Stashes SessionData on request.state so routes needing the CSRF token do not
     repeat the Redis lookup.
     """

@@ -243,7 +243,7 @@ export interface paths {
          * List projects
          * @description Paginated project list for the current user, newest first.
          *
-         *     Scoped to the caller's own projects — never lists other users' projects.
+         *     Scoped to the caller's own projects, never lists other users' projects.
          */
         get: operations["list_projects_api_v1_projects_get"];
         put?: never;
@@ -283,7 +283,7 @@ export interface paths {
         head?: never;
         /**
          * Update project
-         * @description Partial update — set title, transcript, style_config, or caption offset independently.
+         * @description Partial update: set title, transcript, style_config, or caption offset independently.
          */
         patch: operations["update_project_api_v1_projects__project_id__patch"];
         trace?: never;
@@ -522,7 +522,7 @@ export interface paths {
          * @description Internal endpoint: the engine posts intermediate progress.
          *
          *     Authorized by a per-job token (require_job_token / X-Job-Token header), NOT a
-         *     user session — the engine is a service, and a static shared secret would
+         *     user session, the engine is a service, and a static shared secret would
          *     ship the same weak credential to every install. Updates the job row in
          *     Postgres and broadcasts on the project's pub/sub channel so the WebSocket
          *     subscribers see the progress bar advance.
@@ -711,7 +711,7 @@ export interface paths {
          *
          *     Auth-required but read-only: these are deployment settings (env vars), not
          *     per-user preferences, so there is nothing here for an ordinary user to
-         *     mutate at runtime. Secrets like OPENAI_API_KEY are never returned — only a
+         *     mutate at runtime. Secrets like OPENAI_API_KEY are never returned, only a
          *     redacted `openai_configured` boolean.
          */
         get: operations["get_settings_api_v1_settings_get"];
@@ -843,7 +843,7 @@ export interface components {
         AuthStatus: {
             /**
              * Setup Required
-             * @description True when no account exists yet — the SPA should offer first-run signup.
+             * @description True when no account exists yet, the SPA should offer first-run signup.
              */
             setup_required: boolean;
             /**
@@ -858,7 +858,7 @@ export interface components {
             hosted_mode: boolean;
             /**
              * Reset Available
-             * @description Whether self-service password reset is available (SMTP is configured). When false the SPA hides the flow and recovery is the host CLI script. Reveals no SMTP settings — only this boolean.
+             * @description Whether self-service password reset is available (SMTP is configured). When false the SPA hides the flow and recovery is the host CLI script. Reveals no SMTP settings, only this boolean.
              */
             reset_available: boolean;
         };
@@ -1117,7 +1117,7 @@ export interface components {
             label: string;
             /**
              * Note
-             * @description Size/speed tradeoff hint — a bigger model means a larger first-run download and slower CPU transcription.
+             * @description Size/speed tradeoff hint, a bigger model means a larger first-run download and slower CPU transcription.
              */
             note: string;
         };
@@ -1135,7 +1135,7 @@ export interface components {
         };
         /**
          * PasswordResetRequest
-         * @description POST /auth/password-reset body — request a reset link by email.
+         * @description POST /auth/password-reset body: request a reset link by email.
          */
         PasswordResetRequest: {
             /** Email */
@@ -1265,7 +1265,7 @@ export interface components {
         };
         /**
          * RenderRequest
-         * @description POST /projects/{id}/download body — request a render in a specific format.
+         * @description POST /projects/{id}/download body: request a render in a specific format.
          */
         RenderRequest: {
             /**
@@ -1598,12 +1598,12 @@ export interface components {
             device: string | null;
             /**
              * Openai Configured
-             * @description Whether an OpenAI API key is configured, i.e. whether the OpenAI provider can be chosen. The key itself is never exposed — only this boolean. Always false in hosted mode, where the provider is fixed and not selectable.
+             * @description Whether an OpenAI API key is configured, i.e. whether the OpenAI provider can be chosen. The key itself is never exposed, only this boolean. Always false in hosted mode, where the provider is fixed and not selectable.
              */
             openai_configured: boolean;
             /**
              * Supported Languages
-             * @description Languages the transcription engine supports, sorted by label. Does not include 'auto' — that is a mode, not a language.
+             * @description Languages the transcription engine supports, sorted by label. Does not include 'auto', that is a mode, not a language.
              */
             supported_languages: components["schemas"]["LanguageOption"][];
             /**
@@ -2065,7 +2065,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Password reset is not available — SMTP is not configured (`error: reset_unavailable`) */
+            /** @description Password reset is not available. SMTP is not configured (`error: reset_unavailable`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2123,7 +2123,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Password reset is not available — SMTP is not configured (`error: reset_unavailable`) */
+            /** @description Password reset is not available. SMTP is not configured (`error: reset_unavailable`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2452,7 +2452,7 @@ export interface operations {
                     "application/json": components["schemas"]["DownloadResponse"];
                 };
             };
-            /** @description Render job queued — `ready` is false, `job_id` is populated */
+            /** @description Render job queued, `ready` is false, `job_id` is populated */
             202: {
                 headers: {
                     [name: string]: unknown;

@@ -2,7 +2,7 @@
 
 The core ships only the Unlimited policy (never denies), selected by default, so
 self-hosted behaviour is unchanged. A hosted deployment substitutes a policy via
-ENTITLEMENT_PROVIDER; a denial must surface as a clean 403 — not a 500 — with its
+ENTITLEMENT_PROVIDER; a denial must surface as a clean 403, not a 500, with its
 reason. The deny tests substitute a denying policy the same way a hosted edition
 would (register + config), never touching the running stack's default.
 """
@@ -34,7 +34,7 @@ def _dummy_user() -> User:
 
 
 class _DenyAllPolicy(EntitlementPolicy):
-    """A denying policy used only in tests — the hosted-edition shape."""
+    """A denying policy used only in tests: the hosted-edition shape."""
 
     name = "deny-all-test"
 

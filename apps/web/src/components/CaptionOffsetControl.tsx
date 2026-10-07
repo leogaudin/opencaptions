@@ -4,7 +4,7 @@
  *
  * Sits under the presets in Caption style, where it stays visible whatever
  * preset is chosen. Compact by design. Follows the app's button
- * hierarchy — every control here is an adjustment, none is the primary action,
+ * hierarchy: every control here is an adjustment, none is the primary action,
  * so all are transparent-with-outline; the coarse slider uses `accent-primary`
  * like the other sliders. Theme tokens only, no hardcoded colours.
  */

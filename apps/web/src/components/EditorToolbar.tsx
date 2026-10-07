@@ -13,7 +13,7 @@
  *     when that render finishes, whichever page the user is on by then.
  *
  * Every video download shares one code path: requestVideoDownload(format) in
- * the store. That function always POSTs /projects/{id}/download first — no
+ * the store. That function always POSTs /projects/{id}/download first, no
  * code path may navigate the browser to the GET streaming endpoint unless the
  * POST confirmed ready=true.
  */
@@ -55,7 +55,7 @@ export function EditorToolbar() {
   const projectStatus = project?.status;
   const projectUpdatedAt = project?.updated_at;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: projectStatus and projectUpdatedAt are intentional refetch triggers — exports change when status or updated_at change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: projectStatus and projectUpdatedAt are intentional refetch triggers, exports change when status or updated_at change
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -65,7 +65,7 @@ export function EditorToolbar() {
         if (!cancelled) setExports(res);
       })
       .catch(() => {
-        // Non-fatal — export links may not be ready yet.
+        // Non-fatal, export links may not be ready yet.
       });
     return () => {
       cancelled = true;

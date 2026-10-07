@@ -25,7 +25,7 @@ from app.services.usage import (
 
 
 def test_build_usage_record_carries_unit_and_amount() -> None:
-    """The record stores the unit alongside the number — no guessing later."""
+    """The record stores the unit alongside the number, no guessing later."""
     assert build_usage_record(UNIT_RENDER_FRAMES, 120.0) == {
         "unit": "render-frames",
         "amount": 120.0,

@@ -2,7 +2,7 @@
  * Set a new password from a reset link. Shares layout + validation with the
  * other auth screens.
  *
- * The token arrives in the URL query and is used ONLY in memory for the submit —
+ * The token arrives in the URL query and is used ONLY in memory for the submit,
  * never written to localStorage (nor is the password). Only reachable when reset
  * is available (SMTP configured). On success the server has already revoked
  * every existing session and creates no new one, so we send the user to sign in.
@@ -30,7 +30,7 @@ export function ResetPasswordPage() {
     passwordRef.current?.focus();
   }, []);
 
-  // Feature off on this instance — nowhere to go here. Send to sign in.
+  // Feature off on this instance, nowhere to go here. Send to sign in.
   if (!resetAvailable) {
     return <Navigate to="/login" replace />;
   }

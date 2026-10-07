@@ -1,4 +1,4 @@
-"""Tests for the OpenAI transcription provider (response parsing only — no API calls)."""
+"""Tests for the OpenAI transcription provider (response parsing only, no API calls)."""
 
 from __future__ import annotations
 

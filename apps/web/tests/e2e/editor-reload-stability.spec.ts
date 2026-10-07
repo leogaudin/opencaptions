@@ -8,7 +8,7 @@ import { expect, test } from "@playwright/test";
  * which runs loadProject() and flips the store's `loading` flag true for the
  * duration of the fetch. EditorPage previously gated on `loading || !project`,
  * so every such background refresh swapped the whole editor for a
- * "Loading project…" screen — unmounting CaptionPreview and its <video> and
+ * "Loading project…" screen: unmounting CaptionPreview and its <video> and
  * recreating it at frame 0. A playing preview visibly restarted on each event
  * ("looks like a reload"). The gate is now `!project`, so a refresh that keeps
  * the current project re-renders the preview in place instead of remounting it.
@@ -21,7 +21,7 @@ test.describe("Editor stays mounted across background reloads", () => {
   test("transcript_updated over WS does not remount the preview", async ({ page }) => {
     // Intercept the project WebSocket so it "connects" and we can push a
     // server->client broadcast. Store the routes to send on after the page is
-    // ready (the real proxy is not exercised here — this is a pure client test).
+    // ready (the real proxy is not exercised here, this is a pure client test).
     type WsRoute = Parameters<Parameters<typeof page.routeWebSocket>[1]>[0];
     const wsRoutes: WsRoute[] = [];
     await page.routeWebSocket(/\/ws\/v1\/projects\//, (ws) => {
@@ -33,7 +33,7 @@ test.describe("Editor stays mounted across background reloads", () => {
     const resp = await page.request.get("/api/v1/projects");
     const body = await resp.json();
     const items = body.items ?? body;
-    test.skip(!items.length, "No projects available — cannot test reload stability");
+    test.skip(!items.length, "No projects available, cannot test reload stability");
     const projectId = items[0].id;
 
     await page.setViewportSize({ width: 1400, height: 900 });

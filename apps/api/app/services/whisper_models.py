@@ -77,7 +77,7 @@ def _build_registry() -> list[WhisperModelInfo]:
 
         ids: tuple[str, ...] = tuple(available_models())
     except ImportError:
-        logger.warning("faster-whisper not importable — falling back to hardcoded model ids")
+        logger.warning("faster-whisper not importable, falling back to hardcoded model ids")
         ids = tuple(_ID_TO_META.keys())
 
     models: list[WhisperModelInfo] = []
@@ -87,7 +87,7 @@ def _build_registry() -> list[WhisperModelInfo]:
             # Defensive fallback: new model added upstream but not in our table.
             label, note = model_id, ""
             logger.warning(
-                "Whisper model %r has no metadata in the registry — using %r. "
+                "Whisper model %r has no metadata in the registry, using %r. "
                 "Please update _ID_TO_META in app/services/whisper_models.py.",
                 model_id,
                 label,
@@ -99,7 +99,7 @@ def _build_registry() -> list[WhisperModelInfo]:
     return models
 
 
-# Module-level singleton — built once at import time.
+# Module-level singleton, built once at import time.
 WHISPER_MODELS: list[WhisperModelInfo] = _build_registry()
 
 

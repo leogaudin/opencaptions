@@ -33,7 +33,7 @@ async def get_settings(
 
     Auth-required but read-only: these are deployment settings (env vars), not
     per-user preferences, so there is nothing here for an ordinary user to
-    mutate at runtime. Secrets like OPENAI_API_KEY are never returned — only a
+    mutate at runtime. Secrets like OPENAI_API_KEY are never returned, only a
     redacted `openai_configured` boolean.
     """
     # In hosted mode the provider and model are fixed and the hardware is the
