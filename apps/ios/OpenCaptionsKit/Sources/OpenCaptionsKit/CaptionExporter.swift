@@ -10,9 +10,9 @@ public enum ExportError: Error, Equatable, Sendable, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .nothingToExport: "There are no captions to add yet."
-        case .noVideo: "This project has no video."
-        case .failed(let reason): "The video could not be saved: \(reason)"
+        case .nothingToExport: String(localized: "There are no captions to add yet.", bundle: .module)
+        case .noVideo: String(localized: "This project has no video.", bundle: .module)
+        case .failed(let reason): String(localized: "The video could not be saved: \(reason)", bundle: .module)
         }
     }
 }
@@ -163,7 +163,7 @@ public struct CaptionExporter: Sendable {
         await engine.ensureFont(project.styleConfig.font, cache: fonts)
         try await engine.setScene(
             transcript: transcript, style: project.styleConfig, width: width, height: height,
-            captionOffsetMs: project.captionOffsetMs)
+            captionOffsetMs: project.captionOffsetMs, watermark: options.watermark)
 
         let bitrate = options.bitrate(width: width, height: height, fps: fps, plan: plan)
         let encoding = Encoding.make(

@@ -137,7 +137,7 @@ public final class WhisperKitTranscriber: Transcriber {
         // The model loads while the audio is read (and may already be loaded, or loading, from
         // `preload`).
         let loading = Task { Loaded(pipe: try await pipeline(info, folder: folder)) }
-        progress(0, "Reading the audio…")
+        progress(0, KitStrings.localized("Reading the audio…"))
         let samples: [Float]
         let duration: Double
         do {
@@ -148,14 +148,14 @@ public final class WhisperKitTranscriber: Transcriber {
             throw error
         }
 
-        progress(0, "Loading the model into memory…")
+        progress(0, KitStrings.localized("Loading the model into memory…"))
         let pipe = try await loading.value.pipe
 
         var lang = language.flatMap { $0 == "auto" ? nil : $0 }
         // Judge the language from where the speech is, not from the first 30 seconds. An
         // English-only model has nothing to detect.
         if lang == nil, !info.englishOnly {
-            progress(0, "Detecting the language…")
+            progress(0, KitStrings.localized("Detecting the language…"))
             lang = await detectLanguage(of: samples, with: pipe)
         }
         // `detectLanguage` must be asked for when nothing else decided: left alone WhisperKit
@@ -167,7 +167,7 @@ public final class WhisperKitTranscriber: Transcriber {
         // stays 0 until it ends; the screen shows a spinner until there is a fraction.
         let covered = pipe.progress
         let results = try await pipe.transcribe(audioArray: samples, decodeOptions: options) { _ in
-            progress(min(1, covered.fractionCompleted), "Transcribing…")
+            progress(min(1, covered.fractionCompleted), KitStrings.localized("Transcribing…"))
             return nil
         }
         try Task.checkCancellation()
@@ -179,7 +179,7 @@ public final class WhisperKitTranscriber: Transcriber {
                 in: transcript, samples: samples, duration: seconds, language: lang ?? transcript.language,
                 pipe: pipe, progress: progress)
         }
-        progress(1, "Done")
+        progress(1, KitStrings.localized("Done"))
         // Replacing someone's captions with nothing is never what they asked for.
         guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }
         return transcript
@@ -203,7 +203,7 @@ public final class WhisperKitTranscriber: Transcriber {
         var fills: [(gap: ClosedRange<Double>, transcript: Transcript)] = []
         for (index, gap) in gaps.enumerated() {
             try Task.checkCancellation()
-            progress(1, "Checking for missed speech (\(index + 1) of \(gaps.count))…")
+            progress(1, KitStrings.localized("Checking for missed speech (\(index + 1) of \(gaps.count))…"))
             let from = max(0, Int(gap.lowerBound * rate))
             let to = min(samples.count, Int(gap.upperBound * rate))
             guard to - from > Int(rate) else { continue }

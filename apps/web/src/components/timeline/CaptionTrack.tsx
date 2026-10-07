@@ -1,5 +1,6 @@
 import type { PointerEvent } from "react";
 import type { CaptionLine } from "@/lib/engine";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /** How far one arrow key moves a selected edge, in seconds. */
@@ -35,6 +36,7 @@ export function CaptionTrack({
   timeAt: (clientX: number) => number;
   onRetime: (index: number, edge: Edge, time: number) => void;
 }) {
+  const t = useT();
   return (
     <>
       {lines.map((line) => {
@@ -73,7 +75,7 @@ export function CaptionTrack({
                   key={edge}
                   type="button"
                   data-testid={`timeline-${edge}`}
-                  aria-label={edge === "start" ? "Caption start" : "Caption end"}
+                  aria-label={edge === "start" ? t("Caption start") : t("Caption end")}
                   onPointerDown={(e: PointerEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
                     e.currentTarget.setPointerCapture(e.pointerId);

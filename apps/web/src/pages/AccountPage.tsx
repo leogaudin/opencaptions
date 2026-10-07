@@ -9,11 +9,14 @@ import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { ApiKeys } from "@/components/ApiKeys";
 import { TranscriptionService } from "@/components/TranscriptionService";
 import * as api from "@/lib/api";
+import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
+import { useT } from "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 import type { UsageRead } from "@/types";
 import type { AuthUser } from "@/types/auth";
 
 export function AccountPage() {
+  const t = useT();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const [usage, setUsage] = useState<UsageRead | null>(null);
@@ -31,24 +34,24 @@ export function AccountPage() {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-semibold">Account</h1>
+      <h1 className="text-2xl font-semibold">{t("Account")}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{user?.email}</p>
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold">Usage</h2>
+        <h2 className="text-sm font-semibold">{t("Usage")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Totalled from completed jobs. This instance does not meter or limit it.
+          {t("Totalled from completed jobs. This instance does not meter or limit it.")}
         </p>
         <dl className="mt-3 grid grid-cols-3 gap-3" data-testid="usage">
           <Stat
-            label="Transcribed"
+            label={t("Transcribed")}
             value={usage ? formatSeconds(usage.transcription_seconds) : "-"}
           />
           <Stat
-            label="Frames rendered"
+            label={t("Frames rendered")}
             value={usage ? usage.render_frames.toLocaleString() : "-"}
           />
-          <Stat label="Projects" value={usage ? String(usage.projects) : "-"} />
+          <Stat label={t("Projects")} value={usage ? String(usage.projects) : "-"} />
         </dl>
       </section>
 
@@ -76,6 +79,7 @@ function ChangeEmailForm({
   currentEmail: string;
   onChanged: (user: AuthUser) => void;
 }) {
+  const t = useT();
   const [email, setEmail] = useState(currentEmail);
   const [password, setPassword] = useState("");
   const [state, setState] = useState<FormState>({ kind: "idle" });
@@ -94,8 +98,8 @@ function ChangeEmailForm({
   }
 
   return (
-    <Section title="Email" onSubmit={submit} state={state} submitLabel="Update email">
-      <Field label="New email" htmlFor="account-email">
+    <Section title={t("Email")} onSubmit={submit} state={state} submitLabel="Update email">
+      <Field label={t("New email")} htmlFor="account-email">
         <input
           id="account-email"
           type="email"
@@ -105,7 +109,7 @@ function ChangeEmailForm({
           className={inputClass}
         />
       </Field>
-      <Field label="Current password" htmlFor="account-email-password">
+      <Field label={t("Current password")} htmlFor="account-email-password">
         <input
           id="account-email-password"
           type="password"
@@ -121,6 +125,7 @@ function ChangeEmailForm({
 }
 
 function ChangePasswordForm() {
+  const t = useT();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [state, setState] = useState<FormState>({ kind: "idle" });
@@ -142,8 +147,8 @@ function ChangePasswordForm() {
   }
 
   return (
-    <Section title="Password" onSubmit={submit} state={state} submitLabel="Update password">
-      <Field label="Current password" htmlFor="account-current">
+    <Section title={t("Password")} onSubmit={submit} state={state} submitLabel="Update password">
+      <Field label={t("Current password")} htmlFor="account-current">
         <input
           id="account-current"
           type="password"
@@ -154,7 +159,7 @@ function ChangePasswordForm() {
           className={inputClass}
         />
       </Field>
-      <Field label="New password" htmlFor="account-next">
+      <Field label={t("New password")} htmlFor="account-next">
         <input
           id="account-next"
           type="password"
@@ -165,7 +170,9 @@ function ChangePasswordForm() {
           onChange={(e) => setNext(e.target.value)}
           className={inputClass}
         />
-        <p className="mt-1 text-[11px] text-muted-foreground">At least 8 characters.</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {t("At least {n} characters.", { n: MIN_PASSWORD_LENGTH })}
+        </p>
       </Field>
     </Section>
   );

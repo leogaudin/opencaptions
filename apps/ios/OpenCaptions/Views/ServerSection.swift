@@ -150,7 +150,7 @@ struct ConnectServerSheet: View {
         guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
             let link = URL(string: text), let connection = ServerConnection.parse(link: link)
         else {
-            problem = "The clipboard does not hold an OpenCaptions link."
+            problem = String(localized: "The clipboard does not hold an OpenCaptions link.")
             return
         }
         address = connection.url.absoluteString
@@ -161,7 +161,7 @@ struct ConnectServerSheet: View {
     private func connect() async {
         problem = nil
         guard let url = ServerConnection.normalizedURL(address) else {
-            problem = "That does not look like an address."
+            problem = String(localized: "That does not look like an address.")
             return
         }
         let connection = ServerConnection(url: url, key: key.trimmingCharacters(in: .whitespacesAndNewlines), name: name)

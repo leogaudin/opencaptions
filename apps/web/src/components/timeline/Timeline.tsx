@@ -14,6 +14,7 @@ import { Transport } from "@/components/Transport";
 import { CaptionTrack } from "@/components/timeline/CaptionTrack";
 import { Ruler } from "@/components/timeline/Ruler";
 import { useCaptionEditor } from "@/lib/engine";
+import { useT } from "@/lib/i18n";
 import { useVideoClock } from "@/lib/playback";
 import { clampZoom } from "@/lib/timelineScale";
 import type { Transcript } from "@/types";
@@ -50,6 +51,7 @@ export function Timeline({
   title: string;
   onEdit: Edit;
 }) {
+  const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const playhead = useRef<HTMLDivElement>(null);
@@ -205,7 +207,7 @@ export function Timeline({
         <button
           type="button"
           data-testid="zoom-out"
-          aria-label="Zoom out"
+          aria-label={t("Zoom out")}
           disabled={zoom === null}
           onClick={() => zoomButton(1 / ZOOM_STEP)}
           className={BUTTON}
@@ -215,7 +217,7 @@ export function Timeline({
         <button
           type="button"
           data-testid="zoom-in"
-          aria-label="Zoom in"
+          aria-label={t("Zoom in")}
           disabled={px >= Math.max(fit, 400) - 1e-6}
           onClick={() => zoomButton(ZOOM_STEP)}
           className={BUTTON}
@@ -225,7 +227,7 @@ export function Timeline({
         <button
           type="button"
           data-testid="zoom-fit"
-          aria-label="Fit the whole video"
+          aria-label={t("Fit the whole video")}
           disabled={zoom === null}
           onClick={() => setZoom(null)}
           className={BUTTON}
@@ -236,8 +238,8 @@ export function Timeline({
       <div className="flex min-h-0 flex-1 overflow-y-auto">
         <div className="w-20 shrink-0">
           <div className="h-6" />
-          <div className={`${rowLabel} h-9`}>Video</div>
-          <div className={`${rowLabel} h-12`}>Captions</div>
+          <div className={`${rowLabel} h-9`}>{t("Video")}</div>
+          <div className={`${rowLabel} h-12`}>{t("Captions")}</div>
         </div>
         <div ref={scroller} className="relative min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
           <div ref={content} className="relative" style={{ width }}>

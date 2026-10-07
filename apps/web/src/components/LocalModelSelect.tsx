@@ -1,3 +1,4 @@
+import { translate } from "@/lib/i18n";
 import type { WhisperModelOption } from "@/types";
 
 /**
@@ -35,8 +36,8 @@ export function productWhisperModelsWithDefault(
   return [
     {
       id: defaultModel,
-      label: `${defaultModel} (configured)`,
-      note: "Custom server default; weights download on first use.",
+      label: translate("{model} (configured)", { model: defaultModel }),
+      note: translate("Custom server default; weights download on first use."),
     },
     ...curated,
   ];
@@ -61,8 +62,8 @@ export function LocalModelSelect({
   onChange,
   models,
   defaultModel,
-  label = "Local Whisper model",
-  hint = "Larger models use more memory. Weights download on first use.",
+  label = translate("Local Whisper model"),
+  hint = translate("Larger models use more memory. Weights download on first use."),
   compact = false,
   testId,
 }: LocalModelSelectProps) {

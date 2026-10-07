@@ -14,6 +14,9 @@ struct SaveOptionsSheet: View {
     @AppStorage("export.fps") private var frameRate = ExportOptions.FrameRate.original
     @State private var contentHeight: CGFloat = 520
     @State private var freeBytes = DiskSpace.available()
+    @State private var showPro = false
+    @Environment(AppModel.self) private var app
+    private var tier: Entitlements { app.entitlements }
 
     private var isHDR: Bool { project.hdrTransfer != nil }
     private var options: ExportOptions {
@@ -46,10 +49,13 @@ struct SaveOptionsSheet: View {
         .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)
         .tint(Theme.accent)
+        .sheet(isPresented: $showPro) { ProSheet() }
         .onAppear {
-            // What was chosen for another video may not exist for this one.
+            // What was chosen for another video may not exist for this one, or this tier.
             if !sizes.contains(resolution) { resolution = .original }
             if !rates.contains(frameRate) { frameRate = .original }
+            let allowed = tier.limit(options, for: project)
+            (resolution, frameRate, keepHDR) = (allowed.resolution, allowed.frameRate, allowed.keepHDR)
         }
     }
 
@@ -57,7 +63,9 @@ struct SaveOptionsSheet: View {
         section("Range", note: keepHDR
             ? "Keeps the full brightness and colour of the original. Saved as HEVC."
             : "An ordinary video that looks right everywhere, including where HDR is not supported.") {
-            SegmentedPills(options: [true, false], selection: $keepHDR, label: { $0 ? "Keep HDR" : "Standard (SDR)" })
+            SegmentedPills(
+                options: [true, false], selection: $keepHDR, label: { $0 ? "Keep HDR" : "Standard (SDR)" },
+                locked: { $0 && tier.locksHDR(for: project) }, onLocked: { showPro = true })
         }
     }
 
@@ -70,8 +78,10 @@ struct SaveOptionsSheet: View {
     }
 
     private var sizeSection: some View {
-        section("Size", note: dimensions) {
-            SegmentedPills(options: sizes, selection: $resolution, label: label(for:))
+        section("Size", note: LocalizedStringKey(dimensions)) {
+            SegmentedPills(
+                options: sizes, selection: $resolution, label: label(for:),
+                locked: { tier.locks(resolution: $0, for: project) }, onLocked: { showPro = true })
         }
     }
 
@@ -80,7 +90,7 @@ struct SaveOptionsSheet: View {
         ExportOptions.FrameRate.available(forSourceFps: project.videoFps ?? 30)
     }
 
-    private var frameRateNote: String {
+    private var frameRateNote: LocalizedStringKey {
         let source = project.videoFps ?? 30
         guard let rate = frameRate.value else { return "As filmed (\(Int(source.rounded())) fps)." }
         return rate > source
@@ -90,9 +100,12 @@ struct SaveOptionsSheet: View {
 
     private var frameRateSection: some View {
         section("Frame rate", note: frameRateNote) {
-            SegmentedPills(options: rates, selection: $frameRate, label: { rate in
-                rate.value.map { "\(Int($0)) fps" } ?? "Original"
-            })
+            SegmentedPills(
+                options: rates, selection: $frameRate,
+                label: { rate in
+                    if let value = rate.value { "\(Int(value)) fps" } else { "Original" }
+                },
+                locked: { tier.locks(frameRate: $0, for: project) }, onLocked: { showPro = true })
         }
     }
 
@@ -127,7 +140,7 @@ struct SaveOptionsSheet: View {
         .padding(.horizontal, 4)
     }
 
-    private func section<Content: View>(_ title: String, note: String? = nil, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: LocalizedStringKey, note: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionLabel(title)
             content()
@@ -137,7 +150,7 @@ struct SaveOptionsSheet: View {
         }
     }
 
-    private func label(for size: ExportOptions.Resolution) -> String {
+    private func label(for size: ExportOptions.Resolution) -> LocalizedStringKey {
         switch size {
         case .original: "Original"
         case .p2160: "4K"

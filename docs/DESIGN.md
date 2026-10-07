@@ -339,6 +339,28 @@ the model is chosen in the Transcribe sheet (while the language is picked) and r
 reading of the audio; the loaded model stays for the next transcription and is let go on a memory
 warning or when the app leaves the screen.
 
+**Languages.** The interface is in English, French, Spanish and German (the browser's or the
+phone's language is used; the web has a choice in the account menu and on the sign-in screens).
+On the web the English text in the code is the key: `t("Download")`, with `{name}` for values, and
+`locales/<code>.json` holds the others (`lib/i18n.ts`); a text without a translation shows in
+English. On iOS, SwiftUI text and `String(localized:)` are collected in the app's string catalogs
+(`Localizable.xcstrings`, `InfoPlist.xcstrings`), and the Kit has its own for the words it
+produces (errors, what a long job says). Tests fail on a text missing in any language or a
+translation that loses a placeholder (`i18n.spec.ts`, `LocalizationTests`). What the server
+says (its errors, a job's progress) is not translated, and neither is the watermark. Adding a
+language means a file or a column of translations in each of those, and its code in the list.
+
+**Free and Pro.** `Entitlements` (in the Kit) is the one place the tier's limits are written: a free
+app puts a small watermark on the picture and the saved video (drawn by the engine, `watermark` in the
+scene, so the preview and the save carry the same one, and part of the saved file's name), saves
+at up to 1080p and 30 fps, turns an HDR video into an ordinary one, locks the styles marked
+`"pro": true` in `presets.json` (the web ignores the flag) and the Large v3 speech model (Large v3
+Turbo is free). The screens lock what the tier lacks and show `ProSheet`; the save also passes its
+options through `Entitlements.limit`, so a remembered choice cannot get past a screen. Nothing
+else is gated: the engine and the rest are open source. A build from source is Pro; an App Store
+build (compiled with `APPSTORE`) starts free until a purchase (StoreKit, not built yet) says
+otherwise. A debug build picks the tier in Settings or with `OC_TIER=free|pro`.
+
 **HDR.** A PQ or HLG source stays HDR: decoded to 10 bits, written as 10-bit HEVC
 with BT.2020. Core Image puts sRGB white well above reference white in an HDR
 signal, so the captions are scaled by a measured factor per transfer function, and

@@ -5,6 +5,33 @@ public struct Preset: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String
     public var config: StyleConfig
+    /// Part of the paid tier (`Entitlements`); false when the file does not say.
+    public var pro: Bool
+
+    public init(id: String, name: String, config: StyleConfig, pro: Bool = false) {
+        self.id = id
+        self.name = name
+        self.config = config
+        self.pro = pro
+    }
+
+    enum CodingKeys: String, CodingKey { case id, name, config, pro }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        config = try c.decode(StyleConfig.self, forKey: .config)
+        pro = try c.decodeIfPresent(Bool.self, forKey: .pro) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(config, forKey: .config)
+        if pro { try c.encode(true, forKey: .pro) }
+    }
 }
 
 public enum Presets {

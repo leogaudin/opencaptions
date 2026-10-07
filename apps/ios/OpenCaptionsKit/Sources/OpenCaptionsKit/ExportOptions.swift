@@ -62,14 +62,18 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     /// For an HDR source: keep it HDR (always HEVC, 10-bit) or make an ordinary SDR video.
     public var keepHDR: Bool
     public var frameRate: FrameRate
+    /// A mark drawn in a corner of the video (a free tier's); nil for none.
+    public var watermark: String?
 
     public init(
-        codec: Codec = .h264, resolution: Resolution = .original, keepHDR: Bool = true, frameRate: FrameRate = .original
+        codec: Codec = .h264, resolution: Resolution = .original, keepHDR: Bool = true,
+        frameRate: FrameRate = .original, watermark: String? = nil
     ) {
         self.codec = codec
         self.resolution = resolution
         self.keepHDR = keepHDR
         self.frameRate = frameRate
+        self.watermark = watermark
     }
 
     /// The saved video's frame rate for a source at `source`.
@@ -129,6 +133,6 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         case (nil, .h264): "h264"
         }
         let rate = frameRate == .original ? "" : "-\(frameRate.rawValue)"
-        return "\(format)-\(resolution.rawValue)\(rate)"
+        return "\(format)-\(resolution.rawValue)\(rate)\(watermark == nil ? "" : "-marked")"
     }
 }

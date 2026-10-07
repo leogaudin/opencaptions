@@ -81,14 +81,14 @@ struct ExportSheet: View {
 
     private func saveToPhotos(_ url: URL) async {
         guard await PHPhotoLibrary.requestAuthorization(for: .addOnly) == .authorized else {
-            photosMessage = "OpenCaptions needs permission to add to Photos. You can allow it in Settings."
+            photosMessage = String(localized: "OpenCaptions needs permission to add to Photos. You can allow it in Settings.")
             return
         }
         do {
             try await PhotosLibrary.addVideo(at: url)
-            photosMessage = "Saved to Photos."
+            photosMessage = String(localized: "Saved to Photos.")
         } catch {
-            photosMessage = "Could not save: \(error.localizedDescription)"
+            photosMessage = String(localized: "Could not save: \(error.localizedDescription)")
         }
     }
 }

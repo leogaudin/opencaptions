@@ -14,24 +14,32 @@ import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
 import { FontPicker } from "@/components/FontPicker";
 import { PresetStrip, TileStrip } from "@/components/PresetStrip";
 import { ColorField, SliderField } from "@/components/StyleFields";
+import { msg, useT } from "@/lib/i18n";
 import { useLookPreviews } from "@/lib/presetPreviews";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
-import { ANIMATION_NAMES, ANIMATIONS, BACKGROUNDS, withBackground } from "@/lib/styleLooks";
+import {
+  ANIMATION_NAMES,
+  ANIMATIONS,
+  BACKGROUND_NAMES,
+  BACKGROUNDS,
+  withBackground,
+} from "@/lib/styleLooks";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { StyleConfig } from "@/types";
 
 const TABS = [
-  { id: "presets", label: "Presets", icon: Sparkles },
-  { id: "text", label: "Text", icon: Type },
-  { id: "background", label: "Background", icon: Square },
-  { id: "animation", label: "Animation", icon: Wand2 },
-  { id: "outline", label: "Outline", icon: PenLine },
-  { id: "timing", label: "Timing", icon: Clock },
+  { id: "presets", label: msg("Presets"), icon: Sparkles },
+  { id: "text", label: msg("Text"), icon: Type },
+  { id: "background", label: msg("Background"), icon: Square },
+  { id: "animation", label: msg("Animation"), icon: Wand2 },
+  { id: "outline", label: msg("Outline"), icon: PenLine },
+  { id: "timing", label: msg("Timing"), icon: Clock },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
 export function StyleControls() {
+  const t = useT();
   const style = useEditorStore((s) => s.style);
   const setStyle = useEditorStore((s) => s.setStyle);
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
@@ -45,7 +53,7 @@ export function StyleControls() {
     <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
       <div
         role="tablist"
-        aria-label="Caption style"
+        aria-label={t("Caption style")}
         className="-mx-1 mb-4 flex gap-1 overflow-x-auto"
       >
         {TABS.map(({ id, label, icon: Icon }) => (
@@ -61,7 +69,7 @@ export function StyleControls() {
             }`}
           >
             <Icon className="h-[18px] w-[18px]" aria-hidden />
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
@@ -106,11 +114,12 @@ function TextPanel({
   setStyle: Setter;
   throttled: Setter;
 }) {
+  const t = useT();
   return (
     <Panel>
       <FontPicker value={style.font} onChange={(font) => setStyle({ font })} />
       <SliderField
-        label="Font size"
+        label={t("Font size")}
         unit="px"
         value={style.font_size}
         min={20}
@@ -119,18 +128,18 @@ function TextPanel({
         onChange={(font_size) => throttled({ font_size })}
       />
       <ColorField
-        label="Text color"
+        label={t("Text color")}
         value={style.text_color}
         onChange={(text_color) => throttled({ text_color })}
       />
       <ColorField
-        label="Highlight color"
+        label={t("Highlight color")}
         value={style.highlight_color}
         onChange={(highlight_color) => throttled({ highlight_color })}
       />
       {/* Discrete: one dispatch per step, so it is not throttled. */}
       <SliderField
-        label="Words per line"
+        label={t("Words per line")}
         value={style.words_per_line}
         min={1}
         max={10}
@@ -138,7 +147,7 @@ function TextPanel({
         onChange={(words_per_line) => setStyle({ words_per_line })}
       />
       <SliderField
-        label="Word spacing"
+        label={t("Word spacing")}
         value={style.word_spacing}
         min={0}
         max={0.6}
@@ -159,6 +168,7 @@ function BackgroundPanel({
   setStyle: Setter;
   throttled: Setter;
 }) {
+  const t = useT();
   const tiles = useLookPreviews(
     BACKGROUNDS.map((b) => ({ id: b, config: withBackground(style, b) })),
     lookKey(style, "background"),
@@ -169,7 +179,7 @@ function BackgroundPanel({
         testIdPrefix="background"
         tiles={BACKGROUNDS.map((b) => ({
           id: b,
-          label: b.charAt(0).toUpperCase() + b.slice(1),
+          label: t(BACKGROUND_NAMES[b]),
           image: tiles?.[b],
           swatch: withBackground(style, b),
         }))}
@@ -182,12 +192,12 @@ function BackgroundPanel({
       {style.background !== "none" && (
         <>
           <ColorField
-            label="Background color"
+            label={t("Background color")}
             value={style.background_color}
             onChange={(background_color) => throttled({ background_color })}
           />
           <SliderField
-            label="Background opacity"
+            label={t("Background opacity")}
             value={style.background_opacity}
             min={0}
             max={1}
@@ -202,6 +212,7 @@ function BackgroundPanel({
 }
 
 function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Setter }) {
+  const t = useT();
   const tiles = useLookPreviews(
     ANIMATIONS.map((animation) => ({ id: animation, config: { ...style, animation } })),
     lookKey(style, "animation"),
@@ -212,7 +223,7 @@ function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Set
         testIdPrefix="animation"
         tiles={ANIMATIONS.map((a) => ({
           id: a,
-          label: ANIMATION_NAMES[a],
+          label: t(ANIMATION_NAMES[a]),
           image: tiles?.[a],
           swatch: { ...style, animation: a },
         }))}
@@ -227,10 +238,11 @@ function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Set
 }
 
 function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Setter }) {
+  const t = useT();
   return (
     <Panel>
       <SliderField
-        label="Stroke width"
+        label={t("Stroke width")}
         value={style.stroke_width}
         min={0}
         max={10}
@@ -239,7 +251,7 @@ function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Set
         onChange={(stroke_width) => throttled({ stroke_width })}
       />
       <SliderField
-        label="Shadow blur"
+        label={t("Shadow blur")}
         value={style.shadow_blur}
         min={0}
         max={20}

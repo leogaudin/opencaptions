@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LanguageSelect } from "@/components/LanguageSelect";
 /**
  * Shared chrome for the auth screens (login + signup): a centered card, the
  * OpenCaptions wordmark, a title/subtitle, the form slot and an optional footer.
@@ -36,6 +37,9 @@ export function AuthLayout({
           <div className="mt-6">{children}</div>
         </div>
         {footer && <p className="mt-4 text-center text-sm text-muted-foreground">{footer}</p>}
+        <div className="mt-6 flex justify-center">
+          <LanguageSelect />
+        </div>
       </div>
     </div>
   );

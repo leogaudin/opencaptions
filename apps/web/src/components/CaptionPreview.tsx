@@ -12,6 +12,7 @@ import {
   type SceneInput,
   useCaptionEditor,
 } from "@/lib/engine";
+import { useT } from "@/lib/i18n";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
 import { useAttachVideo, useVideo } from "@/lib/playback";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
@@ -75,6 +76,7 @@ function CaptionCanvas({
   displayWidth: number;
   displayHeight: number;
 }) {
+  const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [renderer, setRenderer] = useState<CaptionRenderer | null>(null);
   const [active, setActive] = useState<ActiveCaption | null>(null);
@@ -269,8 +271,8 @@ function CaptionCanvas({
         <button
           type="button"
           data-testid="caption-handle"
-          aria-label="Move caption; double-click a word to edit"
-          title="Drag to move · double-click a word to edit"
+          aria-label={t("Move caption; double-click a word to edit")}
+          title={t("Drag to move · double-click a word to edit")}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -307,6 +309,7 @@ function CaptionCanvas({
 }
 
 export function CaptionPreview() {
+  const t = useT();
   const project = useEditorStore((s) => s.project);
   const transcript = useEditorStore((s) => s.transcript);
   const style = useEditorStore((s) => s.style);
@@ -402,10 +405,13 @@ export function CaptionPreview() {
       ) : previewBlocked ? (
         note(
           <>
-            <p className="font-medium text-foreground">This browser cannot preview this video.</p>
+            <p className="font-medium text-foreground">
+              {t("This browser cannot preview this video.")}
+            </p>
             <p className="mt-1">
-              You can still download it from the toolbar above, the MP4 (H.264) download plays in
-              every browser, or open any format in a desktop player like VLC.
+              {t(
+                "You can still download it from the toolbar above, the MP4 (H.264) download plays in every browser, or open any format in a desktop player like VLC.",
+              )}
             </p>
           </>,
           "preview-unsupported",

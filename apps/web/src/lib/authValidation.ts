@@ -5,16 +5,18 @@
  * mistakes early and keep the login and signup forms consistent.
  */
 
+import { translate } from "@/lib/i18n";
+
 /** Minimum password length enforced on account creation. */
 export const MIN_PASSWORD_LENGTH = 8;
 
 /** Returns an error message, or null when the email is acceptable. */
 export function validateEmail(email: string): string | null {
   const value = email.trim();
-  if (!value) return "Email is required.";
+  if (!value) return translate("Email is required.");
   // Permissive shape check, deliberately not RFC-complete.
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-    return "Enter a valid email address.";
+    return translate("Enter a valid email address.");
   }
   return null;
 }
@@ -28,9 +30,9 @@ export function validatePassword(
   password: string,
   opts: { requireStrength?: boolean } = {},
 ): string | null {
-  if (!password) return "Password is required.";
+  if (!password) return translate("Password is required.");
   if (opts.requireStrength && password.length < MIN_PASSWORD_LENGTH) {
-    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    return translate("Password must be at least {n} characters.", { n: MIN_PASSWORD_LENGTH });
   }
   return null;
 }

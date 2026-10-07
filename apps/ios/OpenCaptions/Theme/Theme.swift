@@ -54,7 +54,7 @@ enum Appearance: String, CaseIterable, Identifiable {
         }
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .system: "System"
         case .light: "Light"
@@ -175,12 +175,13 @@ extension View {
 
 /// A small caps label over a group, in the quiet grey of the desktop's muted text.
 struct SectionLabel: View {
-    let text: String
+    let text: LocalizedStringKey
 
-    init(_ text: String) { self.text = text }
+    init(_ text: LocalizedStringKey) { self.text = text }
 
     var body: some View {
-        Text(text.uppercased())
+        Text(text)
+            .textCase(.uppercase)
             .font(.system(size: 12, weight: .bold))
             .tracking(0.8)
             .foregroundStyle(Theme.textSecondary)

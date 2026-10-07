@@ -12,9 +12,11 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthLayout } from "@/components/AuthLayout";
 import { requestPasswordReset } from "@/lib/api";
 import { validateEmail } from "@/lib/authValidation";
+import { useT } from "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 
 export function ForgotPasswordPage() {
+  const t = useT();
   const resetAvailable = useAuthStore((s) => s.status?.reset_available ?? false);
   const location = useLocation();
 
@@ -50,14 +52,14 @@ export function ForgotPasswordPage() {
       setSubmitted(true);
     } catch {
       // A transport/5xx failure is not an existence signal; keep it generic.
-      setFormError("Couldn't send the reset email. Please try again.");
+      setFormError(t("Couldn't send the reset email. Please try again."));
       setSubmitting(false);
     }
   }
 
   return (
     <AuthLayout
-      title="Reset your password"
+      title={t("Reset your password")}
       subtitle={
         submitted
           ? undefined
@@ -65,9 +67,9 @@ export function ForgotPasswordPage() {
       }
       footer={
         <>
-          Remembered it?{" "}
+          {t("Remembered it?")}{" "}
           <Link to="/login" className="font-medium text-foreground underline hover:opacity-80">
-            Back to sign in
+            {t("Back to sign in")}
           </Link>
         </>
       }
@@ -77,8 +79,9 @@ export function ForgotPasswordPage() {
           data-testid="reset-request-sent"
           className="block rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground"
         >
-          If an account exists for that email, we've sent a link to set a new password. The link
-          expires in one hour.
+          {t(
+            "If an account exists for that email, we've sent a link to set a new password. The link expires in one hour.",
+          )}
         </output>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -92,7 +95,7 @@ export function ForgotPasswordPage() {
           )}
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium">
-              Email
+              {t("Email")}
             </label>
             <input
               ref={emailRef}
@@ -120,7 +123,7 @@ export function ForgotPasswordPage() {
             data-testid="auth-submit"
             className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? "Sending…" : "Send reset link"}
+            {submitting ? t("Sending…") : t("Send reset link")}
           </button>
         </form>
       )}

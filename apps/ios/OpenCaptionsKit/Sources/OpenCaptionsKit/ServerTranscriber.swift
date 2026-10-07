@@ -48,12 +48,12 @@ public enum ServerTranscriptionError: Error, Equatable, Sendable, LocalizedError
 
     public var errorDescription: String? {
         switch self {
-        case .unreachable(let host): "Could not reach \(host). Check the address and your connection."
-        case .keyRejected: "The server did not accept the key. It may have been revoked: make a new one."
+        case .unreachable(let host): String(localized: "Could not reach \(host). Check the address and your connection.", bundle: .module)
+        case .keyRejected: String(localized: "The server did not accept the key. It may have been revoked: make a new one.", bundle: .module)
         case .incompatible(let v):
-            "The server speaks transcription version \(v), and this app speaks \(ServerTranscriber.apiVersion). Update the older one."
+            String(localized: "The server speaks transcription version \(v), and this app speaks \(ServerTranscriber.apiVersion). Update the older one.", bundle: .module)
         case .refused(let why): why
-        case .failed(let why): "The server could not transcribe it: \(why)"
+        case .failed(let why): String(localized: "The server could not transcribe it: \(why)", bundle: .module)
         }
     }
 }
@@ -132,7 +132,7 @@ public struct ServerTranscriber: Transcriber {
         progress: @escaping @Sendable (Double, String) -> Void
     ) async throws -> Transcript {
         let name = connection.displayName
-        progress(0, "Preparing the audio…")
+        progress(0, String(localized: "Preparing the audio…", bundle: .module))
         let audio = try await AudioExport.m4a(from: source)
         defer { try? FileManager.default.removeItem(at: audio) }
 
@@ -141,16 +141,16 @@ public struct ServerTranscriber: Transcriber {
 
         // A model id means something to the server that lists it: send ours only if it offers it.
         let offered = capabilities.models.contains { $0.id == model }
-        progress(0.02, "Uploading to \(name)…")
+        progress(0.02, String(localized: "Uploading to \(name)…", bundle: .module))
         let jobID = try await upload(audio, language: language, model: offered ? model : nil) { fraction in
-            progress(0.02 + 0.08 * fraction, "Uploading to \(name)…")
+            progress(0.02 + 0.08 * fraction, String(localized: "Uploading to \(name)…", bundle: .module))
         }
         do {
             try await wait(for: jobID, serverName: name, progress: progress)
             let transcript = try await fetch(jobID)
             await forget(jobID)
             guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }
-            progress(1, "Done")
+            progress(1, String(localized: "Done", bundle: .module))
             return transcript
         } catch {
             await forget(jobID)  // cancelled, failed or lost: the server need not keep it
@@ -195,7 +195,7 @@ public struct ServerTranscriber: Transcriber {
             switch job.status {
             case "completed": return
             case "failed", "cancelled": throw ServerTranscriptionError.failed(job.error ?? job.message ?? job.status)
-            default: progress(0.1 + 0.9 * (job.progress ?? 0), job.message ?? "Transcribing on \(serverName)…")
+            default: progress(0.1 + 0.9 * (job.progress ?? 0), job.message ?? String(localized: "Transcribing on \(serverName)…", bundle: .module))
             }
             try await Task.sleep(for: pollInterval)
         }

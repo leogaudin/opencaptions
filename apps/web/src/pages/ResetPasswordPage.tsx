@@ -12,9 +12,11 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthLayout } from "@/components/AuthLayout";
 import { ApiException, confirmPasswordReset } from "@/lib/api";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "@/lib/authValidation";
+import { useT } from "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 
 export function ResetPasswordPage() {
+  const t = useT();
   const resetAvailable = useAuthStore((s) => s.status?.reset_available ?? false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -52,9 +54,11 @@ export function ResetPasswordPage() {
       navigate("/login", { replace: true });
     } catch (err) {
       if (err instanceof ApiException && (err.status === 400 || err.status === 422)) {
-        setFormError("This reset link is invalid or has expired. Request a new one to try again.");
+        setFormError(
+          t("This reset link is invalid or has expired. Request a new one to try again."),
+        );
       } else {
-        setFormError("Couldn't reset your password. Please try again.");
+        setFormError(t("Couldn't reset your password. Please try again."));
       }
       setSubmitting(false);
       passwordRef.current?.focus();
@@ -63,16 +67,16 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      title="Choose a new password"
-      subtitle="Enter a new password for your OpenCaptions account."
+      title={t("Choose a new password")}
+      subtitle={t("Enter a new password for your OpenCaptions account.")}
       footer={
         <>
-          Need a new link?{" "}
+          {t("Need a new link?")}{" "}
           <Link
             to="/forgot-password"
             className="font-medium text-foreground underline hover:opacity-80"
           >
-            Request another
+            {t("Request another")}
           </Link>
         </>
       }
@@ -89,7 +93,7 @@ export function ResetPasswordPage() {
           )}
           <div>
             <label htmlFor="password" className="mb-1 block text-sm font-medium">
-              New password
+              {t("New password")}
             </label>
             <input
               ref={passwordRef}
@@ -110,7 +114,7 @@ export function ResetPasswordPage() {
               </p>
             ) : (
               <p id="password-hint" className="mt-1 text-xs text-muted-foreground">
-                At least {MIN_PASSWORD_LENGTH} characters.
+                {t("At least {n} characters.", { n: MIN_PASSWORD_LENGTH })}
               </p>
             )}
           </div>
@@ -120,7 +124,7 @@ export function ResetPasswordPage() {
             data-testid="auth-submit"
             className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? "Saving…" : "Set new password"}
+            {submitting ? t("Saving…") : t("Set new password")}
           </button>
         </form>
       ) : (
@@ -129,9 +133,11 @@ export function ResetPasswordPage() {
           data-testid="reset-missing-token"
           className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
         >
-          This reset link is missing its token. Please open the link from your email again, or{" "}
+          {t(
+            "This reset link is missing its token. Please open the link from your email again, or",
+          )}{" "}
           <Link to="/forgot-password" className="font-medium underline hover:opacity-80">
-            request a new one
+            {t("request a new one")}
           </Link>
           .
         </div>

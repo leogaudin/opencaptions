@@ -11,6 +11,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react
 import { AboutDialog, AboutTrigger } from "@/components/AboutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import * as api from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import { iconButtonClass, shellX } from "@/lib/ui";
 import { useTheme } from "@/lib/useTheme";
 import { AccountPage } from "@/pages/AccountPage";
@@ -98,10 +99,11 @@ export function App() {
 
 /** Full-screen neutral loader shown while the session is being resolved. */
 function BootstrapSplash() {
+  const t = useT();
   return (
     <output className="flex h-screen w-full items-center justify-center bg-background text-foreground">
       <Loader2 className="mr-2 h-5 w-5 animate-spin text-muted-foreground" aria-hidden />
-      <span className="text-sm text-muted-foreground">Loading…</span>
+      <span className="text-sm text-muted-foreground">{t("Loading…")}</span>
     </output>
   );
 }
@@ -156,6 +158,7 @@ function AppShell() {
 }
 
 function Header() {
+  const t = useT();
   const { theme, toggle } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
   // Runtime details are a self-hoster's business; a hosted instance keeps
@@ -186,20 +189,20 @@ function Header() {
             page content and toolbar actions below. */}
         <nav className="flex items-center gap-2 text-sm">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
-            Projects
+            {t("Projects")}
           </Link>
           <Link
             to="/upload"
             className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
-            New project
+            {t("New project")}
           </Link>
           {!hostedMode && <AboutTrigger onClick={() => setAboutOpen(true)} />}
           <button
             type="button"
             onClick={toggle}
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
+            title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
             className={iconButtonClass}
           >
             {theme === "dark" ? (

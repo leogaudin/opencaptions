@@ -10,10 +10,12 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthLayout } from "@/components/AuthLayout";
 import { ApiException } from "@/lib/api";
 import { MIN_PASSWORD_LENGTH, validateEmail, validatePassword } from "@/lib/authValidation";
+import { useT } from "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 import type { ApiError } from "@/types";
 
 export function SignupPage() {
+  const t = useT();
   const register = useAuthStore((s) => s.register);
   // Only redirect when we KNOW registration is closed (status resolved). If the
   // backend was unreachable (status null), render the form and let submit fail
@@ -61,13 +63,13 @@ export function SignupPage() {
       // Success: RedirectIfAuthenticated navigates away on the phase change.
     } catch (err) {
       if (err instanceof ApiException && err.status === 409) {
-        setFormError("An account with this email already exists.");
+        setFormError(t("An account with this email already exists."));
       } else if (err instanceof ApiException && err.status === 400) {
         setFormError(
           (err.body as ApiError | null)?.detail ?? "Please check your details and try again.",
         );
       } else {
-        setFormError("Couldn't create your account. Please try again.");
+        setFormError(t("Couldn't create your account. Please try again."));
       }
       setSubmitting(false);
     }
@@ -75,13 +77,13 @@ export function SignupPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Sign up to start captioning your videos."
+      title={t("Create your account")}
+      subtitle={t("Sign up to start captioning your videos.")}
       footer={
         <>
-          Already have an account?{" "}
+          {t("Already have an account?")}{" "}
           <Link to="/login" className="font-medium text-foreground underline hover:opacity-80">
-            Sign in
+            {t("Sign in")}
           </Link>
         </>
       }
@@ -97,7 +99,7 @@ export function SignupPage() {
         )}
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
-            Email
+            {t("Email")}
           </label>
           <input
             ref={emailRef}
@@ -121,7 +123,7 @@ export function SignupPage() {
         </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium">
-            Password
+            {t("Password")}
           </label>
           <input
             ref={passwordRef}
@@ -142,7 +144,7 @@ export function SignupPage() {
             </p>
           ) : (
             <p id="password-hint" className="mt-1 text-xs text-muted-foreground">
-              At least {MIN_PASSWORD_LENGTH} characters.
+              {t("At least {n} characters.", { n: MIN_PASSWORD_LENGTH })}
             </p>
           )}
         </div>
@@ -152,7 +154,7 @@ export function SignupPage() {
           data-testid="auth-submit"
           className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
         >
-          {submitting ? "Creating account…" : "Create account"}
+          {submitting ? t("Creating account…") : t("Create account")}
         </button>
       </form>
     </AuthLayout>

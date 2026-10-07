@@ -23,6 +23,10 @@ final class AppModel {
     private(set) var presets: [Preset] = []
     private(set) var projects: [Project] = []
     var errorMessage: String?
+    /// What this build lets the user do. Builds from source have everything; an App Store build
+    /// (compiled with `APPSTORE`) starts free until a purchase says otherwise. A debug build can be
+    /// set to either from Settings, or with `OC_TIER=free|pro`, to try both.
+    var entitlements = AppModel.startingEntitlements()
     /// One model per open project, kept for the life of the app: a transcription or an
     /// autosave in progress must not end because the user went back to the list.
     @ObservationIgnored private var editors: [UUID: EditorModel] = [:]
@@ -43,6 +47,25 @@ final class AppModel {
         Diagnostics.recordUncaughtExceptions()
         Diagnostics.log("launch")
     }
+
+    private static func startingEntitlements() -> Entitlements {
+        #if DEBUG
+            let chosen = ProcessInfo.processInfo.environment["OC_TIER"] ?? UserDefaults.standard.string(forKey: "debug.tier")
+            if let chosen { return chosen == "free" ? .free : .pro }
+        #endif
+        #if APPSTORE
+            return .free
+        #else
+            return .pro
+        #endif
+    }
+
+    #if DEBUG
+        func setTier(_ tier: Entitlements) {
+            entitlements = tier
+            UserDefaults.standard.set(tier.isPro ? "pro" : "free", forKey: "debug.tier")
+        }
+    #endif
 
     /// A transcriber for the connected server, whatever the remembered choice: for a transcription
     /// that picks the server just once.
@@ -109,7 +132,7 @@ final class AppModel {
             reload()
             return project
         } catch {
-            errorMessage = "Could not import that video: \(error.localizedDescription)"
+            errorMessage = String(localized: "Could not import that video: \(error.localizedDescription)")
             return nil
         }
     }

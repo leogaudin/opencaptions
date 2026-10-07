@@ -5,6 +5,7 @@ import PackageDescription
 // `make ios-engine` builds the engine into ../Build/OpenCaptionsEngine.xcframework.
 let package = Package(
     name: "OpenCaptionsKit",
+    defaultLocalization: "en",
     platforms: [.iOS(.v18), .macOS(.v14)],
     products: [
         .library(name: "OpenCaptionsKit", targets: ["OpenCaptionsKit"]),
@@ -16,7 +17,9 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(name: "OpenCaptionsEngine", path: "../Build/OpenCaptionsEngine.xcframework"),
-        .target(name: "OpenCaptionsKit", dependencies: ["OpenCaptionsEngine"]),
+        .target(
+            name: "OpenCaptionsKit", dependencies: ["OpenCaptionsEngine"],
+            resources: [.process("Resources")]),
         // WhisperKit lives in its own target so the core tests do not build it.
         .target(
             name: "OpenCaptionsTranscription",

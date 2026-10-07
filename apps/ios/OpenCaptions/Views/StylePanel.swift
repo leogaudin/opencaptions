@@ -8,6 +8,7 @@ struct StylePanel: View {
 
     @State private var choosingFont = false
     @State private var tab = Tab.presets
+    @State private var showPro = false
     /// The background and animation choices, each drawn in the caption's current look.
     @State private var backgroundTiles: [Background: CGImage] = [:]
     @State private var animationTiles: [CaptionAnimation: CGImage] = [:]
@@ -15,9 +16,18 @@ struct StylePanel: View {
 
     /// The style sheet's pages, so that no one page is long and the video stays in view.
     private enum Tab: String, CaseIterable, Identifiable {
-        case presets = "Presets", text = "Text", background = "Background", animation = "Animation"
-        case outline = "Outline", timing = "Timing"
+        case presets, text, background, animation, outline, timing
         var id: Self { self }
+        var title: LocalizedStringKey {
+            switch self {
+            case .presets: "Presets"
+            case .text: "Text"
+            case .background: "Background"
+            case .animation: "Animation"
+            case .outline: "Outline"
+            case .timing: "Timing"
+            }
+        }
         var icon: String {
             switch self {
             case .presets: "sparkles"
@@ -46,9 +56,10 @@ struct StylePanel: View {
             .task {
                 let env = ProcessInfo.processInfo.environment
                 if env["OC_SHOW_FONTS"] != nil { choosingFont = true }
-                if let name = env["OC_STYLE_TAB"], let shown = Tab(rawValue: name) { tab = shown }
+                if let name = env["OC_STYLE_TAB"], let shown = Tab.allCases.first(where: { "\($0)" == name.lowercased() }) { tab = shown }
             }
         #endif
+        .sheet(isPresented: $showPro) { ProSheet() }
         .sheet(isPresented: $choosingFont) {
             FontPickerSheet(current: style.font, suggested: fonts) { family in
                 model.updateStyle { $0.font = family }
@@ -63,11 +74,13 @@ struct StylePanel: View {
     @ViewBuilder private var content: some View {
         switch tab {
         case .presets:
-            section("Presets") {
-                PresetStrip(presets: presets, active: { style.matches($0) }, apply: { model.apply($0) })
+            section {
+                PresetStrip(presets: presets, active: { style.matches($0) }, apply: { preset in
+                    if app.entitlements.locks(preset: preset) { showPro = true } else { model.apply(preset) }
+                })
             }
         case .text:
-            section("Text") {
+            section {
                 Row("Font") {
                     Button { choosingFont = true } label: {
                         HStack(spacing: 6) {
@@ -85,9 +98,9 @@ struct StylePanel: View {
                 LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
             }
         case .background:
-            section("Background") {
+            section {
                 ChoiceStrip(
-                    options: Background.allCases, selection: style.background, title: { $0.rawValue.capitalized },
+                    options: Background.allCases, selection: style.background, title: backgroundName,
                     images: backgroundTiles, pick: { choice in model.updateStyle { $0 = $0.withBackground(choice) } })
                 if style.background != .none {
                     Row("Color") { ColorPicker("Background color", selection: color(\.backgroundColor), supportsOpacity: false).labelsHidden() }
@@ -95,13 +108,13 @@ struct StylePanel: View {
                 }
             }
         case .animation:
-            section("Animation") {
+            section {
                 ChoiceStrip(
                     options: CaptionAnimation.allCases, selection: style.animation, title: animationName,
                     images: animationTiles, pick: { choice in model.updateStyle { $0.animation = choice } })
             }
         case .outline:
-            section("Outline & shadow") {
+            section {
                 LabeledSlider("Outline", value: model.binding(\.strokeWidth), range: 0...10, step: 0.5)
                 if style.strokeWidth > 0 {
                     Row("Outline color") { ColorPicker("Outline color", selection: color(\.strokeColor), supportsOpacity: false).labelsHidden() }
@@ -112,7 +125,7 @@ struct StylePanel: View {
                 }
             }
         case .timing:
-            section("Timing", footer: "Moves every caption against the audio, without transcribing again.") {
+            section(footer: "Moves every caption against the audio, without transcribing again.") {
                 OffsetControl(model: model)
             }
         }
@@ -127,7 +140,7 @@ struct StylePanel: View {
                     Button { tab = item } label: {
                         VStack(spacing: 3) {
                             Image(systemName: item.icon).font(.system(size: 17, weight: .semibold))
-                            Text(item.rawValue).font(.system(size: 11, weight: .semibold))
+                            Text(item.title).font(.system(size: 11, weight: .semibold))
                         }
                         .foregroundStyle(chosen ? Theme.textPrimary : Theme.textSecondary)
                         .frame(minWidth: 62).padding(.vertical, 7).padding(.horizontal, 6)
@@ -183,7 +196,7 @@ struct StylePanel: View {
     // MARK: Layout
 
     private func section<Content: View>(
-        _ title: String, footer: String? = nil, @ViewBuilder content: () -> Content
+        footer: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content
     ) -> some View {
         // The tab names the section, so there is no title over it.
         VStack(alignment: .leading, spacing: 10) {
@@ -200,7 +213,15 @@ struct StylePanel: View {
         return (["Inter"] + presets.map(\.config.font) + [style.font]).filter { seen.insert($0).inserted }
     }
 
-    private func animationName(_ animation: CaptionAnimation) -> String {
+    private func backgroundName(_ background: Background) -> LocalizedStringKey {
+        switch background {
+        case .none: "None"
+        case .solid: "Solid"
+        case .pill: "Pill"
+        }
+    }
+
+    private func animationName(_ animation: CaptionAnimation) -> LocalizedStringKey {
         switch animation {
         case .wordHighlight: "Highlight"
         case .highlightBox: "Box"
@@ -226,10 +247,10 @@ struct StylePanel: View {
 
 /// A label at the left and a control at the right.
 private struct Row<Control: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder let control: Control
 
-    init(_ title: String, @ViewBuilder control: () -> Control) {
+    init(_ title: LocalizedStringKey, @ViewBuilder control: () -> Control) {
         self.title = title
         self.control = control()
     }
@@ -245,12 +266,12 @@ private struct Row<Control: View>: View {
 
 /// A slider with its name and value above it.
 private struct LabeledSlider: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
     let step: Double
 
-    init(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double) {
+    init(_ title: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>, step: Double) {
         self.title = title
         _value = value
         self.range = range
@@ -294,7 +315,7 @@ private struct OffsetControl: View {
         }
     }
 
-    private func nudge(_ symbol: String, _ label: String, _ action: @escaping () -> Void) -> some View {
+    private func nudge(_ symbol: String, _ label: LocalizedStringKey, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 14, weight: .bold))
                 .frame(width: 34, height: 34)

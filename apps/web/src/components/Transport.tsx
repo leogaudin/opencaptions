@@ -7,6 +7,7 @@
  */
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { useVideo, useVideoClock } from "@/lib/playback";
 import { formatTimecode } from "@/lib/time";
 
@@ -34,6 +35,7 @@ export function Transport({
   /** Controls kept at the right end of the bar (the timeline's zoom). */
   children?: ReactNode;
 }) {
+  const t = useT();
   const video = useVideo();
   const time = useRef<HTMLSpanElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -94,7 +96,7 @@ export function Transport({
       <button
         type="button"
         data-testid="transport-play"
-        aria-label={playing ? "Pause" : "Play"}
+        aria-label={playing ? t("Pause") : t("Play")}
         disabled={!video}
         onClick={toggle}
         className={PLAY}
@@ -117,7 +119,7 @@ export function Transport({
       </span>
       <button
         type="button"
-        aria-label={muted ? "Unmute" : "Mute"}
+        aria-label={muted ? t("Unmute") : t("Mute")}
         disabled={!video}
         onClick={() => {
           if (video) video.muted = !video.muted;

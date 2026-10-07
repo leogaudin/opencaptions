@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("transcribeLanguage") private var language = "auto"
 
     @State private var refresh = 0
+    @State private var showPro = false
     @State private var downloading: [String: Double] = [:]
     @State private var deleting: WhisperModel?
     @State private var meteredFor: WhisperModel?
@@ -28,6 +29,9 @@ struct SettingsView: View {
                     transcriptionSection
                     modelsSection
                     storageSection
+                    #if DEBUG
+                        tierSection
+                    #endif
                     aboutSection
                 }
                 .padding(.horizontal, 16)
@@ -41,6 +45,7 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .fadesIntoTabBar()
+        .sheet(isPresented: $showPro) { ProSheet() }
         .id(refresh)
         // Sizes (saved videos, models) are read when the tab is shown, so a save made since is counted.
         // Outside the id: inside it, each refresh would remake the view and appear again, for ever.
@@ -100,10 +105,10 @@ struct SettingsView: View {
 
     private var alertTitle: String {
         switch prompt {
-        case .deleteModel: "Delete this model?"
-        case .metered: "Download on a metered connection?"
-        case .clearSaved: "Delete every saved video?"
-        case .failure, nil: "Something went wrong"
+        case .deleteModel: String(localized: "Delete this model?")
+        case .metered: String(localized: "Download on a metered connection?")
+        case .clearSaved: String(localized: "Delete every saved video?")
+        case .failure, nil: String(localized: "Something went wrong")
         }
     }
 
@@ -161,7 +166,10 @@ struct SettingsView: View {
         let downloaded = app.transcriber.isDownloaded(model.id)
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.label).font(.system(size: 16, weight: .semibold))
+                HStack(spacing: 6) {
+                    Text(model.label).font(.system(size: 16, weight: .semibold))
+                    if app.entitlements.locks(model: model.id) { ProBadge() }
+                }
                 Text(downloaded ? "On this device · \(Self.size(app.transcriber.sizeOnDisk(model.id)))" : "\(model.megabytes) MB")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
             }
@@ -177,8 +185,10 @@ struct SettingsView: View {
                     .buttonStyle(CircleButtonStyle())
                     .accessibilityLabel("Delete \(model.label)")
             } else {
-                Button("Download") { requestDownload(model) }
-                    .buttonStyle(PillButtonStyle(prominent: true))
+                Button("Download") {
+                    if app.entitlements.locks(model: model.id) { showPro = true } else { requestDownload(model) }
+                }
+                .buttonStyle(PillButtonStyle(prominent: true))
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -213,6 +223,20 @@ struct SettingsView: View {
             Text(value).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
         }
     }
+
+    #if DEBUG
+        /// Debug builds only: try the free and the Pro side of the app.
+        private var tierSection: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionLabel("Debug")
+                InlinePicker(
+                    title: "Tier", options: [false, true],
+                    selection: Binding(get: { app.entitlements.isPro }, set: { app.setTier($0 ? .pro : .free) }),
+                    label: { $0 ? "Pro" : "Free" }
+                ).card()
+            }
+        }
+    #endif
 
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -257,7 +281,7 @@ struct SettingsView: View {
                     Task { @MainActor in downloading[model.id] = fraction }
                 }
             } catch {
-                failure = "\(model.label) could not be downloaded: \(error.localizedDescription)"
+                failure = String(localized: "\(model.label) could not be downloaded: \(error.localizedDescription)")
             }
             downloading[model.id] = nil
             refresh += 1
@@ -268,7 +292,7 @@ struct SettingsView: View {
         do {
             try app.transcriber.delete(model.id)
         } catch {
-            failure = "\(model.label) could not be deleted: \(error.localizedDescription)"
+            failure = String(localized: "\(model.label) could not be deleted: \(error.localizedDescription)")
         }
         refresh += 1
     }

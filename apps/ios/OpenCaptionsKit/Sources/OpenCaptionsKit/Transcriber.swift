@@ -8,10 +8,10 @@ public enum TranscriptionError: Error, Equatable, Sendable, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .unknownModel(let id): "Unknown model \(id)."
-        case .modelNotDownloaded(let id): "The \(id) model has not been downloaded."
-        case .noAudio: "This video has no audio to transcribe."
-        case .noSpeech: "No speech was found in this video."
+        case .unknownModel(let id): String(localized: "Unknown model \(id).", bundle: .module)
+        case .modelNotDownloaded(let id): String(localized: "The \(id) model has not been downloaded.", bundle: .module)
+        case .noAudio: String(localized: "This video has no audio to transcribe.", bundle: .module)
+        case .noSpeech: String(localized: "No speech was found in this video.", bundle: .module)
         }
     }
 }

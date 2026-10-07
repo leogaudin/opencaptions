@@ -4,6 +4,7 @@
 name: OpenCaptions
 options:
   bundleIdPrefix: org.leogaudin
+  developmentLanguage: en
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
@@ -14,6 +15,9 @@ settings:
     DEVELOPMENT_TEAM: R32B9PWM4R
     CODE_SIGN_STYLE: Automatic
     SWIFT_VERSION: "6.0"
+    # Strings in the code are collected into the string catalog by the build.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     # The engine is built for the Apple-silicon simulator only (see build-apple.sh).
     EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 packages:

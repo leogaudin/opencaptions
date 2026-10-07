@@ -123,7 +123,7 @@ struct EditorView: View {
             // The system takes the hardware encoder from an app that leaves the screen, which ends a
             // save abruptly. Stopping it ourselves leaves a clear message instead of a dead app.
             if phase == .background {
-                exporter?.interrupt("The save stopped because OpenCaptions left the screen. Keep it open while it saves, then try again.")
+                exporter?.interrupt(String(localized: "The save stopped because OpenCaptions left the screen. Keep it open while it saves, then try again."))
             }
         }
         // A long job needs the app in the foreground: there is no background processing.
@@ -143,7 +143,9 @@ struct EditorView: View {
 
     /// Saves what is on screen: pending edits land first, and the preview lets go of the
     /// engine while the export uses it.
-    private func saveVideo(_ options: ExportOptions) async {
+    private func saveVideo(_ chosen: ExportOptions) async {
+        // Whatever the screen allowed, what is saved is within this tier.
+        let options = app.entitlements.limit(chosen, for: model.project)
         guard let source = app.store.sourceURL(for: model.project.id) else { return }
         await model.flush()
         playback.pause()
@@ -167,7 +169,7 @@ struct EditorView: View {
             Color.black
             PreviewView(
                 playback: playback, project: model.project, fonts: app.fontCache,
-                suspended: exporter?.isRunning == true,
+                suspended: exporter?.isRunning == true, watermark: app.entitlements.watermark,
                 onTogglePlay: { playback.toggle() },
                 onAdjust: { position, size in model.adjustCaption(position: position, fontSize: size) },
                 onEditWord: { index in

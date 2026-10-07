@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Field } from "@/components/StyleFields";
 import { listFonts } from "@/lib/api";
 import { engineFamilies } from "@/lib/engine";
+import { useT } from "@/lib/i18n";
 import type { FontFamily } from "@/types";
 
 const SHOWN = 60;
@@ -64,6 +65,7 @@ function FontName({ family }: { family: string }) {
 }
 
 export function FontPicker({ value, onChange }: { value: string; onChange: (f: string) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [included, setIncluded] = useState<Row[]>([]);
@@ -119,7 +121,7 @@ export function FontPicker({ value, onChange }: { value: string; onChange: (f: s
   );
 
   return (
-    <Field label="Font">
+    <Field label={t("Font")}>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Trigger asChild>
           <button
@@ -134,55 +136,62 @@ export function FontPicker({ value, onChange }: { value: string; onChange: (f: s
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[80vh] w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-card p-4 shadow-lg focus:outline-hidden">
             <div className="flex items-center justify-between">
-              <Dialog.Title className="text-base font-semibold">Font</Dialog.Title>
+              <Dialog.Title className="text-base font-semibold">{t("Font")}</Dialog.Title>
               <Dialog.Close
                 className="text-muted-foreground hover:text-foreground"
-                aria-label="Close"
+                aria-label={t("Close")}
               >
                 <X className="h-4 w-4" />
               </Dialog.Close>
             </div>
             <Dialog.Description className="sr-only">
-              Search the included fonts and Google Fonts.
+              {t("Search the included fonts and Google Fonts.")}
             </Dialog.Description>
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search fonts"
-              aria-label="Search fonts"
+              placeholder={t("Search fonts")}
+              aria-label={t("Search fonts")}
               className="mt-3 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
             />
             <ul className="mt-2 min-h-0 flex-1 overflow-y-auto">
-              {shownIncluded.length > 0 && heading("Included")}
+              {shownIncluded.length > 0 && heading(t("Included"))}
               {shownIncluded.map(row)}
-              {heading("More fonts · Google Fonts")}
+              {heading(t("More fonts · Google Fonts"))}
               {google === "loading" && (
-                <li className="px-2 py-3 text-sm text-muted-foreground">Loading Google Fonts…</li>
+                <li className="px-2 py-3 text-sm text-muted-foreground">
+                  {t("Loading Google Fonts…")}
+                </li>
               )}
               {google === "failed" && (
                 <li className="px-2 py-3 text-sm text-muted-foreground" data-testid="fonts-failed">
-                  Google Fonts could not be loaded: this server needs internet access to list them.
-                  The included fonts above still work.{" "}
+                  {t(
+                    "Google Fonts could not be loaded: this server needs internet access to list them. The included fonts above still work.",
+                  )}{" "}
                   <button
                     type="button"
                     onClick={() => setAttempt((n) => n + 1)}
                     className="underline hover:text-foreground"
                   >
-                    Try again
+                    {t("Try again")}
                   </button>
                 </li>
               )}
               {shownCatalogue.map(row)}
               {matchingCatalogue.length > shownCatalogue.length && (
                 <li className="px-2 py-2 text-xs text-muted-foreground">
-                  {matchingCatalogue.length - shownCatalogue.length} more: type to search them.
+                  {t("{n} more: type to search them.", {
+                    n: matchingCatalogue.length - shownCatalogue.length,
+                  })}
                 </li>
               )}
               {Array.isArray(google) &&
                 shownIncluded.length === 0 &&
                 matchingCatalogue.length === 0 && (
-                  <li className="px-2 py-3 text-sm text-muted-foreground">No font matches.</li>
+                  <li className="px-2 py-3 text-sm text-muted-foreground">
+                    {t("No font matches.")}
+                  </li>
                 )}
             </ul>
           </Dialog.Content>

@@ -139,8 +139,8 @@ struct ProjectsView: View {
                 Text("Add captions that move")
                     .font(.system(size: 30, weight: .heavy)).multilineTextAlignment(.center)
                     .foregroundStyle(Theme.textPrimary)
-                (Text("Transcribe, restyle and ").foregroundStyle(.white) + Text("save").foregroundStyle(Theme.accent)
-                    + Text(" a video, all on this phone.").foregroundStyle(.white))
+                Text(tagline)
+                    .foregroundStyle(.white)
                     .font(.system(size: 17, weight: .semibold))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 18).padding(.vertical, 12)
@@ -160,6 +160,15 @@ struct ProjectsView: View {
         .padding(.horizontal, 24)
     }
 
+    /// One sentence for the translator, with the word to stress marked in bold: it is drawn in the accent.
+    private var tagline: AttributedString {
+        var text = AttributedString(localized: "Transcribe, restyle and **save** a video, all on this phone.")
+        for run in text.runs where run.inlinePresentationIntent?.contains(.stronglyEmphasized) == true {
+            text[run.range].foregroundColor = Theme.accent
+        }
+        return text
+    }
+
     private var importingCard: some View {
         VStack(spacing: 12) {
             ProgressView().tint(Theme.accent)
@@ -173,28 +182,28 @@ struct ProjectsView: View {
     /// A picked video is copied somewhere the app owns and looked at, then the user is shown it and
     /// decides: nothing is imported until they say so.
     private func load(_ item: PhotosPickerItem) async {
-        importing = "Preparing your video…"
+        importing = String(localized: "Preparing your video…")
         defer {
             importing = nil
             picked = nil
         }
         guard let movie = try? await item.loadTransferable(type: PickedMovie.self) else {
-            app.errorMessage = "That video could not be read."
+            app.errorMessage = String(localized: "That video could not be read.")
             return
         }
         guard let info = try? await VideoProbe.probe(movie.url) else {
             try? FileManager.default.removeItem(at: movie.url)
-            app.errorMessage = "That file does not look like a video."
+            app.errorMessage = String(localized: "That file does not look like a video.")
             return
         }
         pending = PendingImport(
-            url: movie.url, title: "Video " + Date().formatted(date: .abbreviated, time: .shortened),
+            url: movie.url, title: String(localized: "Video \(Date().formatted(date: .abbreviated, time: .shortened))"),
             info: info, poster: await PendingImport.poster(of: movie.url))
     }
 
     private func confirm(_ item: PendingImport) async {
         pending = nil
-        importing = "Importing…"
+        importing = String(localized: "Importing…")
         defer { importing = nil }
         let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
         if let project = await app.importVideo(
@@ -354,8 +363,8 @@ private struct ProjectDialogs: ViewModifier {
     }
 
     private var alertTitle: String {
-        if case .delete = prompt { return "Delete this project?" }
-        return "Something went wrong"
+        if case .delete = prompt { return String(localized: "Delete this project?") }
+        return String(localized: "Something went wrong")
     }
 }
 

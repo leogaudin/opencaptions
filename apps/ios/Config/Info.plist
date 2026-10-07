@@ -3,6 +3,14 @@
 <!-- What the generated Info.plist cannot express; Xcode merges it with the generated keys. -->
 <plist version="1.0">
 <dict>
+	<!-- The languages the app is translated into (its string catalogs). -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>fr</string>
+		<string>es</string>
+		<string>de</string>
+	</array>
 	<!-- opencaptions://connect?url=…&key=… : the link the web app makes to pair this app with a server. -->
 	<key>CFBundleURLTypes</key>
 	<array>

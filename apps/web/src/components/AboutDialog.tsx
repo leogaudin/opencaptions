@@ -9,6 +9,7 @@ import { Info, X } from "lucide-react";
  */
 import { useCallback, useEffect, useState } from "react";
 import { getHealth, type HealthResponse } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import { iconButtonClass } from "@/lib/ui";
 import { version as APP_VERSION } from "../../package.json";
 
@@ -42,42 +43,47 @@ function ServiceBadge({ name, value }: { name: string; value: string }) {
   );
 }
 
-function TranscriptionRuntime({ info: t }: { info: NonNullable<HealthResponse["transcription"]> }) {
+function TranscriptionRuntime({
+  info: runtime,
+}: {
+  info: NonNullable<HealthResponse["transcription"]>;
+}) {
+  const t = useT();
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Transcription
+        {t("Transcription")}
       </p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-        <span className="text-muted-foreground">Device</span>
+        <span className="text-muted-foreground">{t("Device")}</span>
         <span className="font-mono text-xs">
-          {t.device}
-          {t.requested_device !== t.device && (
+          {runtime.device}
+          {runtime.requested_device !== runtime.device && (
             <span className="ml-1 text-yellow-600 dark:text-yellow-400">
-              (requested: {t.requested_device})
+              (requested: {runtime.requested_device})
             </span>
           )}
         </span>
-        <span className="text-muted-foreground">Compute</span>
+        <span className="text-muted-foreground">{t("Compute")}</span>
         <span className="font-mono text-xs">
-          {t.compute_type}
-          {t.requested_compute_type !== t.compute_type && (
+          {runtime.compute_type}
+          {runtime.requested_compute_type !== runtime.compute_type && (
             <span className="ml-1 text-yellow-600 dark:text-yellow-400">
-              (requested: {t.requested_compute_type})
+              (requested: {runtime.requested_compute_type})
             </span>
           )}
         </span>
-        <span className="text-muted-foreground">Provider</span>
-        <span className="font-mono text-xs">{t.default_provider}</span>
+        <span className="text-muted-foreground">{t("Provider")}</span>
+        <span className="font-mono text-xs">{runtime.default_provider}</span>
       </div>
-      {t.device_fallback_reason && (
+      {runtime.device_fallback_reason && (
         <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
-          ⚠ {t.device_fallback_reason}
+          ⚠ {runtime.device_fallback_reason}
         </p>
       )}
-      {t.compute_type_fallback_reason && (
+      {runtime.compute_type_fallback_reason && (
         <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
-          ⚠ {t.compute_type_fallback_reason}
+          ⚠ {runtime.compute_type_fallback_reason}
         </p>
       )}
     </div>
@@ -85,6 +91,7 @@ function TranscriptionRuntime({ info: t }: { info: NonNullable<HealthResponse["t
 }
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
+  const t = useT();
   const [fetchState, setFetchState] = useState<FetchState>({ status: "idle" });
 
   // Fetch health lazily when the dialog opens, no network cost while closed.
@@ -126,7 +133,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           {/* Static project info */}
           <div className="mt-4 space-y-1 text-sm">
             <p>
-              <span className="text-muted-foreground">Licence: </span>
+              <span className="text-muted-foreground">{t("Licence:")} </span>
               <a
                 href="https://github.com/leogaudin/opencaptions/blob/main/LICENSE"
                 target="_blank"
@@ -137,7 +144,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               </a>
             </p>
             <p>
-              <span className="text-muted-foreground">Repository: </span>
+              <span className="text-muted-foreground">{t("Repository:")} </span>
               <a
                 href="https://github.com/leogaudin/opencaptions"
                 target="_blank"
@@ -151,10 +158,10 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
 
           {/* Live runtime info */}
           <div className="mt-5 border-t border-border pt-4">
-            <h3 className="mb-2 text-sm font-medium text-muted-foreground">Runtime</h3>
+            <h3 className="mb-2 text-sm font-medium text-muted-foreground">{t("Runtime")}</h3>
 
             {fetchState.status === "loading" && (
-              <p className="text-sm text-muted-foreground">Loading health info…</p>
+              <p className="text-sm text-muted-foreground">{t("Loading health info…")}</p>
             )}
 
             {fetchState.status === "error" && (
@@ -166,7 +173,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             {fetchState.status === "success" && (
               <div className="space-y-3">
                 <p className="text-sm">
-                  <span className="text-muted-foreground">API version: </span>
+                  <span className="text-muted-foreground">{t("API version:")} </span>
                   <span className="font-mono text-xs">{fetchState.data.version}</span>
                 </p>
 
@@ -174,7 +181,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                 {fetchState.data.services && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Services
+                      {t("Services")}
                     </p>
                     <ServiceBadge name="database" value={fetchState.data.services.database} />
                     <ServiceBadge name="redis" value={fetchState.data.services.redis} />
@@ -194,7 +201,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           <Dialog.Close asChild>
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t("Close")}
               className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -212,13 +219,14 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
  * foreground, accent on hover): matching the theme-toggle and logout buttons.
  */
 export function AboutTrigger({ onClick }: { onClick: () => void }) {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={onClick}
       data-testid="about-trigger"
-      aria-label="About OpenCaptions"
-      title="About OpenCaptions"
+      aria-label={t("About OpenCaptions")}
+      title={t("About OpenCaptions")}
       className={iconButtonClass}
     >
       <Info className="h-4 w-4" aria-hidden />

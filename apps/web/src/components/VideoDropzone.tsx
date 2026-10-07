@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /** Accepted video container formats (kept in one place, shared by all callers). */
@@ -39,6 +40,7 @@ export function VideoDropzone({
   testId,
   inputTestId,
 }: VideoDropzoneProps) {
+  const t = useT();
   const onDrop = useCallback(
     (accepted: File[], rejections: FileRejection[]) => {
       if (rejections.length > 0) {
@@ -68,7 +70,7 @@ export function VideoDropzone({
         {...getRootProps()}
         data-testid={testId}
         disabled={disabled}
-        aria-label="Upload a video: drop a file here, or activate to choose one"
+        aria-label={t("Upload a video: drop a file here, or activate to choose one")}
         className={cn(
           // w-full because a button sizes to its content, where the div this replaced
           // filled its parent.
@@ -90,7 +92,7 @@ export function VideoDropzone({
         ) : (
           <div className="text-sm text-muted-foreground">
             <div className="font-medium text-foreground">
-              {isDragActive ? "Drop to upload" : "Drop a video here, or click to choose"}
+              {isDragActive ? t("Drop to upload") : t("Drop a video here, or click to choose")}
             </div>
             <div className="mt-1 text-xs">.mp4 .mov .webm .mkv .avi</div>
           </div>

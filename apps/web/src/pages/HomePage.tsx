@@ -8,10 +8,11 @@ import { Trash2 } from "lucide-react";
  *   - With projects: a scannable list with poster thumbnails, relative "updated"
  *     time, live progress for active work, and per-row delete.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProjectThumbnail } from "@/components/ProjectThumbnail";
 import * as api from "@/lib/api";
+import { msg, useT } from "@/lib/i18n";
 import { formatRelativeTime } from "@/lib/time";
 import { shellX } from "@/lib/ui";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
@@ -19,6 +20,7 @@ import { formatBytes } from "@/lib/utils";
 import type { ProjectListItem } from "@/types";
 
 export function HomePage() {
+  const t = useT();
   const [items, setItems] = useState<ProjectListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +60,7 @@ export function HomePage() {
   if (items === null) {
     return (
       <div className={`w-full ${shellX} py-12 text-sm text-muted-foreground`}>
-        Loading projects…
+        {t("Loading projects…")}
       </div>
     );
   }
@@ -70,7 +72,7 @@ export function HomePage() {
   return (
     <div className={`w-full ${shellX} py-10`}>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold tracking-tight">Your projects</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">{t("Your projects")}</h1>
         {/* The single primary "New project" action lives in the header (global,
             reachable from every screen). No duplicate here. */}
       </div>
@@ -86,24 +88,33 @@ export function HomePage() {
 /** The three-step flow shown under the empty-state CTA. Copy only, the steps
  *  are context, not actions, so they carry no icon or link of their own. */
 const FLOW_STEPS = [
-  { label: "Upload", detail: "Drop or pick a video" },
-  { label: "Transcribe", detail: "Runs locally, on your machine" },
-  { label: "Style & export", detail: "Caption it, download the video" },
+  { label: msg("Upload"), detail: msg("Drop or pick a video") },
+  { label: msg("Transcribe"), detail: msg("Runs locally, on your machine") },
+  { label: msg("Style & export"), detail: msg("Caption it, download the video") },
 ] as const;
 
 function EmptyState() {
+  const t = useT();
   return (
     <div className={`mx-auto w-full max-w-3xl ${shellX} py-16 text-center`}>
       <h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
-        Add captions that move
+        {t("Add captions that move")}
       </h1>
       {/* A caption as the app draws one: the spoken word in yellow. */}
       <p className="mx-auto mb-4 inline-block max-w-md rounded-2xl bg-black px-5 py-3 text-lg font-semibold text-white">
-        Transcribe, restyle and <span className="text-primary">save</span> a video, all on your
-        machine.
+        {t("Transcribe, restyle and {save} a video, all on your machine.", {
+          save: "\u0000",
+        })
+          .split("\u0000")
+          .map((part, i) => (
+            <Fragment key={part}>
+              {i > 0 && <span className="text-primary">{t("save")}</span>}
+              {part}
+            </Fragment>
+          ))}
       </p>
       <p className="mx-auto mb-8 max-w-md text-sm text-muted-foreground">
-        Nothing leaves your machine unless you choose a hosted transcription provider.
+        {t("Nothing leaves your machine unless you choose a hosted transcription provider.")}
       </p>
 
       {/* One unmistakable next action: a large, labelled button that says exactly
@@ -118,7 +129,7 @@ function EmptyState() {
         data-testid="empty-new-project"
         className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90"
       >
-        New project
+        {t("New project")}
       </Link>
 
       {/* The 1-2-3 flow, restyled: it explains how the app works, so it must read
@@ -136,8 +147,8 @@ function EmptyState() {
               {i + 1}
             </span>
             <div>
-              <div className="text-sm font-medium">{step.label}</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">{step.detail}</div>
+              <div className="text-sm font-medium">{t(step.label)}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{t(step.detail)}</div>
             </div>
           </li>
         ))}
@@ -155,6 +166,7 @@ function ProjectRow({
   onDeleted: (id: string) => void;
   onRenamed: (id: string, title: string) => void;
 }) {
+  const t = useT();
   const [confirming, setConfirming] = useState(false);
   // Renaming happens here, on the list, and nowhere else: one place to do it.
   const [draft, setDraft] = useState<string | null>(null);
@@ -215,7 +227,7 @@ function ProjectRow({
                 data-testid="delete-confirm"
                 className="rounded-full bg-destructive px-2.5 py-1 text-xs font-bold text-destructive-foreground disabled:opacity-50"
               >
-                {deleting ? "Deleting…" : "Delete"}
+                {deleting ? t("Deleting…") : t("Delete")}
               </button>
               <button
                 type="button"
@@ -223,7 +235,7 @@ function ProjectRow({
                 disabled={deleting}
                 className="rounded-full px-2.5 py-1 text-xs font-semibold hover:bg-white/15 disabled:opacity-50"
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </span>
           ) : (
@@ -231,7 +243,7 @@ function ProjectRow({
               type="button"
               onClick={() => setConfirming(true)}
               aria-label={`Delete ${item.title}`}
-              title="Delete project"
+              title={t("Delete project")}
               data-testid="delete-project"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
             >
@@ -248,7 +260,7 @@ function ProjectRow({
               settled.current = false;
               setDraft(item.title);
             }}
-            title="Click to rename"
+            title={t("Click to rename")}
             data-testid="project-title"
             className="-mx-2 block w-[calc(100%+1rem)] cursor-text truncate rounded-md px-2 py-1 text-left font-semibold hover:bg-muted"
           >
@@ -266,7 +278,7 @@ function ProjectRow({
               if (e.key === "Enter") finishRename(true);
               else if (e.key === "Escape") finishRename(false);
             }}
-            aria-label="Project name"
+            aria-label={t("Project name")}
             data-testid="rename-input"
             maxLength={255}
             className="-mx-2 w-[calc(100%+1rem)] rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold"
@@ -301,6 +313,7 @@ function ProjectRow({
  * holds the handler in a ref, so this inline callback doesn't re-subscribe.
  */
 function LiveProgress({ projectId }: { projectId: string }) {
+  const t = useT();
   const [pct, setPct] = useState<number | null>(null);
 
   useProjectWebSocket(projectId, (msg) => {
@@ -318,13 +331,23 @@ function LiveProgress({ projectId }: { projectId: string }) {
         />
       </span>
       <span className="text-[11px] text-muted-foreground">
-        {pct !== null ? `${pct}%` : "Transcribing…"}
+        {pct !== null ? `${pct}%` : t("Transcribing…")}
       </span>
     </span>
   );
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: msg("draft"),
+  transcribing: msg("transcribing"),
+  transcribed: msg("transcribed"),
+  preparing: msg("preparing"),
+  done: msg("done"),
+  error: msg("error"),
+};
+
 function StatusBadge({ status }: { status: string }) {
+  const t = useT();
   // Semantic status colours use light+dark pairs (matching AboutDialog's
   // convention) so they stay legible in BOTH themes, never a single hardcoded
   // shade that vanishes in light mode.
@@ -338,8 +361,8 @@ function StatusBadge({ status }: { status: string }) {
       error: "bg-red-500/20 text-red-700 dark:text-red-400",
     }[status] ?? "bg-muted text-muted-foreground";
   // User-facing labels: avoid exposing internal "rendering" state.
-  const label = status === "rendering" ? "preparing" : status;
+  const label = STATUS_LABELS[status === "rendering" ? "preparing" : status] ?? status;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{label}</span>
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{t(label)}</span>
   );
 }

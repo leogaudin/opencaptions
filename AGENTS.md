@@ -128,4 +128,5 @@ images, which is what an end user does.
 - **Swift:** Swift 6 language mode (strict concurrency); logic goes in `OpenCaptionsKit` with tests, views stay thin. The engine is only called through the `CaptionEngine` actor.
 - **Rust:** `cargo fmt`, `clippy -D warnings` for the server, `wasm32-unknown-unknown` and `aarch64-apple-ios`, edition 2024.
 - **Strict TypeScript:** `tsconfig.json` sets `"strict": true`. No `as any`, `@ts-ignore`, or `@ts-expect-error`.
+- **Words on screen are translated.** Web: `t("English text")` from `lib/i18n.ts` (or `msg(...)` for a text shown later through a variable), with the translations added to every `src/locales/*.json`; iOS: SwiftUI literals, `String(localized:)`, and the catalogs. The tests fail on a missing translation.
 - **License:** AGPL-3.0-only, and contributors accept `CLA.md`.

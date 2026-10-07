@@ -25,6 +25,7 @@ import { DownloadDialog } from "@/components/DownloadDialog";
 import { RetranscribeDialog } from "@/components/RetranscribeDialog";
 import * as api from "@/lib/api";
 import { usePendingDownload } from "@/lib/downloads";
+import { useT } from "@/lib/i18n";
 import { useEditorStore } from "@/store/editorStore";
 
 /**
@@ -37,6 +38,7 @@ const ICON_BUTTON_CLASSES =
   "inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:opacity-50";
 
 export function EditorToolbar() {
+  const t = useT();
   const project = useEditorStore((s) => s.project);
   const transcript = useEditorStore((s) => s.transcript);
   const requestVideoDownload = useEditorStore((s) => s.requestVideoDownload);
@@ -83,10 +85,10 @@ export function EditorToolbar() {
   const transcriptionPct = transcriptionJob
     ? Math.round((transcriptionJob.progress ?? 0) * 100)
     : 0;
-  const transcriptionMessage = transcriptionJob?.message ?? "Transcribing…";
+  const transcriptionMessage = transcriptionJob?.message ?? t("Transcribing…");
 
   /** Format label for the in-progress download indicator. */
-  const preparingFormatLabel = downloadFormat?.toUpperCase() ?? "video";
+  const preparingFormatLabel = downloadFormat?.toUpperCase() ?? t("video");
 
   async function handleFormatDownload(format: string): Promise<void> {
     if (!project) return;
@@ -118,7 +120,7 @@ export function EditorToolbar() {
               data-testid="cancel-job"
               className="rounded-md border border-destructive/40 px-2 py-0.5 text-[11px] text-destructive hover:bg-destructive/10 disabled:opacity-50"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         )}
@@ -127,7 +129,7 @@ export function EditorToolbar() {
           <div className="flex items-center gap-1.5">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-ink" aria-hidden />
             <span className="text-[11px] text-muted-foreground">
-              Preparing {preparingFormatLabel}
+              {t("Preparing {format}", { format: preparingFormatLabel })}
               {preparePct > 0 ? ` ${preparePct}%` : "…"}
             </span>
           </div>
@@ -150,7 +152,7 @@ export function EditorToolbar() {
               className="hidden text-[11px] text-muted-foreground sm:inline"
             >
               <span className="uppercase">{transcript.language}</span>
-              {transcript.language_detection === "auto" ? " (auto-detected)" : ""}
+              {transcript.language_detection === "auto" ? ` ${t("(auto-detected)")}` : ""}
             </span>
             <AutosaveIndicator />
             <RetranscribeDialog current={transcript.language} />
@@ -163,8 +165,8 @@ export function EditorToolbar() {
           onClick={() => setDownloading(true)}
           disabled={preparingNow || saving || !transcript}
           data-testid="download-open"
-          title="Download video"
-          aria-label="Download video"
+          title={t("Download video")}
+          aria-label={t("Download video")}
           className="inline-flex h-7 items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
           {preparingNow ? (
@@ -187,8 +189,8 @@ export function EditorToolbar() {
             <button
               type="button"
               disabled={!exports?.subtitles}
-              aria-label="Download subtitles"
-              title="Download subtitles"
+              aria-label={t("Download subtitles")}
+              title={t("Download subtitles")}
               className={ICON_BUTTON_CLASSES}
             >
               <FileText className="h-3.5 w-3.5" aria-hidden />
@@ -207,7 +209,7 @@ export function EditorToolbar() {
                   data-testid="dl-srt"
                   className="flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-xs outline-hidden hover:bg-accent focus:bg-accent"
                 >
-                  SRT
+                  {t("SRT")}
                 </a>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
@@ -217,7 +219,7 @@ export function EditorToolbar() {
                   data-testid="dl-vtt"
                   className="flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-xs outline-hidden hover:bg-accent focus:bg-accent"
                 >
-                  VTT
+                  {t("VTT")}
                 </a>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
@@ -227,7 +229,7 @@ export function EditorToolbar() {
                   data-testid="dl-json"
                   className="flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-xs outline-hidden hover:bg-accent focus:bg-accent"
                 >
-                  JSON
+                  {t("JSON")}
                 </a>
               </DropdownMenu.Item>
             </DropdownMenu.Content>

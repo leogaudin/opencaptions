@@ -3,10 +3,12 @@
  * panel: the main surface for working with the captions over time.
  */
 import { Timeline } from "@/components/timeline/Timeline";
+import { useT } from "@/lib/i18n";
 import { useVideo } from "@/lib/playback";
 import { useEditorStore } from "@/store/editorStore";
 
 export function TimelineDock() {
+  const t = useT();
   const video = useVideo();
   const project = useEditorStore((s) => s.project);
   const transcript = useEditorStore((s) => s.transcript);
@@ -17,7 +19,7 @@ export function TimelineDock() {
   if (!project?.video_storage_key || !transcript || transcript.segments.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
-        Captions appear here once the video is transcribed.
+        {t("Captions appear here once the video is transcribed.")}
       </div>
     );
   }

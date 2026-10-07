@@ -3,7 +3,12 @@
  * replacing raw locale strings like "8/28/2026, 4:00:42 PM", use the platform
  * Intl.RelativeTimeFormat so output is locale-aware with no dependencies.
  */
-const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+import { getLanguage } from "@/lib/i18n";
+
+/** In the interface's language, which is not necessarily the browser's. */
+function rtf(): Intl.RelativeTimeFormat {
+  return new Intl.RelativeTimeFormat(getLanguage(), { numeric: "auto" });
+}
 
 const DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: "second" },
@@ -27,7 +32,7 @@ export function formatRelativeTime(iso: string): string {
   let duration = (date.getTime() - Date.now()) / 1000;
   for (const division of DIVISIONS) {
     if (Math.abs(duration) < division.amount) {
-      return rtf.format(Math.round(duration), division.unit);
+      return rtf().format(Math.round(duration), division.unit);
     }
     duration /= division.amount;
   }

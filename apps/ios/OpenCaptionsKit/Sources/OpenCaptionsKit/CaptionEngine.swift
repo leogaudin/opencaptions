@@ -146,20 +146,23 @@ public actor CaptionEngine {
         var width: Int
         var height: Int
         var captionOffsetMs: Int
+        var watermark: String?
 
         enum CodingKeys: String, CodingKey {
-            case transcript, style, width, height
+            case transcript, style, width, height, watermark
             case captionOffsetMs = "caption_offset_ms"
         }
     }
 
-    /// Lays out the captions for a transcript, style and frame size.
+    /// Lays out the captions for a transcript, style and frame size. A `watermark` is drawn by the
+    /// engine in a corner of every frame, so the preview and the export carry the same one.
     public func setScene(
-        transcript: Transcript, style: StyleConfig, width: Int, height: Int, captionOffsetMs: Int
+        transcript: Transcript, style: StyleConfig, width: Int, height: Int, captionOffsetMs: Int,
+        watermark: String? = nil
     ) throws {
         let input = SceneInput(
             transcript: transcript, style: style, width: width, height: height,
-            captionOffsetMs: captionOffsetMs
+            captionOffsetMs: captionOffsetMs, watermark: watermark
         )
         try apply(input)
     }
@@ -199,7 +202,8 @@ public actor CaptionEngine {
             do {
                 try apply(
                     SceneInput(
-                        transcript: transcript, style: style, width: width, height: height, captionOffsetMs: 0))
+                        transcript: transcript, style: style, width: width, height: height, captionOffsetMs: 0,
+                        watermark: nil))
             } catch { return nil }
             return render(at: middle)
         }

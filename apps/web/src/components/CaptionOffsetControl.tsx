@@ -11,6 +11,7 @@
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import { RangeInput } from "@/components/RangeInput";
 import { CAPTION_OFFSET_MAX_MS, CAPTION_OFFSET_MIN_MS } from "@/lib/captionOffset";
+import { useT } from "@/lib/i18n";
 import { useEditorStore } from "@/store/editorStore";
 
 /** Precise nudge step (ms) for the +/- buttons. The slider gives coarse drag. */
@@ -22,6 +23,7 @@ function formatOffset(ms: number): string {
 }
 
 export function CaptionOffsetControl() {
+  const t = useT();
   const captionOffsetMs = useEditorStore((s) => s.captionOffsetMs);
   const setCaptionOffset = useEditorStore((s) => s.setCaptionOffset);
 
@@ -32,7 +34,8 @@ export function CaptionOffsetControl() {
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <label htmlFor="caption-offset" className="text-xs font-medium text-muted-foreground">
-          Timing offset <span className="text-muted-foreground/70">· captions vs. audio</span>
+          {t("Timing offset")}{" "}
+          <span className="text-muted-foreground/70">{t("· captions vs. audio")}</span>
         </label>
         <span
           data-testid="caption-offset-value"
@@ -44,7 +47,7 @@ export function CaptionOffsetControl() {
       <div className="flex items-center gap-2">
         <button
           type="button"
-          aria-label="Shift captions earlier"
+          aria-label={t("Shift captions earlier")}
           data-testid="caption-offset-dec"
           onClick={() => setCaptionOffset(captionOffsetMs - NUDGE_MS)}
           disabled={captionOffsetMs <= CAPTION_OFFSET_MIN_MS}
@@ -60,11 +63,11 @@ export function CaptionOffsetControl() {
           value={captionOffsetMs}
           onChange={setCaptionOffset}
           data-testid="caption-offset-slider"
-          aria-label="Caption timing offset in milliseconds"
+          aria-label={t("Caption timing offset in milliseconds")}
         />
         <button
           type="button"
-          aria-label="Shift captions later"
+          aria-label={t("Shift captions later")}
           data-testid="caption-offset-inc"
           onClick={() => setCaptionOffset(captionOffsetMs + NUDGE_MS)}
           disabled={captionOffsetMs >= CAPTION_OFFSET_MAX_MS}
@@ -74,8 +77,8 @@ export function CaptionOffsetControl() {
         </button>
         <button
           type="button"
-          aria-label="Reset timing offset to zero"
-          title="Reset to 0"
+          aria-label={t("Reset timing offset to zero")}
+          title={t("Reset to 0")}
           data-testid="caption-offset-reset"
           onClick={() => setCaptionOffset(0)}
           disabled={captionOffsetMs === 0}

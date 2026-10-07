@@ -10,9 +10,11 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthLayout } from "@/components/AuthLayout";
 import { ApiException } from "@/lib/api";
 import { validateEmail, validatePassword } from "@/lib/authValidation";
+import { useT } from "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 
 export function LoginPage() {
+  const t = useT();
   const login = useAuthStore((s) => s.login);
   const setupRequired = useAuthStore((s) => s.status?.setup_required ?? false);
   const registrationEnabled = useAuthStore((s) => s.status?.registration_enabled ?? false);
@@ -59,9 +61,9 @@ export function LoginPage() {
     } catch (err) {
       // Never differentiate "no such email" from "wrong password".
       if (err instanceof ApiException && (err.status === 400 || err.status === 401)) {
-        setFormError("Incorrect email or password.");
+        setFormError(t("Incorrect email or password."));
       } else {
-        setFormError("Couldn't sign in. Please try again.");
+        setFormError(t("Couldn't sign in. Please try again."));
       }
       setSubmitting(false);
       passwordRef.current?.focus();
@@ -70,14 +72,14 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in"
-      subtitle="Sign in to your OpenCaptions account."
+      title={t("Sign in")}
+      subtitle={t("Sign in to your OpenCaptions account.")}
       footer={
         registrationEnabled ? (
           <>
-            Need an account?{" "}
+            {t("Need an account?")}{" "}
             <Link to="/signup" className="font-medium text-foreground underline hover:opacity-80">
-              Create one
+              {t("Create one")}
             </Link>
           </>
         ) : null
@@ -94,7 +96,7 @@ export function LoginPage() {
         )}
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
-            Email
+            {t("Email")}
           </label>
           <input
             ref={emailRef}
@@ -118,7 +120,7 @@ export function LoginPage() {
         </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium">
-            Password
+            {t("Password")}
           </label>
           <input
             ref={passwordRef}
@@ -146,7 +148,7 @@ export function LoginPage() {
               data-testid="forgot-password-link"
               className="text-sm font-medium text-muted-foreground underline hover:text-foreground"
             >
-              Forgot password?
+              {t("Forgot password?")}
             </Link>
           </div>
         )}
@@ -156,7 +158,7 @@ export function LoginPage() {
           data-testid="auth-submit"
           className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
         >
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? t("Signing in…") : t("Sign in")}
         </button>
       </form>
     </AuthLayout>

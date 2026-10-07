@@ -15,6 +15,7 @@ struct TranscribeSheet: View {
     @State private var downloading: Double?
     @State private var askAboutData = false
     @State private var failure: String?
+    @State private var showPro = false
     private let languages = TranscriptionLanguages.all
 
     private var chosen: WhisperModel { WhisperModels.model(modelID) ?? WhisperModels.all[0] }
@@ -80,6 +81,7 @@ struct TranscribeSheet: View {
         .tint(Theme.accent)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
+        .sheet(isPresented: $showPro) { ProSheet() }
         .task(id: onServer) { await loadServerModels() }
         // The longest wait is loading the model: start it as soon as it is the one chosen, while the
         // language is picked.
@@ -224,10 +226,16 @@ struct TranscribeSheet: View {
     /// there is exactly one, and it should not read as a list of options to tick.
     private func modelRow(_ option: WhisperModel) -> some View {
         let selected = option.id == modelID
-        return Button { modelID = option.id } label: {
+        let locked = app.entitlements.locks(model: option.id)
+        return Button {
+            if locked { showPro = true } else { modelID = option.id }
+        } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(option.label).font(.system(size: 16, weight: .semibold))
+                    HStack(spacing: 6) {
+                        Text(option.label).font(.system(size: 16, weight: .semibold))
+                        if locked { ProBadge() }
+                    }
                     if let hint = Self.hint(option.id) {
                         Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                     }
@@ -252,7 +260,7 @@ struct TranscribeSheet: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private static func hint(_ id: String) -> String? {
+    private static func hint(_ id: String) -> LocalizedStringKey? {
         switch id {
         case "tiny": "Fastest, least accurate"
         case "base": "Fast, good for most videos"
@@ -304,7 +312,7 @@ struct TranscribeSheet: View {
                 }
             } catch {
                 downloading = nil
-                failure = "The model could not be downloaded: \(error.localizedDescription)"
+                failure = String(localized: "The model could not be downloaded: \(error.localizedDescription)")
                 return
             }
             downloading = nil

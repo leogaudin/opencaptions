@@ -6,10 +6,11 @@
  */
 import { Segmented } from "@/components/StyleFields";
 import { setDownloadOptions, useDownloadOptions } from "@/lib/downloadOptions";
+import { msg, useT } from "@/lib/i18n";
 import type { ExportChoices, RenderOptions } from "@/types";
 
 const SIZE_LABELS: Record<RenderOptions["resolution"], string> = {
-  original: "Original",
+  original: msg("Original"),
   "2160": "4K",
   "1080": "1080p",
   "720": "720p",
@@ -25,6 +26,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function DownloadOptions({ choices }: { choices: ExportChoices }) {
+  const t = useT();
   const options = useDownloadOptions();
   // A remembered choice this video cannot offer is saved at the video's own.
   const resolution = choices.resolutions.includes(options.resolution)
@@ -33,22 +35,22 @@ export function DownloadOptions({ choices }: { choices: ExportChoices }) {
   const frameRate = choices.frame_rates.includes(options.frame_rate)
     ? options.frame_rate
     : "original";
-  const sourceFps = choices.source_fps ? `${Math.round(choices.source_fps)} fps` : "Original";
+  const sourceFps = choices.source_fps ? `${Math.round(choices.source_fps)} fps` : t("Original");
 
   return (
     <div className="flex flex-col gap-4" data-testid="download-options">
       {choices.resolutions.length > 1 && (
-        <Row label="Size">
+        <Row label={t("Size")}>
           <Segmented
             options={choices.resolutions}
             value={resolution}
             onChange={(v) => setDownloadOptions({ resolution: v })}
-            label={(v) => SIZE_LABELS[v]}
+            label={(v) => t(SIZE_LABELS[v])}
           />
         </Row>
       )}
       {choices.frame_rates.length > 1 && (
-        <Row label="Frame rate">
+        <Row label={t("Frame rate")}>
           <Segmented
             options={choices.frame_rates}
             value={frameRate}

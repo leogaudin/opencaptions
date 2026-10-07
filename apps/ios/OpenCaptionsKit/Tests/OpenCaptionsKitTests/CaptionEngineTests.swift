@@ -35,6 +35,27 @@ extension EngineSuites {
             #expect(after == before)
         }
 
+        @Test func aWatermarkIsDrawnByTheEngineInTheTopRightOfEveryFrame() async throws {
+            try await engine.registerBundledFonts(in: Repo.fonts)
+            let style = try Repo.defaultStyle()
+            func frame(_ mark: String?) async throws -> CaptionFrame {
+                try await engine.setScene(
+                    transcript: Repo.transcript(), style: style, width: 540, height: 960,
+                    captionOffsetMs: 0, watermark: mark)
+                return try #require(await engine.render(at: 100))  // no caption is showing
+            }
+            let plain = try await frame(nil)
+            #expect(!plain.rgba.contains { $0 != 0 })
+            let marked = try await frame(Entitlements.watermarkText)
+            var corner = 0
+            for (i, byte) in marked.rgba.enumerated() where i % 4 == 3 && byte != 0 {
+                let (x, y) = ((i / 4) % 540, (i / 4) / 540)
+                #expect(x > 200 && y < 120, "only in the top right: \(x),\(y)")
+                corner += 1
+            }
+            #expect(corner > 100)
+        }
+
         @Test func bundledFontsRegisterOnceAndInterIsOne() async throws {
             let families = try await engine.registerBundledFonts(in: Repo.fonts)
             #expect(families.contains("Inter"))

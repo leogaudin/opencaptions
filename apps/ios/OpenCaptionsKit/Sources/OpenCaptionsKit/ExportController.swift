@@ -56,7 +56,7 @@ public final class ExportController {
                 guard let self, self.isRunning else { return }
                 if ContinuousClock.now - self.lastProgress > stallLimit {
                     self.task?.cancel()
-                    self.state = .failed("It stopped making progress, so it was stopped. Please try again.")
+                    self.state = .failed(String(localized: "It stopped making progress, so it was stopped. Please try again.", bundle: .module))
                     return
                 }
             }

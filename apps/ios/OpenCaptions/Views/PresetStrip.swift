@@ -14,7 +14,10 @@ struct PresetStrip: View {
     var body: some View {
         LazyVGrid(columns: tileColumns, spacing: 10) {
             ForEach(presets) { preset in
-                PresetTile(preset: preset, image: app.presetPreviews.images[preset.id], active: active(preset)) {
+                PresetTile(
+                    preset: preset, image: app.presetPreviews.images[preset.id], active: active(preset),
+                    locked: app.entitlements.locks(preset: preset)
+                ) {
                     apply(preset)
                 }
             }
@@ -29,18 +32,20 @@ private struct PresetTile: View {
     let preset: Preset
     let image: CGImage?
     let active: Bool
+    let locked: Bool
     let action: () -> Void
 
     var body: some View {
-        StyleTile(title: preset.name, image: image, active: active, action: action)
+        StyleTile(title: LocalizedStringKey(preset.name), image: image, active: active, locked: locked, action: action)
     }
 }
 
 /// A picture the engine drew on a plain card, with its name under it, and a ring when chosen.
 struct StyleTile: View {
-    let title: String
+    let title: LocalizedStringKey
     let image: CGImage?
     let active: Bool
+    var locked = false
     let action: () -> Void
 
     var body: some View {
@@ -58,6 +63,7 @@ struct StyleTile: View {
                 .aspectRatio(156.0 / 87.0, contentMode: .fit)
                 .clipShape(.rect(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
+                .overlay(alignment: .topTrailing) { if locked { ProBadge().padding(6) } }
                 Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             }
             .padding(6)
@@ -73,7 +79,7 @@ struct StyleTile: View {
 struct ChoiceStrip<Value: Hashable>: View {
     let options: [Value]
     let selection: Value
-    let title: (Value) -> String
+    let title: (Value) -> LocalizedStringKey
     let images: [Value: CGImage]
     let pick: (Value) -> Void
 

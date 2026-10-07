@@ -2,6 +2,7 @@
  * The choices of the style panel's Background and Animation tabs, and how each is applied.
  * The iOS app's counterpart is `StyleConfig.withBackground` in OpenCaptionsKit.
  */
+import { msg } from "@/lib/i18n";
 import type { Animation, CaptionBackground, StyleConfig } from "@/types";
 
 export const BACKGROUNDS: readonly CaptionBackground[] = ["none", "solid", "pill"];
@@ -12,11 +13,17 @@ export const ANIMATIONS: readonly Animation[] = [
   "word_fade",
 ];
 
+export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
+  none: msg("None"),
+  solid: msg("Solid"),
+  pill: msg("Pill"),
+};
+
 export const ANIMATION_NAMES: Record<Animation, string> = {
-  word_highlight: "Highlight",
-  highlight_box: "Box",
-  word_pop: "Pop",
-  word_fade: "Fade",
+  word_highlight: msg("Highlight"),
+  highlight_box: msg("Box"),
+  word_pop: msg("Pop"),
+  word_fade: msg("Fade"),
 };
 
 /** A background with no opacity would show nothing, so choosing one gives it a visible opacity. */

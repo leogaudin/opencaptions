@@ -13,6 +13,8 @@ struct PreviewView: UIViewRepresentable {
     let fonts: FontCache
     /// Held while an export owns the engine.
     var suspended = false
+    /// A mark drawn on the picture by the engine (a free tier's), as in the saved video.
+    var watermark: String?
     let onTogglePlay: () -> Void
     /// Where a drag and a pinch settled (either may be nil), once the fingers are up.
     let onAdjust: (_ position: (x: Double, y: Double)?, _ fontSize: Int?) -> Void
@@ -30,7 +32,8 @@ struct PreviewView: UIViewRepresentable {
         view.onTogglePlay = onTogglePlay
         view.onAdjust = onAdjust
         view.onEditWord = onEditWord
-        view.configure(project: project, fonts: fonts, suspended: suspended, isPlaying: playback.isPlaying)
+        view.configure(
+            project: project, fonts: fonts, suspended: suspended, isPlaying: playback.isPlaying, watermark: watermark)
     }
 }
 
@@ -54,6 +57,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         var stamp: Date
         var style: StyleConfig
         var offsetMs: Int
+        var watermark: String?
         var segments: Int
         var width: Int
         var height: Int
@@ -191,16 +195,18 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         horizontalGuide.frame = CGRect(x: 0, y: bounds.midY - 0.5, width: bounds.width, height: 1)
         // The scene is sized to the view, so a new size lays it out again.
         if let lastProject, let lastFonts {
-            configure(project: lastProject, fonts: lastFonts, suspended: suspended, isPlaying: isPlaying)
+            configure(project: lastProject, fonts: lastFonts, suspended: suspended, isPlaying: isPlaying, watermark: lastWatermark)
         }
     }
 
     private var lastProject: Project?
     private var lastFonts: FontCache?
+    private var lastWatermark: String?
 
     @MainActor
-    func configure(project: Project, fonts: FontCache, suspended: Bool, isPlaying: Bool) {
+    func configure(project: Project, fonts: FontCache, suspended: Bool, isPlaying: Bool, watermark: String?) {
         lastProject = project
+        lastWatermark = watermark
         lastFonts = fonts
         // An export replaced the engine's scene; ours must be laid out again.
         if self.suspended, !suspended { sceneKey = nil }
@@ -228,7 +234,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
 
         let key = SceneKey(
             project: project.id, stamp: project.updatedAt, style: project.styleConfig,
-            offsetMs: project.captionOffsetMs, segments: transcript.segments.count, width: width, height: height)
+            offsetMs: project.captionOffsetMs, watermark: watermark, segments: transcript.segments.count, width: width, height: height)
         guard key != sceneKey else { return }
         sceneKey = key
         ready = false
@@ -242,7 +248,8 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             await engine.ensureFont(style.font, cache: fonts)
             guard mine == generation else { return }
             try? await engine.setScene(
-                transcript: transcript, style: style, width: width, height: height, captionOffsetMs: offsetMs)
+                transcript: transcript, style: style, width: width, height: height, captionOffsetMs: offsetMs,
+                watermark: watermark)
             guard mine == generation else { return }
             ready = true
             requestDraw(at: player.currentTime().seconds)

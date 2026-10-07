@@ -33,6 +33,9 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// The watermark is drawn in the application's default face.
+const MARK_FAMILY: &str = "Inter";
+const MARK_OPACITY: f32 = 0.85;
 
 struct Placed {
     start: f32,
@@ -53,7 +56,14 @@ struct Line {
     bounds: IntRect,
 }
 
+/// A watermark: the picture of it and where it goes in the frame.
+struct Mark {
+    rect: IntRect,
+    pixmap: Pixmap,
+}
+
 pub struct Scene {
+    mark: Option<Mark>,
     style: Style,
     width: u32,
     height: u32,
@@ -296,6 +306,68 @@ fn blur(px: &mut Pixmap, sigma: f32) {
     }
 }
 
+/// The watermark as a small picture in white with a soft shadow, placed in the top right corner.
+fn watermark(book: &FontBook, text: &str, width: u32, height: u32) -> Option<Mark> {
+    if text.trim().is_empty() {
+        return None;
+    }
+    let size = (height as f32 * 0.018).max(8.0);
+    let face = book.face(book.primary(MARK_FAMILY));
+    let (glyphs, advance) = shape(face, text, size);
+    let glyphs = glyphs?;
+    let margin = (size * 0.6).ceil();
+    let (w, h) = (
+        (advance + 2.0 * margin).ceil() as u32,
+        (size * 1.5 + 2.0 * margin).ceil() as u32,
+    );
+    // Not in a frame too small to hold it.
+    if w + 2 > width || h + 2 > height {
+        return None;
+    }
+    let edge = height as f32 * 0.035;
+    let x = (width as f32 - edge - advance - margin).max(0.0) as i32;
+    let y = (edge - margin * 0.5).max(0.0) as i32;
+    let rect = IntRect::from_xywh(x, y, w.min(width - x as u32), h.min(height - y as u32))?;
+    let mut pixmap = Pixmap::new(rect.width(), rect.height())?;
+    let at = Transform::from_translate(margin, margin + size);
+    if let Some(mut shadow) = Pixmap::new(rect.width(), rect.height()) {
+        shadow.fill_path(&glyphs, &paint(Color::BLACK), FillRule::Winding, at, None);
+        blur(&mut shadow, size * 0.12);
+        let p = PixmapPaint {
+            opacity: 0.7,
+            ..PixmapPaint::default()
+        };
+        pixmap.draw_pixmap(0, 0, shadow.as_ref(), &p, Transform::identity(), None);
+    }
+    let white = colour(Rgba([255, 255, 255, 255]), MARK_OPACITY);
+    pixmap.fill_path(&glyphs, &paint(white), FillRule::Winding, at, None);
+    Some(Mark { rect, pixmap })
+}
+
+fn overlaps(a: IntRect, b: IntRect) -> bool {
+    a.x() < b.right() && b.x() < a.right() && a.y() < b.bottom() && b.y() < a.bottom()
+}
+
+/// Copies `r` of a premultiplied frame into straight-alpha RGBA.
+fn unpremultiply(src: &[u8], out: &mut [u8], r: IntRect, width: u32) {
+    for span in rows(r, width) {
+        for (o, p) in out[span.clone()]
+            .chunks_exact_mut(4)
+            .zip(src[span].chunks_exact(4))
+        {
+            let a = u32::from(p[3]);
+            if a == 0 {
+                o.fill(0);
+                continue;
+            }
+            for c in 0..3 {
+                o[c] = ((u32::from(p[c]) * 255 + a / 2) / a) as u8;
+            }
+            o[3] = p[3];
+        }
+    }
+}
+
 fn pixel_bounds(r: Rect, margin: f32, width: u32, height: u32) -> IntRect {
     let x0 = (r.left() - margin).floor().max(0.0) as i32;
     let y0 = (r.top() - margin).floor().max(0.0) as i32;
@@ -414,6 +486,10 @@ impl Scene {
             _ => 12.0 * k,
         };
         Self {
+            mark: input
+                .watermark
+                .as_deref()
+                .and_then(|text| watermark(book, text, width, height)),
             word_radius: fs * 0.14,
             block_radius,
             style,
@@ -562,13 +638,44 @@ fn rows(r: IntRect, width: u32) -> impl Iterator<Item = std::ops::Range<usize>> 
 impl Renderer {
     pub fn new(scene: Scene) -> Self {
         let (w, h) = (scene.width, scene.height);
-        Self {
+        let mut renderer = Self {
             canvas: Pixmap::new(w, h).expect("frame dimensions are validated and non-zero"),
             rgba: vec![0; (w * h * 4) as usize],
             scene,
             last: None,
             dirty: None,
             changed: (0, 0),
+        };
+        renderer.draw_mark();
+        renderer
+    }
+
+    /// The watermark onto the frame (which must be clear where it goes), and into the RGBA.
+    fn draw_mark(&mut self) {
+        let Some(mark) = &self.scene.mark else { return };
+        let (x, y) = (mark.rect.x(), mark.rect.y());
+        self.canvas.draw_pixmap(
+            x,
+            y,
+            mark.pixmap.as_ref(),
+            &PixmapPaint::default(),
+            Transform::identity(),
+            None,
+        );
+        unpremultiply(
+            self.canvas.data(),
+            &mut self.rgba,
+            mark.rect,
+            self.scene.width,
+        );
+    }
+
+    /// Clears the watermark's place, to draw it again once what overlapped it is drawn.
+    fn clear_mark(&mut self) {
+        let Some(mark) = &self.scene.mark else { return };
+        for span in rows(mark.rect, self.scene.width) {
+            self.canvas.data_mut()[span.clone()].fill(0);
+            self.rgba[span].fill(0);
         }
     }
 
@@ -590,11 +697,21 @@ impl Renderer {
             let (top, bottom) = (r.y() as u32, r.bottom() as u32);
             changed = Some(changed.map_or((top, bottom), |(t, b)| (t.min(top), b.max(bottom))));
         };
+        // The watermark is drawn again, over whatever it overlaps, when a caption clears or draws
+        // where it is; otherwise it is left as it is.
+        let mark = self.scene.mark.as_ref().map(|m| m.rect);
+        let mut redraw_mark = false;
         if let Some(r) = self.dirty {
             grow(r);
+            redraw_mark |= mark.is_some_and(|m| overlaps(r, m));
         }
         if let Some(i) = key.0 {
-            grow(self.scene.lines[i].bounds);
+            let bounds = self.scene.lines[i].bounds;
+            grow(bounds);
+            redraw_mark |= mark.is_some_and(|m| overlaps(bounds, m));
+        }
+        if let (true, Some(m)) = (redraw_mark, mark) {
+            grow(m);
         }
         self.changed = changed.unwrap_or((0, 0));
         if let Some(r) = self.dirty.take() {
@@ -603,27 +720,17 @@ impl Renderer {
                 self.rgba[span].fill(0);
             }
         }
+        if redraw_mark {
+            self.clear_mark();
+        }
         if let Some(i) = key.0 {
             let line = &self.scene.lines[i];
             self.scene.draw(&mut self.canvas, line, &key.1);
-            let src = self.canvas.data();
-            for span in rows(line.bounds, width) {
-                for (o, p) in self.rgba[span.clone()]
-                    .chunks_exact_mut(4)
-                    .zip(src[span].chunks_exact(4))
-                {
-                    let a = u32::from(p[3]);
-                    if a == 0 {
-                        o.fill(0);
-                        continue;
-                    }
-                    for c in 0..3 {
-                        o[c] = ((u32::from(p[c]) * 255 + a / 2) / a) as u8;
-                    }
-                    o[3] = p[3];
-                }
-            }
+            unpremultiply(self.canvas.data(), &mut self.rgba, line.bounds, width);
             self.dirty = Some(line.bounds);
+        }
+        if redraw_mark {
+            self.draw_mark();
         }
         self.last = Some(key);
         true
@@ -958,6 +1065,74 @@ mod tests {
                 after[bottom as usize * row..]
             );
         }
+    }
+
+    fn marked(animation: &str, x: f64, y: f64) -> SceneInput {
+        let mut i = input(animation, WORDS, 3);
+        i.style.position_x = x as f32;
+        i.style.position_y = y as f32;
+        i.watermark = Some("Made with OpenCaptions".into());
+        i
+    }
+
+    fn inked(rgba: &[u8]) -> usize {
+        rgba.chunks_exact(4).filter(|p| p[3] != 0).count()
+    }
+
+    #[test]
+    fn a_watermark_is_in_the_corner_of_every_frame_and_only_there() {
+        let mut plain = Renderer::new(Scene::new(&book(), input("word_pop", WORDS, 3)));
+        plain.render(100.0);
+        assert_eq!(inked(plain.rgba()), 0, "nothing without one");
+
+        let mut r = Renderer::new(Scene::new(&book(), marked("word_pop", 0.5, 0.84)));
+        assert!(r.render(100.0), "the first frame is a frame");
+        let rows = (1080 * 4) as usize;
+        let first = r.rgba().to_vec();
+        let ink = inked(&first);
+        assert!(ink > 100, "a mark is drawn: {ink} pixels");
+        // Top right quarter only.
+        for (i, p) in first.chunks_exact(4).enumerate() {
+            if p[3] != 0 {
+                let (x, y) = (i % 1080, i / 1080);
+                assert!(x > 540 && y < 480, "inked at {x},{y}");
+            }
+        }
+        // A caption comes and goes elsewhere: the mark is left as it was.
+        r.render(0.6);
+        assert!(inked(r.rgba()) > ink, "caption and mark");
+        r.render(100.0);
+        assert_eq!(first, r.rgba(), "back to the mark alone, exactly");
+        assert_eq!(rows, 1080 * 4);
+    }
+
+    #[test]
+    fn a_caption_over_the_watermark_does_not_erase_it_or_leave_it_doubled() {
+        // The caption is at the top right, where the mark is.
+        let mut r = Renderer::new(Scene::new(&book(), marked("word_pop", 0.8, 0.04)));
+        r.render(100.0);
+        let alone = r.rgba().to_vec();
+        r.render(0.6);
+        assert_ne!(alone, r.rgba(), "the caption is drawn");
+        let mut fresh = Renderer::new(Scene::new(&book(), marked("word_pop", 0.8, 0.04)));
+        fresh.render(0.6);
+        assert_eq!(
+            fresh.rgba(),
+            r.rgba(),
+            "the same frame however it was reached"
+        );
+        r.render(100.0);
+        assert_eq!(alone, r.rgba(), "and the mark alone again, not thickened");
+    }
+
+    #[test]
+    fn no_mark_in_a_frame_too_small_for_it() {
+        let mut i = marked("word_pop", 0.5, 0.5);
+        i.width = 40;
+        i.height = 40;
+        let mut r = Renderer::new(Scene::new(&book(), i));
+        r.render(100.0);
+        assert_eq!(inked(r.rgba()), 0);
     }
 
     #[test]

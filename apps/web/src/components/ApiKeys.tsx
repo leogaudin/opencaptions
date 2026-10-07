@@ -7,19 +7,21 @@ import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import qrcode from "qrcode-generator";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import * as api from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import type { ApiKey } from "@/types";
 
 const DOCS = "/api/v1/docs";
 
 export function ApiKeys() {
+  const t = useT();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [name, setName] = useState("");
   const [created, setCreated] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.listApiKeys().then(setKeys, () => setError("Could not load keys."));
-  }, []);
+    api.listApiKeys().then(setKeys, () => setError(t("Could not load keys.")));
+  }, [t]);
 
   async function create(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -30,28 +32,31 @@ export function ApiKeys() {
       setName("");
       setKeys([key, ...keys]);
     } catch {
-      setError("Could not create the key.");
+      setError(t("Could not create the key."));
     }
   }
 
   async function revoke(key: ApiKey): Promise<void> {
     // Irreversible, and breaks any script still using the key.
-    if (!window.confirm(`Revoke "${key.name}"? Scripts using it will stop working.`)) return;
+    if (
+      !window.confirm(t("Revoke “{name}”? Scripts using it will stop working.", { name: key.name }))
+    )
+      return;
     const id = key.id;
     await api.revokeApiKey(id).then(
       () => setKeys(keys.filter((k) => k.id !== id)),
-      () => setError("Could not revoke the key."),
+      () => setError(t("Could not revoke the key.")),
     );
   }
 
   return (
     <section className="mt-8 rounded-lg border border-border bg-card p-4" data-testid="api-keys">
-      <h2 className="text-sm font-semibold">API keys</h2>
+      <h2 className="text-sm font-semibold">{t("API keys")}</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Call the API from scripts with <code>Authorization: Bearer &lt;key&gt;</code>. Every
         endpoint is documented, and can be tried, in the{" "}
         <a href={DOCS} target="_blank" rel="noreferrer" className="underline">
-          API reference
+          {t("API reference")}
         </a>
         .
       </p>
@@ -62,8 +67,8 @@ export function ApiKeys() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name, e.g. podcast pipeline"
-          aria-label="Key name"
+          placeholder={t("Name, e.g. podcast pipeline")}
+          aria-label={t("Key name")}
           maxLength={100}
           required
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
@@ -73,7 +78,7 @@ export function ApiKeys() {
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           <KeyRound className="h-3.5 w-3.5" aria-hidden />
-          Create key
+          {t("Create key")}
         </button>
       </form>
       {error && (
@@ -89,15 +94,17 @@ export function ApiKeys() {
               <div className="min-w-0">
                 <p className="truncate font-medium">{k.name}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  <code>{k.prefix}…</code> · created {day(k.created_at)} ·{" "}
-                  {k.last_used_at ? `last used ${day(k.last_used_at)}` : "never used"}
+                  <code>{k.prefix}…</code> · {t("created {day}", { day: day(k.created_at) })} ·{" "}
+                  {k.last_used_at
+                    ? t("last used {day}", { day: day(k.last_used_at) })
+                    : t("never used")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => revoke(k)}
-                aria-label={`Revoke ${k.name}`}
-                title="Revoke"
+                aria-label={t("Revoke {name}", { name: k.name })}
+                title={t("Revoke")}
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -111,6 +118,7 @@ export function ApiKeys() {
 }
 
 function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const example = `curl -H "Authorization: Bearer ${value}" ${location.origin}/api/v1/projects`;
   // Opens the OpenCaptions app on a phone and fills in this server and key. The phone has to
@@ -131,7 +139,9 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
       role="status"
       data-testid="new-api-key"
     >
-      <p className="font-medium text-foreground">Copy this key now. It will not be shown again.</p>
+      <p className="font-medium text-foreground">
+        {t("Copy this key now. It will not be shown again.")}
+      </p>
       <div className="mt-2 flex items-center gap-2">
         <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1">{value}</code>
         <button
@@ -142,31 +152,32 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
               () => undefined,
             )
           }
-          aria-label="Copy key"
+          aria-label={t("Copy key")}
           className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-accent"
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
       <pre className="mt-2 overflow-x-auto rounded bg-background p-2 text-[11px]">{example}</pre>
-      <p className="mt-3 font-medium text-foreground">Use it from the OpenCaptions app</p>
+      <p className="mt-3 font-medium text-foreground">{t("Use it from the OpenCaptions app")}</p>
       <p className="mt-1 text-muted-foreground">
-        Open this link on the phone (send it by message or AirDrop) to transcribe on this server
-        instead of on the phone.
+        {t(
+          "Open this link on the phone (send it by message or AirDrop) to transcribe on this server instead of on the phone.",
+        )}
         {local &&
           " This page is open as localhost, which a phone cannot reach: open this page by this computer's address on your network, then create the key."}
       </p>
       <div className="mt-2 flex items-start gap-3">
         <img
           src={qr}
-          alt="QR code that connects the OpenCaptions app to this server"
+          alt={t("QR code that connects the OpenCaptions app to this server")}
           data-testid="pairing-qr"
           className="h-36 w-36 shrink-0 rounded-md bg-white p-1"
           style={{ imageRendering: "pixelated" }}
         />
         <div className="min-w-0">
           <p className="text-muted-foreground">
-            Or point the phone's Camera at this code and tap the banner that appears.
+            {t("Or point the phone's Camera at this code and tap the banner that appears.")}
           </p>
           <code className="mt-1 block break-all rounded bg-background px-2 py-1 text-[11px]">
             {pairing}
@@ -174,7 +185,7 @@ function NewKey({ value, onDone }: { value: string; onDone: () => void }) {
         </div>
       </div>
       <button type="button" onClick={onDone} className="mt-2 underline">
-        Done
+        {t("Done")}
       </button>
     </div>
   );

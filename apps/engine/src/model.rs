@@ -118,4 +118,8 @@ pub struct SceneInput {
     /// Global caption timing offset in milliseconds; positive shows captions later.
     #[serde(default)]
     pub caption_offset_ms: i32,
+    /// A small mark of this text in the top right corner of every frame (a free tier's), drawn by
+    /// the engine so the preview and the export carry the same one. None or empty draws nothing.
+    #[serde(default)]
+    pub watermark: Option<String>,
 }

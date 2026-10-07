@@ -5,9 +5,11 @@
  */
 import { useState } from "react";
 import * as api from "@/lib/api";
+import { useT } from "@/lib/i18n";
 import { useTranscriptionSettings } from "@/lib/useTranscriptionSettings";
 
 export function TranscriptionService() {
+  const t = useT();
   const { settings } = useTranscriptionSettings();
   const [result, setResult] = useState<api.RemoteTranscriptionTest | null>(null);
   const [testing, setTesting] = useState(false);
@@ -20,7 +22,7 @@ export function TranscriptionService() {
     try {
       setResult(await api.testRemoteTranscription());
     } catch {
-      setResult({ ok: false, error: "The test could not be run." });
+      setResult({ ok: false, error: t("The test could not be run.") });
     } finally {
       setTesting(false);
     }
@@ -31,9 +33,9 @@ export function TranscriptionService() {
       className="mt-8 rounded-lg border border-border bg-card p-4"
       data-testid="transcription-service"
     >
-      <h2 className="text-sm font-semibold">Transcription service</h2>
+      <h2 className="text-sm font-semibold">{t("Transcription service")}</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        This server can send audio to another OpenCaptions server to be transcribed:{" "}
+        {t("This server can send audio to another OpenCaptions server to be transcribed:")}{" "}
         <code>{remote.remote_url}</code>. Choose it when you add a video. It is set with{" "}
         <code>TRANSCRIPTION_REMOTE_URL</code> and <code>TRANSCRIPTION_REMOTE_KEY</code>.
       </p>
@@ -43,15 +45,17 @@ export function TranscriptionService() {
         disabled={testing}
         className="mt-3 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
       >
-        {testing ? "Testing…" : "Test connection"}
+        {testing ? t("Testing…") : t("Test connection")}
       </button>
       {result?.ok === true && (
         <p className="mt-2 text-xs text-foreground" role="status" data-testid="remote-test-ok">
-          Connected to {result.instance_name ?? "the remote server"}. It offers{" "}
-          {result.models.length > 0
-            ? result.models.map((m) => m.label).join(", ")
-            : "its own model"}
-          .
+          {t("Connected to {name}. It offers {models}.", {
+            name: result.instance_name ?? t("the remote server"),
+            models:
+              result.models.length > 0
+                ? result.models.map((m) => m.label).join(", ")
+                : t("its own model"),
+          })}
         </p>
       )}
       {result?.ok === false && (

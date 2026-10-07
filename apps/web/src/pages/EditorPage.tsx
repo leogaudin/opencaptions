@@ -14,12 +14,14 @@ import { CaptionPreview } from "@/components/CaptionPreview";
 import { EditorToolbar } from "@/components/EditorToolbar";
 import { StyleControls } from "@/components/StyleControls";
 import { TimelineDock } from "@/components/TimelineDock";
+import { useT } from "@/lib/i18n";
 import { PlaybackProvider } from "@/lib/playback";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
 import { useEditorStore } from "@/store/editorStore";
 
 export function EditorPage() {
+  const t = useT();
   const { projectId } = useParams<{ projectId: string }>();
   const project = useEditorStore((s) => s.project);
   const loadProject = useEditorStore((s) => s.loadProject);
@@ -93,7 +95,7 @@ export function EditorPage() {
   if (!project) {
     return (
       <div className="container mx-auto px-4 py-12 text-sm text-muted-foreground">
-        Loading project…
+        {t("Loading project…")}
       </div>
     );
   }

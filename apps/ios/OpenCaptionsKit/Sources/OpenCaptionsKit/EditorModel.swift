@@ -278,7 +278,7 @@ public final class EditorModel {
 
     public func startTranscription(with transcriber: any Transcriber, model: String, language: String?) {
         guard !isTranscribing, let source = store.sourceURL(for: project.id) else { return }
-        transcription = .running(fraction: 0, message: "Starting…")
+        transcription = .running(fraction: 0, message: String(localized: "Starting…", bundle: .module))
         let report: @Sendable (Double, String) -> Void = { [weak self] fraction, message in
             Task { @MainActor in
                 guard let self, self.isTranscribing else { return }
