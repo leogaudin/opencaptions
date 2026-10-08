@@ -227,6 +227,8 @@ final class CaptionGestureTests: XCTestCase {
         let app = try launch("landscape")
         let before = style(app)
         preview(app).tap()
+        // A press right after a tap counts as the second half of a double-tap, not a drag.
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
         drag(app, to: (0.7, 0.3))
         let after = settled(app, after: before)
         XCTAssertEqual(Double(after.x), 70, accuracy: 7, "from \(before) to \(after)")

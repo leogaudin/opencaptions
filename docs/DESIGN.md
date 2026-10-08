@@ -334,7 +334,10 @@ Subtitle files (SRT, VTT) are only exported by the Docker product.
 Tiny, Base, Small, Large v3 Turbo and Large v3 (no English-only or superseded ones).
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection
-asks before a download. Loading a model into memory is the longest wait, so the default one, when
+asks before a download. Loading a model into memory is the longest wait (the first time on a phone
+Core ML prepares it for that chip, minutes on an iPhone 14 for the Turbo model, and the system keeps the
+result, so later loads take seconds; the screen says so), so a model starts loading as soon as it is
+downloaded, the default one, when
 it is downloaded, starts loading as the app opens, any other as soon as it is chosen in the Transcribe
 sheet (while the language is picked), and it runs beside the
 reading of the audio; the loaded model stays for the next transcription and is let go on a memory

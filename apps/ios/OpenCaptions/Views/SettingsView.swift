@@ -289,6 +289,9 @@ struct SettingsView: View {
             }
             downloading[model.id] = nil
             refresh += 1
+            // The first load of a model on a phone is the slow one (Core ML prepares it for this chip, once):
+            // done now, in the background, it is not waited for at the first transcription.
+            if app.transcriber.isDownloaded(model.id) { app.transcriber.preload(model.id) }
         }
     }
 

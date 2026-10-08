@@ -151,7 +151,7 @@ public final class WhisperKitTranscriber: Transcriber {
             throw error
         }
 
-        progress(0, KitStrings.localized("Loading the model into memory…"))
+        progress(0, KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
         let pipe = try await loading.value.pipe
 
         var lang = language.flatMap { $0 == "auto" ? nil : $0 }

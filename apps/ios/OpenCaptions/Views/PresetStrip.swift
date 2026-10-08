@@ -67,6 +67,7 @@ struct StyleTile: View {
                 Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             }
             .padding(6)
+            .contentShape(.rect)
             .overlay { RoundedRectangle(cornerRadius: 17).stroke(Theme.accent, lineWidth: active ? 2.5 : 0) }
         }
         .buttonStyle(.plain)

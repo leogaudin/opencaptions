@@ -386,79 +386,79 @@
         }
       }
     },
-    "Loading the model into memory…": {
+    "Loading the model… the first time on this phone can take a few minutes.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chargement du modèle en mémoire…"
+            "value": "Chargement du modèle… la première fois sur ce téléphone, cela peut prendre quelques minutes."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cargando el modelo en memoria…"
+            "value": "Cargando el modelo… la primera vez en este teléfono puede tardar unos minutos."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modell wird in den Speicher geladen …"
+            "value": "Modell wird geladen … beim ersten Mal auf diesem Telefon kann es einige Minuten dauern."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ładowanie modelu do pamięci…"
+            "value": "Ładowanie modelu… za pierwszym razem na tym telefonie może to potrwać kilka minut."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Carregando o modelo na memória…"
+            "value": "Carregando o modelo… na primeira vez neste celular pode levar alguns minutos."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Caricamento del modello in memoria…"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Загрузка модели в память…"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model belleğe yükleniyor…"
+            "value": "Caricamento del modello… la prima volta su questo telefono può richiedere qualche minuto."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "モデルをメモリに読み込み中…"
+            "value": "モデルを読み込み中… この端末での初回は数分かかることがあります。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "모델을 메모리에 불러오는 중…"
+            "value": "모델을 불러오는 중… 이 휴대폰에서 처음에는 몇 분이 걸릴 수 있습니다."
           }
         },
-        "zh-Hans": {
+        "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在将模型载入内存…"
+            "value": "Загрузка модели… в первый раз на этом телефоне это может занять несколько минут."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model yükleniyor… bu telefonda ilk seferde birkaç dakika sürebilir."
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Memuat model ke memori…"
+            "value": "Memuat model… pertama kali di ponsel ini bisa memakan waktu beberapa menit."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在加载模型… 在这部手机上首次加载可能需要几分钟。"
           }
         }
       }

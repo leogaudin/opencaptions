@@ -25,6 +25,7 @@ struct SegmentedPills<Value: Hashable>: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .background(chosen ? Theme.accent : .clear, in: .capsule)
+                        .contentShape(.capsule)
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(chosen ? .isSelected : [])

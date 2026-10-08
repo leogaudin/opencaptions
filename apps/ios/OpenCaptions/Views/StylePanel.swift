@@ -88,6 +88,7 @@ struct StylePanel: View {
                             Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold))
                         }
                         .foregroundStyle(Theme.textPrimary)
+                        .frame(minHeight: 44).contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                 }
@@ -145,6 +146,7 @@ struct StylePanel: View {
                         .foregroundStyle(chosen ? Theme.textPrimary : Theme.textSecondary)
                         .frame(minWidth: 62).padding(.vertical, 7).padding(.horizontal, 6)
                         .background(chosen ? Theme.raised : .clear, in: .rect(cornerRadius: 12))
+                        .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(chosen ? .isSelected : [])
@@ -320,6 +322,7 @@ private struct OffsetControl: View {
             Image(systemName: symbol).font(.system(size: 14, weight: .bold))
                 .frame(width: 34, height: 34)
                 .background(Theme.raised, in: .circle)
+                .contentShape(.circle)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

@@ -52,6 +52,15 @@ public enum CaptionGestures {
             .map { caption.index * max(1, wordsPerLine) + $0 }
     }
 
+    /// Where the engine puts the middle of a block `extent` long when asked for `position` (0...1) in a
+    /// frame `limit` long: centred on the position, but kept inside the frame (and against its start
+    /// if it is longer than the frame). The preview needs it to show a drag or a pinch where the
+    /// release will land, which at a big size is not where the finger is.
+    public static func blockCentre(position: Double, extent: Double, limit: Double) -> Double {
+        let start = min(max(position * limit - extent / 2, 0), max(limit - extent, 0))
+        return start + extent / 2
+    }
+
     /// The transform that shows a drag or a pinch in progress on the caption layer, which covers a
     /// view of `size`: scaled by `scale` about `pivot` (the caption's middle, in the view's points,
     /// from its top-left corner), then moved by `offset`. A layer's transform turns about the

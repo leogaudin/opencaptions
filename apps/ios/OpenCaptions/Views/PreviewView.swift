@@ -405,9 +405,23 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         if let style, let drawn = placements[drawnGeneration], drawn.fontSize > 0, bounds.width > 0 {
             let target = live.position ?? (style.positionX, style.positionY)
             let size = live.fontSize ?? style.fontSize
-            transform = CaptionGestures.liveTransform(
-                offset: CGSize(width: (target.0 - drawn.x) * bounds.width, height: (target.1 - drawn.y) * bounds.height),
-                scale: CGFloat(size) / CGFloat(drawn.fontSize), pivot: drawnCentre(drawn), in: overlay.bounds.size)
+            let scale = CGFloat(size) / CGFloat(drawn.fontSize)
+            let centre = drawnCentre(drawn)
+            var offset = CGSize(width: (target.0 - drawn.x) * bounds.width, height: (target.1 - drawn.y) * bounds.height)
+            // Where the engine will put the block, which at a big size is held inside the frame, not under the finger.
+            if let box = caption?.bounds, frameSize.width > 0, frameSize.height > 0 {
+                let k = CGSize(width: bounds.width / frameSize.width, height: bounds.height / frameSize.height)
+                // Both ends by the same rule, so that a caption at rest has no offset at all.
+                func moved(_ to: Double, _ from: Double, _ extent: Double, _ limit: Double) -> CGFloat {
+                    CGFloat(
+                        CaptionGestures.blockCentre(position: to, extent: extent * Double(scale), limit: limit)
+                            - CaptionGestures.blockCentre(position: from, extent: extent, limit: limit))
+                }
+                offset = CGSize(
+                    width: moved(target.0, drawn.x, box.width * k.width, bounds.width),
+                    height: moved(target.1, drawn.y, box.height * k.height, bounds.height))
+            }
+            transform = CaptionGestures.liveTransform(offset: offset, scale: scale, pivot: centre, in: overlay.bounds.size)
         }
         guard !CATransform3DEqualToTransform(overlay.transform, CATransform3DMakeAffineTransform(transform)) else { return }
         CATransaction.begin()

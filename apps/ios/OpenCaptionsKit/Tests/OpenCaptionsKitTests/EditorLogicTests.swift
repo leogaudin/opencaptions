@@ -44,6 +44,13 @@ final class Counter { var value = 0 }
 
     // MARK: Timeline scale
 
+    @Test func aBlockIsCentredOnItsPositionButKeptInsideTheFrame() {
+        #expect(CaptionGestures.blockCentre(position: 0.5, extent: 40, limit: 100) == 50)
+        #expect(CaptionGestures.blockCentre(position: 0.0, extent: 40, limit: 100) == 20, "held against the start")
+        #expect(CaptionGestures.blockCentre(position: 1.0, extent: 40, limit: 100) == 80, "and the end")
+        #expect(CaptionGestures.blockCentre(position: 0.7, extent: 150, limit: 100) == 75, "too long: against the start")
+    }
+
     @Test func ticksStayApartAndLabelsAreReadable() {
         #expect(TimelineScale.tickStep(pointsPerSecond: 1000) == 0.1)
         #expect(TimelineScale.tickStep(pointsPerSecond: 70) == 1)

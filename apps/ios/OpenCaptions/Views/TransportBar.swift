@@ -42,6 +42,7 @@ struct TransportBar: View {
     private func tool(_ symbol: String, _ label: LocalizedStringKey, enabled: Bool, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).foregroundStyle(enabled ? Theme.textPrimary : Theme.textSecondary.opacity(0.4))
+                .frame(minWidth: 40, minHeight: 44).contentShape(.rect)
         }
         .disabled(!enabled)
         .accessibilityLabel(label)
