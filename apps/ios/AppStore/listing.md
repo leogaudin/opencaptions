@@ -6,9 +6,9 @@ The privacy policy is `PRIVACY.md` in the repository root, at <https://github.co
 
 ## en
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Auto captions, on your phone
+**Subtitle:** Private, on-device subtitles
 
 **Promotional text:** Animated captions for your videos, made on your phone. Nothing is uploaded. Pay once for Pro, no subscription.
 
@@ -40,9 +40,9 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 ## fr
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Sous-titres auto, sur iPhone
+**Subtitle:** Sous-titres privés, sur iPhone
 
 **Promotional text:** Des sous-titres animés pour vos vidéos, créés sur votre téléphone. Rien n’est envoyé. Pro en achat unique, sans abonnement.
 
@@ -74,9 +74,9 @@ OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même o
 
 ## es
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Subtítulos auto, en tu iPhone
+**Subtitle:** Subtítulos privados, en iPhone
 
 **Promotional text:** Subtítulos animados para tus vídeos, creados en tu teléfono. No se sube nada. Pro con un solo pago, sin suscripción.
 
@@ -108,9 +108,9 @@ OpenCaptions es de código abierto (AGPL-3.0). Lee el código, compílalo tú mi
 
 ## de
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Auto-Untertitel auf dem iPhone
+**Subtitle:** Private Untertitel am iPhone
 
 **Promotional text:** Animierte Untertitel für deine Videos, auf deinem Handy erstellt. Nichts wird hochgeladen. Pro einmal kaufen, kein Abo.
 
@@ -142,9 +142,9 @@ OpenCaptions ist Open Source (AGPL-3.0). Lies den Code, baue ihn selbst oder hos
 
 ## pl
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Napisy automatyczne w iPhonie
+**Subtitle:** Prywatne napisy w iPhonie
 
 **Promotional text:** Animowane napisy do filmów, tworzone na telefonie. Nic nie jest wysyłane. Pro to jednorazowy zakup, bez subskrypcji.
 
@@ -176,9 +176,9 @@ OpenCaptions jest open source (AGPL-3.0). Czytaj kod, zbuduj go sam albo uruchom
 
 ## pt-BR
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Legendas auto, no seu iPhone
+**Subtitle:** Legendas privadas no iPhone
 
 **Promotional text:** Legendas animadas para seus vídeos, feitas no celular. Nada é enviado. Pro com pagamento único, sem assinatura.
 
@@ -210,9 +210,9 @@ O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo
 
 ## it
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Sottotitoli auto su iPhone
+**Subtitle:** Sottotitoli privati su iPhone
 
 **Promotional text:** Sottotitoli animati per i tuoi video, creati sul telefono. Nulla viene caricato. Pro con acquisto unico, senza abbonamento.
 
@@ -244,9 +244,9 @@ OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o osp
 
 ## ru
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Автосубтитры на iPhone
+**Subtitle:** Приватные субтитры на iPhone
 
 **Promotional text:** Анимированные субтитры для видео, созданные на телефоне. Ничего не загружается. Pro — разовая покупка, без подписки.
 
@@ -278,9 +278,9 @@ OpenCaptions — проект с открытым кодом (AGPL-3.0). Чит�
 
 ## tr
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** iPhone'da otomatik altyazı
+**Subtitle:** iPhone'da gizli altyazı
 
 **Promotional text:** Videolarınız için telefonda oluşturulan animasyonlu altyazılar. Hiçbir şey yüklenmez. Pro tek seferlik, abonelik yok.
 
@@ -312,9 +312,9 @@ OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin vey
 
 ## ja
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** iPhoneで自動字幕
+**Subtitle:** iPhoneで完結するプライベート字幕
 
 **Promotional text:** 動画にアニメーション字幕を。iPhone上で作成し、何もアップロードしません。Proは買い切り、サブスクなし。
 
@@ -346,9 +346,9 @@ OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、
 
 ## ko
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** iPhone에서 자동 자막
+**Subtitle:** iPhone에서 만드는 비공개 자막
 
 **Promotional text:** 내 휴대폰에서 만드는 애니메이션 자막. 아무것도 업로드하지 않습니다. Pro는 한 번만 결제, 구독 없음.
 
@@ -380,9 +380,9 @@ OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌�
 
 ## zh-Hans
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** iPhone 上的自动字幕
+**Subtitle:** 在 iPhone 上生成的私密字幕
 
 **Promotional text:** 在手机上为视频生成动画字幕，不上传任何内容。Pro 一次购买，无需订阅。
 
@@ -414,9 +414,9 @@ OpenCaptions 是开源软件（AGPL-3.0）。你可以阅读代码、自行构�
 
 ## id
 
-**Name:** OpenCaptions
+**Name:** OpenCaptions: Auto Captions
 
-**Subtitle:** Teks otomatis di iPhone
+**Subtitle:** Subtitle privat di iPhone
 
 **Promotional text:** Teks animasi untuk videomu, dibuat di ponsel. Tidak ada yang diunggah. Pro sekali bayar, tanpa langganan.
 
