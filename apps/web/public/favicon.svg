@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Caption/subtitle block: rounded rectangle with two text lines -->
-  <rect x="2" y="8" width="28" height="16" rx="4" fill="#1a1a2e"/>
-  <rect x="6" y="13" width="14" height="2.5" rx="1.25" fill="#FFDD00"/>
-  <rect x="6" y="18" width="10" height="2.5" rx="1.25" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The app icon (apps/ios/OpenCaptions/Resources/Assets.xcassets/AppIcon.appiconset/icon.png), redrawn as vector. -->
+  <rect width="1024" height="1024" rx="224" fill="#FFE100"/>
+  <rect x="132" y="300" width="760" height="424" rx="96" fill="#0A0A0A"/>
+  <rect x="212" y="452" width="600" height="64" rx="32" fill="#FFFFFF"/>
+  <rect x="212" y="576" width="400" height="64" rx="32" fill="#FFE100"/>
 </svg>

@@ -10,6 +10,5 @@ dist/
 build/
 docs/
 *.md
-!README.md
 .git/
 .gitignore

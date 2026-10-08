@@ -41,6 +41,21 @@ stack you point it at:
 cd apps/web && npx playwright test -g "your spec" --ui
 ```
 
+## Working on one app
+
+Outside Docker, from `apps/api` (Python, `uv`) or `apps/web` (Node):
+
+```bash
+uv sync --all-extras --dev && uv run uvicorn app.main:app --reload   # api
+uv run pytest                                                         # api tests
+uv run alembic revision --autogenerate -m "add foo"                   # a migration (applied on boot)
+npm install && npm run dev                                            # web, http://localhost:5173
+bash scripts/generate-api-types.sh                                    # after changing api schemas
+```
+
+The web preview is the engine's WebAssembly build: `make engine-wasm` once for `npm run dev`.
+The iOS app has its own [README](apps/ios/README.md).
+
 ## Before you open a pull request
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,

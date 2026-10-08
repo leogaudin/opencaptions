@@ -10,7 +10,7 @@ the push is expected to be green. Before that:
 
 - [ ] Added or updated tests covering what you touched
 - [ ] `make ci` passes (or `make ci-staged` before committing)
-- [ ] Checked whether your change invalidates anything in `docs/DESIGN.md`, the app READMEs, or this file, and updated it
+- [ ] Checked whether your change invalidates anything in `docs/DESIGN.md`, the iOS README, or this file, and updated it
 
 `make ci` is safe to run while your own stack is up: it validates a clean
 snapshot of committed source in pinned containers, and its end-to-end stack runs

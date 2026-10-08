@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "OpenCaptions backend. FastAPI + Celery + faster-whisper"
 license = { text = "AGPL-3.0-only" }
 authors = [{ name = "Leo Gaudin" }]
-readme = "README.md"
 requires-python = ">=3.12"
 
 dependencies = [

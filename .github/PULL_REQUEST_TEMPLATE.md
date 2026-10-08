@@ -1,6 +1,6 @@
-## What & why
+## What
 
-<!-- What does this change do, and why? Link any related issue. -->
+<!-- What does this change do? Link any related issue. -->
 
 ## Checks
 

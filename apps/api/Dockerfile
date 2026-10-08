@@ -22,11 +22,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 
 WORKDIR /app
 
-# Copy lockfile + readme first for cacheable dep install
-# (uv sync validates pyproject metadata, which references README.md)
+# Copy the lockfile first for a cacheable dep install
 COPY pyproject.toml ./
 COPY uv.lock ./
-COPY README.md ./
 
 # Sync dependencies from the committed lockfile (dev extra for tests; NOT the
 # gpu extra). --locked fails the build loudly if uv.lock is missing or out of

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="apps/ios/OpenCaptions/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" alt="OpenCaptions" width="96" height="96">
+
 # OpenCaptions
 
 **Animated captions for your videos. Open source, self-hosted, and on your iPhone.**
@@ -14,11 +16,6 @@ Nothing leaves your machine unless you say so.
 ![OpenCaptions editor: a video with word-by-word animated captions next to the style panel, over the caption timeline](docs/screenshot.png)
 
 </div>
-
-## Why
-
-There is no open-source tool that transcribes a video **and** gives it the animated, word-by-word
-captions you see on TikTok and Reels. OpenCaptions does, on your own hardware, under the AGPL.
 
 ## Features
 

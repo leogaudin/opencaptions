@@ -55,7 +55,7 @@ proxies `/api`, `/ws` and the OpenAPI docs through that single origin.
 For anything beyond a trusted network, put a reverse proxy in front to terminate
 TLS, and bind the port to `127.0.0.1` so only the proxy can reach it.
 
-See [SECURITY.md](SECURITY.md) for the threat model and how to report a vulnerability.
+See [SECURITY.md](../SECURITY.md) for the threat model and how to report a vulnerability.
 
 ## GPU Acceleration
 

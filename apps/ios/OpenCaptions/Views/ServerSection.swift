@@ -23,7 +23,7 @@ struct ServerSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Where to transcribe")
-            SourcePicker(useServer: Binding(get: { app.useServer }, set: choose))
+            SourcePicker(useServer: Binding(get: { app.useServer }, set: { choose($0) }))
             if app.useServer, let connection = app.serverConnection {
                 connected(connection)
             } else if app.serverConnection == nil {

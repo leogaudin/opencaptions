@@ -27,33 +27,21 @@ chance to land before publishing details.
 
 ## Scope
 
-OpenCaptions has per-account authentication (server-side sessions). Its single
-published port listens on every interface, so a stock install is reachable from
-the local network (see the [security note in the self-hosting guide](docs/SELF-HOSTING.md#security)).
-Putting it on a public host is the operator's responsibility, and reports about
-such an instance's own configuration are configuration issues, not
-vulnerabilities.
+OpenCaptions has per-account authentication (server-side sessions). The web port listens on
+every interface and signup is open by default, so a stock install is reachable, and usable, by
+anyone on the local network. Hardening a public host is the operator's job (see the
+[security section of the self-hosting guide](docs/SELF-HOSTING.md#security)); reports about an
+instance's own configuration are configuration issues, not vulnerabilities.
 
-Self-service signup is **on by default**: all accounts are ordinary users (as
-Gitea and Jellyfin allow open signup). Because the web port listens on every
-interface, anyone who can reach the machine can sign up and spend its CPU/GPU on
-transcription and rendering. No other service publishes a port. On anything but a
-trusted network, turn registration off by setting `REGISTRATION_ENABLED` to
-`false` in the `api` service's `environment:` block, and/or bind the port to
-`127.0.0.1` behind a reverse proxy.
+Transcription can leave the machine: with the `openai` or `opencaptions` provider, or when a
+phone app is connected to your server, audio is sent to the other end. An instance, as the other
+end, deletes a job's audio when it ends and the transcript after `TRANSCRIPTION_RESULT_TTL_H`
+hours (24 by default). Its transcription API takes the same API keys as the rest of the API;
+revoke a key on the Account page to cut off a phone. `TRANSCRIPTION_REMOTE_URL` goes through the
+same guard as a video URL, so a private address is refused unless its host is in
+`SSRF_ALLOWED_HOSTS`.
 
-Transcription can leave the machine: with the `openai` or `opencaptions` provider, or when
-a phone app is connected to your server, audio is sent to the other end. Your instance, as
-the other end, deletes the audio of a job when it ends and a transcript after
-`TRANSCRIPTION_RESULT_TTL_H` hours (24 by default). Its transcription API takes the same API
-keys as the rest of the API: revoke a key on the Account page to cut off a phone. The address
-set in `TRANSCRIPTION_REMOTE_URL` goes through the same guard as a video URL, so a private
-address is refused unless its host is listed in `SSRF_ALLOWED_HOSTS`.
-
-If a user forgets their password, recovery depends on whether SMTP is configured
-(see the `SMTP_*` variables in the env examples). With SMTP set up, self-service
-reset is offered from the login page: request a link by email, set a new
-password, and every existing session for that account is revoked. Without SMTP
-the flow is not offered at all, and no reset link or token is ever written to a
-log, so recovery is the host operation `scripts/reset_password.py` (run inside
-the `api` container).
+Password recovery depends on SMTP (the `SMTP_*` settings in `apps/api/app/core/config.py`). With
+it, the login page offers a reset link by email and a reset revokes the account's sessions.
+Without it the flow is not offered and no link or token is ever logged: recovery is the host
+operation `scripts/reset_password.py`, run inside the `api` container.
