@@ -10,6 +10,9 @@
         static let productID = "org.leogaudin.opencaptions.pro"
 
         private(set) var product: Product?
+        /// Whether the product is still being asked for, so the sheet can say so, and offer another try when
+        /// the store did not answer.
+        private(set) var isLoadingProduct = false
         private(set) var isBusy = false
         private(set) var message: String?
         /// Called whenever what the user owns is known or changes.
@@ -30,9 +33,18 @@
                 }
             }
             Task {
-                product = try? await Product.products(for: [Self.productID]).first
+                await loadProduct()
                 await refresh()
             }
+        }
+
+        /// Asks the store for the product. Nothing to do once it is known; a failed or empty answer (no
+        /// connection, or the store not offering it yet) leaves it nil, for the sheet to say and retry.
+        func loadProduct() async {
+            guard product == nil, !isLoadingProduct else { return }
+            isLoadingProduct = true
+            defer { isLoadingProduct = false }
+            product = try? await Product.products(for: [Self.productID]).first
         }
 
         func refresh() async {

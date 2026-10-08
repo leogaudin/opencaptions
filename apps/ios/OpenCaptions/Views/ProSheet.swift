@@ -27,7 +27,7 @@ struct ProSheet: View {
             HStack {
                 Text("One-time purchase").font(.system(size: 15, weight: .medium))
                 Spacer()
-                Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+                priceLabel
             }
             .padding(.horizontal, 4)
             #if APPSTORE
@@ -37,9 +37,11 @@ struct ProSheet: View {
                 Button("Unlock Pro") { Task { await app.purchases.buy() } }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(app.purchases.product == nil || app.purchases.isBusy)
-                Button("Restore purchases") { Task { await app.purchases.restore() } }
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.textSecondary)
-                    .disabled(app.purchases.isBusy)
+                HStack(spacing: 10) {
+                    Button("Restore purchases") { Task { await app.purchases.restore() } }
+                        .buttonStyle(SecondaryButtonStyle()).disabled(app.purchases.isBusy)
+                    Button("Not now") { dismiss() }.buttonStyle(SecondaryButtonStyle())
+                }
             #elseif DEBUG
                 Button("Unlock Pro (debug)") {
                     app.setTier(.pro)
@@ -47,7 +49,9 @@ struct ProSheet: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
             #endif
-            Button("Not now") { dismiss() }.buttonStyle(SecondaryButtonStyle())
+            #if !APPSTORE
+                Button("Not now") { dismiss() }.buttonStyle(SecondaryButtonStyle())
+            #endif
         }
         .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 + 16 }
@@ -57,6 +61,27 @@ struct ProSheet: View {
         .presentationBackground(Theme.background)
         .presentationCornerRadius(24)
         .tint(Theme.accent)
+        #if APPSTORE
+            // A price that did not load when the app started (no connection yet) is asked for again here.
+            .task { await app.purchases.loadProduct() }
+        #endif
+    }
+
+    /// The price, or why there is none yet: still being asked for, or the store did not offer the product
+    /// (no connection, or it is not available yet), with another try.
+    @ViewBuilder private var priceLabel: some View {
+        #if APPSTORE
+            if let price = app.purchases.displayPrice {
+                Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+            } else if app.purchases.isLoadingProduct {
+                ProgressView()
+            } else {
+                Button("Try again") { Task { await app.purchases.loadProduct() } }
+                    .font(.system(size: 15, weight: .semibold))
+            }
+        #else
+            Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+        #endif
     }
 
     /// What it costs, as the store shows it. A build that is not from the App Store has no store to ask:
