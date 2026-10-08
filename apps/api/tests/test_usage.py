@@ -205,3 +205,46 @@ async def test_sum_is_zero_for_user_with_no_jobs(db_factory: Any) -> None:
     user_a = await _make_user(db_factory, "a@example.com")
     async with db_factory() as s:
         assert await sum_usage_for_user(s, user_a, UNIT_RENDER_FRAMES) == 0.0
+
+
+def test_a_transcription_made_through_the_api_is_counted_for_its_owner() -> None:
+    """transcribe_upload (the phone's job: no project) records the seconds it transcribed."""
+    from unittest.mock import MagicMock, patch
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from app.models import Base
+    from app.tasks import transcribe
+
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    session_local = sessionmaker(engine)
+    with session_local() as s:
+        owner = User(email="phone@example.com", password_hash="x", is_active=True)
+        s.add(owner)
+        s.flush()
+        job = Job(user_id=owner.id, type="transcription", status="pending")
+        s.add(job)
+        s.commit()
+        job_id, owner_id = job.id, owner.id
+
+    transcript = MagicMock(segments=[1])
+    with (
+        patch.object(transcribe, "_sync_session_factory", return_value=session_local),
+        patch("app.storage.s3") as s3,
+        patch.object(transcribe, "extract_audio"),
+        patch.object(transcribe, "probe_duration", return_value=15.4),
+        patch.object(transcribe, "_transcribe_audio", return_value=transcript),
+    ):
+        s3.put_object_bytes.return_value = None
+        transcribe.transcribe_upload.apply(args=(str(job_id), "a", "r")).get()
+
+    with session_local() as s:
+        stored = s.get(Job, job_id)
+        assert stored is not None
+        assert stored.status == "completed"
+        assert stored.metadata_json == {
+            "usage": {"unit": UNIT_TRANSCRIPTION_SECONDS, "amount": 15.4}
+        }
+        assert owner_id == stored.user_id

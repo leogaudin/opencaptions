@@ -226,7 +226,9 @@ with the `opencaptions` provider are two clients of it. Auth is an API key
 It is asynchronous because a long recording takes minutes on a CPU. The audio is deleted
 when its job ends; the result is kept `TRANSCRIPTION_RESULT_TTL_H` (24) hours so a client
 that was suspended can still fetch it, and the first request after that time removes what
-has expired, so no separate janitor runs. A user may have `TRANSCRIPTION_MAX_CONCURRENT`
+has expired, so no separate janitor runs. Deleting a job (a phone does, as soon as it has the
+transcript) removes its audio and transcript; a job that did work stays as a row with the status
+`deleted`, because the account's usage is summed from those rows. A user may have `TRANSCRIPTION_MAX_CONCURRENT`
 (2) running. A job has its own owner (`jobs.user_id`), so it needs no project. The
 `opencaptions` provider sends an `X-OpenCaptions-Hop` header, and an instance that itself
 forwards refuses a request carrying it, so two instances cannot be configured into a loop.
@@ -345,7 +347,7 @@ warning or when the app leaves the screen.
 
 **Languages.** The interface is in English, French, Spanish, German, Polish, Portuguese (Brazil), Italian,
 Russian, Turkish, Japanese, Korean, Simplified Chinese and Indonesian (the browser's or the
-phone's language is used; the web has a choice in the account menu and on the sign-in screens).
+phone's language is used; the web has a choice on the Account page and on the sign-in screens).
 On the web the English text in the code is the key: `t("Download")`, with `{name}` for values, and
 `locales/<code>.json` holds the others (`lib/i18n.ts`); a text without a translation shows in
 English. On iOS, SwiftUI text and `String(localized:)` are collected in the app's string catalogs

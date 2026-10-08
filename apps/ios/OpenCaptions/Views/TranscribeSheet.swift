@@ -16,6 +16,7 @@ struct TranscribeSheet: View {
     @State private var askAboutData = false
     @State private var failure: String?
     @State private var showPro = false
+    @State private var connecting = false
     private let languages = TranscriptionLanguages.all
 
     private var chosen: WhisperModel { WhisperModels.model(modelID) ?? WhisperModels.all[0] }
@@ -82,6 +83,9 @@ struct TranscribeSheet: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .sheet(isPresented: $showPro) { ProSheet() }
+        .sheet(isPresented: $connecting, onDismiss: { if app.serverConnection != nil { sourceChoice = true } }) {
+            ConnectServerSheet().presentationBackground(Theme.background).presentationCornerRadius(24)
+        }
         .task(id: onServer) { await loadServerModels() }
         // The longest wait is loading the model: start it as soon as it is the one chosen, while the
         // language is picked.
@@ -115,7 +119,10 @@ struct TranscribeSheet: View {
     private var sourceSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Transcribe on")
-            SourcePicker(useServer: Binding(get: { onServer }, set: { sourceChoice = $0 }))
+            SourcePicker(useServer: Binding(get: { onServer }, set: { choice in
+                // With no server connected, choosing one means connecting it, here and now.
+                if choice, app.serverConnection == nil { connecting = true } else { sourceChoice = choice }
+            }))
             if sourceChoice != nil, sourceChoice != app.useServer {
                 Text("Just this time. Settings keeps your usual choice.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
@@ -149,8 +156,9 @@ struct TranscribeSheet: View {
             } else {
                 Text("The server chooses the model.").font(.system(size: 14)).foregroundStyle(Theme.textSecondary).card()
             }
-            Text("Only the audio is sent, to \(app.serverConnection?.url.host ?? "the server"), which deletes it when it is done. Change this in Settings.")
+            Text("Only the audio is sent, to \(app.serverConnection?.url.host ?? "the server"), which deletes it when it is done.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+            Button("Change server") { connecting = true }.buttonStyle(PillButtonStyle())
         }
     }
 

@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Check, LogOut, User, UserCog } from "lucide-react";
+import { LogOut, User, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getLanguage, LANGUAGES, type LanguageCode, setLanguage, useT } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import { iconButtonClass } from "@/lib/ui";
 import { useAuthStore } from "@/store/authStore";
 /**
@@ -71,28 +71,6 @@ export function UserMenu() {
             <UserCog className="h-4 w-4" aria-hidden />
             {t("Account")}
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Label className="px-2 pt-1 text-[11px] text-muted-foreground">
-            {t("Language")}
-          </DropdownMenu.Label>
-          <DropdownMenu.RadioGroup
-            value={getLanguage()}
-            onValueChange={(code) => setLanguage(code as LanguageCode)}
-          >
-            {LANGUAGES.map((l) => (
-              <DropdownMenu.RadioItem
-                key={l.code}
-                value={l.code}
-                data-testid={`language-${l.code}`}
-                className="flex cursor-pointer select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden transition-colors data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-              >
-                <DropdownMenu.ItemIndicator className="absolute left-2">
-                  <Check className="h-4 w-4" aria-hidden />
-                </DropdownMenu.ItemIndicator>
-                {l.name}
-              </DropdownMenu.RadioItem>
-            ))}
-          </DropdownMenu.RadioGroup>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item
             onSelect={() => {

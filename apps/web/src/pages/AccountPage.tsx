@@ -7,6 +7,7 @@
  */
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { ApiKeys } from "@/components/ApiKeys";
+import { LanguageSelect } from "@/components/LanguageSelect";
 import { TranscriptionService } from "@/components/TranscriptionService";
 import * as api from "@/lib/api";
 import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
@@ -53,6 +54,16 @@ export function AccountPage() {
           />
           <Stat label={t("Projects")} value={usage ? String(usage.projects) : "-"} />
         </dl>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold">{t("Language")}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t("The language of this interface, remembered in this browser.")}
+        </p>
+        <div className="mt-3">
+          <LanguageSelect />
+        </div>
       </section>
 
       <ChangeEmailForm currentEmail={user?.email ?? ""} onChanged={(u) => setUser(u)} />

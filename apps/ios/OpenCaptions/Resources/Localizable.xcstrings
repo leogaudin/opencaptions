@@ -1849,6 +1849,83 @@
         }
       }
     },
+    "Cached videos": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vidéos en cache"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeos en caché"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwischengespeicherte Videos"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wideo w pamięci podręcznej"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeos em cache"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video in cache"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кэшированные видео"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önbellekteki videolar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュした動画"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시된 동영상"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缓存的视频"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video dalam cache"
+          }
+        }
+      }
+    },
     "Cancel": {
       "extractionState": "manual",
       "localizations": {
@@ -2153,6 +2230,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Teks yang bergerak, dibuat di ponsel Anda. Tidak ada yang diunggah: ucapan ditranskripsi di perangkat ini."
+          }
+        }
+      }
+    },
+    "Change server": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer de serveur"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar de servidor"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server ändern"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zmień serwer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trocar de servidor"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambia server"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сменить сервер"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunucuyu değiştir"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サーバーを変更"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "서버 변경"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改服务器"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganti server"
           }
         }
       }
@@ -3308,6 +3462,160 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hapus %@"
+          }
+        }
+      }
+    },
+    "Delete cached videos": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les vidéos en cache"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar vídeos en caché"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwischengespeicherte Videos löschen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń wideo z pamięci podręcznej"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluir vídeos em cache"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina i video in cache"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить кэшированные видео"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önbellekteki videoları sil"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュした動画を削除"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시된 동영상 삭제"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除缓存的视频"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hapus video dalam cache"
+          }
+        }
+      }
+    },
+    "Delete every cached video?": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer toutes les vidéos en cache ?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar todos los vídeos en caché?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle zwischengespeicherten Videos löschen?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usunąć wszystkie wideo z pamięci podręcznej?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluir todos os vídeos em cache?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminare tutti i video in cache?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить все кэшированные видео?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önbellekteki tüm videolar silinsin mi?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュした動画をすべて削除しますか？"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시된 동영상을 모두 삭제할까요?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除所有缓存的视频？"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hapus semua video dalam cache?"
           }
         }
       }
@@ -8163,79 +8471,79 @@
         }
       }
     },
-    "Only the audio is sent, to %@, which deletes it when it is done. Change this in Settings.": {
+    "Only the audio is sent, to %@, which deletes it when it is done.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seul l’audio est envoyé, à %@, qui le supprime une fois terminé. Modifiable dans Réglages."
+            "value": "Seul l’audio est envoyé, à %@, qui le supprime une fois terminé."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Solo se envía el audio, a %@, que lo elimina al terminar. Puedes cambiarlo en Ajustes."
+            "value": "Solo se envía el audio, a %@, que lo elimina al terminar."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nur der Ton wird an %@ gesendet, das ihn danach löscht. Ändere das in den Einstellungen."
+            "value": "Nur der Ton wird an %@ gesendet, das ihn danach löscht."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wysyłany jest tylko dźwięk, do %@, który usuwa go po zakończeniu. Zmienisz to w Ustawieniach."
+            "value": "Wysyłany jest tylko dźwięk, do %@, który usuwa go po zakończeniu."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Só o áudio é enviado, para %@, que o apaga ao terminar. Mude isso em Ajustes."
+            "value": "Só o áudio é enviado, para %@, que o apaga ao terminar."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Viene inviato solo l’audio, a %@, che lo elimina al termine. Cambialo in Impostazioni."
+            "value": "Viene inviato solo l’audio, a %@, che lo elimina al termine."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Отправляется только звук, на %@, который удалит его по завершении. Это можно изменить в «Настройках»."
+            "value": "Отправляется только звук, на %@, который удалит его по завершении."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yalnızca ses, işi bitince silen %@ sunucusuna gönderilir. Bunu Ayarlar'dan değiştirebilirsiniz."
+            "value": "Yalnızca ses, işi bitince silen %@ sunucusuna gönderilir."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "音声のみが%@に送信され、処理後に削除されます。設定で変更できます。"
+            "value": "音声のみが%@に送信され、処理後に削除されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "오디오만 %@(으)로 전송되며 완료되면 삭제됩니다. 설정에서 바꿀 수 있습니다."
+            "value": "오디오만 %@(으)로 전송되며 완료되면 삭제됩니다."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "仅发送音频到 %@，完成后即删除。可在设置中更改。"
+            "value": "仅发送音频到 %@，完成后即删除。"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hanya audio yang dikirim, ke %@, yang menghapusnya setelah selesai. Ubah ini di Pengaturan."
+            "value": "Hanya audio yang dikirim, ke %@, yang menghapusnya setelah selesai."
           }
         }
       }
@@ -16013,237 +16321,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "sekitar %lld dtk lagi"
-          }
-        }
-      }
-    },
-    "Cached videos": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vidéos en cache"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vídeos en caché"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zwischengespeicherte Videos"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wideo w pamięci podręcznej"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vídeos em cache"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Video in cache"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Кэшированные видео"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Önbellekteki videolar"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャッシュした動画"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캐시된 동영상"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "缓存的视频"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Video dalam cache"
-          }
-        }
-      }
-    },
-    "Delete every cached video?": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer toutes les vidéos en cache ?"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Eliminar todos los vídeos en caché?"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle zwischengespeicherten Videos löschen?"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usunąć wszystkie wideo z pamięci podręcznej?"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Excluir todos os vídeos em cache?"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminare tutti i video in cache?"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Удалить все кэшированные видео?"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Önbellekteki tüm videolar silinsin mi?"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャッシュした動画をすべて削除しますか？"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캐시된 동영상을 모두 삭제할까요?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除所有缓存的视频？"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hapus semua video dalam cache?"
-          }
-        }
-      }
-    },
-    "Delete cached videos": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer les vidéos en cache"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar vídeos en caché"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zwischengespeicherte Videos löschen"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usuń wideo z pamięci podręcznej"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Excluir vídeos em cache"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elimina i video in cache"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Удалить кэшированные видео"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Önbellekteki videoları sil"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャッシュした動画を削除"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캐시된 동영상 삭제"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除缓存的视频"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hapus video dalam cache"
           }
         }
       }

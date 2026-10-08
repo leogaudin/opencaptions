@@ -144,7 +144,8 @@ async def get_owned_job(
     owner of their own, the owner of its project.
     """
     job = await session.get(Job, job_id)
-    if job is None:
+    # "deleted": its data is gone and the row is kept only for the account's usage.
+    if job is None or job.status == "deleted":
         raise _job_not_found()
     owner = job.user_id
     if owner is None and job.project_id is not None:

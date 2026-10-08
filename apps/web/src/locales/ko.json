@@ -229,5 +229,6 @@
   "your audio will be sent to {host}, which transcribes it and deletes the audio when it is done. This server keeps the result.": "오디오가 {host}(으)로 전송되어 받아쓰기 후 삭제됩니다. 이 서버는 결과를 보관합니다.",
   "{model} (configured)": "{model} (설정됨)",
   "{n} more: type to search them.": "{n}개 더: 입력해서 검색하세요.",
-  "· captions vs. audio": "· 자막과 오디오"
+  "· captions vs. audio": "· 자막과 오디오",
+  "The language of this interface, remembered in this browser.": "이 인터페이스의 언어이며, 이 브라우저에 저장됩니다."
 }

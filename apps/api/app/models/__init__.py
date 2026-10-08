@@ -99,7 +99,7 @@ class Job(Base):
     type: Mapped[str] = mapped_column(String(32))  # 'transcription' | 'rendering'
     status: Mapped[str] = mapped_column(
         String(32), default="pending"
-    )  # 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+    )  # 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'deleted'
     celery_task_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     progress: Mapped[float] = mapped_column(Float, default=0.0)
     message: Mapped[str | None] = mapped_column(String(255), nullable=True)

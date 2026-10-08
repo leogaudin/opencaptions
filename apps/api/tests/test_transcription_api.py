@@ -239,6 +239,31 @@ async def test_delete_removes_the_audio_and_the_result(
 
 
 @pytest.mark.asyncio
+async def test_deleting_a_job_that_did_work_keeps_its_usage(
+    user_a: tuple[AsyncClient, UUID], db_factory: Any
+) -> None:
+    """A phone deletes its job the moment it has the transcript; the account still counts it."""
+    from app.services.usage import UNIT_TRANSCRIPTION_SECONDS, merge_usage_into_metadata
+
+    client, user_id = user_a
+    async with db_factory() as s:
+        job = Job(
+            user_id=user_id,
+            type="transcription",
+            status="completed",
+            metadata_json=merge_usage_into_metadata(None, UNIT_TRANSCRIPTION_SECONDS, 15.4),
+        )
+        s.add(job)
+        await s.commit()
+        job_id = job.id
+    with patch("app.api.transcriptions.s3.delete_prefix"):
+        assert (await client.delete(f"/api/v1/transcriptions/{job_id}")).status_code == 204
+    assert (await client.get(f"/api/v1/transcriptions/{job_id}")).status_code == 404
+    assert (await client.get(f"/api/v1/jobs/{job_id}")).status_code == 404
+    assert (await client.get("/api/v1/auth/me/usage")).json()["transcription_seconds"] == 15.4
+
+
+@pytest.mark.asyncio
 async def test_a_project_job_is_not_reachable_as_a_transcription(
     user_a: tuple[AsyncClient, UUID], seed_project: Callable[..., Any], db_factory: Any
 ) -> None:

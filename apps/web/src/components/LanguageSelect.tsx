@@ -1,6 +1,5 @@
 /**
- * The interface language, for the screens before sign-in (the account menu has the same choice
- * once signed in). Defaults to the browser's language; the choice is remembered in this browser.
+ * The interface language: on the screens before sign-in, and in the Account page once signed in. Defaults to the browser's language; the choice is remembered in this browser.
  */
 import { getLanguage, LANGUAGES, type LanguageCode, setLanguage, useT } from "@/lib/i18n";
 

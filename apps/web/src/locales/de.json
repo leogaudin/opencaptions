@@ -229,5 +229,6 @@
   "your audio will be sent to {host}, which transcribes it and deletes the audio when it is done. This server keeps the result.": "dein Ton wird an {host} gesendet, das ihn transkribiert und danach löscht. Dieser Server behält das Ergebnis.",
   "{model} (configured)": "{model} (konfiguriert)",
   "{n} more: type to search them.": "{n} weitere: tippe, um zu suchen.",
-  "· captions vs. audio": "· Untertitel / Ton"
+  "· captions vs. audio": "· Untertitel / Ton",
+  "The language of this interface, remembered in this browser.": "Die Sprache dieser Oberfläche, in diesem Browser gespeichert."
 }

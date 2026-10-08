@@ -44,6 +44,7 @@ from app.models.schemas import (
     TranscriptionCreated,
 )
 from app.services.languages import all_languages, is_valid_language
+from app.services.usage import USAGE_METADATA_KEY
 from app.services.whisper_models import all_models
 from app.storage import s3
 
@@ -273,6 +274,8 @@ async def get_transcription(
         raise http_error(404, "job_not_found", "Job not found")
     if job.status in _ACTIVE:
         raise http_error(409, "transcription_not_ready", "The transcription is not finished")
+    if job.status == "deleted":
+        return _expired()
     if job.status != "completed":
         raise http_error(
             409, "transcription_failed", job.error or f"The transcription {job.status}"
@@ -299,9 +302,15 @@ def _expired() -> JSONResponse:
 
 
 async def _delete_everything(job: Job, session: AsyncSession) -> None:
+    """Delete the audio and the transcript. A job that did work keeps its row, marked
+    ``deleted``, because that row is what the account's usage is summed from (a phone
+    deletes its job as soon as it has the transcript)."""
     with contextlib.suppress(Exception):
         await asyncio.to_thread(s3.delete_prefix, _transcription_prefix(job.id))
-    await session.delete(job)
+    if USAGE_METADATA_KEY in (job.metadata_json or {}):
+        job.status = "deleted"
+    else:
+        await session.delete(job)
     await session.flush()
 
 
