@@ -127,9 +127,21 @@ ios-archive: ios-project ## Archive the App Store build (Pro for sale, starts fr
 
 # Xcode shells out to rsync, and Homebrew's rsync on the PATH does not take the flags it passes (the export
 # stops at "Copy failed"), so the export runs with the system tools only.
-ios-upload: ios-archive ## Archive and send it to App Store Connect (TestFlight); needs the Apple Developer membership
-	@cd apps/ios && env PATH=/usr/bin:/bin:/usr/sbin:/sbin xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
-	 -exportOptionsPlist $(IOS_EXPORT_OPTIONS) -exportPath Build/Export -allowProvisioningUpdates
+IOS_EXPORT_ENV := env PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+ios-ipa: ios-archive ## Archive and export the signed .ipa (Build/Export/OpenCaptions.ipa), for the Transporter app
+	@cd apps/ios && sed 's#<string>upload</string>#<string>export</string>#' $(IOS_EXPORT_OPTIONS) > Build/ExportOptions-ipa.plist \
+	 && rm -rf Build/Export && $(IOS_EXPORT_ENV) xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
+	 -exportOptionsPlist Build/ExportOptions-ipa.plist -exportPath Build/Export
+	@echo "Signed file: apps/ios/Build/Export/OpenCaptions.ipa (drag it into Transporter, or use make ios-upload with an App Store Connect API key)"
+
+# An App Store Connect API key (Users and Access, Integrations) signs the upload in without Xcode's saved login:
+# IOS_API_KEY=<key id> IOS_API_ISSUER=<issuer id> IOS_API_KEY_FILE=<path to AuthKey_<id>.p8>.
+IOS_AUTH = $(if $(IOS_API_KEY),-authenticationKeyPath $(IOS_API_KEY_FILE) -authenticationKeyID $(IOS_API_KEY) -authenticationKeyIssuerID $(IOS_API_ISSUER),-allowProvisioningUpdates)
+
+ios-upload: ios-archive ## Archive and send it to App Store Connect (TestFlight); needs an API key or Xcode's login
+	@cd apps/ios && $(IOS_EXPORT_ENV) xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
+	 -exportOptionsPlist $(IOS_EXPORT_OPTIONS) -exportPath Build/Export $(IOS_AUTH)
 
 # --- Operations -----------------------------------------------------------
 

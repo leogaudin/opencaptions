@@ -56,10 +56,12 @@ TestFlight. The build number is the date and time (`IOS_BUILD=<n>` overrides it)
 the upload. The store text is in `AppStore/listing.md`, the privacy policy is `PRIVACY.md` at the
 repository root, and `OpenCaptions/PrivacyInfo.xcprivacy` is the manifest the app ships.
 
-Two things that stop an upload. The export runs with the system tools only on the `PATH` (Homebrew's
-rsync does not take the flags Xcode gives it, and the export stops at "Copy failed"). And a certificate
-that Apple holds in the cloud (the one Xcode makes by itself) signs a requirement that spells an accented
-name differently from the certificate's own, which Apple's check refuses as "Invalid Signature": a team
-named with an accent signs with a distribution certificate made from a signing request of your own, its
-private key in the keychain, and exports with `IOS_EXPORT_OPTIONS=<a plist with signingStyle manual, the
-certificate and the App Store profile>`.
+Three things about the upload. The export runs with the system tools only on the `PATH` (Homebrew's rsync does
+not take the flags Xcode gives it, and the export stops at "Copy failed"). The certificate must be one whose
+private key is in your keychain: the one Xcode makes by itself is held by Apple, and signs a requirement that
+spells an accented name differently from the certificate's own, which Apple refuses as "Invalid Signature"
+(the Organizer does the same). Make one from a signing request of your own (a distribution certificate and an
+App Store profile named as in `Config/ExportOptions.plist`, at developer.apple.com), and keep its key. And
+Xcode's saved login does not last for the command line: `make ios-ipa` exports the signed file for the
+Transporter app, and `make ios-upload` with `IOS_API_KEY`, `IOS_API_ISSUER` and `IOS_API_KEY_FILE` (an App Store
+Connect API key) sends it with no login at all.

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- `make ios-upload`: sends the archive to App Store Connect (TestFlight), signed by Xcode. -->
+<!-- `make ios-upload`: sends the archive to App Store Connect (TestFlight). `make ios-ipa` exports the same
+     signed file without sending it. Signed with a distribution certificate whose private key is in the
+     keychain, and its App Store profile (see the iOS README for why, and how to make both). -->
 <plist version="1.0">
 <dict>
 	<key>method</key>
@@ -10,7 +12,14 @@
 	<key>teamID</key>
 	<string>R32B9PWM4R</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>org.leogaudin.opencaptions</key>
+		<string>OpenCaptions App Store</string>
+	</dict>
 	<key>uploadSymbols</key>
 	<true/>
 </dict>
