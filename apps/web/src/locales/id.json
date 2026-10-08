@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (dikonfigurasi)",
   "{n} more: type to search them.": "{n} lagi: ketik untuk mencari.",
   "· captions vs. audio": "· teks dan audio",
-  "The language of this interface, remembered in this browser.": "Bahasa antarmuka ini, diingat di browser ini."
+  "The language of this interface, remembered in this browser.": "Bahasa antarmuka ini, diingat di browser ini.",
+  "Karaoke": "Karaoke",
+  "Underline": "Garis bawah",
+  "Typewriter": "Mesin tik",
+  "Letter case": "Huruf besar/kecil",
+  "Normal": "Normal",
+  "Uppercase": "Huruf kapital",
+  "Slant": "Kemiringan",
+  "Upright": "Tegak",
+  "Italic": "Miring",
+  "Shadow right": "Bayangan ke kanan",
+  "Shadow down": "Bayangan ke bawah",
+  "Glow": "Cahaya",
+  "Glow color": "Warna cahaya"
 }

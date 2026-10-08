@@ -94,7 +94,14 @@ export type DownloadResponse =
 // UI-only, hand-maintained: the WebSocket protocol is not in OpenAPI and these
 // unions are narrower than the API enums on purpose.
 /** Caption animation style. */
-export type Animation = "word_highlight" | "highlight_box" | "word_pop" | "word_fade";
+export type Animation =
+  | "word_highlight"
+  | "highlight_box"
+  | "word_pop"
+  | "word_fade"
+  | "word_sweep"
+  | "word_underline"
+  | "typewriter";
 
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";

@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (yapılandırılmış)",
   "{n} more: type to search them.": "{n} tane daha: aramak için yazın.",
   "· captions vs. audio": "· altyazı ve ses",
-  "The language of this interface, remembered in this browser.": "Bu arayüzün dili, bu tarayıcıda hatırlanır."
+  "The language of this interface, remembered in this browser.": "Bu arayüzün dili, bu tarayıcıda hatırlanır.",
+  "Karaoke": "Karaoke",
+  "Underline": "Altı çizili",
+  "Typewriter": "Daktilo",
+  "Letter case": "Harf biçimi",
+  "Normal": "Normal",
+  "Uppercase": "Büyük harf",
+  "Slant": "Eğim",
+  "Upright": "Dik",
+  "Italic": "İtalik",
+  "Shadow right": "Gölge sağa",
+  "Shadow down": "Gölge aşağı",
+  "Glow": "Parıltı",
+  "Glow color": "Parıltı rengi"
 }

@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (configurado)",
   "{n} more: type to search them.": "{n} más: escribe para buscarlas.",
   "· captions vs. audio": "· subtítulos / audio",
-  "The language of this interface, remembered in this browser.": "El idioma de esta interfaz, recordado en este navegador."
+  "The language of this interface, remembered in this browser.": "El idioma de esta interfaz, recordado en este navegador.",
+  "Karaoke": "Karaoke",
+  "Underline": "Subrayado",
+  "Typewriter": "Máquina de escribir",
+  "Letter case": "Mayúsculas y minúsculas",
+  "Normal": "Normal",
+  "Uppercase": "Mayúsculas",
+  "Slant": "Inclinación",
+  "Upright": "Recto",
+  "Italic": "Cursiva",
+  "Shadow right": "Sombra a la derecha",
+  "Shadow down": "Sombra hacia abajo",
+  "Glow": "Resplandor",
+  "Glow color": "Color del resplandor"
 }

@@ -230,5 +230,18 @@
   "{model} (configured)": "{model}（已配置）",
   "{n} more: type to search them.": "还有 {n} 个：输入关键字搜索。",
   "· captions vs. audio": "· 字幕与音频",
-  "The language of this interface, remembered in this browser.": "此界面的语言，保存在此浏览器中。"
+  "The language of this interface, remembered in this browser.": "此界面的语言，保存在此浏览器中。",
+  "Karaoke": "卡拉OK",
+  "Underline": "下划线",
+  "Typewriter": "打字机",
+  "Letter case": "字母大小写",
+  "Normal": "常规",
+  "Uppercase": "大写",
+  "Slant": "倾斜",
+  "Upright": "直立",
+  "Italic": "斜体",
+  "Shadow right": "阴影向右",
+  "Shadow down": "阴影向下",
+  "Glow": "发光",
+  "Glow color": "发光颜色"
 }

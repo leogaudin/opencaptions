@@ -87,6 +87,15 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case highlightBox = "highlight_box"
     case wordPop = "word_pop"
     case wordFade = "word_fade"
+    /// Karaoke: the highlight colour fills each word as it is said.
+    case wordSweep = "word_sweep"
+    case wordUnderline = "word_underline"
+    case typewriter
+}
+
+public enum TextCase: String, Codable, CaseIterable, Sendable {
+    case none
+    case upper
 }
 
 public enum Background: String, Codable, CaseIterable, Sendable {
@@ -115,13 +124,23 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var strokeColor: String
     public var shadowBlur: Double
     public var shadowColor: String
+    /// Where the shadow falls (tuned like its blur); with no blur it is solid and drawn as an extrusion.
+    public var shadowOffsetX: Double
+    public var shadowOffsetY: Double
+    /// A halo of `glowColor` around the letters; 0 for none.
+    public var glowBlur: Double
+    public var glowColor: String
+    public var textCase: TextCase
+    /// Letters leaned to the right (the engine shears the upright face).
+    public var italic: Bool
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColor: String,
         background: Background, backgroundColor: String, backgroundOpacity: Double,
         positionX: Double, positionY: Double, animation: CaptionAnimation, wordsPerLine: Int,
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
-        shadowColor: String
+        shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
+        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -139,6 +158,38 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.strokeColor = strokeColor
         self.shadowBlur = shadowBlur
         self.shadowColor = shadowColor
+        self.shadowOffsetX = shadowOffsetX
+        self.shadowOffsetY = shadowOffsetY
+        self.glowBlur = glowBlur
+        self.glowColor = glowColor
+        self.textCase = textCase
+        self.italic = italic
+    }
+
+    /// The fields a style gained later may be missing from a project saved before: they take their defaults.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            font: try c.decode(String.self, forKey: .font), fontSize: try c.decode(Int.self, forKey: .fontSize),
+            textColor: try c.decode(String.self, forKey: .textColor),
+            highlightColor: try c.decode(String.self, forKey: .highlightColor),
+            background: try c.decode(Background.self, forKey: .background),
+            backgroundColor: try c.decode(String.self, forKey: .backgroundColor),
+            backgroundOpacity: try c.decode(Double.self, forKey: .backgroundOpacity),
+            positionX: try c.decode(Double.self, forKey: .positionX), positionY: try c.decode(Double.self, forKey: .positionY),
+            animation: try c.decode(CaptionAnimation.self, forKey: .animation),
+            wordsPerLine: try c.decode(Int.self, forKey: .wordsPerLine),
+            wordSpacing: try c.decode(Double.self, forKey: .wordSpacing),
+            strokeWidth: try c.decode(Double.self, forKey: .strokeWidth),
+            strokeColor: try c.decode(String.self, forKey: .strokeColor),
+            shadowBlur: try c.decode(Double.self, forKey: .shadowBlur),
+            shadowColor: try c.decode(String.self, forKey: .shadowColor),
+            shadowOffsetX: try c.decodeIfPresent(Double.self, forKey: .shadowOffsetX) ?? 0,
+            shadowOffsetY: try c.decodeIfPresent(Double.self, forKey: .shadowOffsetY) ?? 0,
+            glowBlur: try c.decodeIfPresent(Double.self, forKey: .glowBlur) ?? 0,
+            glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
+            textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
+            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -158,5 +209,11 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case strokeColor = "stroke_color"
         case shadowBlur = "shadow_blur"
         case shadowColor = "shadow_color"
+        case shadowOffsetX = "shadow_offset_x"
+        case shadowOffsetY = "shadow_offset_y"
+        case glowBlur = "glow_blur"
+        case glowColor = "glow_color"
+        case textCase = "text_case"
+        case italic
     }
 }

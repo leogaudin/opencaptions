@@ -230,5 +230,18 @@
   "{model} (configured)": "{model}（設定済み）",
   "{n} more: type to search them.": "ほか{n}件：入力して検索してください。",
   "· captions vs. audio": "· 字幕と音声",
-  "The language of this interface, remembered in this browser.": "このインターフェースの言語。このブラウザに保存されます。"
+  "The language of this interface, remembered in this browser.": "このインターフェースの言語。このブラウザに保存されます。",
+  "Karaoke": "カラオケ",
+  "Underline": "下線",
+  "Typewriter": "タイプライター",
+  "Letter case": "文字の大小",
+  "Normal": "通常",
+  "Uppercase": "大文字",
+  "Slant": "傾き",
+  "Upright": "直立",
+  "Italic": "イタリック",
+  "Shadow right": "影を右へ",
+  "Shadow down": "影を下へ",
+  "Glow": "グロー",
+  "Glow color": "グローの色"
 }

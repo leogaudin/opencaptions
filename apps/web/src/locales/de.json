@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (konfiguriert)",
   "{n} more: type to search them.": "{n} weitere: tippe, um zu suchen.",
   "· captions vs. audio": "· Untertitel / Ton",
-  "The language of this interface, remembered in this browser.": "Die Sprache dieser Oberfläche, in diesem Browser gespeichert."
+  "The language of this interface, remembered in this browser.": "Die Sprache dieser Oberfläche, in diesem Browser gespeichert.",
+  "Karaoke": "Karaoke",
+  "Underline": "Unterstreichung",
+  "Typewriter": "Schreibmaschine",
+  "Letter case": "Schreibweise",
+  "Normal": "Normal",
+  "Uppercase": "Großbuchstaben",
+  "Slant": "Neigung",
+  "Upright": "Aufrecht",
+  "Italic": "Kursiv",
+  "Shadow right": "Schatten nach rechts",
+  "Shadow down": "Schatten nach unten",
+  "Glow": "Leuchten",
+  "Glow color": "Leuchtfarbe"
 }

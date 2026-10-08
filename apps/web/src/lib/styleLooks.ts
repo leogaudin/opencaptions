@@ -11,6 +11,9 @@ export const ANIMATIONS: readonly Animation[] = [
   "highlight_box",
   "word_pop",
   "word_fade",
+  "word_sweep",
+  "word_underline",
+  "typewriter",
 ];
 
 export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
@@ -24,6 +27,15 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   highlight_box: msg("Box"),
   word_pop: msg("Pop"),
   word_fade: msg("Fade"),
+  word_sweep: msg("Karaoke"),
+  word_underline: msg("Underline"),
+  typewriter: msg("Typewriter"),
+};
+
+export const CASES: readonly StyleConfig["text_case"][] = ["none", "upper"];
+export const CASE_NAMES: Record<StyleConfig["text_case"], string> = {
+  none: msg("Normal"),
+  upper: msg("Uppercase"),
 };
 
 /** A background with no opacity would show nothing, so choosing one gives it a visible opacity. */

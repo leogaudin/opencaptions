@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (настроена)",
   "{n} more: type to search them.": "Ещё {n}: введите запрос для поиска.",
   "· captions vs. audio": "· субтитры и звук",
-  "The language of this interface, remembered in this browser.": "Язык этого интерфейса, сохранённый в этом браузере."
+  "The language of this interface, remembered in this browser.": "Язык этого интерфейса, сохранённый в этом браузере.",
+  "Karaoke": "Караоке",
+  "Underline": "Подчёркивание",
+  "Typewriter": "Печатная машинка",
+  "Letter case": "Регистр",
+  "Normal": "Обычный",
+  "Uppercase": "Заглавные",
+  "Slant": "Наклон",
+  "Upright": "Прямой",
+  "Italic": "Курсив",
+  "Shadow right": "Тень вправо",
+  "Shadow down": "Тень вниз",
+  "Glow": "Свечение",
+  "Glow color": "Цвет свечения"
 }

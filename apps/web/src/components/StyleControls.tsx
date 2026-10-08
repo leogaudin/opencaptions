@@ -13,7 +13,7 @@ import { type ReactNode, useState } from "react";
 import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
 import { FontPicker } from "@/components/FontPicker";
 import { PresetStrip, TileStrip } from "@/components/PresetStrip";
-import { ColorField, SliderField } from "@/components/StyleFields";
+import { ColorField, Field, Segmented, SliderField } from "@/components/StyleFields";
 import { msg, useT } from "@/lib/i18n";
 import { useLookPreviews } from "@/lib/presetPreviews";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
@@ -22,6 +22,8 @@ import {
   ANIMATIONS,
   BACKGROUND_NAMES,
   BACKGROUNDS,
+  CASE_NAMES,
+  CASES,
   withBackground,
 } from "@/lib/styleLooks";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
@@ -92,6 +94,12 @@ export function StyleControls() {
 
 type Setter = (s: Partial<StyleConfig>) => void;
 
+const SLANTS = ["upright", "italic"] as const;
+const SLANT_NAMES: Record<(typeof SLANTS)[number], string> = {
+  upright: msg("Upright"),
+  italic: msg("Italic"),
+};
+
 function Panel({ children }: { children: ReactNode }) {
   return <div className="space-y-4 text-xs">{children}</div>;
 }
@@ -127,6 +135,22 @@ function TextPanel({
         step={1}
         onChange={(font_size) => throttled({ font_size })}
       />
+      <Field label={t("Letter case")}>
+        <Segmented
+          options={CASES}
+          value={style.text_case}
+          label={(c) => t(CASE_NAMES[c])}
+          onChange={(text_case) => setStyle({ text_case })}
+        />
+      </Field>
+      <Field label={t("Slant")}>
+        <Segmented
+          options={SLANTS}
+          value={style.italic ? "italic" : "upright"}
+          label={(s) => t(SLANT_NAMES[s])}
+          onChange={(slant) => setStyle({ italic: slant === "italic" })}
+        />
+      </Field>
       <ColorField
         label={t("Text color")}
         value={style.text_color}
@@ -258,6 +282,37 @@ function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Set
         step={1}
         onChange={(shadow_blur) => throttled({ shadow_blur })}
       />
+      <SliderField
+        label={t("Shadow right")}
+        value={style.shadow_offset_x}
+        min={-20}
+        max={20}
+        step={1}
+        onChange={(shadow_offset_x) => throttled({ shadow_offset_x })}
+      />
+      <SliderField
+        label={t("Shadow down")}
+        value={style.shadow_offset_y}
+        min={-20}
+        max={20}
+        step={1}
+        onChange={(shadow_offset_y) => throttled({ shadow_offset_y })}
+      />
+      <SliderField
+        label={t("Glow")}
+        value={style.glow_blur}
+        min={0}
+        max={40}
+        step={1}
+        onChange={(glow_blur) => throttled({ glow_blur })}
+      />
+      {style.glow_blur > 0 && (
+        <ColorField
+          label={t("Glow color")}
+          value={style.glow_color}
+          onChange={(glow_color) => throttled({ glow_color })}
+        />
+      )}
     </Panel>
   );
 }

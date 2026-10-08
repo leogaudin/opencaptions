@@ -58,6 +58,17 @@ def test_style_config_shadow_supports_alpha() -> None:
     assert s.shadow_color == "#FF000080"
 
 
+def test_style_config_effects_default_to_off_and_are_bounded() -> None:
+    s = StyleConfig()
+    assert (s.shadow_offset_x, s.shadow_offset_y, s.glow_blur) == (0, 0, 0)
+    assert (s.text_case, s.italic) == ("none", False)
+    for animation in ("word_sweep", "word_underline", "typewriter"):
+        assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
+    for bad in ({"shadow_offset_x": 21}, {"glow_blur": 41}, {"text_case": "lower"}):
+        with pytest.raises(ValidationError):
+            StyleConfig(**bad)  # type: ignore[arg-type]
+
+
 def test_error_response_shape() -> None:
     e = ErrorResponse(error="not_found", detail="missing", code=404)
     payload = e.model_dump()

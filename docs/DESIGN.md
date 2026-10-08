@@ -129,6 +129,19 @@ Outline, Timing) so that no page is long. The Background and Animation tabs show
 as tiles drawn the same way, in the caption's current look (a background with no opacity is
 given a visible one when chosen). On iOS the style sheet stops at a little over half the
 screen, so the video stays in view while it is edited.
+**What a style can do.** All of it is the engine's, so the preview and the export agree. Seven
+animations: the word highlighted by colour (`word_highlight`), by a box (`highlight_box`), popped
+(`word_pop`), faded in (`word_fade`), filled left to right as it is said (`word_sweep`, karaoke),
+underlined as it is said (`word_underline`) and typed out letter by letter with a cursor
+(`typewriter`; the steps are whole letters, so a frame changes only when one appears). Beside
+them: an outline, a shadow with a blur and an offset (a shadow with no blur is solid and is drawn as an
+extrusion, the letters carried from where they are to the offset a pixel at a time, so it reads
+as their outline continued), a glow (a blurred halo in its own colour, laid down three times to read as
+light), upper case (drawn, never stored: the transcript is untouched) and italic (the upright face sheared
+by about 11 degrees, so any font leans and no italic file has to be fetched). Every field after
+`shadow_color` is optional with a default of "off", so a style saved before it existed opens unchanged.
+The built-in presets that use them are Karaoke, Bold (Anton, a hard yellow extrusion), Neon,
+Typewriter, Handwritten and Elegant.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.

@@ -93,6 +93,18 @@ struct StylePanel: View {
                     .buttonStyle(.plain)
                 }
                 LabeledSlider("Size", value: intBinding(\.fontSize), range: CaptionGestures.fontSizeRange, step: 1)
+                Row("Letter case") {
+                    SegmentedPills(
+                        options: TextCase.allCases, selection: model.binding(\.textCase),
+                        label: { $0 == .upper ? "Uppercase" : "Normal" })
+                        .frame(maxWidth: 220)
+                }
+                Row("Slant") {
+                    SegmentedPills(
+                        options: [false, true], selection: model.binding(\.italic),
+                        label: { $0 ? "Italic" : "Upright" })
+                        .frame(maxWidth: 220)
+                }
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
                 Row("Highlight color") { ColorPicker("Highlight color", selection: color(\.highlightColor), supportsOpacity: false).labelsHidden() }
                 LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
@@ -121,8 +133,14 @@ struct StylePanel: View {
                     Row("Outline color") { ColorPicker("Outline color", selection: color(\.strokeColor), supportsOpacity: false).labelsHidden() }
                 }
                 LabeledSlider("Shadow", value: model.binding(\.shadowBlur), range: 0...20, step: 1)
-                if style.shadowBlur > 0 {
+                LabeledSlider("Shadow right", value: model.binding(\.shadowOffsetX), range: -20...20, step: 1)
+                LabeledSlider("Shadow down", value: model.binding(\.shadowOffsetY), range: -20...20, step: 1)
+                if style.shadowBlur > 0 || style.shadowOffsetX != 0 || style.shadowOffsetY != 0 {
                     Row("Shadow color") { ColorPicker("Shadow color", selection: color(\.shadowColor, alpha: true), supportsOpacity: true).labelsHidden() }
+                }
+                LabeledSlider("Glow", value: model.binding(\.glowBlur), range: 0...40, step: 1)
+                if style.glowBlur > 0 {
+                    Row("Glow color") { ColorPicker("Glow color", selection: color(\.glowColor), supportsOpacity: false).labelsHidden() }
                 }
             }
         case .timing:
@@ -229,6 +247,9 @@ struct StylePanel: View {
         case .highlightBox: "Box"
         case .wordPop: "Pop"
         case .wordFade: "Fade"
+        case .wordSweep: "Karaoke"
+        case .wordUnderline: "Underline"
+        case .typewriter: "Typewriter"
         }
     }
 

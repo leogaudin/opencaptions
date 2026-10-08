@@ -230,5 +230,18 @@
   "{model} (configured)": "{model} (설정됨)",
   "{n} more: type to search them.": "{n}개 더: 입력해서 검색하세요.",
   "· captions vs. audio": "· 자막과 오디오",
-  "The language of this interface, remembered in this browser.": "이 인터페이스의 언어이며, 이 브라우저에 저장됩니다."
+  "The language of this interface, remembered in this browser.": "이 인터페이스의 언어이며, 이 브라우저에 저장됩니다.",
+  "Karaoke": "노래방",
+  "Underline": "밑줄",
+  "Typewriter": "타자기",
+  "Letter case": "대소문자",
+  "Normal": "보통",
+  "Uppercase": "대문자",
+  "Slant": "기울기",
+  "Upright": "똑바로",
+  "Italic": "이탤릭",
+  "Shadow right": "그림자 오른쪽",
+  "Shadow down": "그림자 아래",
+  "Glow": "글로우",
+  "Glow color": "글로우 색상"
 }

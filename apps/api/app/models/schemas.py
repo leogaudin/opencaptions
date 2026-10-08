@@ -149,7 +149,15 @@ class StyleConfig(BaseModel):
     # centred horizontally and low (the usual subtitle spot); the editor drags it.
     position_x: float = Field(default=0.5, ge=0.0, le=1.0)
     position_y: float = Field(default=0.84, ge=0.0, le=1.0)
-    animation: Literal["word_highlight", "highlight_box", "word_pop", "word_fade"] = "highlight_box"
+    animation: Literal[
+        "word_highlight",
+        "highlight_box",
+        "word_pop",
+        "word_fade",
+        "word_sweep",
+        "word_underline",
+        "typewriter",
+    ] = "highlight_box"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.
     word_spacing: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -161,6 +169,16 @@ class StyleConfig(BaseModel):
         pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
         description="Optional alpha channel for shadow",
     )
+    # Where the shadow falls, in the same units as its blur. With no blur it is solid and drawn as
+    # an extrusion: the outline carried on out to the offset.
+    shadow_offset_x: float = Field(default=0.0, ge=-20.0, le=20.0)
+    shadow_offset_y: float = Field(default=0.0, ge=-20.0, le=20.0)
+    # A halo of glow_color around the letters (0 for none): the neon look.
+    glow_blur: float = Field(default=0.0, ge=0.0, le=40.0)
+    glow_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
+    text_case: Literal["none", "upper"] = "none"
+    # Letters leaned to the right: the upright face, sheared.
+    italic: bool = False
 
 
 # Project + Job

@@ -1365,7 +1365,7 @@ export interface components {
              * @default highlight_box
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter";
             /**
              * Words Per Line
              * @default 3
@@ -1397,6 +1397,37 @@ export interface components {
              * @default #000000A0
              */
             shadow_color: string;
+            /**
+             * Shadow Offset X
+             * @default 0
+             */
+            shadow_offset_x: number;
+            /**
+             * Shadow Offset Y
+             * @default 0
+             */
+            shadow_offset_y: number;
+            /**
+             * Glow Blur
+             * @default 0
+             */
+            glow_blur: number;
+            /**
+             * Glow Color
+             * @default #FFFFFF
+             */
+            glow_color: string;
+            /**
+             * Text Case
+             * @default none
+             * @enum {string}
+             */
+            text_case: "none" | "upper";
+            /**
+             * Italic
+             * @default false
+             */
+            italic: boolean;
         };
         /**
          * SubtitleExportLinks

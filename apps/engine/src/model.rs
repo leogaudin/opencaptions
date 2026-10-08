@@ -45,6 +45,24 @@ pub enum Animation {
     HighlightBox,
     WordPop,
     WordFade,
+    /// The highlight colour fills each word from left to right as it is said, and stays.
+    WordSweep,
+    /// An underline in the highlight colour is drawn under each word as it is said, and stays.
+    WordUnderline,
+    /// Each word is typed out letter by letter as it is said, with a cursor at the end.
+    Typewriter,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum TextCase {
+    #[default]
+    None,
+    Upper,
+}
+
+fn white() -> Rgba {
+    Rgba([255, 255, 255, 255])
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -67,6 +85,22 @@ pub struct Style {
     pub stroke_color: Rgba,
     pub shadow_blur: f32,
     pub shadow_color: Rgba,
+    /// Where the shadow falls, away from the letters, tuned like the blur. A shadow with no blur is
+    /// solid and is drawn as an extrusion: the outline carried on out to the offset.
+    #[serde(default)]
+    pub shadow_offset_x: f32,
+    #[serde(default)]
+    pub shadow_offset_y: f32,
+    /// A halo of `glow_color` around the letters (0 for none), the neon look.
+    #[serde(default)]
+    pub glow_blur: f32,
+    #[serde(default = "white")]
+    pub glow_color: Rgba,
+    #[serde(default)]
+    pub text_case: TextCase,
+    /// Letters leaned to the right, drawn from the upright face by shearing it.
+    #[serde(default)]
+    pub italic: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

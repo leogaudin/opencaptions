@@ -52,6 +52,16 @@ import Testing
         #expect(!style.matches(presets[1]))
     }
 
+    @Test func aStyleSavedBeforeItsLaterFieldsStillOpens() throws {
+        var json = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
+        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic"] {
+            json.removeValue(forKey: key)
+        }
+        let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(old == (try Repo.defaultStyle()), "the missing fields take their defaults, which are the default look's")
+    }
+
     @Test func aBackgroundChosenIsVisible() throws {
         var style = try Repo.defaultStyle()
         style.backgroundOpacity = 0

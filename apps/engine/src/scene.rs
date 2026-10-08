@@ -8,12 +8,12 @@
 use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder};
 use rustybuzz::{Face, UnicodeBuffer};
 use tiny_skia::{
-    Color, FillRule, IntRect, LineCap, LineJoin, Paint, Path, PathBuilder, Pixmap, PixmapPaint,
-    Rect, Stroke, Transform,
+    Color, FillRule, IntRect, LineCap, LineJoin, Mask, Paint, Path, PathBuilder, Pixmap,
+    PixmapPaint, Rect, Stroke, Transform,
 };
 
 use crate::fonts::FontBook;
-use crate::model::{Animation, Background, Rgba, SceneInput, Style, shifted};
+use crate::model::{Animation, Background, Rgba, SceneInput, Style, TextCase, shifted};
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
 const REF_HEIGHT: f32 = 1920.0;
@@ -33,6 +33,15 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// How far an italic leans: the shear of the upright face (about 11 degrees).
+const ITALIC_SKEW: f32 = 0.2;
+/// A typed word takes this share of its time to appear (at least 0.08 s, at most 0.6 s of it).
+const TYPE_SHARE: f32 = 0.8;
+/// The halo of a glow is laid down this many times to read as light, not as a smudge.
+const GLOW_PASSES: usize = 3;
+/// The shortest a word is taken to take to say, so a word with no length still sweeps.
+const MIN_SAID_S: f32 = 0.08;
+const MAX_TYPING_S: f32 = 0.6;
 /// The watermark is drawn in the application's default face.
 const MARK_FAMILY: &str = "Inter";
 const MARK_OPACITY: f32 = 0.85;
@@ -42,6 +51,12 @@ struct Placed {
     end: f32,
     glyphs: Option<Path>,
     slot: Rect,
+    /// Where the letters begin and how wide they run, inside the slot, and the baseline they sit on.
+    ink_x: f32,
+    ink_w: f32,
+    baseline: f32,
+    /// How many letters (for the typewriter's steps).
+    chars: usize,
 }
 
 struct Line {
@@ -79,6 +94,8 @@ struct WordState {
     scale: f32,
     opacity: f32,
     box_scale: f32,
+    /// How much of the word is filled, underlined or typed, 0 to 1 (the sweeping animations).
+    fill: f32,
 }
 
 #[derive(PartialEq)]
@@ -224,6 +241,7 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             scale: 1.0,
             opacity: 1.0,
             box_scale: 1.0,
+            fill: 0.0,
         },
         Animation::HighlightBox => {
             // Grows in with the spring as the word starts, and fades out in place.
@@ -233,6 +251,7 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
                 scale: 1.0,
                 opacity: 1.0,
                 box_scale: BOX_FROM + (1.0 - BOX_FROM) * grow,
+                fill: 0.0,
             }
         }
         Animation::WordPop => WordState {
@@ -240,6 +259,7 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             scale: 1.0 + POP * pulse(t, w, MOTION_S, overshoot),
             opacity: 1.0,
             box_scale: 1.0,
+            fill: 0.0,
         },
         Animation::WordFade => {
             let at = |edge: f32| ((t - edge) / MOTION_S).clamp(0.0, 1.0);
@@ -249,6 +269,27 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
                 scale: 1.0,
                 opacity,
                 box_scale: 1.0,
+                fill: 0.0,
+            }
+        }
+        Animation::WordSweep | Animation::WordUnderline => WordState {
+            on: 0.0,
+            scale: 1.0,
+            opacity: 1.0,
+            box_scale: 1.0,
+            fill: ((t - w.start) / (w.end - w.start).max(MIN_SAID_S)).clamp(0.0, 1.0),
+        },
+        Animation::Typewriter => {
+            // Letter by letter: the steps are whole letters, so a frame only changes when one appears.
+            let typing = (w.end - w.start).clamp(MIN_SAID_S, MAX_TYPING_S) * TYPE_SHARE;
+            let typed = ((t - w.start) / typing).clamp(0.0, 1.0);
+            let letters = w.chars.max(1) as f32;
+            WordState {
+                on,
+                scale: 1.0,
+                opacity: 1.0,
+                box_scale: 1.0,
+                fill: (typed * letters).ceil() / letters,
             }
         }
     }
@@ -259,6 +300,9 @@ fn scaled(style: &Style, k: f32) -> Style {
         font_size: style.font_size * k,
         stroke_width: style.stroke_width * k,
         shadow_blur: style.shadow_blur * k,
+        shadow_offset_x: style.shadow_offset_x * k,
+        shadow_offset_y: style.shadow_offset_y * k,
+        glow_blur: style.glow_blur * k,
         ..style.clone()
     }
 }
@@ -441,21 +485,43 @@ impl Scene {
         };
         let sep = base_gap + fs * style.word_spacing;
         let max_row = MAX_WIDTH * width as f32 - 2.0 * pad_bx;
-        let margin = style.shadow_blur * 3.0 + style.stroke_width + 2.0;
+        let reach = |dx: f32, dy: f32| dx.abs().max(dy.abs());
+        // What a caption's drawing reaches past its block: the soft edges of a shadow and a glow, the
+        // shadow's offset, an outline, and an italic's lean over the top corner.
+        let margin = style.shadow_blur * 3.0
+            + reach(style.shadow_offset_x, style.shadow_offset_y)
+            + style.glow_blur * 3.0
+            + style.stroke_width
+            + if style.italic { fs * ITALIC_SKEW } else { 0.0 }
+            + 2.0;
 
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
         let lines = words
             .chunks(style.words_per_line.max(1) as usize)
             .map(|chunk| {
-                let shaped: Vec<_> = chunk
+                let texts: Vec<String> = chunk
                     .iter()
-                    .map(|w| {
-                        shape(
-                            book.face(book.for_text(primary, &fallbacks, &w.text)),
-                            &w.text,
+                    .map(|w| match style.text_case {
+                        TextCase::Upper => w.text.to_uppercase(),
+                        TextCase::None => w.text.clone(),
+                    })
+                    .collect();
+                let lean = Transform::from_row(1.0, 0.0, -ITALIC_SKEW, 1.0, 0.0, 0.0);
+                let shaped: Vec<_> = texts
+                    .iter()
+                    .map(|text| {
+                        let (glyphs, advance) = shape(
+                            book.face(book.for_text(primary, &fallbacks, text)),
+                            text,
                             fs,
-                        )
+                        );
+                        let glyphs = if style.italic {
+                            glyphs.and_then(|p| p.transform(lean))
+                        } else {
+                            glyphs
+                        };
+                        (glyphs, advance)
                     })
                     .collect();
                 let mut rows: Vec<(Vec<usize>, f32)> = vec![];
@@ -501,6 +567,10 @@ impl Scene {
                             end: shifted(chunk[i].end, offset),
                             glyphs: glyphs.clone().and_then(|p| p.transform(at)),
                             slot: Rect::from_xywh(x, top, slot_w.max(1.0), row_h).unwrap(),
+                            ink_x: x + pad_wx,
+                            ink_w: *adv,
+                            baseline: top + baseline_in_row,
+                            chars: texts[i].chars().count(),
                         });
                         x += slot_w + sep;
                     }
@@ -607,49 +677,158 @@ impl Scene {
         let local = |at: Transform| at.post_translate(-bx as f32, -by as f32);
         let layer = || Pixmap::new(line.bounds.width(), line.bounds.height());
 
-        if s.shadow_blur > 0.0
+        let solid = |c: Rgba| Rgba([c.0[0], c.0[1], c.0[2], 255]);
+        let opacity = |c: Rgba| f32::from(c.0[3]) / 255.0;
+        let has_offset = s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0;
+        if (s.shadow_blur > 0.0 || has_offset)
             && let Some(mut shadow) = layer()
         {
-            let solid = Rgba([
-                s.shadow_color.0[0],
-                s.shadow_color.0[1],
-                s.shadow_color.0[2],
-                255,
-            ]);
+            // A soft shadow is the letters once, moved and blurred. A hard one is the letters carried
+            // from where they are to the offset, a pixel at a time, so it reads as their outline
+            // extended (an extrusion) and not as a second copy behind them.
+            let steps = if s.shadow_blur > 0.0 {
+                1
+            } else {
+                (s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()).ceil() as usize).clamp(1, 96)
+            };
             for (w, st) in line.words.iter().zip(states) {
                 if let Some(path) = &w.glyphs {
-                    let c = colour(solid, st.opacity);
-                    ink(&mut shadow, path, c, c, local(pivot(w, st)));
+                    let c = colour(solid(s.shadow_color), st.opacity);
+                    for step in 1..=steps {
+                        let along = step as f32 / steps as f32;
+                        let at = pivot(w, st)
+                            .post_translate(s.shadow_offset_x * along, s.shadow_offset_y * along);
+                        ink(&mut shadow, path, c, c, local(at));
+                    }
                 }
             }
-            blur(&mut shadow, s.shadow_blur / 2.0);
+            if s.shadow_blur > 0.0 {
+                blur(&mut shadow, s.shadow_blur / 2.0);
+            }
             let p = PixmapPaint {
-                opacity: f32::from(s.shadow_color.0[3]) / 255.0,
+                opacity: opacity(s.shadow_color),
                 ..PixmapPaint::default()
             };
             canvas.draw_pixmap(bx, by, shadow.as_ref(), &p, Transform::identity(), None);
         }
+        if s.glow_blur > 0.0
+            && let Some(mut halo) = layer()
+        {
+            for (w, st) in line.words.iter().zip(states) {
+                if let Some(path) = &w.glyphs {
+                    let c = colour(solid(s.glow_color), st.opacity);
+                    ink(&mut halo, path, c, c, local(pivot(w, st)));
+                }
+            }
+            blur(&mut halo, s.glow_blur / 2.0);
+            let p = PixmapPaint {
+                opacity: opacity(s.glow_color),
+                ..PixmapPaint::default()
+            };
+            for _ in 0..GLOW_PASSES {
+                canvas.draw_pixmap(bx, by, halo.as_ref(), &p, Transform::identity(), None);
+            }
+        }
 
+        // What of a word's letters shows, as a layer cut off at `x`: from the left edge of the
+        // letters to there (typing), or the whole of it with the colour over only that much (filling).
+        let cut = |x: f32| {
+            let mut mask = Mask::new(line.bounds.width(), line.bounds.height())?;
+            let edge = Rect::from_ltrb(
+                0.0,
+                0.0,
+                (x - bx as f32).max(0.0),
+                line.bounds.height() as f32,
+            )?;
+            mask.fill_path(
+                &PathBuilder::from_rect(edge),
+                FillRule::Winding,
+                false,
+                Transform::identity(),
+            );
+            Some(mask)
+        };
         for (w, st) in line.words.iter().zip(states) {
             let Some(path) = &w.glyphs else { continue };
             let fill = match s.animation {
                 Animation::WordHighlight | Animation::WordPop => {
                     mix(s.text_color, s.highlight_color, st.on)
                 }
-                Animation::HighlightBox | Animation::WordFade => s.text_color,
+                Animation::HighlightBox
+                | Animation::WordFade
+                | Animation::WordSweep
+                | Animation::WordUnderline
+                | Animation::Typewriter => s.text_color,
             };
             let (fill, edge) = (colour(fill, 1.0), colour(s.stroke_color, 1.0));
-            if st.opacity >= 1.0 {
+            let typed = s.animation == Animation::Typewriter;
+            if typed && st.fill <= 0.0 {
+                continue;
+            }
+            if st.opacity >= 1.0 && !(typed && st.fill < 1.0) {
                 ink(canvas, path, fill, edge, pivot(w, st));
             } else if let Some(mut group) = layer() {
                 // Composited as one group, like CSS opacity, so the stroke under
                 // the fill does not show through a translucent letter.
                 ink(&mut group, path, fill, edge, local(pivot(w, st)));
+                if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill) {
+                    group.apply_mask(&mask);
+                }
                 let p = PixmapPaint {
                     opacity: st.opacity,
                     ..PixmapPaint::default()
                 };
                 canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
+            }
+            match s.animation {
+                Animation::WordSweep if st.fill > 0.0 => {
+                    // The colour over the letters up to the sweep, the outline left as it is.
+                    let on = colour(s.highlight_color, 1.0);
+                    if st.fill >= 1.0 {
+                        canvas.fill_path(path, &paint(on), FillRule::Winding, pivot(w, st), None);
+                    } else if let (Some(mut group), Some(mask)) =
+                        (layer(), cut(w.ink_x + w.ink_w * st.fill))
+                    {
+                        group.fill_path(
+                            path,
+                            &paint(on),
+                            FillRule::Winding,
+                            local(pivot(w, st)),
+                            None,
+                        );
+                        group.apply_mask(&mask);
+                        let p = PixmapPaint::default();
+                        canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
+                    }
+                }
+                Animation::WordUnderline if st.fill > 0.0 => {
+                    let thick = (s.font_size * 0.075).max(2.0);
+                    let rule = Rect::from_xywh(
+                        w.ink_x,
+                        w.baseline + s.font_size * 0.1,
+                        (w.ink_w * st.fill).max(1.0),
+                        thick,
+                    );
+                    if let Some(path) = rule.and_then(|r| rounded_rect(r, thick / 2.0)) {
+                        let p = paint(colour(s.highlight_color, 1.0));
+                        canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
+                    }
+                }
+                Animation::Typewriter if st.on > 0.0 => {
+                    // The cursor sits where the next letter goes, for as long as the word is being said.
+                    let width = (s.font_size * 0.07).max(2.0);
+                    let cursor = Rect::from_xywh(
+                        w.ink_x + w.ink_w * st.fill,
+                        w.baseline - s.font_size * 0.78,
+                        width,
+                        s.font_size * 0.92,
+                    );
+                    if let Some(path) = cursor.and_then(|r| rounded_rect(r, width / 4.0)) {
+                        let p = paint(colour(s.highlight_color, st.on));
+                        canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -929,6 +1108,141 @@ mod tests {
             "overshoots"
         );
         assert!((at(0.9) - 1.0).abs() < 1e-3, "settles at full size");
+    }
+
+    /// `input` with some style fields changed.
+    fn styled(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value) -> SceneInput {
+        let base = input(animation, words, 3);
+        let mut style = serde_json::to_value(serde_json::json!({
+            "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
+            "highlight_color": "#FF0000", "background": "none",
+            "background_color": "#000000", "background_opacity": 0.0,
+            "position_x": 0.5, "position_y": 0.5, "animation": animation,
+            "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
+            "shadow_blur": 0, "shadow_color": "#00000000"
+        }))
+        .unwrap();
+        for (k, v) in patch.as_object().unwrap() {
+            style[k] = v.clone();
+        }
+        let mut value = serde_json::json!({
+            "width": base.width, "height": base.height,
+            "transcript": serde_json::to_value(&base.transcript).unwrap_or_default(),
+        });
+        value["style"] = style;
+        serde_json::from_value(value).unwrap()
+    }
+
+    /// The columns and rows with any ink in a frame: (left, right, top, bottom).
+    fn extent(renderer: &Renderer, width: usize) -> Option<(usize, usize, usize, usize)> {
+        let rgba = renderer.rgba();
+        let mut found: Option<(usize, usize, usize, usize)> = None;
+        for (i, px) in rgba.chunks(4).enumerate() {
+            if px[3] > 0 {
+                let (x, y) = (i % width, i / width);
+                found = Some(match found {
+                    None => (x, x, y, y),
+                    Some((l, r, t, b)) => (l.min(x), r.max(x), t.min(y), b.max(y)),
+                });
+            }
+        }
+        found
+    }
+
+    fn drawn(patch: serde_json::Value, at: f32) -> Option<(usize, usize, usize, usize)> {
+        let scene = Scene::new(
+            &book(),
+            styled("word_highlight", &[("hello", 0.0, 1.0)], patch),
+        );
+        let mut renderer = Renderer::new(scene);
+        renderer.render(at);
+        extent(&renderer, 1080)
+    }
+
+    #[test]
+    fn a_sweep_fills_the_word_as_it_is_said_and_keeps_it() {
+        let scene = Scene::new(&book(), input("word_sweep", WORDS, 3));
+        let w = &scene.lines[0].words[1];
+        let at = |t: f32| word_state(Animation::WordSweep, w, t).fill;
+        assert_eq!(at(0.4), 0.0, "not said yet");
+        assert!((at(0.75) - 0.5).abs() < 0.01, "half way through the word");
+        assert_eq!(at(1.4), 1.0, "and it stays filled after");
+        let underline = Scene::new(&book(), input("word_underline", WORDS, 3));
+        let w = &underline.lines[0].words[1];
+        assert!((word_state(Animation::WordUnderline, w, 0.75).fill - 0.5).abs() < 0.01);
+    }
+
+    #[test]
+    fn typed_words_appear_a_letter_at_a_time_and_none_before_they_start() {
+        let scene = Scene::new(&book(), input("typewriter", &[("three", 1.0, 1.5)], 3));
+        let w = &scene.lines[0].words[0];
+        let at = |t: f32| word_state(Animation::Typewriter, w, t).fill;
+        assert_eq!(at(0.9), 0.0);
+        let steps: Vec<f32> = (0..40).map(|i| at(1.0 + i as f32 * 0.01)).collect();
+        assert!(
+            steps
+                .iter()
+                .all(|f| (f * 5.0 - (f * 5.0).round()).abs() < 1e-4),
+            "whole letters"
+        );
+        assert_eq!(at(1.5), 1.0, "all of it once typed");
+        assert!(steps.windows(2).all(|p| p[0] <= p[1]), "never untyped");
+    }
+
+    #[test]
+    fn upper_case_is_drawn_not_stored() {
+        let word = [("hello", 0.0, 1.0)];
+        let lower = Scene::new(
+            &book(),
+            styled("word_highlight", &word, serde_json::json!({})),
+        );
+        let upper = Scene::new(
+            &book(),
+            styled(
+                "word_highlight",
+                &word,
+                serde_json::json!({ "text_case": "upper" }),
+            ),
+        );
+        assert!(upper.lines[0].words[0].slot.width() > lower.lines[0].words[0].slot.width());
+    }
+
+    #[test]
+    fn a_hard_shadow_is_the_letters_carried_to_the_offset() {
+        let plain = drawn(serde_json::json!({}), 0.5).unwrap();
+        let solid = serde_json::json!({
+            "shadow_offset_x": 20, "shadow_offset_y": 20, "shadow_blur": 0,
+            "shadow_color": "#000000FF"
+        });
+        let shadowed = drawn(solid, 0.5).unwrap();
+        assert!(shadowed.1 >= plain.1 + 8, "reaches right of the letters");
+        assert!(shadowed.3 >= plain.3 + 8, "and below them");
+    }
+
+    #[test]
+    fn a_glow_reaches_around_the_letters() {
+        let plain = drawn(serde_json::json!({}), 0.5).unwrap();
+        let glow = serde_json::json!({ "glow_blur": 30, "glow_color": "#00FFFFFF" });
+        let lit = drawn(glow, 0.5).unwrap();
+        assert!(
+            lit.0 + 8 <= plain.0 && lit.1 >= plain.1 + 8,
+            "a halo past the letters"
+        );
+    }
+
+    #[test]
+    fn an_italic_leans_over_the_right_edge() {
+        let upright = drawn(serde_json::json!({}), 0.5).unwrap();
+        let leaning = drawn(serde_json::json!({ "italic": true }), 0.5).unwrap();
+        assert!(
+            leaning.1 > upright.1,
+            "the top of the last letter leans out"
+        );
+        assert_eq!(
+            (leaning.2, leaning.3),
+            (upright.2, upright.3),
+            "the same height"
+        );
     }
 
     #[test]

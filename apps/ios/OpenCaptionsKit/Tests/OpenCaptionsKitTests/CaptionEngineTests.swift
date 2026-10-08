@@ -35,6 +35,18 @@ extension EngineSuites {
             #expect(after == before)
         }
 
+        @Test func everyPresetDrawsAndEachIsADifferentLook() async throws {
+            try await engine.registerBundledFonts(in: Repo.fonts)
+            let presets = try Presets.load(from: Repo.presets)
+            let frames = await engine.samples(
+                of: presets.map(\.config), words: ["Make", "it", "pop"], width: 600, height: 300)
+            #expect(frames.count == presets.count)
+            for (preset, frame) in zip(presets, frames) {
+                #expect(frame?.rgba.contains { $0 != 0 } == true, "\(preset.id) draws something")
+            }
+            #expect(Set(frames.compactMap { $0?.rgba }).count == presets.count, "no two presets look the same")
+        }
+
         @Test func aWatermarkIsDrawnByTheEngineInTheTopRightOfEveryFrame() async throws {
             try await engine.registerBundledFonts(in: Repo.fonts)
             let style = try Repo.defaultStyle()
