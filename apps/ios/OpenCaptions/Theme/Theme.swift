@@ -122,12 +122,12 @@ struct SecondaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 17, weight: .semibold))
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(Theme.textPrimary.opacity(enabled ? 1 : 0.4))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 15)
             .background(Theme.raised, in: .rect(cornerRadius: 14))
             .opacity(configuration.isPressed ? 0.8 : 1)
     }

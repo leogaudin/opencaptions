@@ -64,7 +64,7 @@ struct SettingsView: View {
                 Button("Download \(model.megabytes) MB") { startDownload(model) }
             case .clearSaved:
                 Button("Cancel", role: .cancel) {}
-                Button("Delete saved videos", role: .destructive) {
+                Button("Delete cached videos", role: .destructive) {
                     app.store.clearRenders()
                     refresh += 1
                 }
@@ -108,7 +108,7 @@ struct SettingsView: View {
         switch prompt {
         case .deleteModel: String(localized: "Delete this model?")
         case .metered: String(localized: "Download on a metered connection?")
-        case .clearSaved: String(localized: "Delete every saved video?")
+        case .clearSaved: String(localized: "Delete every cached video?")
         case .failure, nil: String(localized: "Something went wrong")
         }
     }
@@ -204,7 +204,7 @@ struct SettingsView: View {
                 storageRow("Projects", Self.size(usage.projects))
                 storageRow("Speech models", Self.size(models))
                 HStack {
-                    Text("Saved videos").font(.system(size: 16, weight: .medium))
+                    Text("Cached videos").font(.system(size: 16, weight: .medium))
                     Spacer()
                     Text(Self.size(usage.renders)).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
                     Button("Clear") { clearingSaved = true }

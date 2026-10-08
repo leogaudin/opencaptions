@@ -106,7 +106,7 @@ edge swipe back is put back by hand). Sheets (style, transcribe, save) use the s
 
 **Settings.** A second tab holds the appearance (system, light or dark), the default spoken
 language, the speech models (each can be downloaded or deleted, with its size on disk), what the app
-stores (with a button to clear the saved videos, which can be made again), and about, including a
+stores (with a button to clear the cached videos, which can be made again), and about, including a
 button that shares `diagnostics.log`: a small log kept on the device with the milestones of the long
 jobs and any uncaught exception, so a crash that leaves no report can still be explained.
 
@@ -323,7 +323,7 @@ as the server does (TrueType, the weight nearest 800), and keeps it on disk.
   API's shapes, so a project moves between phone and server unchanged;
 - `source.<ext>`: copied in at import, so a project survives the clip being deleted
   from Photos;
-- `renders/`: saved videos named by a hash of what decides their pixels (local to
+- `renders/`: cached videos named by a hash of what decides their pixels (local to
   the phone, not the server's hash), excluded from backup.
 
 Writes are atomic (a temporary file, then a rename). The project list is a scan of

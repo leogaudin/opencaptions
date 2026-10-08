@@ -127,7 +127,11 @@ public final class WhisperKitTranscriber: Transcriber {
                 verdicts.append(verdict.langProbs)
             }
         }
-        return LanguageGuess.winner(of: verdicts)
+        let winner = LanguageGuess.winner(of: verdicts)
+        // Kept in the diagnostics: a wrong guess makes the model translate the speech into that language.
+        let tops = verdicts.map { v in v.sorted { $0.value > $1.value }.prefix(3).map { "\($0.key) \(String(format: "%.2f", $0.value))" }.joined(separator: ", ") }
+        Diagnostics.log("language detection: \(winner ?? "none") from \(tops.map { "[\($0)]" }.joined(separator: " "))")
+        return winner
     }
 
     public func transcribe(
