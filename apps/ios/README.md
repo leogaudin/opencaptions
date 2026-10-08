@@ -55,3 +55,11 @@ TestFlight. The build number is the date and time (`IOS_BUILD=<n>` overrides it)
 `org.leogaudin.opencaptions` with the In-App Purchase capability. `make ios-archive` stops before
 the upload. The store text is in `AppStore/listing.md`, the privacy policy is `PRIVACY.md` at the
 repository root, and `OpenCaptions/PrivacyInfo.xcprivacy` is the manifest the app ships.
+
+Two things that stop an upload. The export runs with the system tools only on the `PATH` (Homebrew's
+rsync does not take the flags Xcode gives it, and the export stops at "Copy failed"). And a certificate
+that Apple holds in the cloud (the one Xcode makes by itself) signs a requirement that spells an accented
+name differently from the certificate's own, which Apple's check refuses as "Invalid Signature": a team
+named with an accent signs with a distribution certificate made from a signing request of your own, its
+private key in the keychain, and exports with `IOS_EXPORT_OPTIONS=<a plist with signingStyle manual, the
+certificate and the App Store profile>`.

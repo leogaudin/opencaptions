@@ -115,6 +115,8 @@ ios-build: ios-project ## Build the iOS app for the simulator
 
 # The build number must rise with every upload to App Store Connect: the date and time do.
 IOS_BUILD ?= $(shell date +%y%m%d%H%M)
+# What the export does (see Config/ExportOptions.plist); a different plist can sign with another certificate or only export.
+IOS_EXPORT_OPTIONS ?= Config/ExportOptions.plist
 
 ios-archive: ios-project ## Archive the App Store build (Pro for sale, starts free); IOS_BUILD=<number> to set the build number
 	$(IOS_ONLY)
@@ -123,9 +125,11 @@ ios-archive: ios-project ## Archive the App Store build (Pro for sale, starts fr
 	 -archivePath Build/OpenCaptions.xcarchive -allowProvisioningUpdates \
 	 CURRENT_PROJECT_VERSION=$(IOS_BUILD) -quiet
 
+# Xcode shells out to rsync, and Homebrew's rsync on the PATH does not take the flags it passes (the export
+# stops at "Copy failed"), so the export runs with the system tools only.
 ios-upload: ios-archive ## Archive and send it to App Store Connect (TestFlight); needs the Apple Developer membership
-	@cd apps/ios && xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
-	 -exportOptionsPlist Config/ExportOptions.plist -exportPath Build/Export -allowProvisioningUpdates
+	@cd apps/ios && env PATH=/usr/bin:/bin:/usr/sbin:/sbin xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
+	 -exportOptionsPlist $(IOS_EXPORT_OPTIONS) -exportPath Build/Export -allowProvisioningUpdates
 
 # --- Operations -----------------------------------------------------------
 
