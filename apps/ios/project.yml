@@ -8,6 +8,12 @@ options:
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
+# Debug and Release are the builds from source (everything unlocked). AppStore is Release plus the
+# APPSTORE flag: the build that is archived and uploaded, which starts free and sells Pro.
+configs:
+  Debug: debug
+  Release: release
+  AppStore: release
 settings:
   base:
     MARKETING_VERSION: 0.1.0 # kept equal to the other manifests by scripts/check-version-sync.sh
@@ -32,6 +38,8 @@ schemes:
       config: Debug
       # Purchases can be tried in Xcode, with a test price, without App Store Connect.
       storeKitConfiguration: Config/Pro.storekit
+    archive:
+      config: AppStore
     test:
       config: Debug
       targets:
@@ -83,3 +91,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Saves your captioned videos to Photos.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.photography
+      configs:
+        AppStore:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: APPSTORE

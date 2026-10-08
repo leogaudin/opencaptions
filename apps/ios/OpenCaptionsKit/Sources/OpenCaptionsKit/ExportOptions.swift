@@ -17,7 +17,8 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     static let bitsPerPixel = 0.28
 
     /// The size, as the short side of the picture (so 1080 is 1080 × 1920 upright, and 1920 × 1080
-    /// sideways). A video is never made larger than it was.
+    /// sideways). Any size can be asked for, larger than the source too: the picture is scaled to it,
+    /// and the captions are drawn sharp at the size they are saved at.
     public enum Resolution: String, Codable, CaseIterable, Sendable {
         case original, p2160, p1080, p720
 
@@ -30,10 +31,10 @@ public struct ExportOptions: Codable, Equatable, Sendable {
             }
         }
 
-        /// The choices worth offering for a video whose short side is `side`: its own size, and each
-        /// smaller one.
+        /// The choices for a video whose short side is `side`: its own size, and each other one, smaller
+        /// or larger (a size it already is would only repeat "original").
         public static func available(forShortSide side: Int) -> [Resolution] {
-            [.original] + allCases.filter { ($0.shortSide ?? .max) < side }
+            [.original] + allCases.filter { $0.shortSide.map { $0 != side } ?? false }
         }
     }
 
@@ -99,7 +100,7 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     public func outputSize(width: Int, height: Int) -> (width: Int, height: Int) {
         func even(_ value: Double) -> Int { max(2, Int(value.rounded()) & ~1) }
         let short = min(width, height)
-        guard let target = resolution.shortSide, target < short else { return (even(Double(width)), even(Double(height))) }
+        guard let target = resolution.shortSide, target != short else { return (even(Double(width)), even(Double(height))) }
         let scale = Double(target) / Double(short)
         return (even(Double(width) * scale), even(Double(height) * scale))
     }

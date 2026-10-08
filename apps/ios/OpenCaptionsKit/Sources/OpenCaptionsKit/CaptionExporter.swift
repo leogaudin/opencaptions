@@ -142,7 +142,7 @@ public struct CaptionExporter: Sendable {
         let duration = try await asset.load(.duration).seconds
         let shown = CGRect(origin: .zero, size: size).applying(transform)
         // Encoders need even dimensions, and the engine's overlay must match exactly. The picture is
-        // made at the size asked for (never larger than the source), and the captions are drawn at it.
+        // made at the size asked for (larger than the source too), and the captions are drawn at it.
         let (width, height) = options.outputSize(
             width: Int(abs(shown.width).rounded()), height: Int(abs(shown.height).rounded()))
         let sourceHeight = max(2, Int(abs(shown.height).rounded()) & ~1)

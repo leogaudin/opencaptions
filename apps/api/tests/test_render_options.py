@@ -35,14 +35,14 @@ class _Project:
         self.transcript = self.transcript or _TRANSCRIPT
 
 
-def test_the_size_is_the_short_side_and_never_larger_than_the_source() -> None:
+def test_the_size_is_the_short_side_and_may_be_larger_than_the_source() -> None:
     p = _Project()
     out = resolve_render_inputs(p, RenderOptions(resolution="1080"))
     assert (out.width, out.height) == (1920, 1080)
     vertical = _Project(video_width=1080, video_height=1920)
     assert (resolve_render_inputs(vertical, RenderOptions(resolution="720")).width) == 720
-    same = resolve_render_inputs(vertical, RenderOptions(resolution="2160"))
-    assert (same.width, same.height) == (1080, 1920), "asking for more never upscales"
+    larger = resolve_render_inputs(vertical, RenderOptions(resolution="2160"))
+    assert (larger.width, larger.height) == (2160, 3840), "a larger size scales the picture up"
     odd = resolve_render_inputs(
         _Project(video_width=1001, video_height=1335), RenderOptions(resolution="720")
     )
@@ -56,7 +56,12 @@ def test_the_frame_rate_may_be_above_the_sources() -> None:
     assert available_frame_rates(_Project(video_fps=29.97)) == ["original", "60"]
     assert available_frame_rates(_Project(video_fps=24)) == ["original", "30", "60"]
     assert available_resolutions(_Project()) == ["original", "1080", "720"]
-    assert available_resolutions(_Project(video_width=640, video_height=360)) == ["original"]
+    assert available_resolutions(_Project(video_width=640, video_height=360)) == [
+        "original",
+        "2160",
+        "1080",
+        "720",
+    ]
 
 
 def test_every_option_changes_the_hash() -> None:
@@ -106,7 +111,7 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
 
     choices = (await client.get(f"{base}/exports")).json()["choices"]
     assert choices == {
-        "resolutions": ["original", "720"],
+        "resolutions": ["original", "2160", "720"],
         "frame_rates": ["original", "60"],
         "source_fps": None,
     }

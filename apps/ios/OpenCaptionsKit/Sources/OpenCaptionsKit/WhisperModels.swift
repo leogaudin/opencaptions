@@ -22,7 +22,6 @@ public enum WhisperModels {
         .init(id: "small", label: "Small", variant: "openai_whisper-small_216MB", megabytes: 217),
         .init(id: "large-v3-turbo", label: "Large v3 Turbo", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
         .init(id: "large-v3", label: "Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
-        .init(id: "medium", label: "Medium", variant: "openai_whisper-medium", megabytes: 1530),
     ]
 
     /// Large v3 quality at two thirds of the size and much faster; the one to recommend.

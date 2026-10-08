@@ -219,10 +219,10 @@ def _source_geometry(project: RenderableProject) -> tuple[int, int, float]:
 
 
 def available_resolutions(project: RenderableProject) -> list[str]:
-    """The sizes a project can be saved at: its own, and each smaller one (never larger)."""
+    """The sizes a project can be saved at: its own, and every other, larger ones too."""
     width, height, _ = _source_geometry(project)
     short = min(width, height)
-    return ["original"] + [r for r, side in _SHORT_SIDES.items() if side < short]
+    return ["original"] + [r for r, side in _SHORT_SIDES.items() if side != short]
 
 
 def available_frame_rates(project: RenderableProject) -> list[str]:
@@ -244,14 +244,13 @@ def resolve_render_inputs(
 
     The transcript stays as stored and the caption offset travels beside it: the
     engine applies the offset, so its draw and the hash see the same two inputs.
-    The size and frame rate are those of the output. A size above the source's falls back to
-    the source's (never upscaled); a frame rate may be above it, repeating frames while the
-    captions are drawn at the higher rate.
+    The size and frame rate are those of the output. Either may be above the source's: the
+    picture is scaled up, or its frames repeated while the captions are drawn at the higher rate.
     """
     options = options or RenderOptions()
     width, height, fps = _source_geometry(project)
     target = _SHORT_SIDES.get(options.resolution)
-    if target and target < min(width, height):
+    if target and target != min(width, height):
         scale = target / min(width, height)
         width, height = _even(width * scale), _even(height * scale)
     fps = _FRAME_RATES.get(options.frame_rate, fps)

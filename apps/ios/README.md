@@ -45,3 +45,13 @@ Build/                   # gitignored: the engine xcframework, DerivedData
 ```
 
 The simulator slice is Apple-silicon only; Intel Macs are not supported.
+
+## Releasing to the App Store
+
+`make ios-upload` archives the `AppStore` configuration (Release plus the `APPSTORE` flag: it starts
+free and sells Pro, see `Entitlements.swift`) and sends it to App Store Connect, where it appears in
+TestFlight. The build number is the date and time (`IOS_BUILD=<n>` overrides it); the version is
+`MARKETING_VERSION` in `project.yml`. It needs an active Apple Developer membership and the App ID
+`org.leogaudin.opencaptions` with the In-App Purchase capability. `make ios-archive` stops before
+the upload. The store text is in `AppStore/listing.md`, the privacy policy is `PRIVACY.md` at the
+repository root, and `OpenCaptions/PrivacyInfo.xcprivacy` is the manifest the app ships.

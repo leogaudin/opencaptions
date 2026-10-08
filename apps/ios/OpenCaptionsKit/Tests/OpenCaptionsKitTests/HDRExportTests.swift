@@ -159,16 +159,17 @@ extension EngineSuites {
             #expect(ExportKey.hash(for: p, options: ExportOptions(codec: .h264)) == ExportKey.hash(for: p, options: ExportOptions(codec: .hevc)))
         }
 
-        @Test func sizesAreNeverLargerThanTheSourceAndAlwaysEven() {
+        @Test func anySizeCanBeAskedForAndIsAlwaysEven() {
             let options = { (r: ExportOptions.Resolution) in ExportOptions(resolution: r) }
             #expect(options(.original).outputSize(width: 1080, height: 1920) == (1080, 1920))
             #expect(options(.p720).outputSize(width: 1080, height: 1920) == (720, 1280))
             #expect(options(.p720).outputSize(width: 1920, height: 1080) == (1280, 720), "sideways")
-            #expect(options(.p1080).outputSize(width: 720, height: 1280) == (720, 1280), "never upscaled")
+            #expect(options(.p1080).outputSize(width: 720, height: 1280) == (1080, 1920), "upscaled")
+            #expect(options(.p2160).outputSize(width: 256, height: 144) == (3840, 2160), "a 144p video at 4K")
             #expect(options(.p720).outputSize(width: 1000, height: 1777) == (720, 1278), "even")
-            #expect(ExportOptions.Resolution.available(forShortSide: 1080) == [.original, .p720])
+            #expect(ExportOptions.Resolution.available(forShortSide: 1080) == [.original, .p2160, .p720])
             #expect(ExportOptions.Resolution.available(forShortSide: 2160) == [.original, .p1080, .p720])
-            #expect(ExportOptions.Resolution.available(forShortSide: 540) == [.original])
+            #expect(ExportOptions.Resolution.available(forShortSide: 144) == [.original, .p2160, .p1080, .p720])
         }
 
         @Test func theEstimateFollowsCodecSizeAndFrameRate() throws {

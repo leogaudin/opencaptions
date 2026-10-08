@@ -23,7 +23,7 @@ struct SaveOptionsSheet: View {
         ExportOptions(codec: codec, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate)
     }
 
-    /// The sizes this video can be saved at: its own, and each smaller.
+    /// The sizes this video can be saved at: its own, and every other, larger ones too.
     private var sizes: [ExportOptions.Resolution] {
         ExportOptions.Resolution.available(forShortSide: min(project.videoWidth ?? 1080, project.videoHeight ?? 1920))
     }

@@ -391,8 +391,8 @@ that layer shows brighter than the player shows the file, so the two factors dif
 the same.
 
 **Save options.** Save opens a sheet first: the format (H.264, which plays everywhere, or HEVC, about a
-third smaller), the size (original, or 4K, 1080p, 720p by the short side, never larger than the
-source), the frame rate (the source's, or 30 or 60: a lower one keeps evenly spaced frames, a higher
+third smaller), the size (original, or 4K, 1080p, 720p by the short side, larger than the source too:
+a 144p video can be saved at 4K, the picture scaled up and the captions drawn sharp at the size saved), the frame rate (the source's, or 30 or 60: a lower one keeps evenly spaced frames, a higher
 one repeats them while the captions are drawn at each, so they animate smoother) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
 ordinary SDR video before the captions go on. The choice is remembered, and an estimate of the
 size is shown (from bits per pixel, with HEVC needing two thirds of H.264's; there is no quality

@@ -32,6 +32,9 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Only HTTPS and the system's own encryption: nothing for export compliance to ask about. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- A server on the local network (a GPU box at home) is plain http; nothing else is allowed to be. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

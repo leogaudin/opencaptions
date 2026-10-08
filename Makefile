@@ -113,6 +113,20 @@ ios-build: ios-project ## Build the iOS app for the simulator
 	 -destination 'generic/platform=iOS Simulator' -derivedDataPath Build/DerivedData \
 	 CODE_SIGNING_ALLOWED=NO -quiet
 
+# The build number must rise with every upload to App Store Connect: the date and time do.
+IOS_BUILD ?= $(shell date +%y%m%d%H%M)
+
+ios-archive: ios-project ## Archive the App Store build (Pro for sale, starts free); IOS_BUILD=<number> to set the build number
+	$(IOS_ONLY)
+	@cd apps/ios && rm -rf Build/OpenCaptions.xcarchive && xcodebuild archive -project OpenCaptions.xcodeproj \
+	 -scheme OpenCaptions -configuration AppStore -destination 'generic/platform=iOS' \
+	 -archivePath Build/OpenCaptions.xcarchive -allowProvisioningUpdates \
+	 CURRENT_PROJECT_VERSION=$(IOS_BUILD) -quiet
+
+ios-upload: ios-archive ## Archive and send it to App Store Connect (TestFlight); needs the Apple Developer membership
+	@cd apps/ios && xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
+	 -exportOptionsPlist Config/ExportOptions.plist -exportPath Build/Export -allowProvisioningUpdates
+
 # --- Operations -----------------------------------------------------------
 
 migration:           ## New migration. Usage: make migration MSG="add foo"
