@@ -140,7 +140,7 @@ as their outline continued), a glow (a blurred halo in its own colour, laid down
 light), upper case (drawn, never stored: the transcript is untouched) and italic (the upright face sheared
 by about 11 degrees, so any font leans and no italic file has to be fetched). Every field after
 `shadow_color` is optional with a default of "off", so a style saved before it existed opens unchanged.
-The built-in presets that use them are Karaoke, Bold (Anton, a hard yellow extrusion), Neon,
+The built-in presets that use them are Karaoke, Bold (Montserrat ExtraBold in capitals, a thick black outline carried out into a hard black extrusion), Neon,
 Typewriter, Handwritten and Elegant.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
