@@ -8086,6 +8086,83 @@
         }
       }
     },
+    "Not sure which language this is": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langue incertaine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se sabe con certeza el idioma"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprache nicht sicher erkannt"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie wiadomo, jaki to język"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não há certeza do idioma"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lingua non rilevata con certezza"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Язык определён неуверенно"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dilden emin olunamadı"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を特定できませんでした"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "언어를 확신할 수 없습니다"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法确定语言"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bahasa tidak dapat dipastikan"
+          }
+        }
+      }
+    },
     "Not transcribed": {
       "extractionState": "manual",
       "localizations": {
@@ -13241,6 +13318,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Audio video Anda akan dikirim ke %@ untuk ditranskripsi di sana. Lanjutkan hanya jika Anda memercayainya."
+          }
+        }
+      }
+    },
+    "The best guess was %@, but it is far from certain. Choose the language to go on.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La meilleure estimation était %@, mais elle est loin d’être sûre. Choisissez la langue pour continuer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La mejor suposición fue %@, pero está lejos de ser segura. Elige el idioma para continuar."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die beste Vermutung war %@, aber sie ist alles andere als sicher. Wähle die Sprache, um fortzufahren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Najlepsze przypuszczenie to %@, ale jest dalekie od pewnego. Wybierz język, aby kontynuować."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O melhor palpite foi %@, mas está longe de ser certo. Escolha o idioma para continuar."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La stima migliore era %@, ma è tutt’altro che certa. Scegli la lingua per continuare."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучшее предположение — %@, но оно далеко не точное. Выберите язык, чтобы продолжить."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En iyi tahmin %@ idi, ancak kesin olmaktan uzak. Devam etmek için dili seçin."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最も有力な推測は%@でしたが、確実ではありません。続けるには言語を選んでください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "가장 유력한 추측은 %@였지만 확실하지 않습니다. 계속하려면 언어를 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最可能的是%@，但远不能确定。请选择语言以继续。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perkiraan terbaik adalah %@, tetapi jauh dari pasti. Pilih bahasanya untuk melanjutkan."
           }
         }
       }

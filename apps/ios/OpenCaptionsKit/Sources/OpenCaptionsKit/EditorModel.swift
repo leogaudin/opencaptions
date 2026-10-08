@@ -13,6 +13,8 @@ public enum TranscriptionState: Equatable, Sendable {
     case idle
     case running(fraction: Double, message: String)
     case failed(String)
+    /// Auto-detect was not sure: the user is asked which language it is (`guess` is the best one).
+    case needsLanguage(guess: String)
 }
 
 /// One open project: its transcript and style, what is selected, saving and
@@ -297,15 +299,20 @@ public final class EditorModel {
                 self?.changed()
             } catch is CancellationError {
                 self?.transcription = .idle
+            } catch TranscriptionError.unsureLanguage(let guess) {
+                self?.transcription = .needsLanguage(guess: guess)
             } catch {
                 self?.transcription = .failed(error.localizedDescription)
             }
         }
     }
 
-    /// Clears a failure once the user has seen it.
+    /// Clears a failure, or a question about the language, once the user has seen it.
     public func dismissTranscriptionFailure() {
-        if case .failed = transcription { transcription = .idle }
+        switch transcription {
+        case .failed, .needsLanguage: transcription = .idle
+        case .idle, .running: break
+        }
     }
 
     public func cancelTranscription() {

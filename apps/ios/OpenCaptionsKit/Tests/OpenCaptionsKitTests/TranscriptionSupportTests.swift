@@ -62,10 +62,19 @@ import Testing
     @Test func theVerdictsOfSeveralWindowsAreAddedUp() {
         // One window leans French, two lean Spanish: Spanish wins on the sum.
         let probabilities: [[String: Float]] = [["fr": 0.5, "es": 0.4], ["es": 0.6, "fr": 0.1], ["es": 0.45, "nl": 0.3]]
-        #expect(LanguageGuess.winner(of: probabilities) == "es")
+        #expect(LanguageGuess.winner(of: probabilities)?.language == "es")
         // Log probabilities (all at or below zero) are exponentiated first.
         let logs: [[String: Float]] = [["fr": log(0.2), "es": log(0.7)], ["fr": log(0.6), "es": log(0.3)]]
-        #expect(LanguageGuess.winner(of: logs) == "es")
+        #expect(LanguageGuess.winner(of: logs)?.language == "es")
         #expect(LanguageGuess.winner(of: []) == nil)
+    }
+
+    @Test func aGuessIsAsConfidentAsItsAverageProbability() {
+        // The phone's Spanish clip: one window, Dutch at e^-1.53, about 22%.
+        let unsure = LanguageGuess.winner(of: [["nl": -1.53]])
+        #expect(unsure?.language == "nl")
+        #expect(unsure.map { $0.confidence < LanguageGuess.minimumConfidence } == true)
+        let sure = LanguageGuess.winner(of: [["es": log(0.9)], ["es": log(0.8)]])
+        #expect(sure.map { $0.confidence >= LanguageGuess.minimumConfidence } == true)
     }
 }

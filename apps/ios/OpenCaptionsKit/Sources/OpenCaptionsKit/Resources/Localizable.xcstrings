@@ -848,6 +848,83 @@
         }
       }
     },
+    "The language of this video could not be told. Choose it and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La langue de cette vidéo n’a pas pu être déterminée. Choisissez-la et réessayez."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo determinar el idioma de este vídeo. Elígelo e inténtalo de nuevo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Sprache dieses Videos konnte nicht erkannt werden. Wähle sie und versuche es erneut."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie udało się rozpoznać języka tego wideo. Wybierz go i spróbuj ponownie."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível identificar o idioma deste vídeo. Escolha-o e tente de novo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato possibile riconoscere la lingua di questo video. Sceglila e riprova."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось определить язык видео. Выберите его и повторите попытку."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu videonun dili belirlenemedi. Dili seçip tekrar deneyin."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この動画の言語を判定できませんでした。言語を選んでもう一度お試しください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 동영상의 언어를 알 수 없습니다. 언어를 선택하고 다시 시도하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法判断此视频的语言。请选择语言后重试。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bahasa video ini tidak dapat ditentukan. Pilih bahasanya lalu coba lagi."
+          }
+        }
+      }
+    },
     "The server could not transcribe it: %@": {
       "extractionState": "manual",
       "localizations": {

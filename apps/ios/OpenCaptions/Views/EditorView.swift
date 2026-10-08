@@ -100,6 +100,10 @@ struct EditorView: View {
         } message: {
             if case .failed(let reason) = model.transcription { Text(reason) }
         }
+        // Auto-detect was not sure: the sheet comes back to ask which language it is.
+        .onChange(of: model.transcription) { _, state in
+            if case .needsLanguage = state { showTranscribe = true }
+        }
         .task {
             if let source = app.store.sourceURL(for: model.project.id) { playback.load(source) }
             #if DEBUG

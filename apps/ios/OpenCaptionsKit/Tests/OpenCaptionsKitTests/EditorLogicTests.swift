@@ -404,4 +404,15 @@ final class Counter { var value = 0 }
         #expect(other.transcription == .failed("This video has no audio to transcribe."))
         #expect(other.transcript == nil)
     }
+
+    @Test func anUnsureLanguageAsksWhichOneItIsAndLeavesTheCaptionsAlone() async throws {
+        let (model, store) = try make(empty: true)
+        try Data("x".utf8).write(to: store.directory(for: model.project.id).appendingPathComponent("source.mov"))
+        model.startTranscription(with: Stub(result: .failure(TranscriptionError.unsureLanguage(guess: "nl"))), model: "base", language: nil)
+        while model.isTranscribing { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(model.transcription == .needsLanguage(guess: "nl"))
+        #expect(model.transcript == nil)
+        model.dismissTranscriptionFailure()
+        #expect(model.transcription == .idle)
+    }
 }

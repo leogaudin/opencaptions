@@ -28,14 +28,20 @@ public enum LanguageGuess {
         return windows.sorted { $0.energy > $1.energy }.prefix(count).map(\.range).sorted { $0.lowerBound < $1.lowerBound }
     }
 
-    /// The language with the most weight across the windows. A model reports either
-    /// probabilities or log probabilities; values that are all at or below zero are taken as logs.
-    public static func winner(of verdicts: [[String: Float]]) -> String? {
+    /// A guess below this share of the weight is a coin toss, and forcing it on the model makes it
+    /// translate the speech into the wrong language: better to ask.
+    public static let minimumConfidence: Float = 0.5
+
+    /// The language with the most weight across the windows, and how much of the weight that is (0 to 1,
+    /// the average of its probability over the windows). A model reports either probabilities or log
+    /// probabilities; values that are all at or below zero are taken as logs.
+    public static func winner(of verdicts: [[String: Float]]) -> (language: String, confidence: Float)? {
         var totals: [String: Float] = [:]
         for verdict in verdicts {
             let isLog = verdict.values.allSatisfy { $0 <= 0 }
             for (language, value) in verdict { totals[language, default: 0] += isLog ? exp(value) : value }
         }
-        return totals.max { $0.value < $1.value }?.key
+        guard let best = totals.max(by: { $0.value < $1.value }) else { return nil }
+        return (best.key, min(1, best.value / Float(verdicts.count)))
     }
 }

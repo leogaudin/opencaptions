@@ -120,7 +120,7 @@ public final class WhisperKitTranscriber: Transcriber {
     }
 
     /// The language of the loudest stretches of audio, or nil if the model cannot say.
-    private func detectLanguage(of samples: [Float], with pipe: WhisperKit) async -> String? {
+    private func detectLanguage(of samples: [Float], with pipe: WhisperKit) async throws -> String? {
         var verdicts: [[String: Float]] = []
         for window in LanguageGuess.loudestWindows(in: samples) {
             if let verdict = try? await pipe.detectLangauge(audioArray: Array(samples[window])) {
@@ -130,8 +130,13 @@ public final class WhisperKitTranscriber: Transcriber {
         let winner = LanguageGuess.winner(of: verdicts)
         // Kept in the diagnostics: a wrong guess makes the model translate the speech into that language.
         let tops = verdicts.map { v in v.sorted { $0.value > $1.value }.prefix(3).map { "\($0.key) \(String(format: "%.2f", $0.value))" }.joined(separator: ", ") }
-        Diagnostics.log("language detection: \(winner ?? "none") from \(tops.map { "[\($0)]" }.joined(separator: " "))")
-        return winner
+        Diagnostics.log("language detection: \(winner.map { "\($0.language) \(String(format: "%.2f", $0.confidence))" } ?? "none") from \(tops.map { "[\($0)]" }.joined(separator: " "))")
+        guard let winner else { return nil }
+        // Too unsure to force on the model: the user is asked, and the loaded model is kept for the retry.
+        guard winner.confidence >= LanguageGuess.minimumConfidence else {
+            throw TranscriptionError.unsureLanguage(guess: winner.language)
+        }
+        return winner.language
     }
 
     public func transcribe(
@@ -163,7 +168,7 @@ public final class WhisperKitTranscriber: Transcriber {
         // English-only model has nothing to detect.
         if lang == nil, !info.englishOnly {
             progress(0, KitStrings.localized("Detecting the language…"))
-            lang = await detectLanguage(of: samples, with: pipe)
+            lang = try await detectLanguage(of: samples, with: pipe)
         }
         // `detectLanguage` must be asked for when nothing else decided: left alone WhisperKit
         // assumes English, and the model then transcribes other speech as an English translation.

@@ -27,6 +27,11 @@ struct TranscribeSheet: View {
     private var onServer: Bool { (sourceChoice ?? app.useServer) && app.serverConnection != nil }
     private var downloaded: Bool { onServer || app.transcriber.isDownloaded(modelID) }
     private var busy: Bool { downloading != nil || model.isTranscribing }
+    /// After an unsure guess, auto-detect would only guess again: a language has to be chosen.
+    private var mustChoose: Bool {
+        if case .needsLanguage = model.transcription { return language == "auto" }
+        return false
+    }
     @State private var serverModels: ServerCapabilities?
     @State private var serverModelID: String?
     @State private var serverProblem: String?
@@ -45,6 +50,16 @@ struct TranscribeSheet: View {
                             .font(.system(size: 14, weight: .semibold))
                             .fixedSize(horizontal: false, vertical: true)
                             .card()
+                    }
+                    if case .needsLanguage(let guess) = model.transcription {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("Not sure which language this is", systemImage: "questionmark.circle.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("The best guess was \(Locale.current.localizedString(forLanguageCode: guess) ?? guess), but it is far from certain. Choose the language to go on.")
+                                .font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                        .card()
                     }
                     if model.isTranscribing {
                         Label("A transcription is already running.", systemImage: "hourglass")
@@ -82,6 +97,7 @@ struct TranscribeSheet: View {
         .tint(Theme.accent)
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
+        .onDisappear { model.dismissTranscriptionFailure() }
         .sheet(isPresented: $showPro) { ProSheet() }
         .sheet(isPresented: $connecting, onDismiss: { if app.serverConnection != nil { sourceChoice = true } }) {
             ConnectServerSheet().presentationBackground(Theme.background).presentationCornerRadius(24)
@@ -284,7 +300,7 @@ struct TranscribeSheet: View {
                 Task { await begin(allowMetered: false) }
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(busy)
+            .disabled(busy || mustChoose)
             Text(onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
         }
