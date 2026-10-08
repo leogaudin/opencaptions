@@ -44,7 +44,16 @@
             guard product == nil, !isLoadingProduct else { return }
             isLoadingProduct = true
             defer { isLoadingProduct = false }
-            product = try? await Product.products(for: [Self.productID]).first
+            // Kept in the diagnostics: a store that offers nothing says why only here.
+            do {
+                let found = try await Product.products(for: [Self.productID])
+                product = found.first
+                if found.isEmpty {
+                    Diagnostics.log("purchases: the store offered no product for \(Self.productID) (payments allowed: \(AppStore.canMakePayments))")
+                }
+            } catch {
+                Diagnostics.log("purchases: asking the store failed: \(error) (payments allowed: \(AppStore.canMakePayments))")
+            }
         }
 
         func refresh() async {
