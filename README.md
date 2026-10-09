@@ -13,7 +13,7 @@ Nothing leaves your machine unless you say so.
 [![CI](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml/badge.svg)](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml)
 [![Status](https://img.shields.io/badge/status-pre--v0.1-orange.svg)](#status)
 
-![OpenCaptions editor: a video with word-by-word animated captions next to the style panel, over the caption timeline](docs/screenshot.png)
+![OpenCaptions editor: a video with word-by-word animated captions next to the style panel, over the caption timeline](docs/screenshot.webp)
 
 </div>
 
