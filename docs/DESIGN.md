@@ -157,7 +157,7 @@ the side it has passed and the plain colour on the rest, so no soft edge of the 
 The built-in presets that use them are Purple Punch (a box that slides between words), Karaoke, Bold
 (Montserrat Black, bundled with the engine, in capitals with a thick black outline carried out into a
 hard black extrusion), Boom, Lyric, Documentary,
-Gradient, Stickers, Subtitle, Neon, Typewriter, Handwritten and Elegant.
+Gradient, Stickers, Plain (subtitles that do not move), Neon, Typewriter, Handwritten and Elegant.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.

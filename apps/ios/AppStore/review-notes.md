@@ -14,7 +14,7 @@ HOW TO TRY IT
 3. Pick a look in the style sheet, move the caption on the video, tap a word to correct it, and use Save to export the captioned video to Photos.
 
 IN-APP PURCHASE
-"OpenCaptions Pro" is a single non-consumable purchase (product ID org.leogaudin.opencaptions.pro). The app is fully usable without it: free users can transcribe, caption, and save up to 1080p at 30 fps (with a small mark in the corner), with six styles. Pro unlocks the other styles, saving above 1080p or above 30 fps, keeping HDR, saving without the mark, and the largest speech model.
+"OpenCaptions Pro" is a single non-consumable purchase (product ID org.leogaudin.opencaptions.pro). The app is fully usable without it: free users can transcribe, caption, and save up to 1080p at 30 fps (with a small mark in the corner), with five styles. Pro unlocks the other styles, saving above 1080p or above 30 fps, keeping HDR, saving without the mark, and the largest speech model.
 You can reach the purchase screen from Settings (the first row, "OpenCaptions Pro", then "Unlock Pro"), or by tapping anything marked as Pro: a locked style in the style sheet, a locked size, frame rate or HDR choice in the Save sheet, or a locked speech model. "Restore purchases" is on the same screen.
 
 OPTIONAL FEATURE YOU CAN IGNORE

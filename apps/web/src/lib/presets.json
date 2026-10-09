@@ -29,35 +29,6 @@
     }
   },
   {
-    "id": "builtin:sunset",
-    "name": "Sunset",
-    "config": {
-      "font": "Montserrat",
-      "font_size": 62,
-      "text_color": "#FFFFFF",
-      "highlight_color": "#FFE066",
-      "highlight_color_end": null,
-      "background": "pill",
-      "background_color": "#FF4D6D",
-      "background_opacity": 0.95,
-      "position_x": 0.5,
-      "position_y": 0.84,
-      "animation": "word_pop",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 0,
-      "shadow_color": "#00000000",
-      "shadow_offset_x": 0,
-      "shadow_offset_y": 0,
-      "glow_blur": 0,
-      "glow_color": "#FFFFFF",
-      "text_case": "none",
-      "italic": false
-    }
-  },
-  {
     "id": "builtin:paper",
     "name": "Paper",
     "config": {
@@ -87,8 +58,8 @@
     }
   },
   {
-    "id": "builtin:subtitle",
-    "name": "Subtitle",
+    "id": "builtin:plain",
+    "name": "Plain",
     "config": {
       "font": "Inter",
       "font_size": 56,
