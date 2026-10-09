@@ -196,11 +196,11 @@ async def test_progress_callback_accepts_valid_job_token(
     from app.api import jobs as jobs_api
 
     published: list[tuple[UUID, dict[str, Any]]] = []
-    monkeypatch.setattr(
-        jobs_api,
-        "publish_to_project",
-        lambda project_id, message: published.append((project_id, message)),
-    )
+
+    async def record(project_id: UUID, message: dict[str, Any]) -> None:
+        published.append((project_id, message))
+
+    monkeypatch.setattr(jobs_api, "publish_project_event", record)
 
     _client_a, owner_id = user_a
     async with db_factory() as s:

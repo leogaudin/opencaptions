@@ -7,7 +7,6 @@ from app.core.config import settings
 celery_app = Celery(
     "opencaptions",
     broker=settings.redis_url,
-    backend=settings.redis_url,
     include=["app.tasks.transcribe", "app.tasks.render"],
 )
 
@@ -29,10 +28,8 @@ celery_app.conf.update(
     accept_content=["json"],
     timezone="UTC",
     enable_utc=True,
-    # Time limits, render and transcribe can take minutes.
-    task_soft_time_limit=900,  # 15 min soft
-    task_time_limit=1200,  # 20 min hard
-    # Result backend
-    result_expires=3600,
-    result_extended=True,
+    # Progress and outcome live in the jobs table and the project's channel; nothing
+    # reads a task's result, so none is kept (or a backend asked for). The time limits
+    # are per task, in app.core.task_limits.
+    task_ignore_result=True,
 )

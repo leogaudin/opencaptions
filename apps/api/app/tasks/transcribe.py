@@ -21,6 +21,7 @@ from uuid import UUID
 import celery
 
 from app.core.celery_app import celery_app
+from app.core.task_limits import TRANSCRIBE_HARD_LIMIT_S, TRANSCRIBE_SOFT_LIMIT_S
 from app.models import Project
 from app.models.schemas import Transcript
 from app.services import progress
@@ -90,7 +91,12 @@ def _transcribe_audio(
     return clean_transcript(transcript)
 
 
-@celery_app.task(name="app.tasks.transcribe.transcribe_video", bind=True)
+@celery_app.task(
+    name="app.tasks.transcribe.transcribe_video",
+    bind=True,
+    soft_time_limit=TRANSCRIBE_SOFT_LIMIT_S,
+    time_limit=TRANSCRIBE_HARD_LIMIT_S,
+)
 def transcribe_video(
     self: celery.Task,
     job_id: str,
@@ -195,7 +201,12 @@ def transcribe_video(
         return {"status": "failed", "reason": reason}
 
 
-@celery_app.task(name="app.tasks.transcribe.transcribe_upload", bind=True)
+@celery_app.task(
+    name="app.tasks.transcribe.transcribe_upload",
+    bind=True,
+    soft_time_limit=TRANSCRIBE_SOFT_LIMIT_S,
+    time_limit=TRANSCRIBE_HARD_LIMIT_S,
+)
 def transcribe_upload(
     self: celery.Task,
     job_id: str,

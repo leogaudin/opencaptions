@@ -15,6 +15,7 @@ import logging
 import os
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -23,6 +24,7 @@ import httpx
 
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
+from app.services.audio import EXTRACT_TIMEOUT_S
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,52 @@ OPENAI_FILE_LIMIT_BYTES = 25 * 1024 * 1024
 
 class OpenAIProviderError(RuntimeError):
     """Wrapped OpenAI API error surfaced to the caller."""
+
+
+# Rate limits and a flaky gateway are answered with a wait, not a failed job: a
+# transcription that took minutes to prepare should not be lost to a 429.
+_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
+_ATTEMPTS = 4
+_MAX_WAIT_S = 30.0
+
+
+def _sleep(seconds: float) -> None:
+    time.sleep(seconds)
+
+
+def _wait_for(attempt: int, resp: httpx.Response | None) -> float:
+    """Seconds before the next try: the server's ``Retry-After`` if it gave one, else 2, 4, 8."""
+    if resp is not None:
+        try:
+            return min(_MAX_WAIT_S, max(0.0, float(resp.headers.get("retry-after", ""))))
+        except ValueError:
+            pass
+    return float(min(_MAX_WAIT_S, 2**attempt))
+
+
+def _post_with_retries(
+    api_key: str, data: dict[str, Any], files: dict[str, Any], fh: Any
+) -> httpx.Response:
+    with httpx.Client(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
+        for attempt in range(1, _ATTEMPTS + 1):
+            fh.seek(0)
+            try:
+                resp = client.post(
+                    OPENAI_AUDIO_ENDPOINT,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    data=data,
+                    files=files,
+                )
+            except httpx.TransportError:
+                if attempt == _ATTEMPTS:
+                    raise
+                _sleep(_wait_for(attempt, None))
+                continue
+            if resp.status_code not in _RETRYABLE_STATUS or attempt == _ATTEMPTS:
+                return resp
+            logger.warning("OpenAI answered %s, retrying (try %d)", resp.status_code, attempt)
+            _sleep(_wait_for(attempt, resp))
+    raise AssertionError("unreachable")  # pragma: no cover
 
 
 class OpenAIWhisperProvider(TranscriptionProvider):
@@ -73,13 +121,7 @@ class OpenAIWhisperProvider(TranscriptionProvider):
                 files = {
                     "file": (Path(send_path).name, fh, "audio/wav"),
                 }
-                with httpx.Client(timeout=httpx.Timeout(600.0, connect=30.0)) as client:
-                    resp = client.post(
-                        OPENAI_AUDIO_ENDPOINT,
-                        headers={"Authorization": f"Bearer {api_key}"},
-                        data=data,
-                        files=files,
-                    )
+                resp = _post_with_retries(api_key, data, files, fh)
         finally:
             # Clean up our re-encoded temp file if we created one.
             if send_path != audio_path and os.path.exists(send_path):
@@ -126,8 +168,10 @@ class OpenAIWhisperProvider(TranscriptionProvider):
             out_path,
         ]
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
-        except (FileNotFoundError, subprocess.CalledProcessError) as e:
+            subprocess.run(
+                cmd, check=True, capture_output=True, text=True, timeout=EXTRACT_TIMEOUT_S
+            )
+        except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             stderr = getattr(e, "stderr", "") or str(e)
             raise OpenAIProviderError(
                 f"Could not re-encode oversized audio for OpenAI: {stderr[:500]}"

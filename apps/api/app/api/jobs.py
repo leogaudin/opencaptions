@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import db_session, get_owned_job, require_job_token
-from app.api.websocket import publish_to_project
 from app.core.celery_app import celery_app
+from app.core.events import publish as publish_project_event
 from app.models import Job
 from app.models.schemas import _404_JOB, JobStatus
 from app.services.progress import RENDERING
@@ -88,7 +88,7 @@ async def report_progress(
 
     if job.project_id is None:
         return  # a job with no project has no channel to broadcast on
-    publish_to_project(
+    await publish_project_event(
         job.project_id,
         {
             "type": "job_progress",

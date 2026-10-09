@@ -27,6 +27,16 @@ browser ──▶ web (nginx: SPA + proxy) ──▶ api (FastAPI) ──▶ pos
 Two queues, because a backlog of renders must never starve transcription, and
 the two scale on different hardware.
 
+**When a job fails to finish.** Tasks are acknowledged late, so a task a crashed worker held
+is handed to another; an API restart therefore says nothing about running work and does not
+fail it. At boot only a job that cannot still be working is failed (`services/recovery.py`):
+`running` with no change for longer than any task may run, or `pending` for a day (a message
+that old is gone). Each task has its own time limits (`core/task_limits.py`): a render's
+follow the engine's request timeout, a transcription's the longest video the instance
+accepts. A job that is over (`completed`, `failed`, `cancelled`) is never brought back by its
+task's late status updates. Progress is published to Redis over one pooled connection per
+process (`core/events.py`).
+
 ## A job, end to end
 
 1. **Upload.** `POST /projects` stores the source at `projects/{id}/source.<ext>`,

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.services.render_formats import (
     FORMATS,
+    RenderInputs,
     all_formats,
     compute_render_hash,
     get_format,
@@ -135,3 +138,56 @@ class TestRenderObjectKey:
     def test_webm_extension(self) -> None:
         key = render_object_key("proj-1", "1234567890abcdef", ".webm")
         assert key == "projects/proj-1/renders/1234567890abcdef.webm"
+
+
+def _original_hash(**inputs: Any) -> str:
+    """The hash as it was first written: one dict, serialized whole. Cached renders in
+    storage are named by it, so the faster version must never differ by a byte."""
+    import hashlib
+    import json
+
+    fmt = get_format(inputs["format_id"])
+    encoder = {"crf": fmt.crf, "pro_res_profile": fmt.pro_res_profile} if fmt else {}
+    canonical = json.dumps(
+        {**inputs, "encoder": encoder},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+
+def test_the_hash_is_byte_for_byte_the_one_cached_renders_are_named_by() -> None:
+    transcript = {
+        "language": "fr",
+        "segments": [
+            {"id": "s1", "words": [{"text": "déjà", "start": 0.1, "end": 0.5, "confidence": 0.9}]},
+            {"id": "s2", "words": [{"text": '日本語 "quoted"\n', "start": 1, "end": 2.25}]},
+        ],
+    }
+    style = {"font": "Inter", "font_size": 48.5, "outline": {"width": 2, "color": "#000"}}
+    for format_id in ("mp4", "mp4-hevc", "webm", "mov", "not-a-format"):
+        for green_screen in (False, True):
+            inputs = {
+                "transcript": transcript,
+                "style_config": style,
+                "caption_offset_ms": -250,
+                "format_id": format_id,
+                "width": 1080,
+                "height": 1920,
+                "fps": 30,
+                "green_screen": green_screen,
+            }
+            expected = _original_hash(**inputs)
+            assert compute_render_hash(**inputs) == expected
+            shared = RenderInputs(
+                transcript=transcript,
+                style_config=style,
+                caption_offset_ms=-250,
+                width=1080,
+                height=1920,
+                fps=30,
+                green_screen=green_screen,
+            )
+            # Twice: the second answer comes from the serialization kept by the first.
+            assert shared.hash_for(format_id) == expected
+            assert shared.hash_for(format_id) == expected

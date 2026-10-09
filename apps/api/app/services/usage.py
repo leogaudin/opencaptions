@@ -71,8 +71,9 @@ async def sum_usage_for_user(
     had one. ``since`` is inclusive and ``until`` exclusive, so adjacent windows do
     not double-count.
     """
+    # Only the metadata column: the rest of each job row is of no use here.
     stmt = (
-        select(Job)
+        select(Job.metadata_json)
         .outerjoin(Project, Job.project_id == Project.id)
         .where(or_(Job.user_id == owner_id, Project.owner_id == owner_id))
     )
@@ -82,8 +83,8 @@ async def sum_usage_for_user(
         stmt = stmt.where(Job.created_at < until)
 
     total = 0.0
-    for job in (await session.execute(stmt)).scalars().all():
-        record = (job.metadata_json or {}).get(USAGE_METADATA_KEY)
+    for metadata in (await session.execute(stmt)).scalars().all():
+        record = (metadata or {}).get(USAGE_METADATA_KEY)
         if isinstance(record, dict) and record.get("unit") == unit:
             amount = record.get("amount")
             if isinstance(amount, (int, float)) and not isinstance(amount, bool):

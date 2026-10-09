@@ -61,7 +61,8 @@ async def get_session(session_id: str) -> SessionData | None:
     if not session_id:
         return None
     redis = get_redis()
-    raw = await redis.get(_key(session_id))
+    # Read and slide the idle window in one round trip (Redis 6.2+).
+    raw = await redis.getex(_key(session_id), ex=IDLE_TTL_SECONDS)
     if raw is None:
         return None
     data = json.loads(raw)
@@ -70,8 +71,6 @@ async def get_session(session_id: str) -> SessionData | None:
     if time.time() - created_at > ABSOLUTE_TTL_SECONDS:
         await redis.delete(_key(session_id))
         return None
-    # Slide the idle window forward on access.
-    await redis.expire(_key(session_id), IDLE_TTL_SECONDS)
     return SessionData(
         user_id=UUID(data["user_id"]),
         csrf_token=data["csrf_token"],

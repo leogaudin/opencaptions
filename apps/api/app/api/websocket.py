@@ -14,11 +14,13 @@ from uuid import UUID
 
 import redis.asyncio as redis_async
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from sqlalchemy import select
 
 from app.api.deps import SESSION_COOKIE_NAME
 from app.core import sessions
 from app.core.config import settings
 from app.core.db import SessionFactory
+from app.core.events import channel_for_project
 from app.models import Project
 
 logger = logging.getLogger(__name__)
@@ -26,10 +28,6 @@ router = APIRouter()
 
 # Keepalive cadence, also used to re-validate the session (see project_ws).
 _KEEPALIVE_INTERVAL_SECONDS = 20
-
-
-def _channel_for_project(project_id: UUID) -> str:
-    return f"opencaptions:project:{project_id}"
 
 
 async def _authorize_handshake(websocket: WebSocket, project_id: UUID) -> str | None:
@@ -47,10 +45,11 @@ async def _authorize_handshake(websocket: WebSocket, project_id: UUID) -> str | 
         return None
 
     async with SessionFactory() as db:
-        proj = await db.get(Project, project_id)
+        # Only the owner: the row's transcript is not needed to decide.
+        owner_id = await db.scalar(select(Project.owner_id).where(Project.id == project_id))
         # 4403, and identical treatment for "missing" and "not yours", so a
         # non-owner cannot probe which project ids exist over the socket.
-        if proj is None or proj.owner_id != session_data.user_id:
+        if owner_id is None or owner_id != session_data.user_id:
             await websocket.close(code=4403)
             return None
     return session_id
@@ -101,7 +100,7 @@ async def project_ws(websocket: WebSocket, project_id: UUID) -> None:
     await websocket.accept()
     client: redis_async.Redis = redis_async.from_url(settings.redis_url)
     pubsub = client.pubsub()
-    channel = _channel_for_project(project_id)
+    channel = channel_for_project(project_id)
 
     try:
         await pubsub.subscribe(channel)
@@ -123,17 +122,3 @@ async def project_ws(websocket: WebSocket, project_id: UUID) -> None:
         await pubsub.unsubscribe(channel)
         await pubsub.aclose()
         await client.aclose()
-
-
-def publish_to_project(project_id: UUID, message: dict[str, Any]) -> None:
-    """Sync helper used by Celery workers (which run blocking code).
-
-    Tasks call this with {"type": "job_progress", "payload": {...}}.
-    """
-    import redis  # sync client
-
-    r = redis.Redis.from_url(settings.redis_url)
-    try:
-        r.publish(_channel_for_project(project_id), json.dumps(message, default=str))
-    finally:
-        r.close()

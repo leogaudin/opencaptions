@@ -22,6 +22,19 @@ class StorageError(Exception):
     """Wrapped storage error for callers."""
 
 
+class ObjectNotFoundError(StorageError):
+    """The key does not exist."""
+
+
+class RangeNotSatisfiableError(StorageError):
+    """The requested byte range lies outside the object."""
+
+
+# Calls run in the default thread pool (up to 32 at once); a smaller connection pool
+# makes the extra ones open connections only to throw them away.
+_POOL_CONNECTIONS = 32
+
+
 def _make_s3_client() -> Any:
     """Create a boto3 S3 client wired to the configured backend."""
     return boto3.client(
@@ -36,6 +49,7 @@ def _make_s3_client() -> Any:
             connect_timeout=10,
             read_timeout=60,
             retries={"max_attempts": 3, "mode": "standard"},
+            max_pool_connections=_POOL_CONNECTIONS,
         ),
     )
 
@@ -85,12 +99,31 @@ def put_object_bytes(key: str, body: bytes, content_type: str) -> None:
 
 def get_object_bytes(key: str) -> bytes:
     """Read an object into memory."""
+    obj = open_object(key)
     try:
-        resp = _client.get_object(Bucket=settings.s3_bucket, Key=key)
-        body: bytes = resp["Body"].read()
+        body: bytes = obj["Body"].read()
         return body
     except (BotoCoreError, ClientError) as e:
         raise StorageError(f"get_object failed: {e}") from e
+    finally:
+        obj["Body"].close()
+
+
+def open_object(key: str, byte_range: str | None = None) -> dict[str, Any]:
+    """Start reading an object (or a ``Range`` of it); the caller reads and closes ``Body``."""
+    extra = {"Range": byte_range} if byte_range else {}
+    try:
+        obj: dict[str, Any] = _client.get_object(Bucket=settings.s3_bucket, Key=key, **extra)
+        return obj
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in {"404", "NoSuchKey"}:
+            raise ObjectNotFoundError(key) from e
+        if code in {"416", "InvalidRange"}:
+            raise RangeNotSatisfiableError(key) from e
+        raise StorageError(f"open_object failed: {e}") from e
+    except BotoCoreError as e:
+        raise StorageError(f"open_object failed: {e}") from e
 
 
 def delete_object(key: str) -> None:
@@ -131,7 +164,12 @@ def delete_prefix(prefix: str) -> int:
         if not contents:
             continue
         objs = [{"Key": item["Key"]} for item in contents]
-        _client.delete_objects(Bucket=settings.s3_bucket, Delete={"Objects": objs})
+        response = _client.delete_objects(Bucket=settings.s3_bucket, Delete={"Objects": objs})
+        # A 200 can still carry per-key failures; leaving those behind unreported
+        # is how a "deleted" project keeps its video.
+        failed = response.get("Errors") or []
+        if failed:
+            raise StorageError(f"delete_prefix left {len(failed)} object(s): {failed[0]}")
         deleted += len(objs)
     return deleted
 

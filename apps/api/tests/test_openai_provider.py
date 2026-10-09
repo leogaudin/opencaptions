@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
+import httpx
 import pytest
 
 from app.transcription.openai import OpenAIWhisperProvider, _normalize_language
@@ -88,3 +92,59 @@ def test_parse_response_completely_empty() -> None:
     transcript = provider._parse_response({}, requested_language="auto")
     assert transcript.segments == []
     assert transcript.duration == 0.0
+
+
+def test_a_rate_limited_upload_is_retried(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from app.transcription import openai as openai_module
+
+    answers = [httpx.Response(429, headers={"retry-after": "3"}), httpx.Response(200, json={})]
+    waits: list[float] = []
+
+    class _Client:
+        def __init__(self, **_kw: Any) -> None:
+            pass
+
+        def __enter__(self) -> _Client:
+            return self
+
+        def __exit__(self, *_a: Any) -> None:
+            return None
+
+        def post(self, *_a: Any, **_kw: Any) -> httpx.Response:
+            return answers.pop(0)
+
+    monkeypatch.setattr(openai_module.httpx, "Client", _Client)
+    monkeypatch.setattr(openai_module, "_sleep", waits.append)
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"x")
+    with audio.open("rb") as fh:
+        resp = openai_module._post_with_retries("key", {}, {}, fh)
+    assert resp.status_code == 200
+    assert waits == [3.0], "it waited as long as the server asked"
+
+
+def test_a_client_error_is_not_retried(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from app.transcription import openai as openai_module
+
+    calls: list[int] = []
+
+    class _Client:
+        def __init__(self, **_kw: Any) -> None:
+            pass
+
+        def __enter__(self) -> _Client:
+            return self
+
+        def __exit__(self, *_a: Any) -> None:
+            return None
+
+        def post(self, *_a: Any, **_kw: Any) -> httpx.Response:
+            calls.append(1)
+            return httpx.Response(401)
+
+    monkeypatch.setattr(openai_module.httpx, "Client", _Client)
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"x")
+    with audio.open("rb") as fh:
+        assert openai_module._post_with_retries("key", {}, {}, fh).status_code == 401
+    assert len(calls) == 1

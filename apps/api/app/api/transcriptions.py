@@ -44,6 +44,7 @@ from app.models.schemas import (
     TranscriptionCreated,
 )
 from app.services.languages import all_languages, is_valid_language
+from app.services.upload import UploadTooLargeError, copy_capped
 from app.services.usage import USAGE_METADATA_KEY
 from app.services.whisper_models import all_models
 from app.storage import s3
@@ -144,15 +145,12 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
     fd, path = tempfile.mkstemp(prefix="opencaptions-transcription-")
     os.close(fd)
     try:
-        written = 0
-        with open(path, "wb") as out:
-            while chunk := await audio.read(1024 * 1024):
-                written += len(chunk)
-                if written > max_bytes:
-                    raise http_error(
-                        413, "upload_too_large", f"Upload exceeds {settings.max_upload_size_mb} MB"
-                    )
-                out.write(chunk)
+        try:
+            await asyncio.to_thread(copy_capped, audio.file, path, max_bytes)
+        except UploadTooLargeError:
+            raise http_error(
+                413, "upload_too_large", f"Upload exceeds {settings.max_upload_size_mb} MB"
+            ) from None
         try:
             duration: float | None = await asyncio.to_thread(probe_duration, path)
         except Exception:  # noqa: BLE001, a probe that fails is not a reason to refuse
@@ -218,6 +216,9 @@ async def create_transcription(
             "wait for one to finish.",
         )
 
+    # Receiving the audio lasts as long as the transfer: end the transaction signing in
+    # opened, so its pooled connection is not held meanwhile.
+    await session.commit()
     path, duration = await _stage_upload(audio)
     try:
         if duration and duration > settings.max_video_duration_s:
@@ -242,14 +243,21 @@ async def create_transcription(
 
     from app.tasks.transcribe import transcribe_upload
 
-    async_result = transcribe_upload.delay(
-        str(job.id),
-        audio_key(job.id),
-        result_key(job.id),
-        provider=settings.transcription_provider,
-        model=model or settings.whisper_model,
-        language=language,
-    )
+    try:
+        async_result = transcribe_upload.delay(
+            str(job.id),
+            audio_key(job.id),
+            result_key(job.id),
+            provider=settings.transcription_provider,
+            model=model or settings.whisper_model,
+            language=language,
+        )
+    except Exception:
+        # The request fails and its job row with it; the audio, which nothing else
+        # points at, must not outlive them.
+        with contextlib.suppress(Exception):
+            await asyncio.to_thread(s3.delete_object, audio_key(job.id))
+        raise
     job.celery_task_id = async_result.id
     await session.flush()
     return TranscriptionCreated(job_id=job.id)

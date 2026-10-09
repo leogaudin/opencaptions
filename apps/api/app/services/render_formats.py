@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from app.models.schemas import RenderOptions, StyleConfig
@@ -124,22 +124,51 @@ def compute_render_hash(
     invalidates every cached render. The format's encoder settings are part of it,
     so a changed CRF makes a new file rather than serving a stale one.
     """
+    return _digest(
+        _canonical_json(transcript),
+        _canonical_json(style_config),
+        caption_offset_ms=caption_offset_ms,
+        format_id=format_id,
+        width=width,
+        height=height,
+        fps=fps,
+        green_screen=green_screen,
+    )
+
+
+def _canonical_json(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def _digest(
+    transcript_json: str,
+    style_json: str,
+    *,
+    caption_offset_ms: int,
+    format_id: str,
+    width: int,
+    height: int,
+    fps: int,
+    green_screen: bool,
+) -> str:
+    """The hash, from the transcript and style already serialized.
+
+    The string hashed is exactly what ``json.dumps`` of one dict with every key sorted
+    gives (a test holds it to that): the two big values are serialized once and written
+    in, so the four formats of one project do not each serialize a long transcript.
+    """
     fmt = get_format(format_id)
     encoder = {"crf": fmt.crf, "pro_res_profile": fmt.pro_res_profile} if fmt else {}
-    canonical = json.dumps(
-        {
-            "transcript": transcript,
-            "style_config": style_config,
-            "caption_offset_ms": caption_offset_ms,
-            "format_id": format_id,
-            "width": width,
-            "height": height,
-            "fps": fps,
-            "green_screen": green_screen,
-            "encoder": encoder,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
+    canonical = (
+        f'{{"caption_offset_ms":{_canonical_json(caption_offset_ms)}'
+        f',"encoder":{_canonical_json(encoder)}'
+        f',"format_id":{_canonical_json(format_id)}'
+        f',"fps":{_canonical_json(fps)}'
+        f',"green_screen":{_canonical_json(green_screen)}'
+        f',"height":{_canonical_json(height)}'
+        f',"style_config":{style_json}'
+        f',"transcript":{transcript_json}'
+        f',"width":{_canonical_json(width)}}}'
     )
     digest = hashlib.sha256(canonical.encode()).hexdigest()[:16]
     logger.debug("render hash: %s (format=%s, %dx%d@%dfps)", digest, format_id, width, height, fps)
@@ -194,11 +223,21 @@ class RenderInputs:
     height: int
     fps: int
     green_screen: bool = False
+    # The transcript and style serialized, once, for the first hash asked of this object.
+    _serialized: tuple[str, str] | None = field(default=None, init=False, repr=False, compare=False)
 
     def hash_for(self, format_id: str) -> str:
-        return compute_render_hash(
-            transcript=self.transcript,
-            style_config=self.style_config,
+        if self._serialized is None:
+            object.__setattr__(
+                self,
+                "_serialized",
+                (_canonical_json(self.transcript), _canonical_json(self.style_config)),
+            )
+        assert self._serialized is not None
+        transcript_json, style_json = self._serialized
+        return _digest(
+            transcript_json,
+            style_json,
             caption_offset_ms=self.caption_offset_ms,
             format_id=format_id,
             width=self.width,

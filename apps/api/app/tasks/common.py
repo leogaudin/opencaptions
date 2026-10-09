@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 from dataclasses import dataclass
 from uuid import UUID
@@ -15,8 +16,12 @@ from app.services.progress import Stage
 
 SyncSessionFactory = sessionmaker[Session]
 
+TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled", "deleted"})
 
+
+@functools.cache
 def sync_session_factory() -> SyncSessionFactory:
+    """One engine (and pool) per worker process, made on first use so a forked child has its own."""
     engine = create_engine(settings.database_url_sync, pool_pre_ping=True, future=True)
     return sessionmaker(engine, expire_on_commit=False)
 
@@ -37,6 +42,10 @@ class TaskContext:
             job = session.get(Job, UUID(self.job_id))
             if job is None:
                 return
+            if job.status in TERMINAL_STATUSES:
+                # A job cancelled (or failed by a restart) while its task ran stays so:
+                # a late "running" or "completed" must not bring it back.
+                return
             job.status = status
             for name, value in fields.items():
                 setattr(job, name, value)
@@ -45,12 +54,12 @@ class TaskContext:
     def publish(self, message_type: str, payload: dict[str, object]) -> None:
         # Local import keeps rendering-only workers from opening Redis at module
         # import and keeps the function patchable in task tests.
-        from app.api.websocket import publish_to_project
+        from app.core import events
 
         if self.project_id is None:
             return
         try:
-            publish_to_project(UUID(self.project_id), {"type": message_type, "payload": payload})
+            events.publish_sync(UUID(self.project_id), {"type": message_type, "payload": payload})
         except Exception as exc:  # noqa: BLE001
             self.logger.warning("WS publish failed (non-fatal): %s", exc)
 

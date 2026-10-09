@@ -40,7 +40,7 @@ async def test_the_list_shows_what_each_upload_weighs(first_client: AsyncClient)
     with (
         patch("app.services.audio.probe_video_metadata", return_value=_probe(5.0)),
         patch("app.storage.s3.upload_file"),
-        patch("app.api.projects._generate_and_store_thumbnail"),
+        patch("app.api.ingest.generate_and_store_thumbnail"),
     ):
         r = await _upload(first_client)
     assert r.status_code == 201, r.text
@@ -68,7 +68,7 @@ async def test_video_at_the_limit_is_accepted(
     with (
         patch("app.services.audio.probe_video_metadata", return_value=_probe(60.0)),
         patch("app.storage.s3.upload_file"),
-        patch("app.api.projects._generate_and_store_thumbnail"),
+        patch("app.api.ingest.generate_and_store_thumbnail"),
     ):
         r = await _upload(first_client)
     assert r.status_code == 201, r.text
@@ -83,7 +83,7 @@ async def test_unprobeable_video_is_admitted(
     with (
         patch("app.services.audio.probe_video_metadata", side_effect=RuntimeError("no ffprobe")),
         patch("app.storage.s3.upload_file"),
-        patch("app.api.projects._generate_and_store_thumbnail"),
+        patch("app.api.ingest.generate_and_store_thumbnail"),
     ):
         r = await _upload(first_client)
     assert r.status_code == 201, r.text

@@ -12,6 +12,11 @@ from typing import Any, TypedDict
 
 logger = logging.getLogger(__name__)
 
+# A file that makes a tool hang must not hold a worker for good. Probing reads headers; a
+# long video's audio is extracted in a minute or two, so these are loose bounds.
+PROBE_TIMEOUT_S = 60
+EXTRACT_TIMEOUT_S = 30 * 60
+
 
 class VideoMetadata(TypedDict):
     """Typed container for ffprobe video metadata.
@@ -60,11 +65,15 @@ def extract_audio(
     ]
     logger.info("ffmpeg extract: %s -> %s", video_path.name, output_path.name)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=EXTRACT_TIMEOUT_S
+        )
     except FileNotFoundError as e:
         raise AudioExtractionError(
             "ffmpeg binary not found in PATH. Install ffmpeg in the worker image."
         ) from e
+    except subprocess.TimeoutExpired as e:
+        raise AudioExtractionError(f"ffmpeg took longer than {EXTRACT_TIMEOUT_S} s") from e
     except subprocess.CalledProcessError as e:
         raise AudioExtractionError(
             f"ffmpeg failed (exit {e.returncode}): {e.stderr.strip()[:500]}"
@@ -88,9 +97,9 @@ def probe_duration(video_path: str | Path) -> float:
         str(video_path),
     ]
     try:
-        out = subprocess.check_output(cmd, text=True).strip()
+        out = subprocess.check_output(cmd, text=True, timeout=PROBE_TIMEOUT_S).strip()
         return float(out)
-    except (subprocess.CalledProcessError, ValueError):
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
         return 0.0
 
 
@@ -132,9 +141,9 @@ def probe_video_metadata(video_path: str | Path) -> VideoMetadata:
         str(video_path),
     ]
     try:
-        raw = subprocess.check_output(cmd, text=True)
+        raw = subprocess.check_output(cmd, text=True, timeout=PROBE_TIMEOUT_S)
         data = _json.loads(raw)
-    except (subprocess.CalledProcessError, ValueError):
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
         return {"width": None, "height": None, "fps": None, "duration": None}
 
     streams = data.get("streams") or []

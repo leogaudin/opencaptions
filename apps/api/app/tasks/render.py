@@ -14,6 +14,7 @@ import celery
 
 from app.core.celery_app import celery_app
 from app.core.job_tokens import delete_job_token, mint_job_token
+from app.core.task_limits import RENDER_HARD_LIMIT_S, RENDER_SOFT_LIMIT_S
 from app.models import Project
 from app.services import fonts, progress
 from app.services.render_backend import get_backend
@@ -50,7 +51,12 @@ def _fallback_fonts(transcript: dict[str, Any]) -> dict[str, str]:
     return {family: url for family, url in urls.items() if url}
 
 
-@celery_app.task(name="app.tasks.render.render_video", bind=True)
+@celery_app.task(
+    name="app.tasks.render.render_video",
+    bind=True,
+    soft_time_limit=RENDER_SOFT_LIMIT_S,
+    time_limit=RENDER_HARD_LIMIT_S,
+)
 # The suppression is load-bearing: this is a linear render pipeline whose steps
 # share too much local state to split without passing a bag of variables around.
 # It sits on the `def` line because that is where ruff anchors C901.
@@ -71,21 +77,21 @@ def render_video(  # noqa: C901
     session_local = _sync_session_factory()
     task = TaskContext(job_id, project_id, session_local, logger)
 
-    # Resolve the format from the registry
-    fmt = get_format(format_id)
-    if fmt is None:
-        raise RuntimeError(f"Unknown format id: {format_id}")
-    render_options = RenderOptions.model_validate(options or {})
-
-    logger.info(
-        "render format resolved: codec=%s crf=%s proResProfile=%s ext=%s",
-        fmt.codec,
-        fmt.crf,
-        fmt.pro_res_profile,
-        fmt.extension,
-    )
-
     try:
+        # Resolve the format from the registry
+        fmt = get_format(format_id)
+        if fmt is None:
+            raise RuntimeError(f"Unknown format id: {format_id}")
+        render_options = RenderOptions.model_validate(options or {})
+
+        logger.info(
+            "render format resolved: codec=%s crf=%s proResProfile=%s ext=%s",
+            fmt.codec,
+            fmt.crf,
+            fmt.pro_res_profile,
+            fmt.extension,
+        )
+
         with session_local() as session:
             project = session.get(Project, UUID(project_id))
             if project is None:

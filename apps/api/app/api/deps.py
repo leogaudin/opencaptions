@@ -7,7 +7,7 @@ in a request path. That is what keeps every id-addressed route from being an IDO
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -15,6 +15,7 @@ from fastapi import Depends, Header, HTTPException, Path, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 
 from app.core import sessions
 from app.core.db import get_db
@@ -94,6 +95,9 @@ _bearer = HTTPBearer(
 )
 
 
+_LAST_USED_GRANULARITY = timedelta(minutes=5)
+
+
 async def get_current_user(
     request: Request,
     session: Annotated[AsyncSession, Depends(db_session)],
@@ -112,8 +116,15 @@ async def get_current_user(
     user = await session.get(User, key.user_id) if key else None
     if key is None or user is None or not user.is_active:
         raise _unauthenticated()
-    # Committed with the request, like every other write.
-    key.last_used_at = datetime.now(UTC)
+    # Committed with the request, like every other write. Only when the stored time is
+    # old: a script calling in a loop would otherwise write a row per request.
+    now = datetime.now(UTC)
+    last = key.last_used_at
+    if (
+        last is None
+        or now - (last if last.tzinfo else last.replace(tzinfo=UTC)) > _LAST_USED_GRANULARITY
+    ):
+        key.last_used_at = now
     return user
 
 
@@ -128,6 +139,22 @@ async def get_owned_project(
     disclose existence.
     """
     proj = await session.get(Project, project_id)
+    if proj is None or proj.owner_id != user.id:
+        raise _project_not_found()
+    return proj
+
+
+async def get_owned_project_light(
+    project_id: Annotated[UUID, Path()],
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(db_session)],
+) -> Project:
+    """:func:`get_owned_project` without the transcript, for routes that never read it.
+
+    The transcript is the heavy column (every word, with its timing). Touching it on
+    one of these would raise, since the session is async and cannot load it lazily.
+    """
+    proj = await session.get(Project, project_id, options=[defer(Project.transcript)])
     if proj is None or proj.owner_id != user.id:
         raise _project_not_found()
     return proj
@@ -179,5 +206,6 @@ __all__ = [
     "get_current_user",
     "get_owned_job",
     "get_owned_project",
+    "get_owned_project_light",
     "require_job_token",
 ]

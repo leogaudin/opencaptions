@@ -7,6 +7,7 @@ parameters have moved on. Nothing here logs a password, session id or address.
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import logging
 from typing import Annotated
@@ -14,6 +15,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import SESSION_COOKIE_NAME, db_session, get_session_user, http_error
@@ -200,11 +202,15 @@ async def register(
 
     user = User(
         email=body.email,
-        password_hash=security.hash_password(body.password),
+        password_hash=await asyncio.to_thread(security.hash_password, body.password),
         is_active=True,
     )
     session.add(user)
-    await session.flush()
+    try:
+        await session.flush()
+    except IntegrityError as e:
+        # Two registrations of one address raced past the check above.
+        raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered") from e
 
     # Session fixation: drop any pre-existing session id before issuing a new one.
     old = request.cookies.get(SESSION_COOKIE_NAME)
@@ -244,17 +250,17 @@ async def login(
     # Generic failure: never reveal whether the email exists. Verify against a
     # dummy hash when the account is missing so response time doesn't leak it.
     if user is None or not user.is_active:
-        security.verify_password(security.DUMMY_HASH, body.password)
+        await asyncio.to_thread(security.verify_password, security.DUMMY_HASH, body.password)
         await throttle.record_failure(_LOGIN_SCOPE, body.email)
         logger.warning("login failed: no active account for a submitted email")
         raise _invalid_credentials()
-    if not security.verify_password(user.password_hash, body.password):
+    if not await asyncio.to_thread(security.verify_password, user.password_hash, body.password):
         await throttle.record_failure(_LOGIN_SCOPE, body.email)
         logger.warning("login failed: bad password for user id=%s", user.id)
         raise _invalid_credentials()
     # Transparent upgrade if the Argon2 parameters have strengthened since signup.
     if security.needs_rehash(user.password_hash):
-        user.password_hash = security.hash_password(body.password)
+        user.password_hash = await asyncio.to_thread(security.hash_password, body.password)
 
     # Rotate the session id on login (session fixation).
     old = request.cookies.get(SESSION_COOKIE_NAME)
@@ -335,14 +341,19 @@ async def change_email(
     A session alone is not enough: an attacker holding one could otherwise change
     the address and then use password reset to take the account outright.
     """
-    if not security.verify_password(user.password_hash, body.current_password):
+    if not await asyncio.to_thread(
+        security.verify_password, user.password_hash, body.current_password
+    ):
         raise _invalid_credentials()
     if body.email != user.email:
         taken = await session.scalar(select(User).where(User.email == body.email))
         if taken is not None:
             raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered")
     user.email = body.email
-    await session.flush()
+    try:
+        await session.flush()
+    except IntegrityError as e:
+        raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered") from e
     logger.info("email changed for user id=%s", user.id)
     return UserRead.model_validate(user)
 
@@ -364,9 +375,11 @@ async def change_password(
     Every other session is revoked, as on a reset: a password change is often a
     response to suspicion, so sessions opened before it must not survive it.
     """
-    if not security.verify_password(user.password_hash, body.current_password):
+    if not await asyncio.to_thread(
+        security.verify_password, user.password_hash, body.current_password
+    ):
         raise _invalid_credentials()
-    user.password_hash = security.hash_password(body.new_password)
+    user.password_hash = await asyncio.to_thread(security.hash_password, body.new_password)
     await session.flush()
     current = request.cookies.get(SESSION_COOKIE_NAME)
     revoked = await sessions.delete_user_sessions(user.id, keep=current)
@@ -485,7 +498,7 @@ async def confirm_password_reset(
 
     # Server-side policy is enforced by PasswordResetConfirm.password (identical
     # min/max to registration); by here the new password already satisfies it.
-    user.password_hash = security.hash_password(body.password)
+    user.password_hash = await asyncio.to_thread(security.hash_password, body.password)
     await session.flush()
     # Revoke every live session for this user (reuses the helper introduced for
     # the deleted admin work): a compromised old password's sessions must not

@@ -13,7 +13,16 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __version__
-from app.api import auth, fonts, health, jobs, keys, projects, transcriptions
+from app.api import (
+    auth,
+    fonts,
+    health,
+    jobs,
+    keys,
+    project_files,
+    projects,
+    transcriptions,
+)
 from app.api import settings as settings_router
 from app.api import websocket as ws_router
 from app.api.csrf import CSRFMiddleware
@@ -65,35 +74,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning("Bucket bootstrap skipped: %s", e)
 
-    # Recover orphan jobs: any job in pending/running state at API startup
-    # was either left behind by a crashed worker or a hard restart. Mark them
-    # failed so the UI doesn't surface a phantom progress bar after a restart.
+    # Fail the jobs nothing could still be working on (see services/recovery.py).
     try:
-        from sqlalchemy import text as _sql_text
+        from app.core.db import SessionFactory
+        from app.services.recovery import recover_orphan_jobs
 
-        from app.core.db import engine as _engine
-
-        async with _engine.begin() as conn:
-            result = await conn.execute(
-                _sql_text(
-                    "UPDATE jobs SET status='failed', "
-                    "error=COALESCE(error, 'orphaned at API startup'), "
-                    "updated_at=NOW() "
-                    "WHERE status IN ('pending', 'running') "
-                    "RETURNING id"
-                )
-            )
-            count = len(result.all())
-            if count:
-                # Also reset projects whose status implies an in-progress job.
-                await conn.execute(
-                    _sql_text(
-                        "UPDATE projects SET status="
-                        "CASE WHEN transcript IS NOT NULL THEN 'transcribed' ELSE 'draft' END "
-                        "WHERE status IN ('transcribing', 'rendering')"
-                    )
-                )
-                logger.info("Recovered %d orphan job(s) at startup", count)
+        async with SessionFactory() as db:
+            count = await recover_orphan_jobs(db)
+            await db.commit()
+        if count:
+            logger.info("Failed %d abandoned job(s) at startup", count)
     except Exception as e:
         logger.warning("Orphan job recovery skipped: %s", e)
 
@@ -196,6 +186,7 @@ def create_app() -> FastAPI:
     v1.include_router(health.router)
     v1.include_router(auth.router)
     v1.include_router(projects.router)
+    v1.include_router(project_files.router)
     v1.include_router(jobs.router)
     v1.include_router(transcriptions.router)
     v1.include_router(fonts.router)

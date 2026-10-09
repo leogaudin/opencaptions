@@ -110,6 +110,16 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
 
     stored: set[str] = set()
     monkeypatch.setattr(s3, "object_exists", lambda key: key in stored)
+    monkeypatch.setattr(
+        s3, "list_prefix", lambda prefix: [k for k in stored if k.startswith(prefix)]
+    )
+
+    def open_object(key: str, byte_range: str | None = None) -> dict[str, Any]:
+        if key not in stored:
+            raise s3.ObjectNotFoundError(key)
+        raise AssertionError("the test does not stream")
+
+    monkeypatch.setattr(s3, "open_object", open_object)
     monkeypatch.setattr(render_task.render_video, "delay", delay)
     client, owner = user_a
     project_id = await seed_project(owner)  # no probed size: 1080 × 1920 at 30 fps

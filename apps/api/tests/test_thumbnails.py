@@ -1,6 +1,6 @@
 """Tests for the project thumbnail serve endpoint.
 
-Thumbnail presence is answered by a storage existence check (no DB column), so
+Thumbnail presence is answered by reading it (no DB column), so
 these tests stub app.storage.s3 rather than touching real object storage. The
 cross-user 404 case lives in test_isolation.py (the shared authorization
 matrix); here we cover presence/absence and auth for the owner.
@@ -26,7 +26,11 @@ async def test_thumbnail_404_when_absent(
 
     client_a, owner_a = user_a
     project_id = await seed_project(owner_a)
-    monkeypatch.setattr(s3, "object_exists", lambda key: False)
+
+    def _missing(key: str) -> bytes:
+        raise s3.ObjectNotFoundError(key)
+
+    monkeypatch.setattr(s3, "get_object_bytes", _missing)
 
     r = await client_a.get(f"/api/v1/projects/{project_id}/thumbnail")
     assert r.status_code == 404
@@ -48,15 +52,10 @@ async def test_thumbnail_returns_image_when_present(
     fake_jpeg = b"\xff\xd8\xff\xe0jpeg-bytes"
     captured: dict[str, str] = {}
 
-    def _exists(key: str) -> bool:
-        captured["exists_key"] = key
-        return True
-
     def _get_bytes(key: str) -> bytes:
         captured["get_key"] = key
         return fake_jpeg
 
-    monkeypatch.setattr(s3, "object_exists", _exists)
     monkeypatch.setattr(s3, "get_object_bytes", _get_bytes)
 
     r = await client_a.get(f"/api/v1/projects/{project_id}/thumbnail")
@@ -64,7 +63,6 @@ async def test_thumbnail_returns_image_when_present(
     assert r.headers["content-type"] == "image/jpeg"
     assert r.content == fake_jpeg
     # The route addresses the thumbnail by the project's own key convention.
-    assert captured["exists_key"] == f"projects/{project_id}/thumbnail.jpg"
     assert captured["get_key"] == f"projects/{project_id}/thumbnail.jpg"
 
 

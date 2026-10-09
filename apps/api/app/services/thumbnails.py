@@ -11,6 +11,8 @@ import logging
 import subprocess
 from pathlib import Path
 
+from app.services.audio import PROBE_TIMEOUT_S
+
 logger = logging.getLogger(__name__)
 
 # Home-screen list tiles, not hero images: keep the frame small and cheap.
@@ -79,11 +81,15 @@ def extract_thumbnail(
     ]
     logger.info("ffmpeg thumbnail: %s -> %s @ %.3fs", video_path.name, output_path.name, timestamp)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=PROBE_TIMEOUT_S
+        )
     except FileNotFoundError as e:
         raise ThumbnailError(
             "ffmpeg binary not found in PATH. Install ffmpeg in the API image."
         ) from e
+    except subprocess.TimeoutExpired as e:
+        raise ThumbnailError(f"ffmpeg took longer than {PROBE_TIMEOUT_S} s") from e
     except subprocess.CalledProcessError as e:
         raise ThumbnailError(
             f"ffmpeg failed (exit {e.returncode}): {e.stderr.strip()[:500]}"

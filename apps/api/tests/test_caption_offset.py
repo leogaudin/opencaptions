@@ -179,7 +179,7 @@ def _run_render_video(monkeypatch: pytest.MonkeyPatch, offset_ms: int) -> dict[s
     monkeypatch.setattr(render_task, "mint_job_token", lambda _job_id: "tok")
     monkeypatch.setattr(render_task, "delete_job_token", lambda _job_id: None)
     monkeypatch.setattr(render_task, "_font_url", lambda _family: None)
-    monkeypatch.setattr("app.api.websocket.publish_to_project", lambda *_a, **_k: None)
+    monkeypatch.setattr("app.core.events.publish_sync", lambda *_a, **_k: None)
     monkeypatch.setattr("app.storage.s3.presigned_url", lambda _key, expires_in=3600: "http://v")
     monkeypatch.setattr("app.storage.s3.list_prefix", lambda _prefix: [])
 
@@ -266,18 +266,22 @@ async def test_offset_changes_export_readiness_key(
     """Every format's content-addressed readiness key must change with the
     offset, proving the offset reaches the readiness/cache path, not just the
     render task."""
+    from app.services.render_formats import RenderInputs
     from app.storage import s3
 
     client, owner = user_a
     pid = await seed_project(owner)
 
     seen: list[str] = []
+    original = RenderInputs.object_key_for
 
-    def _record(key: str) -> bool:
+    def _record(self: RenderInputs, project_id: str, fmt: Any) -> str:
+        key = original(self, project_id, fmt)
         seen.append(key)
-        return False
+        return key
 
-    monkeypatch.setattr(s3, "object_exists", _record)
+    monkeypatch.setattr(RenderInputs, "object_key_for", _record)
+    monkeypatch.setattr(s3, "list_prefix", lambda _prefix: [])
 
     await client.get(f"/api/v1/projects/{pid}/exports")
     keys_at_zero = set(seen)

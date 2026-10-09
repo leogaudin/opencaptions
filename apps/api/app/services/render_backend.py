@@ -18,12 +18,13 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
+from app.core.task_limits import RENDER_REQUEST_TIMEOUT_S
 from app.storage import s3
 
 logger = logging.getLogger(__name__)
 
 # Rendering a long video takes minutes; the ceiling is generous on purpose.
-RENDER_TIMEOUT = httpx.Timeout(60.0 * 30, connect=30.0)
+RENDER_TIMEOUT = httpx.Timeout(float(RENDER_REQUEST_TIMEOUT_S), connect=30.0)
 # The upload happens at the end of the render, so the grant outlives the ceiling.
 UPLOAD_GRANT_S = 60 * 60 * 2
 
