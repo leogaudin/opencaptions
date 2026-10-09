@@ -131,20 +131,21 @@ mod abi {
     #[unsafe(no_mangle)]
     pub unsafe extern "C" fn oc_set_scene(ptr: *mut u8, len: usize) -> u32 {
         let json = unsafe { take(ptr, len) };
+        let refuse = |reason: Vec<u8>| {
+            set_result(reason);
+            0
+        };
         match serde_json::from_slice::<SceneInput>(&json) {
-            Ok(input) if !lock(&BOOK).is_empty() => {
-                let scene = Scene::new(&lock(&BOOK), input);
-                *lock(&RENDERER) = Some(Renderer::new(scene));
-                1
-            }
-            Ok(_) => {
-                set_result(b"no fonts registered".to_vec());
-                0
-            }
-            Err(e) => {
-                set_result(e.to_string().into_bytes());
-                0
-            }
+            Err(e) => refuse(e.to_string().into_bytes()),
+            Ok(input) => match input.check() {
+                Err(reason) => refuse(reason.into_bytes()),
+                Ok(()) if lock(&BOOK).is_empty() => refuse(b"no fonts registered".to_vec()),
+                Ok(()) => {
+                    let scene = Scene::new(&lock(&BOOK), input);
+                    *lock(&RENDERER) = Some(Renderer::new(scene));
+                    1
+                }
+            },
         }
     }
 

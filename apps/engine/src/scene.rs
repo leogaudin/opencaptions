@@ -786,6 +786,37 @@ impl Scene {
         }
     }
 
+    /// The box, as (x, y, width, height), outside which no frame of this scene ever has a pixel:
+    /// every line's layer and the watermark. On even coordinates and of even size, the grain
+    /// 4:2:2 and 4:2:0 video can be laid over at, and the whole frame when its own size is odd.
+    /// A render sends this box for each frame rather than the picture of the whole.
+    pub fn overlay_bounds(&self) -> (u32, u32, u32, u32) {
+        let whole = (0, 0, self.width, self.height);
+        if !self.width.is_multiple_of(2) || !self.height.is_multiple_of(2) {
+            return whole;
+        }
+        let boxes = self
+            .lines
+            .iter()
+            .map(|l| l.bounds)
+            .chain(self.mark.as_ref().map(|m| m.rect));
+        let Some((x0, y0, x1, y1)) = boxes.fold(None, |acc: Option<(i32, i32, i32, i32)>, r| {
+            let r = (r.x(), r.y(), r.right(), r.bottom());
+            Some(acc.map_or(r, |a| {
+                (a.0.min(r.0), a.1.min(r.1), a.2.max(r.2), a.3.max(r.3))
+            }))
+        }) else {
+            // Nothing is ever drawn: any box will do, and a small one is cheapest.
+            return (0, 0, 2, 2);
+        };
+        let (x0, y0) = ((x0.max(0) & !1) as u32, (y0.max(0) & !1) as u32);
+        let (x1, y1) = (
+            (((x1 + 1) & !1) as u32).min(self.width),
+            (((y1 + 1) & !1) as u32).min(self.height),
+        );
+        (x0, y0, (x1 - x0).max(2), (y1 - y0).max(2))
+    }
+
     pub fn width(&self) -> u32 {
         self.width
     }
@@ -2538,6 +2569,42 @@ mod tests {
                     a.data() == b.data(),
                     "{w}x{h} sigma {sigma} case {case}: the cropped blur differs"
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn the_overlay_box_holds_every_line_and_the_mark_on_even_edges() {
+        let plain = input("word_highlight", WORDS, 2);
+        let mut marked = plain.clone();
+        marked.watermark = Some("OpenCaptions".into());
+        let scene = Scene::new(&book(), marked);
+        let (x, y, w, h) = scene.overlay_bounds();
+        assert!(x % 2 == 0 && y % 2 == 0 && w % 2 == 0 && h % 2 == 0);
+        assert!(x + w <= scene.width && y + h <= scene.height);
+        let mark = scene.mark.as_ref().unwrap().rect;
+        for r in scene.lines.iter().map(|l| l.bounds).chain([mark]) {
+            assert!(
+                x as i32 <= r.x()
+                    && y as i32 <= r.y()
+                    && (x + w) as i32 >= r.right()
+                    && (y + h) as i32 >= r.bottom(),
+                "{r:?} is outside the box {:?}",
+                (x, y, w, h)
+            );
+        }
+        // And nothing is ever drawn outside it.
+        let mut renderer = Renderer::new(Scene::new(&book(), plain));
+        let (x, y, w, h) = renderer.scene().overlay_bounds();
+        for t in [0.0, 0.3, 0.6, 1.2, 3.2] {
+            renderer.render(t);
+            let width = renderer.scene().width as usize;
+            for (row, line) in renderer.rgba().chunks_exact(width * 4).enumerate() {
+                for (col, px) in line.chunks_exact(4).enumerate() {
+                    let inside = (x as usize..(x + w) as usize).contains(&col)
+                        && (y as usize..(y + h) as usize).contains(&row);
+                    assert!(inside || px[3] == 0, "ink at ({col}, {row}) at {t} s");
+                }
             }
         }
     }

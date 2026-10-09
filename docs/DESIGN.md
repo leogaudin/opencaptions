@@ -212,6 +212,13 @@ can be changed, its size and length) before it is imported; cancelling throws th
   (`ENGINE_TOKEN`, a credential the two share like the storage keys) and the engine
   answers 401 to a render without it; `/health` stays open. It posts progress back with a per-job
   token. The API reaches it through a `RenderBackend` seam (`RENDER_BACKEND`).
+  A request is checked before anything is drawn (`SceneInput::check`, shared with the browser and
+  phone builds: finite sizes in range, a bounded frame, http(s) addresses only; FFmpeg may open
+  only http(s) too), and an empty `ENGINE_TOKEN` is refused at start. At most `ENGINE_MAX_RENDERS`
+  (4) renders run at once and the rest wait. Frames are drawn on a thread of their own while the
+  last is written, and only the box the captions can ever be in is piped to FFmpeg and laid over
+  the video there (`Scene::overlay_bounds`), a fraction of the frame. FFmpeg is killed if the
+  render ends any other way than finishing, and the upload is retried.
 
 ## The editor
 
