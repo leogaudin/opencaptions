@@ -73,16 +73,6 @@ pub enum TextCase {
     Upper,
 }
 
-impl Style {
-    /// The colour the `index`th word of the transcript is painted in.
-    pub fn accent(&self, index: usize) -> Rgba {
-        self.palette
-            .get(index % self.palette.len().max(1))
-            .copied()
-            .unwrap_or(self.highlight_color)
-    }
-}
-
 fn white() -> Rgba {
     Rgba([255, 255, 255, 255])
 }
@@ -93,10 +83,6 @@ pub struct Style {
     pub font_size: f32,
     pub text_color: Rgba,
     pub highlight_color: Rgba,
-    /// Colours taken in turn by successive words for what the animation paints in the highlight
-    /// colour (the lit word, a box, a label). Empty means the highlight colour for every word.
-    #[serde(default)]
-    pub palette: Vec<Rgba>,
     /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
     #[serde(default)]
     pub highlight_color_end: Option<Rgba>,

@@ -194,16 +194,13 @@ struct EditorView: View {
         #endif
     }
 
-    /// The timeline sits on a rounded dark panel that runs down under the home indicator.
+    /// The timeline sits on a flat dark panel, set off by a hairline, that runs down under the home
+    /// indicator. It has no rounded corners: they would show the video's black sides behind them.
     private var timelinePanel: some View {
         CaptionTimeline(model: model, playback: playback)
             .background {
-                UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
-                    .fill(Theme.surface)
-                    .overlay(alignment: .top) {
-                        UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
-                            .stroke(Theme.stroke, lineWidth: 1)
-                    }
+                Theme.surface
+                    .overlay(alignment: .top) { Theme.stroke.frame(height: 1) }
                     .ignoresSafeArea(edges: .bottom)
             }
     }

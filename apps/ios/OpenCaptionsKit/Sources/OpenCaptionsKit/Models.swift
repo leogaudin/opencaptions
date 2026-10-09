@@ -118,9 +118,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var fontSize: Int
     public var textColor: String
     public var highlightColor: String
-    /// Colours the successive words take in turn where the animation paints in the highlight colour;
-    /// empty means the highlight colour for every word.
-    public var palette: [String]
     /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
     public var highlightColorEnd: String?
     public var background: Background
@@ -153,13 +150,12 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
-        palette: [String] = [], highlightColorEnd: String? = nil
+        highlightColorEnd: String? = nil
     ) {
         self.font = font
         self.fontSize = fontSize
         self.textColor = textColor
         self.highlightColor = highlightColor
-        self.palette = palette
         self.highlightColorEnd = highlightColorEnd
         self.background = background
         self.backgroundColor = backgroundColor
@@ -205,7 +201,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
             italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
-            palette: try c.decodeIfPresent([String].self, forKey: .palette) ?? [],
             highlightColorEnd: try c.decodeIfPresent(String.self, forKey: .highlightColorEnd))
     }
 
@@ -232,7 +227,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case glowColor = "glow_color"
         case textCase = "text_case"
         case italic
-        case palette
         case highlightColorEnd = "highlight_color_end"
     }
 }

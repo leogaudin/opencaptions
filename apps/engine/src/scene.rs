@@ -74,7 +74,7 @@ struct Placed {
     baseline: f32,
     /// How many letters (for the typewriter's steps).
     chars: usize,
-    /// Its place in the transcript, which picks its palette colour and which way it leans.
+    /// Its place in the transcript, which decides which way it leans.
     index: usize,
 }
 
@@ -789,7 +789,7 @@ impl Scene {
         if s.animation == Animation::Stickers {
             for (w, st) in line.words.iter().zip(states) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius * 1.6) {
-                    let p = paint(colour(s.accent(w.index), 1.0));
+                    let p = paint(colour(s.highlight_color, 1.0));
                     canvas.fill_path(&path, &p, FillRule::Winding, pivot(w, st), None);
                 }
             }
@@ -797,7 +797,7 @@ impl Scene {
         if s.animation == Animation::HighlightBox {
             for (w, st) in line.words.iter().zip(states).filter(|(_, st)| st.on > 0.0) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius) {
-                    let p = paint(colour(s.accent(w.index), st.on * st.opacity));
+                    let p = paint(colour(s.highlight_color, st.on * st.opacity));
                     let grow = WordState {
                         scale: st.box_scale,
                         ..*st
@@ -813,11 +813,14 @@ impl Scene {
             ..Stroke::default()
         });
         // Stroke under fill, so a thick outline grows outward instead of eating the letter.
-        let ink = |px: &mut Pixmap, path: &Path, fill: Color, edge: Color, at: Transform| {
+        let ink_with = |px: &mut Pixmap, path: &Path, fill: &Paint, edge: Color, at: Transform| {
             if let Some(stroke) = &stroke {
                 px.stroke_path(path, &paint(edge), stroke, at, None);
             }
-            px.fill_path(path, &paint(fill), FillRule::Winding, at, None);
+            px.fill_path(path, fill, FillRule::Winding, at, None);
+        };
+        let ink = |px: &mut Pixmap, path: &Path, fill: Color, edge: Color, at: Transform| {
+            ink_with(px, path, &paint(fill), edge, at);
         };
         let (bx, by) = (line.bounds.x(), line.bounds.y());
         let local = |at: Transform| at.post_translate(-bx as f32, -by as f32);
@@ -894,9 +897,9 @@ impl Scene {
             );
             Some(mask)
         };
-        // What a sweep paints with: the word's palette colour, or a run from the highlight colour to
-        // `highlight_color_end` across the whole line, so each word is a different part of it.
-        let sweep = |index: usize| -> Paint<'static> {
+        // What a sweep paints with: the highlight colour, or a run from it to `highlight_color_end`
+        // across the whole line, so each word is a different part of it.
+        let sweep = || -> Paint<'static> {
             let ends = s.highlight_color_end.and_then(|end| {
                 LinearGradient::new(
                     Point::from_xy(line.anchor.x(), 0.0),
@@ -915,7 +918,7 @@ impl Scene {
                     anti_alias: true,
                     ..Paint::default()
                 },
-                None => paint(colour(s.accent(index), 1.0)),
+                None => paint(colour(s.highlight_color, 1.0)),
             }
         };
         for (w, st) in line.words.iter().zip(states) {
@@ -924,7 +927,7 @@ impl Scene {
                 Animation::WordHighlight
                 | Animation::WordPop
                 | Animation::WordBounce
-                | Animation::LyricFocus => mix(s.text_color, s.accent(w.index), st.on),
+                | Animation::LyricFocus => mix(s.text_color, s.highlight_color, st.on),
                 Animation::None
                 | Animation::HighlightBox
                 | Animation::HighlightSlide
@@ -936,6 +939,29 @@ impl Scene {
                 | Animation::Typewriter => s.text_color,
             };
             let (fill, edge) = (colour(fill, 1.0), colour(s.stroke_color, 1.0));
+            if s.animation == Animation::WordSweep && st.fill > 0.0 {
+                // Each letter is painted once: the highlight on the side the sweep has passed, the
+                // plain colour on the rest. Painting the highlight over a finished plain word would
+                // leave the plain word's soft edge showing round it, a pale fringe.
+                let (on, at) = (sweep(), pivot(w, st));
+                if st.fill >= 1.0 {
+                    ink_with(canvas, path, &on, edge, at);
+                } else if let (Some(mut passed), Some(mut ahead), Some(mask)) =
+                    (layer(), layer(), cut(w.ink_x + w.ink_w * st.fill))
+                {
+                    ink_with(&mut passed, path, &on, edge, local(at));
+                    passed.apply_mask(&mask);
+                    ink(&mut ahead, path, fill, edge, local(at));
+                    let mut rest = mask;
+                    rest.invert();
+                    ahead.apply_mask(&rest);
+                    let p = PixmapPaint::default();
+                    for half in [&passed, &ahead] {
+                        canvas.draw_pixmap(bx, by, half.as_ref(), &p, Transform::identity(), None);
+                    }
+                }
+                continue;
+            }
             let typed = s.animation == Animation::Typewriter;
             if typed && st.fill <= 0.0 {
                 continue;
@@ -959,20 +985,6 @@ impl Scene {
                 canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
             }
             match s.animation {
-                Animation::WordSweep if st.fill > 0.0 => {
-                    // The colour over the letters up to the sweep, the outline left as it is.
-                    let on = sweep(w.index);
-                    if st.fill >= 1.0 {
-                        canvas.fill_path(path, &on, FillRule::Winding, pivot(w, st), None);
-                    } else if let (Some(mut group), Some(mask)) =
-                        (layer(), cut(w.ink_x + w.ink_w * st.fill))
-                    {
-                        group.fill_path(path, &on, FillRule::Winding, local(pivot(w, st)), None);
-                        group.apply_mask(&mask);
-                        let p = PixmapPaint::default();
-                        canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
-                    }
-                }
                 Animation::WordUnderline if st.fill > 0.0 => {
                     let thick = (s.font_size * 0.075).max(2.0);
                     let rule = Rect::from_xywh(
@@ -982,7 +994,7 @@ impl Scene {
                         thick,
                     );
                     if let Some(path) = rule.and_then(|r| rounded_rect(r, thick / 2.0)) {
-                        let p = paint(colour(s.accent(w.index), 1.0));
+                        let p = paint(colour(s.highlight_color, 1.0));
                         canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
                     }
                 }
@@ -1858,13 +1870,18 @@ mod tests {
     }
 
     #[test]
-    fn a_palette_is_taken_in_turn_and_falls_back_to_the_highlight() {
-        let mut style = input("word_pop", WORDS, 3).style;
-        assert_eq!(style.accent(5), style.highlight_color, "no palette");
-        let (green, pink) = (Rgba([0, 255, 0, 255]), Rgba([255, 0, 255, 255]));
-        style.palette = vec![green, pink];
-        assert_eq!([style.accent(0), style.accent(1)], [green, pink]);
-        assert_eq!(style.accent(3), pink, "it wraps");
+    fn a_filled_word_has_no_pale_fringe_of_the_plain_colour_under_it() {
+        let patch = serde_json::json!({ "highlight_color": "#FF0000", "font_size": 200 });
+        let words = &[("hello", 0.0, 0.5)];
+        let mut r = Renderer::new(Scene::new(&book(), styled("word_sweep", words, patch)));
+        r.render(0.6);
+        let inked: Vec<&[u8]> = r.rgba().chunks(4).filter(|px| px[3] > 0).collect();
+        assert!(inked.len() > 1000, "the word is drawn");
+        // The plain colour is white: any of it left at the edge shows as green and blue.
+        assert!(
+            inked.iter().all(|px| px[1] < 10 && px[2] < 10),
+            "an edge pixel is not pure highlight"
+        );
     }
 
     #[test]

@@ -1284,7 +1284,7 @@ export interface components {
             frame_rate: "original" | "30" | "60";
             /**
              * Green Screen
-             * @description Captions only, over solid green to key out, with the video's sound
+             * @description Captions only, over solid green to key out, with no sound
              * @default false
              */
             green_screen: boolean;
@@ -1340,8 +1340,6 @@ export interface components {
              * @default #7C3AED
              */
             highlight_color: string;
-            /** Palette */
-            palette?: string[];
             /** Highlight Color End */
             highlight_color_end?: string | null;
             /**
@@ -2538,7 +2536,7 @@ export interface operations {
                 resolution?: "original" | "2160" | "1080" | "720";
                 /** @description Frames per second, or the source's rate */
                 frame_rate?: "original" | "30" | "60";
-                /** @description Captions only, over solid green to key out, with the video's sound */
+                /** @description Captions only, over solid green to key out, with no sound */
                 green_screen?: boolean;
             };
             header?: never;

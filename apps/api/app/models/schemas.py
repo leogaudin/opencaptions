@@ -1,7 +1,7 @@
 """Pydantic schemas for API I/O. Single source of truth for OpenAPI codegen."""
 
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -142,11 +142,6 @@ class StyleConfig(BaseModel):
     font_size: int = Field(default=64, ge=12, le=300)
     text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
     highlight_color: str = Field(default="#7C3AED", pattern=r"^#[0-9A-Fa-f]{6}$")
-    # Colours the successive words take, in turn, where the animation paints in the highlight
-    # colour (the lit word, a box, a label); empty means the highlight colour for every word.
-    palette: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
-        default_factory=list, max_length=8
-    )
     # Where a sweep's colour ends: it runs from highlight_color to this across the line.
     highlight_color_end: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
     background: Literal["none", "solid", "pill"] = "none"
@@ -314,7 +309,7 @@ class RenderOptions(BaseModel):
     )
     green_screen: bool = Field(
         default=False,
-        description="Captions only, over solid green to key out, with the video's sound",
+        description="Captions only, over solid green to key out, with no sound",
     )
 
 

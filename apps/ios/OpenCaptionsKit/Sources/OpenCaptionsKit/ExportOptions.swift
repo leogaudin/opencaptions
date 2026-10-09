@@ -65,7 +65,7 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     public var frameRate: FrameRate
     /// A mark drawn in a corner of the video (a free tier's); nil for none.
     public var watermark: String?
-    /// Only the captions, drawn over solid green to key out in an editor, with the video's sound.
+    /// Only the captions, drawn over solid green to key out in an editor, with no sound.
     public var greenScreen: Bool
 
     public init(

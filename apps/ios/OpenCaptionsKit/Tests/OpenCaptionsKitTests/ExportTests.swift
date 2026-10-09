@@ -74,7 +74,7 @@ extension EngineSuites {
             #expect(max(r, g, b) > 100, "the caption is there: \(r) \(g) \(b)")
         }
 
-        @Test func aGreenScreenIsTheCaptionsOverSolidGreenWithTheClipsLength() async throws {
+        @Test func aGreenScreenIsTheCaptionsOverSolidGreenWithTheClipsLengthAndNoSound() async throws {
             let store = store()
             let p = try await project(for: try await clip(width: 270, height: 480, audio: true, seconds: 2), in: store)
             let url = try await CaptionExporter(fonts: fonts).export(
@@ -85,7 +85,7 @@ extension EngineSuites {
             // encoder used, so the red and blue are not exactly zero.
             #expect(g > 200 && r < 100 && b < 40, "the picture is green, not the clip: \(r) \(g) \(b)")
             let asset = AVURLAsset(url: url)
-            #expect(try await asset.loadTracks(withMediaType: .audio).count == 1, "the sound is kept")
+            #expect(try await asset.loadTracks(withMediaType: .audio).isEmpty, "no sound")
             #expect(abs(try await asset.load(.duration).seconds - 2) < 0.3)
         }
 

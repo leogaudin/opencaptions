@@ -35,7 +35,7 @@ struct RenderRequest {
     crf: Option<u32>,
     pro_res_profile: Option<String>,
     /// Draw the captions over solid chroma green instead of the video, to key out in an editor.
-    /// The video is read only for its sound.
+    /// The file has neither the video's picture nor its sound.
     #[serde(default)]
     green_screen: bool,
     progress_url: Option<String>,
@@ -366,7 +366,12 @@ fn render(
             &format!("{w}x{h}"),
         ])
         .args(["-framerate", &req.fps.to_string(), "-i", "pipe:0"])
-        .args(["-filter_complex", &filter, "-map", "[v]", "-map", "0:a?"])
+        .args(["-filter_complex", &filter, "-map", "[v]"])
+        .args(if req.green_screen {
+            vec!["-an"]
+        } else {
+            vec!["-map", "0:a?"]
+        })
         .args(["-t", &format!("{duration:.3}")])
         .args(colour.tags())
         .args(&enc.args)

@@ -178,7 +178,8 @@ public struct CaptionExporter: Sendable {
         let videoOut = AVAssetReaderTrackOutput(
             track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: decodeFormat])
         reader.add(videoOut)
-        let audio = try await audioPipeline(asset: asset, reader: reader)
+        // A green screen is the captions alone: no sound either.
+        let audio = options.greenScreen ? nil : try await audioPipeline(asset: asset, reader: reader)
 
         let writer = try AVAssetWriter(outputURL: output, fileType: .mp4)
         var settings = encoding.settings

@@ -48,8 +48,8 @@ the two scale on different hardware.
    the source's, and a frame rate (30 or 60, the cap), which may be above the
    source's: the picture's frames repeat, but the captions are drawn at every
    output frame, so their animation is smoother. `green_screen` draws the captions over solid
-   chroma green instead of the picture, with the video's sound, to key out in an editor (it is part
-   of the hash, and the engine skips decoding the video's picture). There is no quality choice: a download is a second encoding of the
+   chroma green instead of the picture, with no sound, to key out in an editor (it is part
+   of the hash, and the engine does not use the video at all). There is no quality choice: a download is a second encoding of the
    source, so each format is made as good as its codec does well (a CRF in
    `render_formats.py`; ProRes takes a profile), and the size is chosen with the
    resolution and frame rate. `resolve_render_inputs` alone turns options into
@@ -148,12 +148,12 @@ as their outline continued), a glow (a blurred halo in its own colour, laid down
 light), upper case (drawn, never stored: the transcript is untouched) and italic (the upright face sheared
 by about 11 degrees, so any font leans and no italic file has to be fetched). Every field after
 `shadow_color` is optional with a default of "off", so a style saved before it existed opens unchanged.
-Two fields exist for presets and have no control: `palette`, colours the successive words take where
-the animation paints in the highlight colour (the lit word, a box, a label), and `highlight_color_end`,
-which makes a sweep run as a gradient from the highlight colour to it across the line.
+One field exists for presets and has no control: `highlight_color_end`, which makes a sweep run as a
+gradient from the highlight colour to it across the line. A sweep paints each letter once, the highlight on
+the side it has passed and the plain colour on the rest, so no soft edge of the plain word shows round it.
 The built-in presets that use them are Purple Punch (a box that slides between words), Karaoke, Bold
 (Montserrat Black, bundled with the engine, in capitals with a thick black outline carried out into a
-hard black extrusion; the lit word takes yellow, green and red in turn), Boom, Lyric, Documentary,
+hard black extrusion), Boom, Lyric, Documentary,
 Gradient, Stickers, Subtitle, Neon, Typewriter, Handwritten and Elegant.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
