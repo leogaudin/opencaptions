@@ -97,6 +97,12 @@ async function settle<T>(resp: Response, skipAuthRedirect = false): Promise<T> {
     body = await resp.json();
   } else {
     body = await resp.text();
+    // A successful answer that is not JSON is not the API's (a dev server or a proxy answering
+    // with its own page): fail here, in words, rather than hand a string to code expecting data.
+    if (resp.ok && typeof body === "string" && body.trim() !== "") {
+      throw new ApiException(resp.status, null, "Unexpected response from the server");
+    }
+    if (resp.ok) return undefined as T;
   }
 
   if (!resp.ok) {
@@ -192,8 +198,12 @@ export function confirmPasswordReset(token: string, password: string): Promise<v
 
 // ---------- Projects ----------
 
-export function listProjects(page = 1, perPage = 20): Promise<ProjectList> {
-  return request<ProjectList>(`/projects?page=${page}&per_page=${perPage}`);
+export async function listProjects(page = 1, perPage = 20): Promise<ProjectList> {
+  const list = await request<ProjectList>(`/projects?page=${page}&per_page=${perPage}`);
+  if (!Array.isArray(list?.items)) {
+    throw new ApiException(200, null, "Unexpected response from the server");
+  }
+  return list;
 }
 
 export function getProject(projectId: string): Promise<Project> {

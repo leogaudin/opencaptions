@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "Следует настройкам устройства, пока вы не выберете, и запоминается в этом браузере.",
   "Docs": "Документация",
   "The demo could not be loaded.": "Не удалось загрузить демо.",
-  "Tap the video to play or pause. Drag the caption to move it.": "Нажмите на видео, чтобы запустить или остановить. Перетащите субтитры, чтобы переместить их.",
   "Captions that": "Субтитры, которые",
   "stop the scroll": "останавливают скролл",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Субтитры с ИИ с открытым кодом, которые вы размещаете сами. Выберите стиль и посмотрите на примере.",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "Приложение для iPhone может распознавать речь прямо на телефоне с помощью Whisper. Загрузка не нужна.",
   "Open source": "Открытый код",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Читайте код, собирайте сами или запускайте весь веб-редактор на своём сервере.",
-  "The same pixels everywhere": "Одни и те же пиксели везде",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Один движок на Rust рисует каждые субтитры в браузере, на сервере и на телефоне.",
   "Use it where you work": "Используйте там, где работаете",
   "iPhone and iPad": "iPhone и iPad",
   "Caption, retime and save right on the phone.": "Добавляйте субтитры, правьте тайминг и сохраняйте прямо на телефоне.",
   "Your own server": "Свой сервер",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Веб-редактор с таймлайном, файлами субтитров и API запускается одной командой docker compose.",
-  "Read the docs": "Читать документацию"
+  "Read the docs": "Читать документацию",
+  "Same pixels everywhere": "Одни и те же пиксели везде",
+  "Tap the video to play or pause.": "Нажмите на видео, чтобы запустить или остановить.",
+  "Turn the sound on": "Включить звук",
+  "Turn the sound off": "Выключить звук"
 }

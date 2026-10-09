@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "Suit votre appareil tant que vous n'avez pas choisi, et est mémorisé dans ce navigateur.",
   "Docs": "Docs",
   "The demo could not be loaded.": "La démo n'a pas pu être chargée.",
-  "Tap the video to play or pause. Drag the caption to move it.": "Touchez la vidéo pour lire ou mettre en pause. Faites glisser la légende pour la déplacer.",
   "Captions that": "Des sous-titres qui",
   "stop the scroll": "arrêtent le scroll",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Des sous-titres IA open source que vous hébergez vous-même. Choisissez un style et voyez-le sur un extrait.",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "L'app iPhone peut écrire les mots sur le téléphone, avec Whisper. Aucun envoi nécessaire.",
   "Open source": "Open source",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Lisez le code, compilez-le vous-même, ou faites tourner tout l'éditeur web sur votre serveur.",
-  "The same pixels everywhere": "Les mêmes pixels partout",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Un seul moteur Rust dessine chaque sous-titre dans le navigateur, sur le serveur et sur le téléphone.",
   "Use it where you work": "Utilisez-le là où vous travaillez",
   "iPhone and iPad": "iPhone et iPad",
   "Caption, retime and save right on the phone.": "Sous-titrez, recalez et enregistrez directement sur le téléphone.",
   "Your own server": "Votre propre serveur",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "L'éditeur web, avec timeline, fichiers de sous-titres et API, lancé en une commande docker compose.",
-  "Read the docs": "Lire la documentation"
+  "Read the docs": "Lire la documentation",
+  "Same pixels everywhere": "Les mêmes pixels partout",
+  "Tap the video to play or pause.": "Touchez la vidéo pour lire ou mettre en pause.",
+  "Turn the sound on": "Activer le son",
+  "Turn the sound off": "Couper le son"
 }

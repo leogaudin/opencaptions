@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "Folgt Ihrem Gerät, bis Sie etwas wählen, und wird in diesem Browser gespeichert.",
   "Docs": "Doku",
   "The demo could not be loaded.": "Die Demo konnte nicht geladen werden.",
-  "Tap the video to play or pause. Drag the caption to move it.": "Tippe auf das Video, um abzuspielen oder zu pausieren. Ziehe die Untertitel, um sie zu verschieben.",
   "Captions that": "Untertitel, die",
   "stop the scroll": "das Scrollen stoppen",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Open-Source-KI-Untertitel, die du selbst hostest. Wähle einen Look und sieh ihn an einem Beispielclip.",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "Die iPhone-App kann den Text mit Whisper direkt auf dem Telefon erzeugen. Kein Upload nötig.",
   "Open source": "Open Source",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Lies den Code, baue ihn selbst oder betreibe den ganzen Web-Editor auf deinem eigenen Server.",
-  "The same pixels everywhere": "Überall dieselben Pixel",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Eine Rust-Engine zeichnet jeden Untertitel im Browser, auf dem Server und auf dem Telefon.",
   "Use it where you work": "Nutze es, wo du arbeitest",
   "iPhone and iPad": "iPhone und iPad",
   "Caption, retime and save right on the phone.": "Untertiteln, Timing anpassen und speichern, direkt auf dem Telefon.",
   "Your own server": "Dein eigener Server",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Der Web-Editor mit Timeline, Untertiteldateien und API, gestartet mit einem einzigen docker-compose-Befehl.",
-  "Read the docs": "Doku lesen"
+  "Read the docs": "Doku lesen",
+  "Same pixels everywhere": "Überall dieselben Pixel",
+  "Tap the video to play or pause.": "Tippe auf das Video, um abzuspielen oder zu pausieren.",
+  "Turn the sound on": "Ton einschalten",
+  "Turn the sound off": "Ton ausschalten"
 }

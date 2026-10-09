@@ -73,11 +73,14 @@ function CaptionCanvas({
   scene,
   displayWidth,
   displayHeight,
+  interactive,
 }: {
   video: HTMLVideoElement | null;
   scene: SceneInput;
   displayWidth: number;
   displayHeight: number;
+  /** Whether the caption can be dragged and its words edited. */
+  interactive: boolean;
 }) {
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -277,7 +280,7 @@ function CaptionCanvas({
           className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
         />
       )}
-      {bounds && !editing && paused && (
+      {interactive && bounds && !editing && paused && (
         // Shown only while paused, over the caption alone, so a tap anywhere on the
         // playing video still pauses it.
         <button
@@ -320,7 +323,7 @@ function CaptionCanvas({
   );
 }
 
-export function CaptionPreview() {
+export function CaptionPreview({ interactive = true }: { interactive?: boolean } = {}) {
   const t = useT();
   const project = useEditorStore((s) => s.project);
   const transcript = useEditorStore((s) => s.transcript);
@@ -469,6 +472,7 @@ export function CaptionPreview() {
             scene={scene}
             displayWidth={displayWidth}
             displayHeight={displayHeight}
+            interactive={interactive}
           />
         </div>
       ) : null}

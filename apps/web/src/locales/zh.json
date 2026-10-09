@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "在你选择之前跟随设备，并保存在此浏览器中。",
   "Docs": "文档",
   "The demo could not be loaded.": "无法加载演示。",
-  "Tap the video to play or pause. Drag the caption to move it.": "点按视频即可播放或暂停。拖动字幕即可移动。",
   "Captions that": "让人停下",
   "stop the scroll": "滑动的字幕",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "可自行托管的开源 AI 字幕。选择样式,在示例视频上查看效果。",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "iPhone 应用可用 Whisper 直接在手机上生成文字,无需上传。",
   "Open source": "开源",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "阅读代码、自行构建,或在自己的服务器上运行完整的网页编辑器。",
-  "The same pixels everywhere": "处处一致的画面",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "同一个 Rust 引擎在浏览器、服务器和手机上绘制每一条字幕。",
   "Use it where you work": "在你工作的地方使用",
   "iPhone and iPad": "iPhone 和 iPad",
   "Caption, retime and save right on the phone.": "直接在手机上添加字幕、调整时间并保存。",
   "Your own server": "你自己的服务器",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "带时间轴、字幕文件和 API 的网页编辑器,一条 docker compose 命令即可启动。",
-  "Read the docs": "阅读文档"
+  "Read the docs": "阅读文档",
+  "Same pixels everywhere": "处处一致的画面",
+  "Tap the video to play or pause.": "点按视频即可播放或暂停。",
+  "Turn the sound on": "开启声音",
+  "Turn the sound off": "关闭声音"
 }

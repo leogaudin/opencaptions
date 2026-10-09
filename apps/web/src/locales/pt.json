@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "Segue o seu dispositivo até escolher, e fica guardado neste navegador.",
   "Docs": "Documentação",
   "The demo could not be loaded.": "Não foi possível carregar a demonstração.",
-  "Tap the video to play or pause. Drag the caption to move it.": "Toque no vídeo para reproduzir ou pausar. Arraste a legenda para movê-la.",
   "Captions that": "Legendas que",
   "stop the scroll": "param o scroll",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Legendas com IA de código aberto que você hospeda. Escolha um estilo e veja num clipe de exemplo.",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "O app para iPhone pode escrever as palavras no próprio telefone, com Whisper. Sem enviar nada.",
   "Open source": "Código aberto",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Leia o código, compile você mesmo ou rode todo o editor web no seu servidor.",
-  "The same pixels everywhere": "Os mesmos pixels em todo lugar",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Um único motor em Rust desenha cada legenda no navegador, no servidor e no telefone.",
   "Use it where you work": "Use onde você trabalha",
   "iPhone and iPad": "iPhone e iPad",
   "Caption, retime and save right on the phone.": "Legende, ajuste o tempo e salve direto no telefone.",
   "Your own server": "Seu próprio servidor",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "O editor web, com linha do tempo, arquivos de legenda e uma API, iniciado com um comando docker compose.",
-  "Read the docs": "Ler a documentação"
+  "Read the docs": "Ler a documentação",
+  "Same pixels everywhere": "Os mesmos pixels em todo lugar",
+  "Tap the video to play or pause.": "Toque no vídeo para reproduzir ou pausar.",
+  "Turn the sound on": "Ativar o som",
+  "Turn the sound off": "Desativar o som"
 }

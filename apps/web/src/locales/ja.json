@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "選ぶまではデバイスの設定に従い、選択はこのブラウザに保存されます。",
   "Docs": "ドキュメント",
   "The demo could not be loaded.": "デモを読み込めませんでした。",
-  "Tap the video to play or pause. Drag the caption to move it.": "動画をタップして再生・一時停止。字幕をドラッグして動かせます。",
   "Captions that": "スクロールを",
   "stop the scroll": "止める字幕",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "自分でホストできるオープンソースのAI字幕。スタイルを選んでサンプル動画で確認できます。",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "iPhoneアプリはWhisperで端末上で文字起こしできます。アップロードは不要です。",
   "Open source": "オープンソース",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "コードを読み、自分でビルドし、Webエディターごと自分のサーバーで動かせます。",
-  "The same pixels everywhere": "どこでも同じピクセル",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "1つのRustエンジンが、ブラウザ、サーバー、スマートフォンのすべての字幕を描画します。",
   "Use it where you work": "作業する場所で使う",
   "iPhone and iPad": "iPhoneとiPad",
   "Caption, retime and save right on the phone.": "スマートフォン上で字幕の追加、タイミング調整、保存ができます。",
   "Your own server": "自分のサーバー",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "タイムライン、字幕ファイル、APIを備えたWebエディターを、docker composeの1コマンドで起動できます。",
-  "Read the docs": "ドキュメントを読む"
+  "Read the docs": "ドキュメントを読む",
+  "Same pixels everywhere": "どこでも同じピクセル",
+  "Tap the video to play or pause.": "動画をタップして再生・一時停止。",
+  "Turn the sound on": "音声をオンにする",
+  "Turn the sound off": "音声をオフにする"
 }

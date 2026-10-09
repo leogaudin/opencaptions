@@ -3,7 +3,7 @@
  * few sample clips. No API, no account, nothing saved; the captions are drawn by the engine,
  * exactly as in the editor and the download.
  */
-import { Moon, Sun } from "lucide-react";
+import { Code, Layers, Moon, Server, Smartphone, Sun, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CaptionPreview } from "@/components/CaptionPreview";
 import { PresetStrip } from "@/components/PresetStrip";
@@ -60,16 +60,42 @@ function Nav() {
   );
 }
 
-/** Plays the clip, muted, once it can (unless the visitor asked for less motion). */
-function Autoplay({ clipId }: { clipId: string }) {
+/**
+ * Plays each clip as it loads (muted, unless the visitor asked for less motion), also after a
+ * change of clip, which loads a new source into the same <video>. The sound is a button.
+ */
+function Player() {
+  const t = useT();
   const video = useVideo();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new clip is a new source
+  const [muted, setMuted] = useState(true);
   useEffect(() => {
-    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!video) return;
     video.muted = true;
-    video.play().catch(() => undefined);
-  }, [video, clipId]);
-  return null;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = (): void => {
+      if (!reduced) video.play().catch(() => undefined);
+    };
+    start();
+    video.addEventListener("loadeddata", start);
+    return () => video.removeEventListener("loadeddata", start);
+  }, [video]);
+  if (!video) return null;
+  const label = muted ? t("Turn the sound on") : t("Turn the sound off");
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        video.muted = !video.muted;
+        setMuted(video.muted);
+      }}
+      aria-label={label}
+      title={label}
+      data-testid="sound-toggle"
+      className="absolute bottom-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition-colors hover:bg-black/80"
+    >
+      {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+    </button>
+  );
 }
 
 function Demo() {
@@ -116,11 +142,11 @@ function Demo() {
 
   return (
     <PlaybackProvider>
-      {clipId && <Autoplay clipId={clipId} />}
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 pb-16 md:flex-row md:items-start md:justify-center md:gap-10">
-        <div className="h-[min(70vh,600px)] w-full max-w-[360px] shrink-0">
+        <div className="relative h-[min(70vh,600px)] w-full max-w-[360px] shrink-0">
           {/* Mounted once a project is there: its size observer attaches on first mount. */}
-          {loaded && <CaptionPreview />}
+          {loaded && <CaptionPreview interactive={false} />}
+          {loaded && <Player />}
         </div>
         <div className="w-full min-w-0 md:max-w-md">
           <div className="mb-3 flex flex-wrap gap-2" data-testid="clip-chips">
@@ -147,7 +173,7 @@ function Demo() {
             tileClassName="w-32 shrink-0 md:w-auto"
           />
           <p className="mt-3 text-xs text-muted-foreground">
-            {t("Tap the video to play or pause. Drag the caption to move it.")}
+            {t("Tap the video to play or pause.")}
           </p>
         </div>
       </div>
@@ -155,26 +181,42 @@ function Demo() {
   );
 }
 
+function IconBadge({ icon: Icon }: { icon: typeof Code }) {
+  return (
+    <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </span>
+  );
+}
+
 function Facts() {
   const t = useT();
   const facts = [
-    [
-      t("On your device"),
-      t("The iPhone app can write the words on the phone itself, with Whisper. No upload needed."),
-    ],
-    [
-      t("Open source"),
-      t("Read the code, build it yourself, or run the whole web editor on your own server."),
-    ],
-    [
-      t("The same pixels everywhere"),
-      t("One Rust engine draws every caption in the browser, on the server and on the phone."),
-    ],
+    {
+      icon: Smartphone,
+      title: t("On your device"),
+      body: t(
+        "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.",
+      ),
+    },
+    {
+      icon: Code,
+      title: t("Open source"),
+      body: t("Read the code, build it yourself, or run the whole web editor on your own server."),
+    },
+    {
+      icon: Layers,
+      title: t("Same pixels everywhere"),
+      body: t(
+        "One Rust engine draws every caption in the browser, on the server and on the phone.",
+      ),
+    },
   ];
   return (
     <section className="mx-auto grid max-w-5xl gap-8 px-4 pb-16 sm:grid-cols-3">
-      {facts.map(([title, body]) => (
+      {facts.map(({ icon, title, body }) => (
         <div key={title}>
+          <IconBadge icon={icon} />
           <h3 className="text-base font-bold">{title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">{body}</p>
         </div>
@@ -192,6 +234,7 @@ function Ways() {
       </h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
+          <IconBadge icon={Smartphone} />
           <h3 className="text-lg font-bold">{t("iPhone and iPad")}</h3>
           <p className="flex-1 text-sm text-muted-foreground">
             {t("Caption, retime and save right on the phone.")}
@@ -207,6 +250,7 @@ function Ways() {
           )}
         </article>
         <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
+          <IconBadge icon={Server} />
           <h3 className="text-lg font-bold">{t("Your own server")}</h3>
           <p className="flex-1 text-sm text-muted-foreground">
             {t(

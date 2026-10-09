@@ -17,7 +17,18 @@
   }
 }
 
+/* Inter, the face the engine bundles (one file, shared with the caption preview, so it is fetched
+   once). The system faces stand in until it arrives and where it cannot be fetched. */
+@font-face {
+  font-family: "Inter";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/engine/fonts/Inter.ttf") format("truetype");
+}
+
 @theme {
+  --font-sans: "Inter", "SF Pro Display", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -104,6 +115,11 @@
   ::backdrop,
   ::file-selector-button {
     @apply border-border;
+  }
+  /* Selected text in the accent. */
+  ::selection {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
   body {
     @apply bg-background text-foreground;

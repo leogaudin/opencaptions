@@ -2,7 +2,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { languageReady } from "@/lib/i18n";
 import { setSources } from "@/lib/sources";
-import { setFallbackChoice } from "@/lib/useTheme";
 import { disableSaving } from "@/store/editorStore";
 import "../index.css";
 import { DemoApp } from "./DemoApp";
@@ -13,7 +12,6 @@ setSources({
   font: (family) => `/demo/fonts/${family.replace(/[^A-Za-z0-9]+/g, "-")}.ttf`,
 });
 disableSaving();
-setFallbackChoice("dark");
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root not found");

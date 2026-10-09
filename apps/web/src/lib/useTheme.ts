@@ -14,21 +14,14 @@ export type ThemeChoice = Theme | "system";
 const STORAGE_KEY = "opencaptions:theme";
 const DARK = "(prefers-color-scheme: dark)";
 
-let fallbackChoice: ThemeChoice = "system";
-
-/** What a visitor who has not chosen gets (the public demo opens dark). */
-export function setFallbackChoice(c: ThemeChoice): void {
-  fallbackChoice = c;
-}
-
 function readChoice(): ThemeChoice {
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
     if (v === "dark" || v === "light") return v;
   } catch {
-    /* storage blocked: the fallback */
+    /* storage blocked: follow the system */
   }
-  return fallbackChoice;
+  return "system";
 }
 
 function subscribeSystem(listener: () => void): () => void {

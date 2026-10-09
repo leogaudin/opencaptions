@@ -284,7 +284,6 @@
   "Follows your device until you choose, and is remembered in this browser.": "직접 선택하기 전에는 기기 설정을 따르며, 이 브라우저에 기억됩니다.",
   "Docs": "문서",
   "The demo could not be loaded.": "데모를 불러오지 못했습니다.",
-  "Tap the video to play or pause. Drag the caption to move it.": "영상을 탭해 재생하거나 일시정지하세요. 자막을 드래그해 옮길 수 있습니다.",
   "Captions that": "스크롤을",
   "stop the scroll": "멈추게 하는 자막",
   "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "직접 호스팅하는 오픈소스 AI 자막. 스타일을 골라 샘플 영상에서 확인해 보세요.",
@@ -296,12 +295,15 @@
   "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "iPhone 앱은 Whisper로 기기에서 직접 자막을 만들 수 있습니다. 업로드가 필요 없습니다.",
   "Open source": "오픈소스",
   "Read the code, build it yourself, or run the whole web editor on your own server.": "코드를 읽고 직접 빌드하거나, 웹 편집기 전체를 자체 서버에서 실행하세요.",
-  "The same pixels everywhere": "어디서나 같은 픽셀",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "하나의 Rust 엔진이 브라우저, 서버, 휴대폰에서 모든 자막을 그립니다.",
   "Use it where you work": "작업하는 곳에서 사용하세요",
   "iPhone and iPad": "iPhone 및 iPad",
   "Caption, retime and save right on the phone.": "휴대폰에서 바로 자막을 만들고, 타이밍을 조정하고, 저장하세요.",
   "Your own server": "나만의 서버",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "타임라인, 자막 파일, API를 갖춘 웹 편집기를 docker compose 명령 하나로 실행합니다.",
-  "Read the docs": "문서 읽기"
+  "Read the docs": "문서 읽기",
+  "Same pixels everywhere": "어디서나 같은 픽셀",
+  "Tap the video to play or pause.": "영상을 탭해 재생하거나 일시정지하세요.",
+  "Turn the sound on": "소리 켜기",
+  "Turn the sound off": "소리 끄기"
 }
