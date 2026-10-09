@@ -1,4 +1,4 @@
-import { Loader2, Moon, Sun } from "lucide-react";
+import { Loader2 } from "lucide-react";
 /**
  * Application shell: session bootstrap, route guards, router + layout chrome.
  *
@@ -12,8 +12,7 @@ import { AboutDialog, AboutTrigger } from "@/components/AboutDialog";
 import { UserMenu } from "@/components/UserMenu";
 import * as api from "@/lib/api";
 import { useT } from "@/lib/i18n";
-import { iconButtonClass, shellX } from "@/lib/ui";
-import { useTheme } from "@/lib/useTheme";
+import { shellX } from "@/lib/ui";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -181,7 +180,6 @@ function PageLoading() {
 
 function Header() {
   const t = useT();
-  const { theme, toggle } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
   // Runtime details are a self-hoster's business; a hosted instance keeps
   // its infrastructure to itself (the API withholds them too).
@@ -220,19 +218,6 @@ function Header() {
             {t("New project")}
           </Link>
           {!hostedMode && <AboutTrigger onClick={() => setAboutOpen(true)} />}
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
-            title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
-            className={iconButtonClass}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" aria-hidden />
-            ) : (
-              <Moon className="h-4 w-4" aria-hidden />
-            )}
-          </button>
           {/* Identity + sign-out collapsed into one silhouette icon button that
               opens a menu (see UserMenu): shows who you're signed in as and a way
               out, with room to hang future account actions. Follows the non-accent
