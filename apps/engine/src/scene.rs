@@ -391,50 +391,127 @@ fn scaled(style: &Style, k: f32) -> Style {
     }
 }
 
+/// The radius of each of the three box blurs that approximate a Gaussian of `sigma`.
+fn blur_radius(sigma: f32) -> usize {
+    ((sigma * sigma * 4.0 + 1.0).sqrt() / 2.0).round().max(1.0) as usize
+}
+
+/// How far a blur of `sigma` carries ink from where it was: the three boxes' radii.
+fn blur_reach(sigma: f32) -> usize {
+    3 * blur_radius(sigma)
+}
+
 /// Three box blurs approximate a Gaussian of `sigma`, in integer arithmetic on
 /// premultiplied bytes so every target computes the same result.
+///
+/// Only the part of the pixmap that can change is worked on: the ink's bounding box and the
+/// reach of the blur around it. Beyond that the pixels are 0 before and 0 after (a box of
+/// zeros sums to zero), and the pixmap's own edge already counts as 0, so the result is
+/// exactly what blurring every pixel gives.
 fn blur(px: &mut Pixmap, sigma: f32) {
-    let radius = ((sigma * sigma * 4.0 + 1.0).sqrt() / 2.0).round().max(1.0) as usize;
+    let radius = blur_radius(sigma);
     let (w, h) = (px.width() as usize, px.height() as usize);
     let data = px.data_mut();
-    let mut line = vec![0u32; w.max(h) * 4];
-    let span = (2 * radius + 1) as u32;
-    let mut pass = |len: usize, at: &dyn Fn(usize) -> usize| {
-        for i in 0..len {
-            for c in 0..4 {
-                line[i * 4 + c] = u32::from(data[at(i) + c]);
-            }
-        }
-        let mut acc = [0u32; 4];
-        for i in 0..=radius.min(len - 1) {
-            for c in 0..4 {
-                acc[c] += line[i * 4 + c];
-            }
-        }
-        for i in 0..len {
-            for c in 0..4 {
-                data[at(i) + c] = ((acc[c] + span / 2) / span) as u8;
-            }
-            if i + radius + 1 < len {
-                for c in 0..4 {
-                    acc[c] += line[(i + radius + 1) * 4 + c];
-                }
-            }
-            if i >= radius {
-                for c in 0..4 {
-                    acc[c] -= line[(i - radius) * 4 + c];
-                }
-            }
-        }
+    let Some((left, top, right, bottom)) = ink_extent(data, w, h) else {
+        return;
     };
+    let reach = blur_reach(sigma);
+    let x0 = left.saturating_sub(reach);
+    let x1 = (right + reach).min(w);
+    let y0 = top.saturating_sub(reach);
+    let y1 = (bottom + reach).min(h);
+    let (cw, ch) = (x1 - x0, y1 - y0);
+    let span = (2 * radius + 1) as u32;
+    let mut src = vec![0u8; cw.max(ch) * 4];
+    let mut sums = vec![0u32; cw * 4];
+    let mut rows = vec![0u8; cw * ch * 4];
     for _ in 0..3 {
-        for y in 0..h {
-            pass(w, &|x| (y * w + x) * 4);
+        for y in y0..y1 {
+            let row = &mut data[(y * w + x0) * 4..(y * w + x1) * 4];
+            src[..cw * 4].copy_from_slice(row);
+            slide(&src[..cw * 4], row, radius, span);
         }
-        for x in 0..w {
-            pass(h, &|y| (y * w + x) * 4);
+        // Down the columns, a row at a time: the running sums are kept for every column
+        // at once, so memory is read in order.
+        for (r, y) in (y0..y1).enumerate() {
+            rows[r * cw * 4..(r + 1) * cw * 4]
+                .copy_from_slice(&data[(y * w + x0) * 4..(y * w + x1) * 4]);
+        }
+        sums.fill(0);
+        for r in 0..=radius.min(ch - 1) {
+            add_row(&mut sums, &rows[r * cw * 4..(r + 1) * cw * 4]);
+        }
+        for r in 0..ch {
+            let out = &mut data[((y0 + r) * w + x0) * 4..((y0 + r) * w + x1) * 4];
+            for (o, acc) in out.iter_mut().zip(&sums) {
+                *o = ((acc + span / 2) / span) as u8;
+            }
+            if r + radius + 1 < ch {
+                add_row(
+                    &mut sums,
+                    &rows[(r + radius + 1) * cw * 4..(r + radius + 2) * cw * 4],
+                );
+            }
+            if r >= radius {
+                for (acc, v) in sums
+                    .iter_mut()
+                    .zip(&rows[(r - radius) * cw * 4..(r - radius + 1) * cw * 4])
+                {
+                    *acc -= u32::from(*v);
+                }
+            }
         }
     }
+}
+
+fn add_row(sums: &mut [u32], row: &[u8]) {
+    for (acc, v) in sums.iter_mut().zip(row) {
+        *acc += u32::from(*v);
+    }
+}
+
+/// One box blur along a row of RGBA pixels: each output byte is the rounded mean of the
+/// `2 * radius + 1` bytes around it in the same channel, with 0 beyond the ends.
+fn slide(src: &[u8], out: &mut [u8], radius: usize, span: u32) {
+    let len = src.len() / 4;
+    let mut acc = [0u32; 4];
+    for px in src.chunks_exact(4).take(radius.min(len - 1) + 1) {
+        for c in 0..4 {
+            acc[c] += u32::from(px[c]);
+        }
+    }
+    for i in 0..len {
+        for c in 0..4 {
+            out[i * 4 + c] = ((acc[c] + span / 2) / span) as u8;
+        }
+        if i + radius + 1 < len {
+            for c in 0..4 {
+                acc[c] += u32::from(src[(i + radius + 1) * 4 + c]);
+            }
+        }
+        if i >= radius {
+            for c in 0..4 {
+                acc[c] -= u32::from(src[(i - radius) * 4 + c]);
+            }
+        }
+    }
+}
+
+/// The columns and rows holding any non-zero byte: (left, top, right, bottom), the last two
+/// exclusive. None for an empty pixmap.
+fn ink_extent(data: &[u8], w: usize, h: usize) -> Option<(usize, usize, usize, usize)> {
+    let (mut left, mut top, mut right, mut bottom) = (w, h, 0, 0);
+    for (y, row) in data.chunks_exact(w * 4).enumerate().take(h) {
+        let Some(first) = row.chunks_exact(4).position(|p| p != [0; 4]) else {
+            continue;
+        };
+        let last = row.chunks_exact(4).rposition(|p| p != [0; 4])?;
+        left = left.min(first);
+        right = right.max(last + 1);
+        top = top.min(y);
+        bottom = y + 1;
+    }
+    (right > left && bottom > top).then_some((left, top, right, bottom))
 }
 
 /// The watermark as a small picture in white with a soft shadow, placed in the top right corner.
@@ -505,6 +582,11 @@ fn unpremultiply(src: &[u8], out: &mut [u8], r: IntRect, width: u32) {
             let a = u32::from(p[3]);
             if a == 0 {
                 o.fill(0);
+                continue;
+            }
+            if a == 255 {
+                // (p * 255 + 127) / 255 is p.
+                *o = *p;
                 continue;
             }
             for c in 0..3 {
@@ -772,7 +854,14 @@ impl Scene {
         }
     }
 
-    fn draw(&self, canvas: &mut Pixmap, line: &Line, states: &[WordState], guide: Option<Guide>) {
+    fn draw(
+        &self,
+        canvas: &mut Pixmap,
+        (index, line): (usize, &Line),
+        states: &[WordState],
+        guide: Option<Guide>,
+        cache: &mut LayerCache,
+    ) {
         let s = &self.style;
         let pivot = |w: &Placed, st: &WordState| {
             let (cx, cy) = (
@@ -835,69 +924,136 @@ impl Scene {
         let (bx, by) = (line.bounds.x(), line.bounds.y());
         let local = |at: Transform| at.post_translate(-bx as f32, -by as f32);
         let layer = || Pixmap::new(line.bounds.width(), line.bounds.height());
+        // The part of the frame one word's letters can touch, as a pixel box inside the line's:
+        // their moved and scaled outline, room for the stroke and `reach` more for a blur. A word
+        // is composited on its own, and a layer the size of the whole line for each of them,
+        // cleared, drawn and blended, was most of the cost of a fade.
+        let word_box = |path: &Path, w: &Placed, st: &WordState, reach: usize| -> Option<IntRect> {
+            let b = path.bounds();
+            let mut corners = [
+                Point::from_xy(b.left(), b.top()),
+                Point::from_xy(b.right(), b.top()),
+                Point::from_xy(b.left(), b.bottom()),
+                Point::from_xy(b.right(), b.bottom()),
+            ];
+            pivot(w, st).map_points(&mut corners);
+            let (mut x0, mut y0, mut x1, mut y1) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+            for c in corners {
+                (x0, y0, x1, y1) = (x0.min(c.x), y0.min(c.y), x1.max(c.x), y1.max(c.y));
+            }
+            let moved = Rect::from_ltrb(x0, y0, x1, y1)?;
+            let r = pixel_bounds(
+                moved,
+                s.stroke_width + reach as f32 + 2.0,
+                self.width,
+                self.height,
+            );
+            let l = line.bounds;
+            IntRect::from_ltrb(
+                r.x().max(l.x()),
+                r.y().max(l.y()),
+                r.right().min(l.right()),
+                r.bottom().min(l.bottom()),
+            )
+        };
 
         let solid = |c: Rgba| Rgba([c.0[0], c.0[1], c.0[2], 255]);
         let opacity = |c: Rgba| f32::from(c.0[3]) / 255.0;
         let has_offset = s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0;
-        if (s.shadow_blur > 0.0 || has_offset)
-            && let Some(mut shadow) = layer()
-        {
-            // A soft shadow is the letters once, moved and blurred. A hard one is the letters carried
-            // from where they are to the offset, a pixel at a time, so it reads as their outline
-            // extended (an extrusion) and not as a second copy behind them.
-            let steps = if s.shadow_blur > 0.0 {
-                1
-            } else {
-                (s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()).ceil() as usize).clamp(1, 96)
-            };
-            for (w, st) in line.words.iter().zip(states) {
-                if let Some(path) = &w.glyphs {
-                    let c = colour(solid(s.shadow_color), st.opacity);
-                    for step in 1..=steps {
-                        let along = step as f32 / steps as f32;
-                        let at = pivot(w, st)
-                            .post_translate(s.shadow_offset_x * along, s.shadow_offset_y * along);
-                        ink(&mut shadow, path, c, c, local(at));
+        // The shadow and the glow are the letters as they stand: they change when a word's
+        // opacity, size or tilt does, and for most animations they do not change at all while
+        // the line is up, so the finished layer (blur and all) is kept for the next frame.
+        let look: Vec<[u32; 3]> = states
+            .iter()
+            .map(|st| [st.opacity.to_bits(), st.scale.to_bits(), st.tilt.to_bits()])
+            .collect();
+        let key = (index, look);
+        if s.shadow_blur > 0.0 || has_offset {
+            if cache.shadow.as_ref().is_none_or(|(k, _)| *k != key) {
+                cache.shadow = layer().map(|mut shadow| {
+                    // A soft shadow is the letters once, moved and blurred. A hard one is the letters
+                    // carried from where they are to the offset, a pixel at a time, so it reads as
+                    // their outline extended (an extrusion) and not as a second copy behind them.
+                    let steps = if s.shadow_blur > 0.0 {
+                        1
+                    } else {
+                        (s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()).ceil() as usize)
+                            .clamp(1, 96)
+                    };
+                    for (w, st) in line.words.iter().zip(states) {
+                        if let Some(path) = &w.glyphs {
+                            let c = colour(solid(s.shadow_color), st.opacity);
+                            for step in 1..=steps {
+                                let along = step as f32 / steps as f32;
+                                let at = pivot(w, st).post_translate(
+                                    s.shadow_offset_x * along,
+                                    s.shadow_offset_y * along,
+                                );
+                                ink(&mut shadow, path, c, c, local(at));
+                            }
+                        }
                     }
-                }
+                    if s.shadow_blur > 0.0 {
+                        blur(&mut shadow, s.shadow_blur / 2.0);
+                    }
+                    (key.clone(), Trimmed::of(&shadow, (bx, by)))
+                });
             }
-            if s.shadow_blur > 0.0 {
-                blur(&mut shadow, s.shadow_blur / 2.0);
+            if let Some((_, Some(shadow))) = &cache.shadow {
+                let p = PixmapPaint {
+                    opacity: opacity(s.shadow_color),
+                    ..PixmapPaint::default()
+                };
+                canvas.draw_pixmap(
+                    shadow.x,
+                    shadow.y,
+                    shadow.pixmap.as_ref(),
+                    &p,
+                    Transform::identity(),
+                    None,
+                );
             }
-            let p = PixmapPaint {
-                opacity: opacity(s.shadow_color),
-                ..PixmapPaint::default()
-            };
-            canvas.draw_pixmap(bx, by, shadow.as_ref(), &p, Transform::identity(), None);
         }
-        if s.glow_blur > 0.0
-            && let Some(mut halo) = layer()
-        {
-            for (w, st) in line.words.iter().zip(states) {
-                if let Some(path) = &w.glyphs {
-                    let c = colour(solid(s.glow_color), st.opacity);
-                    ink(&mut halo, path, c, c, local(pivot(w, st)));
-                }
+        if s.glow_blur > 0.0 {
+            if cache.halo.as_ref().is_none_or(|(k, _)| *k != key) {
+                cache.halo = layer().map(|mut halo| {
+                    for (w, st) in line.words.iter().zip(states) {
+                        if let Some(path) = &w.glyphs {
+                            let c = colour(solid(s.glow_color), st.opacity);
+                            ink(&mut halo, path, c, c, local(pivot(w, st)));
+                        }
+                    }
+                    blur(&mut halo, s.glow_blur / 2.0);
+                    (key.clone(), Trimmed::of(&halo, (bx, by)))
+                });
             }
-            blur(&mut halo, s.glow_blur / 2.0);
-            let p = PixmapPaint {
-                opacity: opacity(s.glow_color),
-                ..PixmapPaint::default()
-            };
-            for _ in 0..GLOW_PASSES {
-                canvas.draw_pixmap(bx, by, halo.as_ref(), &p, Transform::identity(), None);
+            if let Some((_, Some(halo))) = &cache.halo {
+                let p = PixmapPaint {
+                    opacity: opacity(s.glow_color),
+                    ..PixmapPaint::default()
+                };
+                for _ in 0..GLOW_PASSES {
+                    canvas.draw_pixmap(
+                        halo.x,
+                        halo.y,
+                        halo.pixmap.as_ref(),
+                        &p,
+                        Transform::identity(),
+                        None,
+                    );
+                }
             }
         }
 
         // What of a word's letters shows, as a layer cut off at `x`: from the left edge of the
         // letters to there (typing), or the whole of it with the colour over only that much (filling).
-        let cut = |x: f32| {
-            let mut mask = Mask::new(line.bounds.width(), line.bounds.height())?;
+        let cut = |x: f32, within: IntRect| {
+            let mut mask = Mask::new(within.width(), within.height())?;
             let edge = Rect::from_ltrb(
                 0.0,
                 0.0,
-                (x - bx as f32).max(0.0),
-                line.bounds.height() as f32,
+                (x - within.x() as f32).max(0.0),
+                within.height() as f32,
             )?;
             mask.fill_path(
                 &PathBuilder::from_rect(edge),
@@ -960,18 +1116,30 @@ impl Scene {
                 let (on, at) = (sweep(), pivot(w, st));
                 if st.fill >= 1.0 {
                     ink_with(canvas, path, &on, edge, at);
-                } else if let (Some(mut passed), Some(mut ahead), Some(mask)) =
-                    (layer(), layer(), cut(w.ink_x + w.ink_w * st.fill))
+                } else if let Some(within) = word_box(path, w, st, 0)
+                    && let (Some(mut passed), Some(mut ahead), Some(mask)) = (
+                        Pixmap::new(within.width(), within.height()),
+                        Pixmap::new(within.width(), within.height()),
+                        cut(w.ink_x + w.ink_w * st.fill, within),
+                    )
                 {
-                    ink_with(&mut passed, path, &on, edge, local(at));
+                    let at = at.post_translate(-within.x() as f32, -within.y() as f32);
+                    ink_with(&mut passed, path, &on, edge, at);
                     passed.apply_mask(&mask);
-                    ink(&mut ahead, path, fill, edge, local(at));
+                    ink(&mut ahead, path, fill, edge, at);
                     let mut rest = mask;
                     rest.invert();
                     ahead.apply_mask(&rest);
                     let p = PixmapPaint::default();
                     for half in [&passed, &ahead] {
-                        canvas.draw_pixmap(bx, by, half.as_ref(), &p, Transform::identity(), None);
+                        canvas.draw_pixmap(
+                            within.x(),
+                            within.y(),
+                            half.as_ref(),
+                            &p,
+                            Transform::identity(),
+                            None,
+                        );
                     }
                 }
                 continue;
@@ -982,21 +1150,39 @@ impl Scene {
             }
             if st.opacity >= 1.0 && st.soften <= 0.0 && !(typed && st.fill < 1.0) {
                 ink(canvas, path, fill, edge, pivot(w, st));
-            } else if let Some(mut group) = layer() {
-                // Composited as one group, like CSS opacity, so the stroke under
-                // the fill does not show through a translucent letter.
-                ink(&mut group, path, fill, edge, local(pivot(w, st)));
-                if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill) {
-                    group.apply_mask(&mask);
-                }
-                if st.soften > 0.0 {
-                    blur(&mut group, st.soften * s.font_size * FOCUS_BLUR);
-                }
-                let p = PixmapPaint {
-                    opacity: st.opacity,
-                    ..PixmapPaint::default()
+            } else {
+                let sigma = st.soften * s.font_size * FOCUS_BLUR;
+                let reach = if st.soften > 0.0 {
+                    blur_reach(sigma)
+                } else {
+                    0
                 };
-                canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
+                if let Some(within) = word_box(path, w, st, reach)
+                    && let Some(mut group) = Pixmap::new(within.width(), within.height())
+                {
+                    // Composited as one group, like CSS opacity, so the stroke under
+                    // the fill does not show through a translucent letter.
+                    let at = pivot(w, st).post_translate(-within.x() as f32, -within.y() as f32);
+                    ink(&mut group, path, fill, edge, at);
+                    if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill, within) {
+                        group.apply_mask(&mask);
+                    }
+                    if st.soften > 0.0 {
+                        blur(&mut group, sigma);
+                    }
+                    let p = PixmapPaint {
+                        opacity: st.opacity,
+                        ..PixmapPaint::default()
+                    };
+                    canvas.draw_pixmap(
+                        within.x(),
+                        within.y(),
+                        group.as_ref(),
+                        &p,
+                        Transform::identity(),
+                        None,
+                    );
+                }
             }
             match s.animation {
                 Animation::WordUnderline if st.fill > 0.0 => {
@@ -1042,7 +1228,45 @@ impl Scene {
 
 /// Renders a scene frame by frame into straight-alpha RGBA, touching only the
 /// pixels a caption occupies and skipping frames identical to the last.
+/// The finished shadow and glow layers of the line last drawn, with what they were made from.
+#[derive(Default)]
+struct LayerCache {
+    shadow: Option<(LayerKey, Option<Trimmed>)>,
+    halo: Option<(LayerKey, Option<Trimmed>)>,
+}
+
+/// A finished layer cut down to the box that holds its ink, and where that box goes in the
+/// frame: blending the rest, which is transparent, changes nothing and cost most of the time.
+struct Trimmed {
+    pixmap: Pixmap,
+    x: i32,
+    y: i32,
+}
+
+impl Trimmed {
+    /// `layer`, which sits at `origin` in the frame; None when it holds no ink.
+    fn of(layer: &Pixmap, origin: (i32, i32)) -> Option<Self> {
+        let (w, h) = (layer.width() as usize, layer.height() as usize);
+        let (left, top, right, bottom) = ink_extent(layer.data(), w, h)?;
+        let rect = IntRect::from_xywh(
+            left as i32,
+            top as i32,
+            (right - left) as u32,
+            (bottom - top) as u32,
+        )?;
+        Some(Self {
+            pixmap: layer.clone_rect(rect)?,
+            x: origin.0 + left as i32,
+            y: origin.1 + top as i32,
+        })
+    }
+}
+
+/// A line, and each of its words' opacity, size and tilt: all the layers depend on.
+type LayerKey = (usize, Vec<[u32; 3]>);
+
 pub struct Renderer {
+    layers: LayerCache,
     scene: Scene,
     canvas: Pixmap,
     rgba: Vec<u8>,
@@ -1061,6 +1285,7 @@ impl Renderer {
     pub fn new(scene: Scene) -> Self {
         let (w, h) = (scene.width, scene.height);
         let mut renderer = Self {
+            layers: LayerCache::default(),
             canvas: Pixmap::new(w, h).expect("frame dimensions are validated and non-zero"),
             rgba: vec![0; (w * h * 4) as usize],
             scene,
@@ -1147,7 +1372,8 @@ impl Renderer {
         }
         if let Some(i) = key.0 {
             let line = &self.scene.lines[i];
-            self.scene.draw(&mut self.canvas, line, &key.1, key.2);
+            self.scene
+                .draw(&mut self.canvas, (i, line), &key.1, key.2, &mut self.layers);
             unpremultiply(self.canvas.data(), &mut self.rgba, line.bounds, width);
             self.dirty = Some(line.bounds);
         }
@@ -2085,4 +2311,269 @@ mod tests {
             assert!(r.rgba().iter().any(|&b| b != 0), "{anim} drew nothing");
         }
     }
+
+    /// FNV-1a over a frame's bytes: a fingerprint of every pixel.
+    fn fingerprint(bytes: &[u8], mut h: u64) -> u64 {
+        for &b in bytes {
+            h = (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        h
+    }
+
+    /// The frame times a golden case is drawn at, in order, as a player would reach them.
+    const GOLDEN_TIMES: [f32; 5] = [0.0, 0.25, 0.6, 1.2, 3.2];
+
+    /// Draws a scene through `GOLDEN_TIMES` and returns one fingerprint of all the frames,
+    /// after checking that each frame, drawn on the renderer that kept the last one, is the
+    /// frame a fresh renderer draws at that time: the incremental redraw changes nothing.
+    fn golden(mut input: SceneInput) -> u64 {
+        // Half size: layout is proportional to the frame's height, so this is the same
+        // picture, a quarter of the pixels.
+        (input.width, input.height) = (540, 960);
+        let book = book();
+        let mut kept = Renderer::new(Scene::new(&book, input.clone()));
+        let mut all = 0xcbf2_9ce4_8422_2325;
+        for t in GOLDEN_TIMES {
+            kept.render(t);
+            let mut fresh = Renderer::new(Scene::new(&book, input.clone()));
+            fresh.render(t);
+            assert!(
+                kept.rgba() == fresh.rgba(),
+                "the frame at {t} s differs between an incremental and a fresh redraw"
+            );
+            all = fingerprint(kept.rgba(), all);
+        }
+        all
+    }
+
+    /// Every look the engine can draw, as (name, style patch, animation).
+    fn golden_cases() -> Vec<(String, SceneInput)> {
+        let mut cases = Vec::new();
+        for anim in [
+            "word_highlight",
+            "highlight_box",
+            "word_pop",
+            "word_fade",
+            "word_sweep",
+            "word_underline",
+            "typewriter",
+            "none",
+            "word_bounce",
+            "lyric_focus",
+            "highlight_slide",
+            "line_bar",
+            "stickers",
+        ] {
+            cases.push((anim.to_string(), styled(anim, WORDS, serde_json::json!({}))));
+        }
+        let effects = [
+            (
+                "stroke",
+                serde_json::json!({ "stroke_width": 6, "stroke_color": "#000000" }),
+            ),
+            (
+                "hard_shadow",
+                serde_json::json!({
+                    "stroke_width": 4, "stroke_color": "#000000", "shadow_blur": 0,
+                    "shadow_color": "#000000", "shadow_offset_x": 8, "shadow_offset_y": 10
+                }),
+            ),
+            (
+                "blur_shadow",
+                serde_json::json!({
+                    "shadow_blur": 12, "shadow_color": "#000000CC",
+                    "shadow_offset_x": 4, "shadow_offset_y": 6
+                }),
+            ),
+            (
+                "glow",
+                serde_json::json!({ "glow_blur": 14, "glow_color": "#00FFAA" }),
+            ),
+            (
+                "italic_upper",
+                serde_json::json!({ "italic": true, "text_case": "upper" }),
+            ),
+            (
+                "pill",
+                serde_json::json!({
+                    "background": "pill", "background_color": "#101010", "background_opacity": 0.8
+                }),
+            ),
+        ];
+        for (name, patch) in effects {
+            // On a still look and on two that move every word's opacity or scale.
+            for anim in ["word_highlight", "word_fade", "word_pop"] {
+                cases.push((format!("{anim}+{name}"), styled(anim, WORDS, patch.clone())));
+            }
+        }
+        let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
+        marked.watermark = Some("OpenCaptions".to_string());
+        cases.push(("watermark".to_string(), marked));
+        cases
+    }
+
+    /// The fingerprint of every look at every golden time. A change that is meant to alter the
+    /// picture updates these (`OC_PRINT_GOLDEN=1 cargo test golden -- --nocapture` prints
+    /// them); a change that only makes drawing faster must not touch one.
+    #[test]
+    fn frames_are_byte_for_byte_what_they_were() {
+        let got: Vec<(String, u64)> = golden_cases()
+            .into_iter()
+            .map(|(name, input)| {
+                let h = golden(input);
+                (name, h)
+            })
+            .collect();
+        if std::env::var_os("OC_PRINT_GOLDEN").is_some() {
+            for (name, h) in &got {
+                println!("        (\"{name}\", 0x{h:016x}),");
+            }
+        }
+        let want: &[(&str, u64)] = GOLDEN;
+        let got_names: Vec<&str> = got.iter().map(|(n, _)| n.as_str()).collect();
+        let want_names: Vec<&str> = want.iter().map(|(n, _)| *n).collect();
+        assert_eq!(
+            got_names, want_names,
+            "the looks covered changed: update GOLDEN"
+        );
+        for ((name, h), (_, expected)) in got.iter().zip(want) {
+            assert_eq!(*h, *expected, "{name}: the drawn frames changed");
+        }
+    }
+
+    /// The blur as it was first written: every pixel, every pass, a column at a time.
+    fn blur_everywhere(px: &mut Pixmap, sigma: f32) {
+        let radius = blur_radius(sigma);
+        let (w, h) = (px.width() as usize, px.height() as usize);
+        let data = px.data_mut();
+        let mut line = vec![0u32; w.max(h) * 4];
+        let span = (2 * radius + 1) as u32;
+        let mut pass = |len: usize, at: &dyn Fn(usize) -> usize| {
+            for i in 0..len {
+                for c in 0..4 {
+                    line[i * 4 + c] = u32::from(data[at(i) + c]);
+                }
+            }
+            let mut acc = [0u32; 4];
+            for i in 0..=radius.min(len - 1) {
+                for c in 0..4 {
+                    acc[c] += line[i * 4 + c];
+                }
+            }
+            for i in 0..len {
+                for c in 0..4 {
+                    data[at(i) + c] = ((acc[c] + span / 2) / span) as u8;
+                }
+                if i + radius + 1 < len {
+                    for c in 0..4 {
+                        acc[c] += line[(i + radius + 1) * 4 + c];
+                    }
+                }
+                if i >= radius {
+                    for c in 0..4 {
+                        acc[c] -= line[(i - radius) * 4 + c];
+                    }
+                }
+            }
+        };
+        for _ in 0..3 {
+            for y in 0..h {
+                pass(w, &|x| (y * w + x) * 4);
+            }
+            for x in 0..w {
+                pass(h, &|y| (y * w + x) * 4);
+            }
+        }
+    }
+
+    #[test]
+    fn the_blur_is_exactly_the_blur_of_every_pixel() {
+        let mut seed = 0x9e37_79b9_7f4a_7c15_u64;
+        let mut next = move || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+        // Sizes and sigmas that put ink at the edges, in the middle, nowhere, and so thin
+        // or small that the blur's reach is wider than the pixmap.
+        for (w, h, sigma) in [
+            (64, 40, 0.5),
+            (64, 40, 3.0),
+            (7, 5, 6.0),
+            (1, 1, 2.0),
+            (90, 9, 1.2),
+            (33, 61, 9.0),
+            (120, 80, 14.0),
+        ] {
+            for case in 0..6 {
+                let mut a = Pixmap::new(w, h).unwrap();
+                let (bw, bh) = (
+                    1 + next() as usize % w as usize,
+                    1 + next() as usize % h as usize,
+                );
+                let (ox, oy) = (
+                    next() as usize % (w as usize - bw + 1),
+                    next() as usize % (h as usize - bh + 1),
+                );
+                if case != 0 {
+                    for y in oy..oy + bh {
+                        for x in ox..ox + bw {
+                            if case == 1 || next() % 3 == 0 {
+                                // Premultiplied: no channel above alpha.
+                                let alpha = 1 + (next() % 255) as u8;
+                                let i = (y * w as usize + x) * 4;
+                                for c in 0..3 {
+                                    a.data_mut()[i + c] = (next() % (u64::from(alpha) + 1)) as u8;
+                                }
+                                a.data_mut()[i + 3] = alpha;
+                            }
+                        }
+                    }
+                }
+                let mut b = a.clone();
+                blur(&mut a, sigma);
+                blur_everywhere(&mut b, sigma);
+                assert!(
+                    a.data() == b.data(),
+                    "{w}x{h} sigma {sigma} case {case}: the cropped blur differs"
+                );
+            }
+        }
+    }
+
+    const GOLDEN: &[(&str, u64)] = &[
+        ("word_highlight", 0xf26273125dfc6bf6),
+        ("highlight_box", 0xd7eb38aa81c8867f),
+        ("word_pop", 0xda614d49f56c55f4),
+        ("word_fade", 0x44ed1a5d9329ca4e),
+        ("word_sweep", 0x76a12a545f6c55d2),
+        ("word_underline", 0x814cc3e43cbcd80d),
+        ("typewriter", 0x774d718bfa4e3047),
+        ("none", 0xfe846054695b2f5c),
+        ("word_bounce", 0x9b22e3d1ae08a039),
+        ("lyric_focus", 0xff7ba296ae71a528),
+        ("highlight_slide", 0x88314a33e4a554f9),
+        ("line_bar", 0x6b1e7afb5365656d),
+        ("stickers", 0x5c9bad18f058c1c7),
+        ("word_highlight+stroke", 0xa886db0bfe0007d8),
+        ("word_fade+stroke", 0x100c37255aee5408),
+        ("word_pop+stroke", 0x8bbaecd606e3c7e3),
+        ("word_highlight+hard_shadow", 0x5b74783a76662701),
+        ("word_fade+hard_shadow", 0x475ee9f0778267b3),
+        ("word_pop+hard_shadow", 0x553d16d2b7218cc0),
+        ("word_highlight+blur_shadow", 0x14f08f9b6e36576c),
+        ("word_fade+blur_shadow", 0x06a272810bee5643),
+        ("word_pop+blur_shadow", 0x93eadae460e3a326),
+        ("word_highlight+glow", 0x3ee4161be9e7bfda),
+        ("word_fade+glow", 0x9eb95ca66e0a91ce),
+        ("word_pop+glow", 0xd34e7d3719c1ed61),
+        ("word_highlight+italic_upper", 0xbb710f6a8ee71ff2),
+        ("word_fade+italic_upper", 0xbd182700c42782ba),
+        ("word_pop+italic_upper", 0xd20257c98ebb01a7),
+        ("word_highlight+pill", 0x39e4fe882e5dfa3b),
+        ("word_fade+pill", 0xbcf444e5865cfa9c),
+        ("word_pop+pill", 0xc9c9ca585f268aa2),
+        ("watermark", 0xe22c164ced6e9dd5),
+    ];
 }
