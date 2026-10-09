@@ -24,7 +24,8 @@ Nothing leaves your machine unless you say so.
 - **Animated styles** with presets and a full custom panel: fonts, colours, outline, background,
   animation, position
 - **A real editor**: a timeline to retime captions, fix a misheard word right on the video
-- **Export** a burned-in MP4, WebM or ProRes, or SRT, VTT and JSON
+- **Export** a burned-in MP4, WebM or ProRes, SRT, VTT and JSON, or just the captions on a green
+  screen to key out in your video editor
 - **The preview is the export**: one Rust engine draws both, so what you see is what you get
 - **iPhone and iPad app** with on-device Whisper, no server and no account
 - **Many scripts and languages**: Latin, Cyrillic, Arabic, Hebrew, Indic, Thai, CJK and more, and

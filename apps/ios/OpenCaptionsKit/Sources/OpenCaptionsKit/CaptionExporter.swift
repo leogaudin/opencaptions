@@ -158,7 +158,8 @@ public struct CaptionExporter: Sendable {
         let orientation = VideoOrientation.from(transform)
         let plan = options.plan(for: project)
         // An HDR source made into an SDR video is tone-mapped down before the captions go on.
-        let toneMap = project.hdrTransfer != nil && plan.transfer == nil
+        let toneMap = project.hdrTransfer != nil && plan.transfer == nil && !options.greenScreen
+        let green = CIImage(color: CIColor(red: 0, green: 1, blue: 0, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)!).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
 
         let fallbacks = await engine.ensureFonts(for: transcript, style: project.styleConfig, cache: fonts)
         try await engine.setScene(
@@ -215,8 +216,9 @@ public struct CaptionExporter: Sendable {
             // Each frame holds tens of megabytes of pixel buffers; a pool per frame returns them
             // at once instead of whenever the long-running task next unwinds.
             try autoreleasepool {
-                var picture = CIImage(cvPixelBuffer: decoded).oriented(orientation)
-                if scale < 1 { picture = picture.downscaled(by: scale).cropped(to: bounds) }
+                // Green screen: the frame only sets the timing; the picture is solid green.
+                var picture = options.greenScreen ? green : CIImage(cvPixelBuffer: decoded).oriented(orientation)
+                if scale < 1 && !options.greenScreen { picture = picture.downscaled(by: scale).cropped(to: bounds) }
                 if toneMap { picture = picture.toneMappedToSDR() }
                 var buffer: CVPixelBuffer?
                 CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)

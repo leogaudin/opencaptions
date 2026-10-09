@@ -1283,6 +1283,12 @@ export interface components {
              */
             frame_rate: "original" | "30" | "60";
             /**
+             * Green Screen
+             * @description Captions only, over solid green to key out, with the video's sound
+             * @default false
+             */
+            green_screen: boolean;
+            /**
              * Format
              * @description Format id from the format registry (mp4, mp4-hevc, webm, mov)
              */
@@ -1334,6 +1340,10 @@ export interface components {
              * @default #7C3AED
              */
             highlight_color: string;
+            /** Palette */
+            palette?: string[];
+            /** Highlight Color End */
+            highlight_color_end?: string | null;
             /**
              * Background
              * @default none
@@ -1362,10 +1372,10 @@ export interface components {
             position_y: number;
             /**
              * Animation
-             * @default highlight_box
+             * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers";
             /**
              * Words Per Line
              * @default 3
@@ -2528,6 +2538,8 @@ export interface operations {
                 resolution?: "original" | "2160" | "1080" | "720";
                 /** @description Frames per second, or the source's rate */
                 frame_rate?: "original" | "30" | "60";
+                /** @description Captions only, over solid green to key out, with the video's sound */
+                green_screen?: boolean;
             };
             header?: never;
             path: {

@@ -155,6 +155,9 @@ extension EngineSuites {
                 ExportOptions(resolution: .p720), ExportOptions(keepHDR: false),
             ].map { ExportKey.hash(for: p, options: $0) }
             #expect(Set(names).count == names.count, "each choice is a different file")
+            // Green is never HDR, and is its own file.
+            #expect(ExportOptions(greenScreen: true).plan(for: p) == .init(transfer: nil, codec: .h264))
+            #expect(ExportKey.hash(for: p, options: ExportOptions(greenScreen: true)) != ExportKey.hash(for: p, options: ExportOptions()))
             // A choice that changes nothing for this source does not make another file: codec is moot in HDR.
             #expect(ExportKey.hash(for: p, options: ExportOptions(codec: .h264)) == ExportKey.hash(for: p, options: ExportOptions(codec: .hevc)))
         }

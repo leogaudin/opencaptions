@@ -1,5 +1,5 @@
 /**
- * Size and frame rate for a video download, the choices of the iOS Save sheet:
+ * Size, frame rate and background for a video download, the choices of the iOS Save sheet:
  * only what this video can offer (its own size and rate, and lower ones) is
  * shown, and a row with a single choice is left out. There is no quality
  * choice: a download is made as good as each format does well.
@@ -59,6 +59,19 @@ export function DownloadOptions({ choices }: { choices: ExportChoices }) {
           />
         </Row>
       )}
+      <Row label={t("Background")}>
+        <Segmented
+          options={["video", "green"] as const}
+          value={options.green_screen ? "green" : "video"}
+          onChange={(v) => setDownloadOptions({ green_screen: v === "green" })}
+          label={(v) => (v === "green" ? t("Green screen") : t("Video"))}
+        />
+        {options.green_screen && (
+          <p className="text-[11px] text-muted-foreground">
+            {t("Only the captions, on green, to key out in your editor.")}
+          </p>
+        )}
+      </Row>
     </div>
   );
 }

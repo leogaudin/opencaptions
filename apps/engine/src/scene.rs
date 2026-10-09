@@ -8,8 +8,8 @@
 use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder};
 use rustybuzz::{Face, UnicodeBuffer};
 use tiny_skia::{
-    Color, FillRule, IntRect, LineCap, LineJoin, Mask, Paint, Path, PathBuilder, Pixmap,
-    PixmapPaint, Rect, Stroke, Transform,
+    Color, FillRule, GradientStop, IntRect, LineCap, LineJoin, LinearGradient, Mask, Paint, Path,
+    PathBuilder, Pixmap, PixmapPaint, Point, Rect, SpreadMode, Stroke, Transform,
 };
 
 use crate::fonts::FontBook;
@@ -43,6 +43,23 @@ const GLOW_PASSES: usize = 3;
 const MIN_SAID_S: f32 = 0.08;
 const MAX_TYPING_S: f32 = 0.6;
 /// The watermark is drawn in the application's default face.
+/// How far a bounced word rises past its size, and how far it leans (degrees), left and right in turn.
+const BOUNCE: f32 = 0.28;
+const BOUNCE_TILT: f32 = 5.0;
+/// A label's lean (degrees) and how far the word being said lifts it.
+const STICKER_TILT: f32 = 3.0;
+const STICKER_LIFT: f32 = 0.12;
+/// Lyric focus: how dim and how soft (a share of the font size) a word is before it is said, and
+/// how much larger the word being said is.
+const FOCUS_DIM: f32 = 0.35;
+const FOCUS_BLUR: f32 = 0.05;
+const FOCUS_SCALE: f32 = 0.06;
+/// How long the sliding box takes to cross to the next word.
+const SLIDE_S: f32 = 0.18;
+/// The line bar: its distance under the line and its thickness, as shares of the font size.
+const BAR_GAP: f32 = 0.12;
+const BAR_THICK: f32 = 0.07;
+
 const MARK_FAMILY: &str = "Inter";
 const MARK_OPACITY: f32 = 0.85;
 
@@ -57,6 +74,8 @@ struct Placed {
     baseline: f32,
     /// How many letters (for the typewriter's steps).
     chars: usize,
+    /// Its place in the transcript, which picks its palette colour and which way it leans.
+    index: usize,
 }
 
 struct Line {
@@ -96,10 +115,35 @@ struct WordState {
     box_scale: f32,
     /// How much of the word is filled, underlined or typed, 0 to 1 (the sweeping animations).
     fill: f32,
+    /// How far the word is turned, in degrees.
+    tilt: f32,
+    /// How out of focus the word is, 0 to 1.
+    soften: f32,
+}
+
+impl WordState {
+    /// A word at rest: unmoved, unlit, fully shown.
+    const STEADY: Self = Self {
+        on: 0.0,
+        scale: 1.0,
+        opacity: 1.0,
+        box_scale: 1.0,
+        fill: 0.0,
+        tilt: 0.0,
+        soften: 0.0,
+    };
+}
+
+/// A shape that belongs to the line and not to a word (the sliding box, the bar), at a moment:
+/// its rectangle (x, y, width, height) and how visible it is.
+#[derive(Clone, Copy, PartialEq)]
+struct Guide {
+    rect: [f32; 4],
+    alpha: f32,
 }
 
 #[derive(PartialEq)]
-struct FrameKey(Option<usize>, Vec<WordState>);
+struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>);
 
 struct Sink {
     pb: PathBuilder,
@@ -233,51 +277,44 @@ fn pulse(t: f32, w: &Placed, secs: f32, ease: fn(f32) -> f32) -> f32 {
     at(w.start - LEAD_S) - at(w.end + TRAIL_S)
 }
 
+/// Which way the word at `index` leans: left, then right, in turn.
+fn lean(w: &Placed) -> f32 {
+    if w.index.is_multiple_of(2) { -1.0 } else { 1.0 }
+}
+
+/// How much of the way to a word's start the clock is: 0 before it, 1 from it on, kept after.
+fn reached(t: f32, w: &Placed, secs: f32) -> f32 {
+    ((t - (w.start - LEAD_S)) / secs).clamp(0.0, 1.0)
+}
+
 fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
     let on = pulse(t, w, COLOUR_S, linear);
+    let steady = WordState::STEADY;
     match anim {
-        Animation::WordHighlight => WordState {
-            on,
-            scale: 1.0,
-            opacity: 1.0,
-            box_scale: 1.0,
-            fill: 0.0,
-        },
+        Animation::None | Animation::HighlightSlide => steady,
+        Animation::WordHighlight => WordState { on, ..steady },
         Animation::HighlightBox => {
             // Grows in with the spring as the word starts, and fades out in place.
             let grow = overshoot(((t - (w.start - LEAD_S)) / BOX_S).clamp(0.0, 1.0));
             WordState {
                 on,
-                scale: 1.0,
-                opacity: 1.0,
                 box_scale: BOX_FROM + (1.0 - BOX_FROM) * grow,
-                fill: 0.0,
+                ..steady
             }
         }
         Animation::WordPop => WordState {
             on,
             scale: 1.0 + POP * pulse(t, w, MOTION_S, overshoot),
-            opacity: 1.0,
-            box_scale: 1.0,
-            fill: 0.0,
+            ..steady
         },
         Animation::WordFade => {
             let at = |edge: f32| ((t - edge) / MOTION_S).clamp(0.0, 1.0);
             let opacity = 0.4 + 0.6 * at(w.start - LEAD_S) - 0.3 * at(w.end + TRAIL_S);
-            WordState {
-                on: 0.0,
-                scale: 1.0,
-                opacity,
-                box_scale: 1.0,
-                fill: 0.0,
-            }
+            WordState { opacity, ..steady }
         }
         Animation::WordSweep | Animation::WordUnderline => WordState {
-            on: 0.0,
-            scale: 1.0,
-            opacity: 1.0,
-            box_scale: 1.0,
             fill: ((t - w.start) / (w.end - w.start).max(MIN_SAID_S)).clamp(0.0, 1.0),
+            ..steady
         },
         Animation::Typewriter => {
             // Letter by letter: the steps are whole letters, so a frame only changes when one appears.
@@ -286,12 +323,51 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             let letters = w.chars.max(1) as f32;
             WordState {
                 on,
-                scale: 1.0,
-                opacity: 1.0,
-                box_scale: 1.0,
                 fill: (typed * letters).ceil() / letters,
+                ..steady
             }
         }
+        Animation::WordBounce => {
+            let lift = pulse(t, w, MOTION_S, overshoot);
+            WordState {
+                on,
+                scale: 1.0 + BOUNCE * lift,
+                tilt: lean(w) * BOUNCE_TILT * lift,
+                ..steady
+            }
+        }
+        Animation::LyricFocus => {
+            // Soft and dim until said; the word being said is sharp, bright and larger; a word already
+            // said stays sharp and readable.
+            let lit = pulse(t, w, MOTION_S, linear);
+            let said = reached(t, w, MOTION_S);
+            WordState {
+                on: lit,
+                scale: 1.0 + FOCUS_SCALE * lit,
+                opacity: FOCUS_DIM + (1.0 - FOCUS_DIM) * (0.6 * said + 0.4 * lit),
+                soften: 1.0 - said,
+                ..steady
+            }
+        }
+        Animation::LineBar => WordState {
+            opacity: 0.35 + 0.65 * reached(t, w, MOTION_S),
+            ..steady
+        },
+        Animation::Stickers => WordState {
+            scale: 1.0 + STICKER_LIFT * pulse(t, w, MOTION_S, overshoot),
+            tilt: lean(w) * STICKER_TILT,
+            ..steady
+        },
+    }
+}
+
+/// How far a word grows past its slot at most, as a share of the line: room the line's bounds keep.
+fn lift(anim: Animation) -> f32 {
+    match anim {
+        Animation::WordBounce => BOUNCE,
+        Animation::Stickers => STICKER_LIFT,
+        Animation::LyricFocus => FOCUS_SCALE,
+        _ => POP,
     }
 }
 
@@ -450,7 +526,10 @@ impl Scene {
         let k = height as f32 / REF_HEIGHT;
         let style = scaled(&input.style, k);
         let fs = style.font_size;
-        let boxed = style.animation == Animation::HighlightBox;
+        let boxed = matches!(
+            style.animation,
+            Animation::HighlightBox | Animation::HighlightSlide | Animation::Stickers
+        );
         let (pad_wx, pad_wy) = if boxed {
             (fs * 0.12, fs * 0.06)
         } else {
@@ -493,13 +572,21 @@ impl Scene {
             + style.glow_blur * 3.0
             + style.stroke_width
             + if style.italic { fs * ITALIC_SKEW } else { 0.0 }
+            + match style.animation {
+                // The soft words' blur, a turned word's corners, the bar under the line.
+                Animation::LyricFocus => fs * FOCUS_BLUR * 3.0,
+                Animation::WordBounce | Animation::Stickers => fs * 0.15,
+                Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
+                _ => 0.0,
+            }
             + 2.0;
 
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
         let lines = words
             .chunks(style.words_per_line.max(1) as usize)
-            .map(|chunk| {
+            .enumerate()
+            .map(|(c, chunk)| {
                 let texts: Vec<String> = chunk
                     .iter()
                     .map(|w| match style.text_case {
@@ -571,13 +658,14 @@ impl Scene {
                             ink_w: *adv,
                             baseline: top + baseline_in_row,
                             chars: texts[i].chars().count(),
+                            index: c * style.words_per_line.max(1) as usize + i,
                         });
                         x += slot_w + sep;
                     }
                 }
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
-                let grow = inner_w.max(row_h) * POP;
+                let grow = inner_w.max(row_h) * lift(style.animation);
                 Line {
                     start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
                     end: shifted(chunk.last().map_or(0.0, |w| w.end), offset),
@@ -630,10 +718,51 @@ impl Scene {
                 .map(|w| word_state(self.style.animation, w, t))
                 .collect()
         });
-        FrameKey(line, states)
+        let guide = line.and_then(|i| self.guide(&self.lines[i], t));
+        FrameKey(line, states, guide)
     }
 
-    fn draw(&self, canvas: &mut Pixmap, line: &Line, states: &[WordState]) {
+    /// The sliding box or the line bar at `t`, for the animations that have one.
+    fn guide(&self, line: &Line, t: f32) -> Option<Guide> {
+        match self.style.animation {
+            Animation::HighlightSlide => {
+                let words = &line.words;
+                let at = words.iter().rposition(|w| t >= w.start - LEAD_S)?;
+                let (from, to) = (&words[at.saturating_sub(1)], &words[at]);
+                let travel = overshoot(((t - (to.start - LEAD_S)) / SLIDE_S).clamp(0.0, 1.0));
+                let lerp = |a: f32, b: f32| a + (b - a) * travel;
+                let (a, b) = (from.slot, to.slot);
+                Some(Guide {
+                    rect: [
+                        lerp(a.x(), b.x()),
+                        lerp(a.y(), b.y()),
+                        lerp(a.width(), b.width()),
+                        lerp(a.height(), b.height()),
+                    ],
+                    // It fades in under the first word and is simply there after.
+                    alpha: reached(t, &words[0], COLOUR_S),
+                })
+            }
+            Animation::LineBar => {
+                let done =
+                    ((t - line.start) / (line.end - line.start).max(MIN_SAID_S)).clamp(0.0, 1.0);
+                let a = line.anchor;
+                let fs = self.style.font_size;
+                Some(Guide {
+                    rect: [
+                        a.x(),
+                        a.bottom() + fs * BAR_GAP,
+                        a.width() * done,
+                        (fs * BAR_THICK).max(2.0),
+                    ],
+                    alpha: 1.0,
+                })
+            }
+            _ => None,
+        }
+    }
+
+    fn draw(&self, canvas: &mut Pixmap, line: &Line, states: &[WordState], guide: Option<Guide>) {
         let s = &self.style;
         let pivot = |w: &Placed, st: &WordState| {
             let (cx, cy) = (
@@ -642,16 +771,33 @@ impl Scene {
             );
             Transform::from_translate(-cx, -cy)
                 .post_scale(st.scale, st.scale)
+                .post_rotate(st.tilt)
                 .post_translate(cx, cy)
         };
         if let Some(path) = line.block.and_then(|b| rounded_rect(b, self.block_radius)) {
             let p = paint(colour(s.background_color, s.background_opacity));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
+        if s.animation == Animation::HighlightSlide
+            && let Some(g) = guide
+            && let Some(path) = Rect::from_xywh(g.rect[0], g.rect[1], g.rect[2], g.rect[3])
+                .and_then(|r| rounded_rect(r, self.word_radius))
+        {
+            let p = paint(colour(s.highlight_color, g.alpha));
+            canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
+        }
+        if s.animation == Animation::Stickers {
+            for (w, st) in line.words.iter().zip(states) {
+                if let Some(path) = rounded_rect(w.slot, self.word_radius * 1.6) {
+                    let p = paint(colour(s.accent(w.index), 1.0));
+                    canvas.fill_path(&path, &p, FillRule::Winding, pivot(w, st), None);
+                }
+            }
+        }
         if s.animation == Animation::HighlightBox {
             for (w, st) in line.words.iter().zip(states).filter(|(_, st)| st.on > 0.0) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius) {
-                    let p = paint(colour(s.highlight_color, st.on * st.opacity));
+                    let p = paint(colour(s.accent(w.index), st.on * st.opacity));
                     let grow = WordState {
                         scale: st.box_scale,
                         ..*st
@@ -748,13 +894,42 @@ impl Scene {
             );
             Some(mask)
         };
+        // What a sweep paints with: the word's palette colour, or a run from the highlight colour to
+        // `highlight_color_end` across the whole line, so each word is a different part of it.
+        let sweep = |index: usize| -> Paint<'static> {
+            let ends = s.highlight_color_end.and_then(|end| {
+                LinearGradient::new(
+                    Point::from_xy(line.anchor.x(), 0.0),
+                    Point::from_xy(line.anchor.right().max(line.anchor.x() + 1.0), 0.0),
+                    vec![
+                        GradientStop::new(0.0, colour(s.highlight_color, 1.0)),
+                        GradientStop::new(1.0, colour(end, 1.0)),
+                    ],
+                    SpreadMode::Pad,
+                    Transform::identity(),
+                )
+            });
+            match ends {
+                Some(shader) => Paint {
+                    shader,
+                    anti_alias: true,
+                    ..Paint::default()
+                },
+                None => paint(colour(s.accent(index), 1.0)),
+            }
+        };
         for (w, st) in line.words.iter().zip(states) {
             let Some(path) = &w.glyphs else { continue };
             let fill = match s.animation {
-                Animation::WordHighlight | Animation::WordPop => {
-                    mix(s.text_color, s.highlight_color, st.on)
-                }
-                Animation::HighlightBox
+                Animation::WordHighlight
+                | Animation::WordPop
+                | Animation::WordBounce
+                | Animation::LyricFocus => mix(s.text_color, s.accent(w.index), st.on),
+                Animation::None
+                | Animation::HighlightBox
+                | Animation::HighlightSlide
+                | Animation::LineBar
+                | Animation::Stickers
                 | Animation::WordFade
                 | Animation::WordSweep
                 | Animation::WordUnderline
@@ -765,7 +940,7 @@ impl Scene {
             if typed && st.fill <= 0.0 {
                 continue;
             }
-            if st.opacity >= 1.0 && !(typed && st.fill < 1.0) {
+            if st.opacity >= 1.0 && st.soften <= 0.0 && !(typed && st.fill < 1.0) {
                 ink(canvas, path, fill, edge, pivot(w, st));
             } else if let Some(mut group) = layer() {
                 // Composited as one group, like CSS opacity, so the stroke under
@@ -773,6 +948,9 @@ impl Scene {
                 ink(&mut group, path, fill, edge, local(pivot(w, st)));
                 if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill) {
                     group.apply_mask(&mask);
+                }
+                if st.soften > 0.0 {
+                    blur(&mut group, st.soften * s.font_size * FOCUS_BLUR);
                 }
                 let p = PixmapPaint {
                     opacity: st.opacity,
@@ -783,19 +961,13 @@ impl Scene {
             match s.animation {
                 Animation::WordSweep if st.fill > 0.0 => {
                     // The colour over the letters up to the sweep, the outline left as it is.
-                    let on = colour(s.highlight_color, 1.0);
+                    let on = sweep(w.index);
                     if st.fill >= 1.0 {
-                        canvas.fill_path(path, &paint(on), FillRule::Winding, pivot(w, st), None);
+                        canvas.fill_path(path, &on, FillRule::Winding, pivot(w, st), None);
                     } else if let (Some(mut group), Some(mask)) =
                         (layer(), cut(w.ink_x + w.ink_w * st.fill))
                     {
-                        group.fill_path(
-                            path,
-                            &paint(on),
-                            FillRule::Winding,
-                            local(pivot(w, st)),
-                            None,
-                        );
+                        group.fill_path(path, &on, FillRule::Winding, local(pivot(w, st)), None);
                         group.apply_mask(&mask);
                         let p = PixmapPaint::default();
                         canvas.draw_pixmap(bx, by, group.as_ref(), &p, Transform::identity(), None);
@@ -810,7 +982,7 @@ impl Scene {
                         thick,
                     );
                     if let Some(path) = rule.and_then(|r| rounded_rect(r, thick / 2.0)) {
-                        let p = paint(colour(s.highlight_color, 1.0));
+                        let p = paint(colour(s.accent(w.index), 1.0));
                         canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
                     }
                 }
@@ -830,6 +1002,14 @@ impl Scene {
                 }
                 _ => {}
             }
+        }
+        if s.animation == Animation::LineBar
+            && let Some(g) = guide
+            && let Some(path) = Rect::from_xywh(g.rect[0], g.rect[1], g.rect[2], g.rect[3])
+                .and_then(|r| rounded_rect(r, g.rect[3] / 2.0))
+        {
+            let p = paint(colour(s.highlight_color, g.alpha));
+            canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
     }
 }
@@ -941,7 +1121,7 @@ impl Renderer {
         }
         if let Some(i) = key.0 {
             let line = &self.scene.lines[i];
-            self.scene.draw(&mut self.canvas, line, &key.1);
+            self.scene.draw(&mut self.canvas, line, &key.1, key.2);
             unpremultiply(self.canvas.data(), &mut self.rgba, line.bounds, width);
             self.dirty = Some(line.bounds);
         }
@@ -1610,8 +1790,128 @@ mod tests {
     }
 
     #[test]
+    fn a_bounced_word_rises_past_its_size_and_leans_left_then_right() {
+        let scene = Scene::new(&book(), input("word_bounce", WORDS, 3));
+        let [one, two] = [&scene.lines[0].words[0], &scene.lines[0].words[1]];
+        let (a, b) = (
+            word_state(Animation::WordBounce, one, 0.25),
+            word_state(Animation::WordBounce, two, 0.75),
+        );
+        assert!(a.scale > 1.2 && b.scale > 1.2, "both are larger while said");
+        assert!(a.tilt < 0.0 && b.tilt > 0.0, "and lean opposite ways");
+        assert_eq!(
+            word_state(Animation::WordBounce, two, 0.0).tilt,
+            0.0,
+            "not before"
+        );
+    }
+
+    #[test]
+    fn lyric_focus_is_soft_until_said_sharp_while_said_and_readable_after() {
+        let scene = Scene::new(&book(), input("lyric_focus", WORDS, 3));
+        let w = &scene.lines[0].words[1];
+        let at = |t: f32| word_state(Animation::LyricFocus, w, t);
+        let (before, now, after) = (at(0.2), at(0.75), at(1.4));
+        assert_eq!((before.soften, before.opacity), (1.0, FOCUS_DIM));
+        assert_eq!((now.soften, now.opacity), (0.0, 1.0));
+        assert!(now.scale > 1.0);
+        assert_eq!(after.soften, 0.0, "a word that was said stays in focus");
+        assert!(after.opacity > FOCUS_DIM && after.opacity < 1.0);
+    }
+
+    #[test]
+    fn the_box_slides_from_word_to_word_and_rests_on_the_one_being_said() {
+        let scene = Scene::new(&book(), input("highlight_slide", WORDS, 3));
+        let line = &scene.lines[0];
+        assert!(
+            scene.guide(line, 0.0 - 0.1).is_none(),
+            "no box before the first word"
+        );
+        let on = |i: usize| line.words[i].slot.x();
+        assert_eq!(scene.guide(line, 0.25).unwrap().rect[0], on(0));
+        assert!((scene.guide(line, 0.9).unwrap().rect[0] - on(1)).abs() < 0.01);
+        let mid = scene
+            .guide(line, 0.5 - LEAD_S + SLIDE_S / 4.0)
+            .unwrap()
+            .rect[0];
+        assert!(
+            mid > on(0) && mid < on(1),
+            "between the two while it travels"
+        );
+    }
+
+    #[test]
+    fn the_line_bar_fills_as_the_line_is_spoken() {
+        let scene = Scene::new(&book(), input("line_bar", WORDS, 3));
+        let line = &scene.lines[0];
+        let width = |t: f32| scene.guide(line, t).unwrap().rect[2];
+        assert_eq!(width(0.0), 0.0);
+        assert!(
+            (width(0.75) - line.anchor.width() * 0.5).abs() < 1.0,
+            "half way"
+        );
+        assert!(
+            (width(1.5) - line.anchor.width()).abs() < 0.01,
+            "and full at the end"
+        );
+        assert!(scene.guide(&scene.lines[0], 0.5).unwrap().rect[1] > line.anchor.bottom());
+    }
+
+    #[test]
+    fn a_palette_is_taken_in_turn_and_falls_back_to_the_highlight() {
+        let mut style = input("word_pop", WORDS, 3).style;
+        assert_eq!(style.accent(5), style.highlight_color, "no palette");
+        let (green, pink) = (Rgba([0, 255, 0, 255]), Rgba([255, 0, 255, 255]));
+        style.palette = vec![green, pink];
+        assert_eq!([style.accent(0), style.accent(1)], [green, pink]);
+        assert_eq!(style.accent(3), pink, "it wraps");
+    }
+
+    #[test]
+    fn a_gradient_sweep_runs_from_one_colour_to_the_other_across_the_line() {
+        let words = &[("aaaa", 0.0, 0.5), ("bbbb", 0.5, 1.0)];
+        let patch = serde_json::json!({
+            "highlight_color": "#FF0000", "highlight_color_end": "#0000FF", "font_size": 200
+        });
+        let mut r = Renderer::new(Scene::new(&book(), styled("word_sweep", words, patch)));
+        r.render(1.0);
+        // The leftmost and rightmost fully inked pixels: the two ends of the line.
+        let solid = |px: &&[u8]| px[3] == 255;
+        let at = |i: usize| i % 1080;
+        let pixels: Vec<&[u8]> = r.rgba().chunks(4).collect();
+        let first = pixels
+            .iter()
+            .enumerate()
+            .filter(|(_, px)| solid(px))
+            .min_by_key(|(i, _)| at(*i));
+        let last = pixels
+            .iter()
+            .enumerate()
+            .filter(|(_, px)| solid(px))
+            .max_by_key(|(i, _)| at(*i));
+        let (left, right) = (first.unwrap().1, last.unwrap().1);
+        let (left, right) = ((left[0], left[2]), (right[0], right[2]));
+        assert!(left.0 > left.1, "the start of the line is red");
+        assert!(right.1 > right.0, "and its end is blue");
+    }
+
+    #[test]
     fn every_animation_draws() {
-        for anim in ["word_highlight", "highlight_box", "word_pop", "word_fade"] {
+        for anim in [
+            "word_highlight",
+            "highlight_box",
+            "word_pop",
+            "word_fade",
+            "word_sweep",
+            "word_underline",
+            "typewriter",
+            "none",
+            "word_bounce",
+            "lyric_focus",
+            "highlight_slide",
+            "line_bar",
+            "stickers",
+        ] {
             let mut r = Renderer::new(Scene::new(&book(), input(anim, WORDS, 3)));
             r.render(0.6);
             assert!(r.rgba().iter().any(|&b| b != 0), "{anim} drew nothing");

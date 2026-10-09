@@ -116,6 +116,7 @@ def compute_render_hash(
     width: int,
     height: int,
     fps: int,
+    green_screen: bool = False,
 ) -> str:
     """Digest of every render-affecting input, as 16 hex characters.
 
@@ -134,6 +135,7 @@ def compute_render_hash(
             "width": width,
             "height": height,
             "fps": fps,
+            "green_screen": green_screen,
             "encoder": encoder,
         },
         sort_keys=True,
@@ -191,6 +193,7 @@ class RenderInputs:
     width: int
     height: int
     fps: int
+    green_screen: bool = False
 
     def hash_for(self, format_id: str) -> str:
         return compute_render_hash(
@@ -201,6 +204,7 @@ class RenderInputs:
             width=self.width,
             height=self.height,
             fps=self.fps,
+            green_screen=self.green_screen,
         )
 
     def object_key_for(self, project_id: str, fmt: RenderFormat) -> str:
@@ -266,4 +270,5 @@ def resolve_render_inputs(
         width=width,
         height=height,
         fps=int(round(fps)),
+        green_screen=options.green_screen,
     )

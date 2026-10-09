@@ -65,16 +65,19 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     public var frameRate: FrameRate
     /// A mark drawn in a corner of the video (a free tier's); nil for none.
     public var watermark: String?
+    /// Only the captions, drawn over solid green to key out in an editor, with the video's sound.
+    public var greenScreen: Bool
 
     public init(
         codec: Codec = .h264, resolution: Resolution = .original, keepHDR: Bool = true,
-        frameRate: FrameRate = .original, watermark: String? = nil
+        frameRate: FrameRate = .original, watermark: String? = nil, greenScreen: Bool = false
     ) {
         self.codec = codec
         self.resolution = resolution
         self.keepHDR = keepHDR
         self.frameRate = frameRate
         self.watermark = watermark
+        self.greenScreen = greenScreen
     }
 
     /// The saved video's frame rate for a source at `source`.
@@ -85,14 +88,14 @@ public struct ExportOptions: Codable, Equatable, Sendable {
     public static let standard = ExportOptions()
 
     /// How a project is encoded under these options: an HDR source kept as HDR is 10-bit HEVC, since
-    /// H.264 cannot carry it; anything else is SDR in the chosen codec.
+    /// H.264 cannot carry it; anything else (and green, which is never HDR) is SDR in the chosen codec.
     public struct Plan: Equatable, Sendable {
         public var transfer: HDRTransfer?
         public var codec: Codec
     }
 
     public func plan(for project: Project) -> Plan {
-        if let transfer = project.hdrTransfer, keepHDR { return Plan(transfer: transfer, codec: .hevc) }
+        if let transfer = project.hdrTransfer, keepHDR, !greenScreen { return Plan(transfer: transfer, codec: .hevc) }
         return Plan(transfer: nil, codec: codec)
     }
 
@@ -134,6 +137,6 @@ public struct ExportOptions: Codable, Equatable, Sendable {
         case (nil, .h264): "h264"
         }
         let rate = frameRate == .original ? "" : "-\(frameRate.rawValue)"
-        return "\(format)-\(resolution.rawValue)\(rate)\(watermark == nil ? "" : "-marked")"
+        return "\(format)-\(resolution.rawValue)\(rate)\(watermark == nil ? "" : "-marked")\(greenScreen ? "-green" : "")"
     }
 }

@@ -144,7 +144,7 @@ export function PresetSwatch({ config }: { config: StyleConfig }) {
         }}
       >
         <span style={{ color: config.text_color }}>A</span>
-        {config.animation === "highlight_box" ? (
+        {config.animation === "highlight_box" || config.animation === "highlight_slide" ? (
           // Marked by a box, not a colour, so the swatch must show a box too.
           <span
             style={{

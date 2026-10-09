@@ -1,7 +1,7 @@
 """Pydantic schemas for API I/O. Single source of truth for OpenAPI codegen."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -142,6 +142,13 @@ class StyleConfig(BaseModel):
     font_size: int = Field(default=64, ge=12, le=300)
     text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
     highlight_color: str = Field(default="#7C3AED", pattern=r"^#[0-9A-Fa-f]{6}$")
+    # Colours the successive words take, in turn, where the animation paints in the highlight
+    # colour (the lit word, a box, a label); empty means the highlight colour for every word.
+    palette: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
+        default_factory=list, max_length=8
+    )
+    # Where a sweep's colour ends: it runs from highlight_color to this across the line.
+    highlight_color_end: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
     background: Literal["none", "solid", "pill"] = "none"
     background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
     background_opacity: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -157,7 +164,13 @@ class StyleConfig(BaseModel):
         "word_sweep",
         "word_underline",
         "typewriter",
-    ] = "highlight_box"
+        "none",
+        "word_bounce",
+        "lyric_focus",
+        "highlight_slide",
+        "line_bar",
+        "stickers",
+    ] = "highlight_slide"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.
     word_spacing: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -298,6 +311,10 @@ class RenderOptions(BaseModel):
     )
     frame_rate: ExportFrameRate = Field(
         default="original", description="Frames per second, or the source's rate"
+    )
+    green_screen: bool = Field(
+        default=False,
+        description="Captions only, over solid green to key out, with the video's sound",
     )
 
 

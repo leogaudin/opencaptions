@@ -142,6 +142,7 @@ def render_video(  # noqa: C901
             # ProRes takes a profile instead of a CRF; the engine reads whichever is set.
             "crf": fmt.crf,
             "pro_res_profile": fmt.pro_res_profile,
+            "green_screen": inputs.green_screen,
             # Lets the engine push live progress back while it renders.
             "progress_url": f"http://api:8000/api/v1/jobs/{job_id}/progress",
             # Per-job token authorizing that callback: the engine is a service

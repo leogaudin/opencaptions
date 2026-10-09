@@ -4,7 +4,7 @@
  *
  * The first, Purple Punch, is the application default and equals the API's `StyleConfig()`.
  * The rest are looks of the kind short-form editors offer (a boxed word, a coral pill, a
- * monospace terminal...). Presets using `highlight_box` mark the
+ * monospace terminal...). Presets using `highlight_box` or `highlight_slide` mark the
  * active word with a filled box instead of recolouring it, so every word stays legible
  * at full contrast.
  */

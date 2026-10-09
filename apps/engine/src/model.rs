@@ -51,6 +51,18 @@ pub enum Animation {
     WordUnderline,
     /// Each word is typed out letter by letter as it is said, with a cursor at the end.
     Typewriter,
+    /// Nothing moves: the line is shown as it is, for subtitles.
+    None,
+    /// Each word jumps up past its size as it is said and leans a little, left and right in turn.
+    WordBounce,
+    /// The line is dim and soft; the word being said comes into focus, bright and a little larger.
+    LyricFocus,
+    /// One box that slides from word to word as they are said.
+    HighlightSlide,
+    /// Words light up as they are said, and a thin bar under the line fills as the line is spoken.
+    LineBar,
+    /// Every word sits on its own label, tilted left and right in turn; the word being said lifts.
+    Stickers,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
@@ -59,6 +71,16 @@ pub enum TextCase {
     #[default]
     None,
     Upper,
+}
+
+impl Style {
+    /// The colour the `index`th word of the transcript is painted in.
+    pub fn accent(&self, index: usize) -> Rgba {
+        self.palette
+            .get(index % self.palette.len().max(1))
+            .copied()
+            .unwrap_or(self.highlight_color)
+    }
 }
 
 fn white() -> Rgba {
@@ -71,6 +93,13 @@ pub struct Style {
     pub font_size: f32,
     pub text_color: Rgba,
     pub highlight_color: Rgba,
+    /// Colours taken in turn by successive words for what the animation paints in the highlight
+    /// colour (the lit word, a box, a label). Empty means the highlight colour for every word.
+    #[serde(default)]
+    pub palette: Vec<Rgba>,
+    /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
+    #[serde(default)]
+    pub highlight_color_end: Option<Rgba>,
     pub background: Background,
     pub background_color: Rgba,
     pub background_opacity: f32,

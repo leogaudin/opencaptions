@@ -60,17 +60,52 @@ test.describe("Download options", () => {
       format: "mp4",
       resolution: "720",
       frame_rate: "60",
+      green_screen: false,
     });
     const query = new URL(download.url()).searchParams;
     expect(Object.fromEntries(query)).toEqual({
       resolution: "720",
       frame_rate: "60",
+      green_screen: "false",
     });
 
     await page.reload();
     await page.getByTestId("download-open").click();
     await expect(
       page.getByTestId("download-options").getByRole("button", { name: "720p" }),
+    ).toHaveClass(/bg-primary/);
+  });
+
+  test("a green screen is asked for with the download and is not remembered", async ({ page }) => {
+    const requested: Record<string, unknown>[] = [];
+    await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/download`, async (route) => {
+      requested.push(route.request().postDataJSON() as Record<string, unknown>);
+      await route.fulfill({
+        json: { ready: true, download_url: `/api/v1/projects/${MOCK_PROJECT_ID}/download/mp4` },
+      });
+    });
+    await page.route(`**/api/v1/projects/${MOCK_PROJECT_ID}/download/mp4?*`, (route) =>
+      route.fulfill({ body: "video", contentType: "video/mp4" }),
+    );
+
+    await page.goto(`/projects/${MOCK_PROJECT_ID}`);
+    await page.getByTestId("download-open").click();
+    const options = page.getByTestId("download-options");
+    await options.getByRole("button", { name: "Green screen" }).click();
+    await expect(options.getByText(/key out in your editor/)).toBeVisible();
+    const saved = page.waitForEvent("download");
+    await page.getByRole("radio", { name: /MP4 \(H\.264\)/ }).check({ force: true });
+    await page.getByTestId("download-confirm").click();
+    const download = await saved;
+
+    expect(requested[0]?.green_screen).toBe(true);
+    expect(new URL(download.url()).searchParams.get("green_screen")).toBe("true");
+
+    // Not remembered: a later save must not be captions only by surprise.
+    await page.reload();
+    await page.getByTestId("download-open").click();
+    await expect(
+      page.getByTestId("download-options").getByRole("button", { name: "Video" }),
     ).toHaveClass(/bg-primary/);
   });
 });

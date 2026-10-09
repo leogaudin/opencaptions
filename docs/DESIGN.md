@@ -41,13 +41,15 @@ the two scale on different hardware.
    every transcript edit is one of the engine's (see below). Words are edited on
    the preview, captions are retimed on the timeline, and nothing else changes
    the transcript.
-4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate}`
+4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate, green_screen}`
    computes a hash of everything that decides the output (transcript, timing
    offset, style, format and its encoder settings, size, fps). The options are
    the iOS Save sheet's: a short side (2160, 1080, 720), which only ever lowers
    the source's, and a frame rate (30 or 60, the cap), which may be above the
    source's: the picture's frames repeat, but the captions are drawn at every
-   output frame, so their animation is smoother. There is no quality choice: a download is a second encoding of the
+   output frame, so their animation is smoother. `green_screen` draws the captions over solid
+   chroma green instead of the picture, with the video's sound, to key out in an editor (it is part
+   of the hash, and the engine skips decoding the video's picture). There is no quality choice: a download is a second encoding of the
    source, so each format is made as good as its codec does well (a CRF in
    `render_formats.py`; ProRes takes a profile), and the size is chosen with the
    resolution and frame rate. `resolve_render_inputs` alone turns options into
@@ -56,8 +58,8 @@ the two scale on different hardware.
    render job is queued and the SPA polls the job. The cache needs no database
    state: readiness is an existence check. `GET /projects/{id}/exports` lists
    the sizes and rates a project offers. The web editor has one Download button
-   that opens a dialog (format, size, frame rate), as the iOS Save sheet does.
-5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…`.
+   that opens a dialog (format, size, frame rate, background), as the iOS Save sheet does.
+5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…&green_screen=…`.
    Subtitles (SRT, VTT, JSON) are generated from the transcript, without rendering.
 
 ## The caption engine
@@ -129,19 +131,30 @@ Outline, Timing) so that no page is long. The Background and Animation tabs show
 as tiles drawn the same way, in the caption's current look (a background with no opacity is
 given a visible one when chosen). On iOS the style sheet stops at a little over half the
 screen, so the video stays in view while it is edited.
-**What a style can do.** All of it is the engine's, so the preview and the export agree. Seven
+**What a style can do.** All of it is the engine's, so the preview and the export agree. Thirteen
 animations: the word highlighted by colour (`word_highlight`), by a box (`highlight_box`), popped
 (`word_pop`), faded in (`word_fade`), filled left to right as it is said (`word_sweep`, karaoke),
 underlined as it is said (`word_underline`) and typed out letter by letter with a cursor
-(`typewriter`; the steps are whole letters, so a frame changes only when one appears). Beside
-them: an outline, a shadow with a blur and an offset (a shadow with no blur is solid and is drawn as an
+(`typewriter`; the steps are whole letters, so a frame changes only when one appears), none
+(`none`: subtitles that do not move), bounced up past their size with a lean, left and right in turn
+(`word_bounce`), brought into focus out of a dim blur (`lyric_focus`, the words already said stay sharp),
+lit by one box that slides from word to word (`highlight_slide`), lit with a bar under the line that
+fills as the line is spoken (`line_bar`) and each set on its own tilted label (`stickers`). The
+motion is eased with the engine's own arithmetic, never a platform sine, so the two builds still
+agree to the byte. The line's bar and the sliding box are one shape per line (`Guide`), part of the
+frame's identity, so a frame is redrawn when they move. Beside them: an outline, a shadow with a blur and an offset (a shadow with no blur is solid and is drawn as an
 extrusion, the letters carried from where they are to the offset a pixel at a time, so it reads
 as their outline continued), a glow (a blurred halo in its own colour, laid down three times to read as
 light), upper case (drawn, never stored: the transcript is untouched) and italic (the upright face sheared
 by about 11 degrees, so any font leans and no italic file has to be fetched). Every field after
 `shadow_color` is optional with a default of "off", so a style saved before it existed opens unchanged.
-The built-in presets that use them are Karaoke, Bold (Montserrat ExtraBold in capitals, a thick black outline carried out into a hard black extrusion), Neon,
-Typewriter, Handwritten and Elegant.
+Two fields exist for presets and have no control: `palette`, colours the successive words take where
+the animation paints in the highlight colour (the lit word, a box, a label), and `highlight_color_end`,
+which makes a sweep run as a gradient from the highlight colour to it across the line.
+The built-in presets that use them are Purple Punch (a box that slides between words), Karaoke, Bold
+(Montserrat Black, bundled with the engine, in capitals with a thick black outline carried out into a
+hard black extrusion; the lit word takes yellow, green and red in turn), Boom, Lyric, Documentary,
+Gradient, Stickers, Subtitle, Neon, Typewriter, Handwritten and Elegant.
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.
@@ -409,7 +422,9 @@ the same.
 third smaller), the size (original, or 4K, 1080p, 720p by the short side, larger than the source too:
 a 144p video can be saved at 4K, the picture scaled up and the captions drawn sharp at the size saved), the frame rate (the source's, or 30 or 60: a lower one keeps evenly spaced frames, a higher
 one repeats them while the captions are drawn at each, so they animate smoother) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
-ordinary SDR video before the captions go on. The choice is remembered, and an estimate of the
+ordinary SDR video before the captions go on, and the background (the video, or a green screen: only the
+captions over solid green, always SDR, for an editor to key out; it is not remembered, so a later save is
+not captions only by surprise). The other choices are remembered, and an estimate of the
 size is shown (from bits per pixel, with HEVC needing two thirds of H.264's; there is no quality
 choice, a saved video is made as good as it can be), and when it would not fit in the free space Save is disabled with a message saying so. Everything the options decide is part of the file's name (`ExportKey`).
 

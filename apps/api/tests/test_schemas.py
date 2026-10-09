@@ -44,7 +44,7 @@ def test_style_config_defaults() -> None:
     assert s.font == "Poppins"
     assert s.position_x == 0.5
     assert s.position_y == 0.84
-    assert s.animation == "highlight_box"
+    assert s.animation == "highlight_slide"
     assert s.words_per_line == 3
 
 
@@ -62,9 +62,33 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     s = StyleConfig()
     assert (s.shadow_offset_x, s.shadow_offset_y, s.glow_blur) == (0, 0, 0)
     assert (s.text_case, s.italic) == ("none", False)
-    for animation in ("word_sweep", "word_underline", "typewriter"):
+    for animation in (
+        "word_sweep",
+        "word_underline",
+        "typewriter",
+        "none",
+        "word_bounce",
+        "lyric_focus",
+        "highlight_slide",
+        "line_bar",
+        "stickers",
+    ):
         assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
     for bad in ({"shadow_offset_x": 21}, {"glow_blur": 41}, {"text_case": "lower"}):
+        with pytest.raises(ValidationError):
+            StyleConfig(**bad)  # type: ignore[arg-type]
+
+
+def test_style_config_colour_lists_default_to_off_and_are_validated() -> None:
+    s = StyleConfig()
+    assert (s.palette, s.highlight_color_end) == ([], None)
+    ok = StyleConfig(palette=["#FFE600", "#22E06B"], highlight_color_end="#A855F7")
+    assert ok.palette == ["#FFE600", "#22E06B"]
+    for bad in (
+        {"palette": ["yellow"]},
+        {"palette": ["#FFFFFF"] * 9},
+        {"highlight_color_end": "red"},
+    ):
         with pytest.raises(ValidationError):
             StyleConfig(**bad)  # type: ignore[arg-type]
 

@@ -12,6 +12,7 @@ struct SaveOptionsSheet: View {
     @AppStorage("export.resolution") private var resolution = ExportOptions.Resolution.original
     @AppStorage("export.keepHDR") private var keepHDR = true
     @AppStorage("export.fps") private var frameRate = ExportOptions.FrameRate.original
+    @State private var greenScreen = false
     @State private var contentHeight: CGFloat = 520
     @State private var freeBytes = DiskSpace.available()
     @State private var showPro = false
@@ -20,7 +21,7 @@ struct SaveOptionsSheet: View {
 
     private var isHDR: Bool { project.hdrTransfer != nil }
     private var options: ExportOptions {
-        ExportOptions(codec: codec, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate)
+        ExportOptions(codec: codec, resolution: resolution, keepHDR: keepHDR, frameRate: frameRate, greenScreen: greenScreen)
     }
 
     /// The sizes this video can be saved at: its own, and every other, larger ones too.
@@ -32,10 +33,11 @@ struct SaveOptionsSheet: View {
         VStack(spacing: 18) {
             Text("Save video").font(.system(size: 22, weight: .heavy))
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if isHDR { hdrSection }
-            if !isHDR || !keepHDR { formatSection }
+            if isHDR && !greenScreen { hdrSection }
+            if !isHDR || !keepHDR || greenScreen { formatSection }
             sizeSection
             if rates.count > 1 { frameRateSection }
+            backgroundSection
             estimate
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -66,6 +68,12 @@ struct SaveOptionsSheet: View {
             SegmentedPills(
                 options: [true, false], selection: $keepHDR, label: { $0 ? "Keep HDR" : "Standard (SDR)" },
                 locked: { $0 && tier.locksHDR(for: project) }, onLocked: { showPro = true })
+        }
+    }
+
+    private var backgroundSection: some View {
+        section("Background", note: greenScreen ? "Only the captions, on green, to key out in your editor." : "The video, with the captions on it.") {
+            SegmentedPills(options: [false, true], selection: $greenScreen, label: { $0 ? "Green screen" : "Video" })
         }
     }
 

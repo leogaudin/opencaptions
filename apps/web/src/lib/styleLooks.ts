@@ -14,6 +14,12 @@ export const ANIMATIONS: readonly Animation[] = [
   "word_sweep",
   "word_underline",
   "typewriter",
+  "none",
+  "word_bounce",
+  "lyric_focus",
+  "highlight_slide",
+  "line_bar",
+  "stickers",
 ];
 
 export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
@@ -30,6 +36,12 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   word_sweep: msg("Karaoke"),
   word_underline: msg("Underline"),
   typewriter: msg("Typewriter"),
+  none: msg("None"),
+  word_bounce: msg("Bounce"),
+  lyric_focus: msg("Focus"),
+  highlight_slide: msg("Slide"),
+  line_bar: msg("Progress"),
+  stickers: msg("Stickers"),
 };
 
 export const CASES: readonly StyleConfig["text_case"][] = ["none", "upper"];

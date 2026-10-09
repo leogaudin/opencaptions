@@ -250,6 +250,12 @@ struct StylePanel: View {
         case .wordSweep: "Karaoke"
         case .wordUnderline: "Underline"
         case .typewriter: "Typewriter"
+        case .none: "None"
+        case .wordBounce: "Bounce"
+        case .lyricFocus: "Focus"
+        case .highlightSlide: "Slide"
+        case .lineBar: "Progress"
+        case .stickers: "Stickers"
         }
     }
 

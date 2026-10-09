@@ -91,6 +91,13 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case wordSweep = "word_sweep"
     case wordUnderline = "word_underline"
     case typewriter
+    /// Nothing moves: the line is shown as it is.
+    case none
+    case wordBounce = "word_bounce"
+    case lyricFocus = "lyric_focus"
+    case highlightSlide = "highlight_slide"
+    case lineBar = "line_bar"
+    case stickers
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
@@ -111,6 +118,11 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var fontSize: Int
     public var textColor: String
     public var highlightColor: String
+    /// Colours the successive words take in turn where the animation paints in the highlight colour;
+    /// empty means the highlight colour for every word.
+    public var palette: [String]
+    /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
+    public var highlightColorEnd: String?
     public var background: Background
     public var backgroundColor: String
     public var backgroundOpacity: Double
@@ -140,12 +152,15 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         positionX: Double, positionY: Double, animation: CaptionAnimation, wordsPerLine: Int,
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
-        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false
+        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
+        palette: [String] = [], highlightColorEnd: String? = nil
     ) {
         self.font = font
         self.fontSize = fontSize
         self.textColor = textColor
         self.highlightColor = highlightColor
+        self.palette = palette
+        self.highlightColorEnd = highlightColorEnd
         self.background = background
         self.backgroundColor = backgroundColor
         self.backgroundOpacity = backgroundOpacity
@@ -189,7 +204,9 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowBlur: try c.decodeIfPresent(Double.self, forKey: .glowBlur) ?? 0,
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
-            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false)
+            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
+            palette: try c.decodeIfPresent([String].self, forKey: .palette) ?? [],
+            highlightColorEnd: try c.decodeIfPresent(String.self, forKey: .highlightColorEnd))
     }
 
     enum CodingKeys: String, CodingKey {
@@ -215,5 +232,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case glowColor = "glow_color"
         case textCase = "text_case"
         case italic
+        case palette
+        case highlightColorEnd = "highlight_color_end"
     }
 }

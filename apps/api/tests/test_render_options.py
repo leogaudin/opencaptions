@@ -68,9 +68,15 @@ def test_every_option_changes_the_hash() -> None:
     p = _Project()
     hashes = {
         resolve_render_inputs(p, RenderOptions.model_validate(kw)).hash_for("mp4")
-        for kw in ({}, {"resolution": "720"}, {"frame_rate": "30"})
+        for kw in ({}, {"resolution": "720"}, {"frame_rate": "30"}, {"green_screen": True})
     }
-    assert len(hashes) == 3
+    assert len(hashes) == 4
+
+
+def test_green_screen_is_off_unless_asked_for() -> None:
+    p = _Project()
+    assert resolve_render_inputs(p).green_screen is False
+    assert resolve_render_inputs(p, RenderOptions(green_screen=True)).green_screen is True
 
 
 def test_the_encoder_settings_are_part_of_the_hash(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -119,7 +125,8 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
     options = {"resolution": "720", "frame_rate": "60"}
     r = await client.post(f"{base}/download", json={"format": "mp4", **options})
     assert r.status_code == 202, r.text
-    assert sent[0][2:] == ("mp4", options), "the worker gets the options"
+    full = {**options, "green_screen": False}
+    assert sent[0][2:] == ("mp4", full), "the worker gets the options"
     again = await client.post(f"{base}/download", json={"format": "mp4", **options})
     assert again.json()["job_id"] == r.json()["job_id"], "the same output is not queued twice"
     other = await client.post(f"{base}/download", json={"format": "mp4"})
@@ -130,7 +137,8 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
     ready = (await client.post(f"{base}/download", json={"format": "mp4", **options})).json()
     assert ready["ready"] is True
     query = parse_qs(urlparse(ready["download_url"]).query)
-    assert {k: v[0] for k, v in query.items()} == options, "the link names the same file"
+    named = {k: v[0] for k, v in query.items()}
+    assert named == {**options, "green_screen": "False"}, "the link names the same file"
     bad = await client.post(f"{base}/download", json={"format": "mp4", "resolution": "999"})
     assert bad.status_code == 422
 

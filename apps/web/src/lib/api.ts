@@ -270,7 +270,12 @@ export function requestDownload(
  * Direct download URL for a prepared format. Used for programmatic <a> clicks.
  */
 export function getDownloadUrl(projectId: string, format: string, options: RenderOptions): string {
-  const query = new URLSearchParams(options).toString();
+  // A wait saved before green screen existed has no such option, which is "off".
+  const query = new URLSearchParams({
+    resolution: options.resolution,
+    frame_rate: options.frame_rate,
+    green_screen: String(options.green_screen === true),
+  }).toString();
   return `${API_BASE}/projects/${projectId}/download/${format}?${query}`;
 }
 

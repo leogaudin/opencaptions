@@ -101,7 +101,13 @@ export type Animation =
   | "word_fade"
   | "word_sweep"
   | "word_underline"
-  | "typewriter";
+  | "typewriter"
+  | "none"
+  | "word_bounce"
+  | "lyric_focus"
+  | "highlight_slide"
+  | "line_bar"
+  | "stickers";
 
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";

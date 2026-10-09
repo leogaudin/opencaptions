@@ -34,6 +34,10 @@ struct RenderRequest {
     codec: String,
     crf: Option<u32>,
     pro_res_profile: Option<String>,
+    /// Draw the captions over solid chroma green instead of the video, to key out in an editor.
+    /// The video is read only for its sound.
+    #[serde(default)]
+    green_screen: bool,
     progress_url: Option<String>,
     progress_token: Option<String>,
 }
@@ -212,9 +216,12 @@ impl Colour {
         }
     }
 
-    fn filter(&self, w: u32, h: u32, fps: u32, sdr_pix_fmt: &str) -> String {
-        let base =
-            format!("[0:v]setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:flags=lanczos,setsar=1");
+    fn filter(&self, w: u32, h: u32, fps: u32, sdr_pix_fmt: &str, green_screen: bool) -> String {
+        let base = if green_screen {
+            format!("color=c=0x00FF00:s={w}x{h}:r={fps},setsar=1")
+        } else {
+            format!("[0:v]setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:flags=lanczos,setsar=1")
+        };
         let cap = "[1:v]setpts=PTS-STARTPTS";
         // RGB compositing keeps the overlay at full chroma; the conversion is
         // explicit BT.709 rather than FFmpeg's BT.601 default.
@@ -332,8 +339,13 @@ fn render(
 
     // Composited in RGB so the overlay blends at full chroma, then converted once
     // with an explicit BT.709 matrix rather than FFmpeg's BT.601 default.
-    let colour = Colour::of(&probe_transfer(&req.video_url), enc.hdr_pix_fmt);
-    let filter = colour.filter(w, h, req.fps, enc.pix_fmt);
+    // Green is plain SDR whatever the video was, so there is nothing to probe or tone-map.
+    let colour = if req.green_screen {
+        Colour::Sdr
+    } else {
+        Colour::of(&probe_transfer(&req.video_url), enc.hdr_pix_fmt)
+    };
+    let filter = colour.filter(w, h, req.fps, enc.pix_fmt, req.green_screen);
     let mut child = Command::new("ffmpeg")
         .args([
             "-hide_banner",
@@ -594,9 +606,19 @@ mod tests {
         let hlg = Colour::of("arib-std-b67", Some("yuv420p10le"));
         assert_eq!(hlg.tags()[5], "arib-std-b67");
         assert!(
-            hlg.filter(1080, 1920, 30, "yuv420p")
+            hlg.filter(1080, 1920, 30, "yuv420p", false)
                 .contains("t=arib-std-b67")
         );
         assert_eq!(Colour::of("smpte2084", None).tags()[5], "bt709");
+    }
+
+    #[test]
+    fn green_screen_replaces_the_video_with_solid_green() {
+        let green = Colour::Sdr.filter(1080, 1920, 30, "yuv420p", true);
+        assert!(green.starts_with("color=c=0x00FF00:s=1080x1920:r=30"));
+        assert!(!green.contains("[0:v]"), "the video picture is not read");
+        assert!(green.contains("overlay"), "the captions go over it");
+        let plain = Colour::Sdr.filter(1080, 1920, 30, "yuv420p", false);
+        assert!(plain.starts_with("[0:v]") && !plain.contains("0x00FF00"));
     }
 }
