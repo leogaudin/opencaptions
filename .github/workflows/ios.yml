@@ -10,6 +10,11 @@ name: iOS
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/ios/**'
+      - 'apps/engine/**'
+      - 'apps/web/src/lib/presets.json'
+      - '.github/workflows/ios.yml'
   pull_request:
     branches: [main]
     paths:
@@ -18,14 +23,22 @@ on:
       - 'apps/web/src/lib/presets.json'
       - '.github/workflows/ios.yml'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ios:
     name: Build and test the iOS app
     runs-on: macos-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - name: Rust targets
-        run: rustup update stable && rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin
+        run: rustup toolchain install 1.99 --profile minimal && rustup default 1.99 && rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin
       - name: XcodeGen
         run: brew install xcodegen
       - name: Engine xcframework

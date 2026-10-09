@@ -48,8 +48,8 @@ clean:               ## Stop the stack and DELETE all its data
 
 lint: lint-backend lint-frontend   ## Run all linters
 
-lint-backend:        ## Lint Python (ruff + mypy)
-	@$(API) ruff check . && $(API) mypy app/
+lint-backend:        ## Lint Python (ruff check and format, mypy), as CI does
+	@cd apps/api && uv run ruff check . && uv run ruff format --check . && uv run mypy app/
 
 lint-frontend:       ## Lint TS/JS (biome)
 	@$(WEB) lint
@@ -71,7 +71,7 @@ engine-wasm:         ## Build the engine for the browser into apps/web/public/en
 	 -o apps/web/public/engine apps/web >/dev/null && echo "Wrote apps/web/public/engine"
 
 format:              ## Auto-format all code
-	@$(API) ruff format . && $(API) ruff check --fix .
+	@cd apps/api && uv run ruff format . && uv run ruff check --fix .
 	@$(WEB) format
 	@$(ENGINE) cargo fmt
 

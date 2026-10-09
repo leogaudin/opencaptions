@@ -20,15 +20,18 @@ trap cleanup EXIT
 
 # --- Step 1: Offline OpenAPI dump ---
 # Resolve python: the uv-managed venv that `uv sync` creates, what both
-# `make ci` and GitHub CI use, falling back to system python3.
+# `make ci` and GitHub CI use. Without one, uv makes it; a bare system python3 has no
+# dependencies and would fail on the first import.
 if [ -x "$API_DIR/.venv/bin/python" ]; then
-  PYTHON="$API_DIR/.venv/bin/python"
+  PYTHON=("$API_DIR/.venv/bin/python")
+elif command -v uv >/dev/null 2>&1; then
+  PYTHON=(uv run --project "$API_DIR" python)
 else
-  PYTHON=python3
+  PYTHON=(python3)
 fi
 
 echo "→ Dumping OpenAPI schema (offline)..."
-(cd "$API_DIR" && "$PYTHON" -c "
+(cd "$API_DIR" && "${PYTHON[@]}" -c "
 import json, sys
 from app.main import app
 json.dump(app.openapi(), sys.stdout, indent=2)

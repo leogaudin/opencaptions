@@ -138,6 +138,18 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
+    # Credentials the shipped defaults name: public in this repository, so not secrets.
+    _DEV_CREDENTIALS = ("postgres_password", "s3_secret_key", "engine_token")
+
+    @property
+    def default_credentials_in_use(self) -> list[str]:
+        """Which of the development credentials are still the shipped ones, by setting name."""
+        return [
+            name
+            for name in self._DEV_CREDENTIALS
+            if getattr(self, name) == type(self).model_fields[name].default
+        ]
+
     @property
     def smtp_configured(self) -> bool:
         """Whether the password-reset flow is available at all."""

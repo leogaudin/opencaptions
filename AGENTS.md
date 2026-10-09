@@ -77,7 +77,7 @@ images, which is what an end user does.
 
 6. **"Rendering" is not a user-facing concept.** The UI has a single Download button. No user-visible string may mention rendering. `render` remains correct in backend code and logs.
 
-7. **Containers must not invoke `uv`**: it exists only in the builder stage of `apps/api/Dockerfile`. The dev overlay uses `/app/.venv/bin/` binaries directly (`uvicorn`, `celery`, `watchmedo`, `pytest`). If you break this, the dev overlay fails at runtime.
+7. **Containers must not invoke `uv`**: it exists only in the builder stage of `apps/api/Dockerfile`. The runtime image has the locked runtime dependencies and no dev tools (no pytest, ruff or mypy: tests run on the host with `uv run`), and its commands are the `/app/.venv/bin/` binaries directly (`uvicorn`, `celery`). If you break this, the stack fails at runtime.
 
 8. **`POST /projects` accepts a user-supplied `video_url`, the SSRF guard in `apps/api/app/services/video_fetch.py` is load-bearing.** It validates scheme, resolves DNS, blocks private/link-local IPs, and re-validates on every redirect hop. Do not weaken it to simplify a test.
 

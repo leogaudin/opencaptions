@@ -27,7 +27,7 @@ make ci-static   # fast subset: no image builds, no e2e
 
 It is safe to run while your own stack is up: it validates a clean snapshot of
 committed source in pinned containers, on throwaway volumes and off-default
-ports, so it never touches your `data/` directories.
+ports, so it never touches your stack's volumes.
 
 `make lint`, `make test-backend`, `make typecheck` and `make format` are there
 for fast iteration. Run `make` for the full target list.
@@ -46,7 +46,7 @@ cd apps/web && npx playwright test -g "your spec" --ui
 Outside Docker, from `apps/api` (Python, `uv`) or `apps/web` (Node):
 
 ```bash
-uv sync --all-extras --dev && uv run uvicorn app.main:app --reload   # api
+uv sync --extra dev && uv run uvicorn app.main:app --reload   # api
 uv run pytest                                                         # api tests
 uv run alembic revision --autogenerate -m "add foo"                   # a migration (applied on boot)
 npm install && npm run dev                                            # web, http://localhost:5173

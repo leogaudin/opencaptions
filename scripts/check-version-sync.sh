@@ -9,7 +9,7 @@
 #   - apps/ios      → project.yml (MARKETING_VERSION), read by XcodeGen
 # So those manifests are the only places a version number lives. Nothing
 # forces them to agree with each other, so this guard is the safety net: run it
-# before cutting a release (and ideally in CI) to catch a manifest that was
+# before cutting a release (CI and `make ci` run it too) to catch a manifest that was
 # bumped while the others were forgotten.
 #
 # Usage: bash scripts/check-version-sync.sh

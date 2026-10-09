@@ -1,6 +1,6 @@
 # OpenCaptions API, multi-stage Dockerfile
-# Builder + runtime separation; final image ~600 MB with ffmpeg + Python deps.
-# GPU target adds CUDA runtime wheels (~4 GB).
+# Builder + runtime separation; the runtime carries ffmpeg and the locked Python
+# dependencies, not the test and lint tools. GPU target adds CUDA runtime wheels (~4 GB).
 
 # ===== Builder (CPU) =====
 FROM python:3.14-slim AS builder
@@ -13,12 +13,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
-        curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    mv /root/.local/bin/uv /usr/local/bin/uv
+# uv, copied from its own image (the one `make ci` uses): nothing is piped from the
+# network into a shell, and the version is one image tag, not whatever is newest.
+COPY --from=ghcr.io/astral-sh/uv:python3.14-bookworm-slim /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 
 WORKDIR /app
 
@@ -26,27 +25,26 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY uv.lock ./
 
-# Sync dependencies from the committed lockfile (dev extra for tests; NOT the
-# gpu extra). --locked fails the build loudly if uv.lock is missing or out of
+# Sync dependencies from the committed lockfile (no dev tools, and not the gpu
+# extra). --locked fails the build loudly if uv.lock is missing or out of
 # sync with pyproject.toml, so a build can never silently resolve fresh,
 # non-reproducible versions. Regenerate the lock with `uv lock` after editing
-# dependencies in pyproject.toml.
-RUN uv sync --extra dev --locked
+# dependencies in pyproject.toml. The cache mount keeps downloaded wheels between
+# builds, so a changed dependency does not fetch them all again.
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
 
 # Copy application code
 COPY app ./app
 COPY alembic.ini ./
-COPY tests ./tests
 
 # ===== GPU Builder =====
-# Installs CUDA runtime wheels on top of the base builder layer.
+# Adds the CUDA runtime wheels on top of the base builder layer: the `gpu` extra, from the
+# same lockfile as everything else, not an unpinned install beside it.
 FROM builder AS builder-gpu
 
-RUN uv pip install --python /app/.venv/bin/python \
-    "nvidia-cublas-cu12>=12.4" \
-    "nvidia-cudnn-cu12>=9.1"
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --extra gpu
 
-# ===== Runtime (GPU), named target for docker-compose.gpu.yml =====
+# ===== Runtime (GPU): the `gpu` profile of docker-compose.yml =====
 # Inherits from the CPU runtime base but copies the venv from builder-gpu,
 # which includes nvidia-cublas-cu12 and nvidia-cudnn-cu12 wheels.
 # LD_LIBRARY_PATH points the dynamic linker at the nvidia wheel shared objects

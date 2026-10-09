@@ -56,3 +56,15 @@ async def test_get_settings_default_model_is_in_available_models(
     transcription = r.json()["transcription"]
     ids = {m["id"] for m in transcription["available_models"]}
     assert transcription["model"] in ids
+
+
+def test_the_shipped_credentials_are_reported_until_they_are_changed() -> None:
+    from app.core.config import Settings
+
+    assert Settings().default_credentials_in_use == [
+        "postgres_password",
+        "s3_secret_key",
+        "engine_token",
+    ]
+    changed = Settings(postgres_password="x" * 20, engine_token="y" * 20)
+    assert changed.default_credentials_in_use == ["s3_secret_key"]

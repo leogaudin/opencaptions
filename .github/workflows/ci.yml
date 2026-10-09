@@ -7,20 +7,28 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  REGISTRY_GHCR: ghcr.io
-  REGISTRY_HUB: docker.io
-  IMAGE_NAMESPACE: opencaptions
+# Least privilege by default; the publish jobs ask for what they push with.
+permissions:
+  contents: read
+
+# A newer push to a pull request supersedes the run in flight. Pushes to main and tags are
+# never cancelled: each one publishes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint-backend:
     name: Lint backend (ruff + mypy)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           version: latest
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
       - name: Sync deps
         working-directory: apps/api
         run: uv sync --extra dev --locked
@@ -38,11 +46,14 @@ jobs:
   lint-frontend:
     name: Lint frontend (biome)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 26
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
       - name: Install web deps
         working-directory: apps/web
         run: npm ci --no-audit --no-fund
@@ -53,12 +64,16 @@ jobs:
   engine:
     name: Engine (rustfmt + clippy + tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     container: rust:1.99-slim-bookworm
     defaults:
       run:
         working-directory: apps/engine
     steps:
       - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/engine
       - name: Toolchain components
         run: rustup component add rustfmt clippy && rustup target add wasm32-unknown-unknown aarch64-apple-ios
       - name: Format
@@ -75,14 +90,19 @@ jobs:
   typecheck:
     name: Typecheck frontend (tsc + type-generation gate)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           version: latest
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
       - uses: actions/setup-node@v7
         with:
           node-version: 26
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
       - name: Sync API deps (for OpenAPI dump)
         working-directory: apps/api
         run: uv sync --extra dev --locked
@@ -110,11 +130,14 @@ jobs:
   test-backend:
     name: Test backend (pytest)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           version: latest
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
       - name: Sync deps
         working-directory: apps/api
         run: uv sync --extra dev --locked
@@ -125,6 +148,7 @@ jobs:
   compose-drift:
     name: Repository guards
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Check compose fallbacks
@@ -141,6 +165,7 @@ jobs:
   build:
     name: Build images (linux/amd64${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && ', linux/arm64' || '' }})
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     needs: [lint-backend, lint-frontend, typecheck, engine, test-backend, compose-drift]
     strategy:
       matrix:
@@ -179,6 +204,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 26
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
       - name: Install web deps
         working-directory: apps/web
         run: npm ci --no-audit --no-fund
@@ -193,6 +220,21 @@ jobs:
         env:
           BASE_URL: http://localhost:5173
         run: npm run test:e2e
+      # What a failed run leaves to look at: the stack's logs, and Playwright's report and traces.
+      - name: Stack logs
+        if: failure()
+        run: docker compose logs --no-color --timestamps > compose.log
+      - name: Keep the failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: |
+            compose.log
+            apps/web/playwright-report
+            apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Tear down
         if: always()
         run: docker compose down -v
@@ -200,6 +242,7 @@ jobs:
   publish:
     name: Publish images
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     needs: [e2e]
     if: ${{ github.event_name == 'push' }}
     env:
@@ -262,6 +305,7 @@ jobs:
   publish-gpu:
     name: Publish GPU image (api only)
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     needs: [e2e]
     if: ${{ github.event_name == 'push' }}
     env:
@@ -312,4 +356,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           # Read the cache but never export it: several GB of CUDA layers,
           # uploaded after the image is already pushed, can fail a good publish.
-          cache-from: type=gha,scope=api-gpu
+          cache-from: |
+            type=gha,scope=api
+            type=gha,scope=api-gpu

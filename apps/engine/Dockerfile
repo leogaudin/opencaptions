@@ -1,12 +1,18 @@
 # OpenCaptions engine, the render server.
-# Builder: a static release binary. Runtime: Debian with FFmpeg, nothing else.
+# Builder: a release binary. Runtime: Debian with FFmpeg, nothing else.
 
 FROM rust:1.99-slim-bookworm AS builder
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
+# The dependencies come first, built against an empty crate: they are the slow part and change
+# rarely, so a change to src/ does not compile them again.
+RUN mkdir src && echo 'fn main() {}' > src/main.rs && touch src/lib.rs \
+ && cargo build --release --locked --bin opencaptions-engine \
+ && rm -rf src
 COPY src src
 COPY fonts fonts
-RUN cargo build --release --locked --bin opencaptions-engine
+# Copied files can be older than the stub's build; touched, cargo builds the crate itself.
+RUN touch src/main.rs src/lib.rs && cargo build --release --locked --bin opencaptions-engine
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update \

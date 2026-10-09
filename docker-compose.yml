@@ -28,10 +28,54 @@ name: opencaptions
 # anything else, name it in the `environment:` block of the services that read
 # it.
 
+# Written once, reused below (YAML anchors; Compose reads the x- fields as data and ignores them).
+#
+# Logs rotate: Compose's default json-file driver keeps every line forever, and a Celery
+# worker logs each task at info.
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+# What the API and both kinds of worker share with postgres and garage; every copy
+# agreed once is one copy to keep so (check-compose.sh also holds it to config.py).
+x-oc-env: &oc-env
+  POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
+  POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
+  S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
+  S3_BUCKET: ${S3_BUCKET:-opencaptions}
+
+x-oc-depends: &oc-depends
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  garage:
+    condition: service_healthy
+
+# The API image, which the api and the workers all run.
+x-oc-api: &oc-api
+  image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
+  build: { context: apps/api, target: runtime }
+  develop:
+    watch:
+      - { path: apps/api/app, target: /app/app, action: sync+restart }
+      - { path: apps/api/pyproject.toml, action: rebuild }
+      - { path: apps/api/uv.lock, action: rebuild }
+  restart: unless-stopped
+  logging: *logging
+  environment: *oc-env
+  depends_on: *oc-depends
+  volumes:
+    - ${MODELS_PATH:-./models}:/models
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
@@ -47,7 +91,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
+    logging: *logging
+    # noeviction is Redis's default and means nothing without --maxmemory, so it is not spelled out.
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -62,6 +108,7 @@ services:
   garage:
     image: dxflrs/garage:v2.4.1
     restart: unless-stopped
+    logging: *logging
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
       GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-0000000000000000000000000000000000000000000000000000000000000000}
@@ -83,32 +130,7 @@ services:
       start_period: 10s
 
   api:
-    # Shared with postgres/garage; every copy must agree (check-compose.sh).
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
-      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
-      S3_BUCKET: ${S3_BUCKET:-opencaptions}
-    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
-    build: { context: apps/api, target: runtime }
-    develop:
-      watch:
-        - { path: apps/api/app, target: /app/app, action: sync+restart }
-        - { path: apps/api/pyproject.toml, action: rebuild }
-        - { path: apps/api/uv.lock, action: rebuild }
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      garage:
-        condition: service_healthy
-    volumes:
-      - ${MODELS_PATH:-./models}:/models
+    <<: *oc-api
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health').read()"]
       interval: 10s
@@ -119,70 +141,24 @@ services:
   # No `profiles:` on purpose: behind one, an unconfigured deployment would boot
   # healthy and queue jobs forever with no error shown.
   worker-transcription:
-    # Shared with postgres/garage; every copy must agree (check-compose.sh).
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
-      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
-      S3_BUCKET: ${S3_BUCKET:-opencaptions}
-    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
-    build: { context: apps/api, target: runtime }
-    develop:
-      watch:
-        - { path: apps/api/app, target: /app/app, action: sync+restart }
-        - { path: apps/api/pyproject.toml, action: rebuild }
-        - { path: apps/api/uv.lock, action: rebuild }
-    restart: unless-stopped
+    <<: *oc-api
     deploy:
       # ⚠ 0 with no gpu profile = zero workers (jobs queue silently forever).
       #   1 with gpu profile active = two workers share the queue (GPU half-wasted).
       replicas: ${OC_CPU_TRANSCRIBERS:-1}
     command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      garage:
-        condition: service_healthy
-    volumes:
-      - ${MODELS_PATH:-./models}:/models
 
   worker-transcription-gpu:
-    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    <<: *oc-api
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
-      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
-      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+      <<: *oc-env
       # Forced, not defaulted. Missing CUDA falls back to CPU and says so in /health.
       WHISPER_DEVICE: cuda
       WHISPER_COMPUTE_TYPE: float16
     image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}-gpu
     build: { context: apps/api, target: runtime-gpu }
-    develop:
-      watch:
-        - { path: apps/api/app, target: /app/app, action: sync+restart }
-        - { path: apps/api/pyproject.toml, action: rebuild }
-        - { path: apps/api/uv.lock, action: rebuild }
     profiles: ["gpu"]
-    restart: unless-stopped
     command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      garage:
-        condition: service_healthy
-    volumes:
-      - ${MODELS_PATH:-./models}:/models
     deploy:
       resources:
         reservations:
@@ -195,34 +171,20 @@ services:
   # transcription: OC_RENDERERS=4 runs four render workers and leaves
   # transcription alone. See "Scaling" below.
   worker-rendering:
-    # Shared with postgres/garage; every copy must agree (check-compose.sh).
+    <<: *oc-api
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-opencaptions}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencaptions}
-      POSTGRES_DB: ${POSTGRES_DB:-opencaptions}
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
-      S3_BUCKET: ${S3_BUCKET:-opencaptions}
+      <<: *oc-env
       ENGINE_TOKEN: ${ENGINE_TOKEN:-opencaptions-dev-engine-token-change-me-for-any-exposed-host}
-    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
-    build: { context: apps/api, target: runtime }
-    develop:
-      watch:
-        - { path: apps/api/app, target: /app/app, action: sync+restart }
-        - { path: apps/api/pyproject.toml, action: rebuild }
-        - { path: apps/api/uv.lock, action: rebuild }
-    restart: unless-stopped
+    # A render in progress is given time to finish when the stack is stopped, instead of being
+    # killed after Compose's default 10 s and started again from the first frame.
+    stop_grace_period: 2m
+    # Whisper's models are the transcription workers'.
+    volumes: []
     command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "rendering", "--concurrency=2", "--loglevel=info"]
     deploy:
       replicas: ${OC_RENDERERS:-1}
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      garage:
-        condition: service_healthy
+      <<: *oc-depends
       engine:
         condition: service_healthy
 
@@ -238,6 +200,9 @@ services:
       watch:
         - { path: apps/engine, action: rebuild, ignore: [target/] }
     restart: unless-stopped
+    logging: *logging
+    # Like the render worker: a render in flight is let finish.
+    stop_grace_period: 2m
 
   web:
     image: ghcr.io/leogaudin/opencaptions-web:${OPENCAPTIONS_VERSION:-latest}
@@ -248,9 +213,16 @@ services:
         - { path: apps/web, action: rebuild, ignore: [node_modules/, dist/] }
         - { path: apps/engine/src, action: rebuild }
     restart: unless-stopped
+    logging: *logging
     depends_on:
       api:
         condition: service_healthy
+    # 127.0.0.1, not localhost: nginx listens on IPv4 only.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     # The only published port: nginx proxies /api, /ws and the OpenAPI docs, so
     # nothing else needs one. Every interface, and signup is open: read the security
     # section of docs/SELF-HOSTING.md before putting this anywhere untrusted.

@@ -5,7 +5,7 @@ Everything beyond the quick start: configuration, the API, security, GPU and bac
 ## Configuration
 
 There is no env file. Every application setting has its default in
-[`apps/api/app/core/config.py`](apps/api/app/core/config.py), written for this
+[`apps/api/app/core/config.py`](../apps/api/app/core/config.py), written for this
 topology, so the stack boots with no configuration at all. The compose file names
 only what a container cannot infer: the credentials Postgres and the object store
 share with the app, the service topology, and per-service overrides.
@@ -45,7 +45,7 @@ page.
 
 > ⚠️ **The web UI listens on every interface, and signup is open.** Anyone who can reach port 5173 on this machine can create an account and spend its CPU/GPU on transcription and rendering. On a shared network or a public host, close registration by adding `REGISTRATION_ENABLED: "false"` to the `api` service's `environment:` block, firewall the port, or bind it to `127.0.0.1` on the `web` service's `ports:` line.
 
-The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file, and the render server accepts requests that carry `ENGINE_TOKEN`. Change them before running anywhere that matters, in every service that names them, which `scripts/check-compose.sh` verifies.
+The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file, and the render server accepts requests that carry `ENGINE_TOKEN`. Change them before running anywhere that matters, in every service that names them (`scripts/check-compose.sh` fails if the copies in the compose file disagree with one another or with the defaults in `config.py`). A database or storage password changed after the first start does not change the volume that already holds the old one.
 
 The stack publishes exactly one host port, the web UI, on `0.0.0.0:5173`, so
 other devices on your network can use it. Everything else (database, cache, object
@@ -53,7 +53,10 @@ store, API, engine) is reachable only over the compose network, because nginx
 proxies `/api`, `/ws` and the OpenAPI docs through that single origin.
 
 For anything beyond a trusted network, put a reverse proxy in front to terminate
-TLS, and bind the port to `127.0.0.1` so only the proxy can reach it.
+TLS, and bind the port to `127.0.0.1` so only the proxy can reach it. Behind TLS, also set
+`SESSION_COOKIE_SECURE: "true"` and `PUBLIC_BASE_URL` (the address people use; password-reset
+links are built from it) in the `api` service's `environment:` block, and `CORS_ORIGINS` if the
+page is served from another origin: their defaults are for `http://localhost:5173`.
 
 See [SECURITY.md](../SECURITY.md) for the threat model and how to report a vulnerability.
 

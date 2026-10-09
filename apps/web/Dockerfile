@@ -5,12 +5,20 @@
 # Needs the engine as a named build context:
 #   docker build --build-context engine=apps/engine apps/web
 
-FROM rust:1.99-slim-bookworm AS wasm
+# Both build stages run on the machine that builds, whatever the image is for: what they make
+# (WebAssembly, a script bundle) is the same for every architecture, so a multi-arch build
+# does not run them again under emulation.
+FROM --platform=$BUILDPLATFORM rust:1.99-slim-bookworm AS wasm
 RUN rustup target add wasm32-unknown-unknown
 WORKDIR /src
 COPY --from=engine Cargo.toml Cargo.lock ./
+# Dependencies first, against an empty crate (they change rarely; the engine's code does).
+RUN mkdir src && touch src/lib.rs \
+ && cargo build --release --locked --lib --target wasm32-unknown-unknown \
+ && rm -rf src
 COPY --from=engine src src
 COPY --from=engine fonts fonts
+RUN touch src/lib.rs
 # Same files in the same order as the server's load_fonts, so glyph fallback
 # picks the same face in the preview as in the export.
 RUN cargo build --release --locked --lib --target wasm32-unknown-unknown \
@@ -23,7 +31,7 @@ RUN cargo build --release --locked --lib --target wasm32-unknown-unknown \
 FROM scratch AS preview-assets
 COPY --from=wasm /out /
 
-FROM node:26-bookworm-slim AS builder
+FROM --platform=$BUILDPLATFORM node:26-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./

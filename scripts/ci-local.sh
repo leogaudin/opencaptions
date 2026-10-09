@@ -145,12 +145,12 @@ step "Workflow lint (actionlint)"
 # Explicit path: actionlint's repository auto-discovery does not apply to the
 # snapshot, and the workflow file is the only thing being checked.
 docker run --rm -v "$WORKTREE":/repo:ro -w /repo "$ACTIONLINT_IMAGE" -no-color \
-  .github/workflows/ci.yml .github/workflows/ios.yml \
+  .github/workflows/ci.yml .github/workflows/ios.yml .github/workflows/cla.yml \
   || fail "actionlint found workflow errors"
 
 # --- Repository guards -----------------------------------------------------
-step "Repository guards (version sync, compose fallbacks, iOS strings)"
-in_node . 'bash scripts/check-version-sync.sh && bash scripts/check-compose.sh && bash scripts/check-ios-strings.sh' \
+step "Repository guards (version sync, compose fallbacks, this gate against CI, iOS strings)"
+in_node . 'bash scripts/check-version-sync.sh && bash scripts/check-compose.sh && bash scripts/check-ci-parity.sh && bash scripts/check-ios-strings.sh' \
   || fail "repository guards failed"
 
 # --- Backend ---------------------------------------------------------------

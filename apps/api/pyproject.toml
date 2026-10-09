@@ -19,12 +19,10 @@ dependencies = [
     "celery>=5.4",
     "redis>=5.2",
     "boto3>=1.35",
-    "boto3-stubs[s3]>=1.35",
     "faster-whisper>=1.1",
     "httpx>=0.28",
     "python-multipart>=0.0.20",
     "websockets>=14",
-    "watchdog>=6",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +34,7 @@ gpu = [
     "nvidia-cudnn-cu12>=9.1",
 ]
 dev = [
+    "boto3-stubs[s3]>=1.35",
     "ruff>=0.8",
     "mypy>=1.13",
     "pytest>=8.3",

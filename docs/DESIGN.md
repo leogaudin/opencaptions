@@ -117,7 +117,7 @@ build produces byte-identical frames. Nothing else may draw captions.
   in the engine (`edit.rs`). A word is edited one at a time (renamed, or deleted
   by clearing it): text of several words is refused, because splitting a word
   would invent timings. The web calls them through WebAssembly, and the phone
-  will call the same code natively.
+  calls the same code natively.
 - **Look.** An immersive look in the manner of Edits and Instagram and in the desktop's spirit, in
 light or dark (it follows the system, or is chosen from the home screen): the wordmark is the
 desktop's solid "burned-in subtitle" block, inverted with the interface, and the caption
@@ -454,7 +454,7 @@ at up to 1080p and 30 fps, turns an HDR video into an ordinary one, locks the st
 Turbo is free). The screens lock what the tier lacks and show `ProSheet`; the save also passes its
 options through `Entitlements.limit`, so a remembered choice cannot get past a screen. Nothing
 else is gated: the engine and the rest are open source. A build from source is Pro; an App Store
-build (compiled with `APPSTORE`) starts free until a purchase (StoreKit, not built yet) says
+build (compiled with `APPSTORE`) starts free until a purchase says
 otherwise. Pro is a one-time purchase (`Purchases.swift`, StoreKit 2, only in an App Store
 build; `Config/Pro.storekit` is the test configuration the scheme runs with, so a purchase can
 be tried in Xcode with a test price); the Pro sheet shows the store's price. A debug build

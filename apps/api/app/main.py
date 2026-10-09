@@ -65,6 +65,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         )
         raise
 
+    # The shipped credentials are public: fine on a laptop, not on a host others can reach, and
+    # the web port is published on every interface. Said once at start, not enforced.
+    if settings.default_credentials_in_use:
+        logger.warning(
+            "Using the shipped development credentials (%s). Change them before exposing this "
+            "instance beyond a trusted network; see docs/SELF-HOSTING.md.",
+            ", ".join(c.upper() for c in settings.default_credentials_in_use),
+        )
+
     # Best-effort: ensure storage bucket exists. Non-fatal if unreachable at startup,
     # a healthcheck will surface the issue.
     try:
