@@ -257,6 +257,23 @@ private func fixture(_ name: String) throws -> Data {
         #expect(StubServer.sent.contains { $0.method == "DELETE" && $0.path.hasSuffix("transcriptions/job-1") })
     }
 
+    @Test func cancellingWhileARequestIsInFlightIsStillACancellation() async throws {
+        // The poll never answers in time, so the task is cancelled with its request in the air:
+        // URLSession then fails with its own "cancelled", which must reach the caller as a cancellation.
+        try happyServer(polls: 10_000) { sent in
+            if sent.method == "GET", sent.path.hasSuffix("jobs/job-1") { Thread.sleep(forTimeInterval: 1.5) }
+        }
+        let source = try await clip()
+        let task = Task {
+            try await transcriber().transcribe(source: source, language: nil, model: "") { _, _ in }
+        }
+        for _ in 0..<2000 where !StubServer.sent.contains(where: { $0.path.hasSuffix("jobs/job-1") }) {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        task.cancel()
+        await #expect(throws: CancellationError.self) { _ = try await task.value }
+    }
+
     @Test func aServersFullModelListIsNarrowedToThePhonesLadder() throws {
         func caps(models: [String], default defaultModel: String?) throws -> ServerCapabilities {
             let list = models.map { #"{"id":"\#($0)","label":"\#($0.uppercased())","note":""}"# }.joined(separator: ",")

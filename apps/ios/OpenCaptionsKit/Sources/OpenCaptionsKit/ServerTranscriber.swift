@@ -107,7 +107,10 @@ public struct ServerTranscriber: Transcriber {
             guard let http = response as? HTTPURLResponse else { throw ServerTranscriptionError.failed("no answer") }
             if http.statusCode == 401 { throw ServerTranscriptionError.keyRejected }
             return (data, http)
-        } catch let error as URLError where error.code != .cancelled {
+        } catch let error as URLError {
+            // A request cut short by cancelling the task is a cancellation, whichever call was in flight:
+            // callers handle one error for "the user stopped it", not a URLSession one that depends on timing.
+            if error.code == .cancelled { throw CancellationError() }
             throw ServerTranscriptionError.unreachable(host: connection.url.host ?? connection.url.absoluteString)
         }
     }
