@@ -6,7 +6,7 @@ import { Loader2, Moon, Sun } from "lucide-react";
  * /auth/me) BEFORE rendering routes, so a logged-out visitor never sees the app
  * shell flash and an authenticated one never sees a login flash.
  */
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AboutDialog, AboutTrigger } from "@/components/AboutDialog";
 import { UserMenu } from "@/components/UserMenu";
@@ -14,15 +14,24 @@ import * as api from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { iconButtonClass, shellX } from "@/lib/ui";
 import { useTheme } from "@/lib/useTheme";
-import { AccountPage } from "@/pages/AccountPage";
-import { EditorPage } from "@/pages/EditorPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { SignupPage } from "@/pages/SignupPage";
-import { UploadPage } from "@/pages/UploadPage";
 import { useAuthStore } from "@/store/authStore";
+
+// The editor (with the caption engine's glue, the panels and the timeline) is most of the
+// code, and a visitor signing in or browsing projects needs none of it.
+const EditorPage = lazy(() =>
+  import("@/pages/EditorPage").then((m) => ({ default: m.EditorPage })),
+);
+const AccountPage = lazy(() =>
+  import("@/pages/AccountPage").then((m) => ({ default: m.AccountPage })),
+);
+const UploadPage = lazy(() =>
+  import("@/pages/UploadPage").then((m) => ({ default: m.UploadPage })),
+);
 
 export function App() {
   const phase = useAuthStore((s) => s.phase);
@@ -145,15 +154,28 @@ function AppShell() {
     <div className="flex h-screen flex-col bg-background text-foreground">
       <Header />
       <main className="flex min-h-0 flex-1 flex-col">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/upload" element={<UploadPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/projects/:projectId" element={<EditorPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<PageLoading />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/upload" element={<UploadPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/projects/:projectId" element={<EditorPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
+  );
+}
+
+/** While a page's code is fetched. */
+function PageLoading() {
+  const t = useT();
+  return (
+    <output className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+      {t("Loading…")}
+    </output>
   );
 }
 

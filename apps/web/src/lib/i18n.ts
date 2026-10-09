@@ -7,18 +7,6 @@
  * What the API says (error messages, job progress) is not translated here.
  */
 import { useSyncExternalStore } from "react";
-import de from "@/locales/de.json";
-import es from "@/locales/es.json";
-import fr from "@/locales/fr.json";
-import id from "@/locales/id.json";
-import it from "@/locales/it.json";
-import ja from "@/locales/ja.json";
-import ko from "@/locales/ko.json";
-import pl from "@/locales/pl.json";
-import pt from "@/locales/pt.json";
-import ru from "@/locales/ru.json";
-import tr from "@/locales/tr.json";
-import zh from "@/locales/zh.json";
 
 export const LANGUAGES = [
   { code: "en", name: "English" },
@@ -38,20 +26,38 @@ export const LANGUAGES = [
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
-const DICTIONARIES: Record<Exclude<LanguageCode, "en">, Record<string, string>> = {
-  fr,
-  es,
-  de,
-  pl,
-  pt,
-  it,
-  ru,
-  tr,
-  ja,
-  ko,
-  zh,
-  id,
+type Dictionary = Record<string, string>;
+
+/**
+ * The translations are loaded when a language is in use, not shipped all together: the
+ * twelve files were 180 KB of the first download, and a visitor reads one.
+ */
+const LOADERS: Record<Exclude<LanguageCode, "en">, () => Promise<{ default: Dictionary }>> = {
+  fr: () => import("@/locales/fr.json"),
+  es: () => import("@/locales/es.json"),
+  de: () => import("@/locales/de.json"),
+  pl: () => import("@/locales/pl.json"),
+  pt: () => import("@/locales/pt.json"),
+  it: () => import("@/locales/it.json"),
+  ru: () => import("@/locales/ru.json"),
+  tr: () => import("@/locales/tr.json"),
+  ja: () => import("@/locales/ja.json"),
+  ko: () => import("@/locales/ko.json"),
+  zh: () => import("@/locales/zh.json"),
+  id: () => import("@/locales/id.json"),
 };
+
+const loaded = new Map<LanguageCode, Dictionary>();
+
+/** Fetch a language's translations (English is the code itself and needs none). */
+export async function loadLanguage(code: LanguageCode): Promise<void> {
+  if (code === "en" || loaded.has(code)) return;
+  try {
+    loaded.set(code, (await LOADERS[code]()).default);
+  } catch {
+    // Offline or a stale deploy: the interface stays in English rather than failing to start.
+  }
+}
 
 const STORAGE_KEY = "language";
 
@@ -77,6 +83,9 @@ function initialLanguage(): LanguageCode {
 let current: LanguageCode = initialLanguage();
 const listeners = new Set<() => void>();
 
+/** The language the page starts in: await this before the first render, so it does not flash English. */
+export const languageReady: Promise<void> = loadLanguage(current);
+
 function announce(): void {
   document.documentElement.lang = current;
   for (const listener of listeners) listener();
@@ -88,13 +97,16 @@ export function getLanguage(): LanguageCode {
 }
 
 export function setLanguage(code: LanguageCode): void {
-  current = code;
   try {
     localStorage.setItem(STORAGE_KEY, code);
   } catch {
     // The choice just is not remembered.
   }
-  announce();
+  // Switch once its translations have arrived, so the text changes in one step.
+  void loadLanguage(code).then(() => {
+    current = code;
+    announce();
+  });
 }
 
 /**
@@ -109,7 +121,7 @@ export type Values = Record<string, string | number>;
 
 /** `text` in the current language, with `{name}` replaced from `values`. */
 export function translate(text: string, values?: Values): string {
-  const table = current === "en" ? undefined : DICTIONARIES[current];
+  const table = loaded.get(current);
   const out = table?.[text] ?? text;
   if (!values) return out;
   return out.replace(/\{(\w+)\}/g, (whole, name: string) =>

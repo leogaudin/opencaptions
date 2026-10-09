@@ -25,6 +25,8 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    // The image serves the app, it does not debug it: maps would be downloaded by nobody and
+    // would hand out the source.
+    sourcemap: false,
   },
 });

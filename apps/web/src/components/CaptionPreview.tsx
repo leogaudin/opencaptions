@@ -115,12 +115,19 @@ function CaptionCanvas({
     if (!renderer || !ctx || !v) return;
     let live = true;
     let ready = false;
+    // The line whose geometry `activeRef` holds. A line's boxes do not move within a
+    // scene, so they are asked for (several engine calls and copies) only when the line
+    // changes, not whenever a word lights up.
+    let shownIndex = Number.NaN;
     const draw = (): void => {
       if (!ready) return;
       // Only the rows that changed; the first frame of a scene is all of them.
       const update = renderer.render(v.currentTime);
       if (!update) return;
       ctx.putImageData(update.image, 0, update.top);
+      const index = renderer.activeIndex();
+      if (index === shownIndex) return;
+      shownIndex = index;
       const next = renderer.activeCaption();
       if (!sameCaption(next, activeRef.current)) {
         activeRef.current = next;
@@ -378,7 +385,13 @@ export function CaptionPreview() {
   // low-resolution video still gets sharp ones, and layout is proportional to frame height, so this
   // is the export's picture at screen size.
   const dpr = typeof window === "undefined" ? 1 : window.devicePixelRatio;
-  const sceneHeight = Math.max(2, Math.round(Math.min(MAX_SCENE_HEIGHT, displayHeight * dpr)));
+  // In steps of 16 px: dragging a panel edge changes the size every pixel, and each new
+  // size is a new scene to lay out. The canvas is scaled to fit, so a few pixels of
+  // difference cost nothing visible.
+  const sceneHeight = Math.max(
+    2,
+    Math.min(MAX_SCENE_HEIGHT, Math.ceil((displayHeight * dpr) / 16) * 16),
+  );
   const scene = useMemo<SceneInput>(
     () => ({
       transcript: shown,

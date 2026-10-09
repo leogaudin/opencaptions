@@ -422,7 +422,8 @@ warning or when the app leaves the screen.
 Russian, Turkish, Japanese, Korean, Simplified Chinese and Indonesian (the browser's or the
 phone's language is used; the web has a choice on the Account page and on the sign-in screens).
 On the web the English text in the code is the key: `t("Download")`, with `{name}` for values, and
-`locales/<code>.json` holds the others (`lib/i18n.ts`); a text without a translation shows in
+`locales/<code>.json` holds the others (`lib/i18n.ts`, which loads only the language in use,
+before the first paint); a text without a translation shows in
 English. On iOS, SwiftUI text and `String(localized:)` are collected in the app's string catalogs
 (`Localizable.xcstrings`, `InfoPlist.xcstrings`), and the Kit has its own for the words it
 produces (errors, what a long job says). Tests fail on a text missing in any language or a

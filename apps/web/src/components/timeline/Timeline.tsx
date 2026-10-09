@@ -107,6 +107,19 @@ export function Timeline({
   const px = zoom === null ? fit : clampZoom(zoom, fit);
   const width = zoom === null ? view.width : span * px;
 
+  // Only the blocks near the view are mounted: a long video has hundreds, each a few
+  // elements with handlers, and scrolling or following the playhead would otherwise
+  // re-render all of them every frame. The window moves in half-screen steps, with two
+  // half-screens of margin each side, so blocks are in place before they scroll in.
+  const half = Math.max(view.width / 2, 1);
+  const bucket = Math.floor(view.left / half);
+  const shownLines = useMemo(() => {
+    if (view.width === 0) return lines;
+    const [from, to] = [((bucket - 2) * half) / px, ((bucket + 5) * half) / px];
+    // The selected block stays mounted: its handles may hold the keyboard focus.
+    return lines.filter((l) => (l.end >= from && l.start <= to) || l.from === selected);
+  }, [lines, bucket, half, px, selected, view.width]);
+
   // Zooming keeps the time under the anchor (the pointer) where it was: remember it,
   // and once the new scale is laid out, scroll to put it back.
   const anchor = useRef<{ time: number; offset: number } | null>(null);
@@ -308,7 +321,7 @@ export function Timeline({
               onPointerMove={scrub.onPointerMove}
             >
               <CaptionTrack
-                lines={lines}
+                lines={shownLines}
                 pxPerSecond={px}
                 selected={selected}
                 onSelect={setSelected}

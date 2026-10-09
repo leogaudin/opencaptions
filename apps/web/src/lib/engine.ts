@@ -155,6 +155,8 @@ export interface CaptionRenderer {
    * Drawing it at (0, top) over the last one gives the frame.
    */
   render(t: number): FrameUpdate | null;
+  /** Which line is showing now (its index), or -1 for none: cheap, unlike {@link activeCaption}. */
+  activeIndex(): number;
   /** The caption showing now, in frame pixels, or null when none shows. */
   activeCaption(): ActiveCaption | null;
 }
@@ -166,20 +168,32 @@ interface Assets {
 
 let assets: Promise<Assets> | null = null;
 
+/** A fetch that fails on a missing file, instead of handing back whatever page answered. */
+async function fetchOk(url: string): Promise<Response> {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url}: ${r.status}`);
+  return r;
+}
+
 function loadAssets(): Promise<Assets> {
   assets ??= (async () => {
-    const [wasm, names] = await Promise.all([
-      fetch(`${BASE}/opencaptions_engine.wasm`).then((r) => r.arrayBuffer()),
-      fetch(`${BASE}/fonts.json`).then((r) => r.json() as Promise<string[]>),
-    ]);
-    const fonts = await Promise.all(
-      names.map((n) =>
-        fetch(`${BASE}/fonts/${encodeURIComponent(n)}`)
-          .then((r) => r.arrayBuffer())
-          .then((b) => new Uint8Array(b)),
-      ),
-    );
-    return { module: await WebAssembly.compile(wasm), fonts };
+    // The module compiles while the fonts come in, instead of before them.
+    const compiled = fetchOk(`${BASE}/opencaptions_engine.wasm`)
+      .then((r) => r.arrayBuffer())
+      .then((bytes) => WebAssembly.compile(bytes));
+    const fonts = fetchOk(`${BASE}/fonts.json`)
+      .then((r) => r.json() as Promise<string[]>)
+      .then((names) =>
+        Promise.all(
+          names.map((n) =>
+            fetchOk(`${BASE}/fonts/${encodeURIComponent(n)}`)
+              .then((r) => r.arrayBuffer())
+              .then((b) => new Uint8Array(b)),
+          ),
+        ),
+      );
+    const [module, files] = await Promise.all([compiled, fonts]);
+    return { module, fonts: files };
   })();
   // A failed fetch must not poison every later preview.
   assets.catch(() => {
@@ -235,6 +249,9 @@ function requestedFont(family: string): Promise<Uint8Array | null> {
 
 export async function createCaptionRenderer(): Promise<CaptionRenderer> {
   const { x } = await instantiate();
+  // The families a transcript needs depend on its words alone, and a style change (a
+  // drag, a slider) rebuilds the scene with the same transcript: ask the engine once.
+  const fallbackFor = new WeakMap<Transcript, Promise<string[]>>();
   const renderer: CaptionRenderer = {
     async loadFont(family) {
       const name = encoder.encode(family);
@@ -245,12 +262,20 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
         x.oc_add_requested_font(...copyIn(x, name), ...copyIn(x, font));
       }
     },
-    async loadFallbackFonts(transcript) {
-      if (!x.oc_fallback_fonts(...copyIn(x, encoder.encode(JSON.stringify(transcript))))) {
-        throw new Error(`caption engine rejected the transcript: ${result(x)}`);
+    loadFallbackFonts(transcript) {
+      let families = fallbackFor.get(transcript);
+      if (!families) {
+        families = (async () => {
+          if (!x.oc_fallback_fonts(...copyIn(x, encoder.encode(JSON.stringify(transcript))))) {
+            throw new Error(`caption engine rejected the transcript: ${result(x)}`);
+          }
+          const needed = JSON.parse(result(x)) as string[];
+          await Promise.all(needed.map((family) => renderer.loadFont(family)));
+          return needed;
+        })();
+        families.catch(() => fallbackFor.delete(transcript));
+        fallbackFor.set(transcript, families);
       }
-      const families = JSON.parse(result(x)) as string[];
-      await Promise.all(families.map((family) => renderer.loadFont(family)));
       return families;
     },
     setScene(input) {
@@ -269,6 +294,7 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
       const pixels = new Uint8ClampedArray(x.memory.buffer, start, (bottom - top) * w * 4).slice();
       return { image: new ImageData(pixels, w, bottom - top), top };
     },
+    activeIndex: () => x.oc_active_index(),
     activeCaption() {
       const index = x.oc_active_index();
       if (index < 0) return null;
