@@ -68,7 +68,11 @@ class EngineRenderBackend(RenderBackend):
         )
         try:
             with httpx.Client(timeout=RENDER_TIMEOUT) as client:
-                resp = client.post(url, json={**request, "output_url": output_url})
+                resp = client.post(
+                    url,
+                    json={**request, "output_url": output_url},
+                    headers={"x-engine-token": settings.engine_token},
+                )
         except httpx.RequestError as e:
             raise RuntimeError(f"Engine unreachable at {settings.engine_url}: {e}") from e
 

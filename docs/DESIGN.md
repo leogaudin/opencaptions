@@ -155,7 +155,7 @@ line repeated).
 **Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
 can be changed, its size and length) before it is imported; cancelling throws the copy away.
 
-**Fonts.** Inter and Poppins (ExtraBold, the default preset's) are bundled;
+**Fonts.** Inter, Poppins (ExtraBold, the default preset's) and Montserrat (Black, the Bold preset's) are bundled;
   Inter is the glyph fallback, so an offline install still draws. Any Google Fonts family can be chosen: the API
   fetches it once, keeps it in the store (`fonts/`), and gives the preview and
   the engine the same file. A bundled face wins over a requested one, and
@@ -170,7 +170,9 @@ can be changed, its size and length) before it is imported; cancelling throws th
   between them) but the caller serializes them.
 - **Render server.** `POST /render` takes a presigned read URL for the source and
   a presigned write URL for the output, valid for that render only, so the
-  engine holds no storage credentials. It posts progress back with a per-job
+  engine holds no storage credentials. The render worker sends `x-engine-token`
+  (`ENGINE_TOKEN`, a credential the two share like the storage keys) and the engine
+  answers 401 to a render without it; `/health` stays open. It posts progress back with a per-job
   token. The API reaches it through a `RenderBackend` seam (`RENDER_BACKEND`).
 
 ## The editor
@@ -328,7 +330,7 @@ controls and presets are the web's, from the same `presets.json`; the caption of
 is the engine's. Edits autosave after a quiet moment and when the app leaves the
 foreground; there is no Save button.
 
-**Fonts.** Inter and Poppins are bundled with the engine's other fonts, in the same order the
+**Fonts.** Inter, Poppins and Montserrat are bundled with the engine's other fonts, in the same order the
 server loads them. A style that names another Google Fonts family fetches it once,
 as the server does (TrueType, the weight nearest 800), and keeps it on disk.
 

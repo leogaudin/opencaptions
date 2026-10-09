@@ -45,7 +45,7 @@ page.
 
 > ⚠️ **The web UI listens on every interface, and signup is open.** Anyone who can reach port 5173 on this machine can create an account and spend its CPU/GPU on transcription and rendering. On a shared network or a public host, close registration by adding `REGISTRATION_ENABLED: "false"` to the `api` service's `environment:` block, firewall the port, or bind it to `127.0.0.1` on the `web` service's `ports:` line.
 
-The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` and the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file. Change them before running anywhere that matters, in every service that names them, which `scripts/check-compose.sh` verifies.
+The shipped defaults are development credentials, not secrets: Postgres is `opencaptions` / `opencaptions` the bundled Garage object store uses the `S3_ACCESS_KEY` / `S3_SECRET_KEY` written in the compose file, and the render server accepts requests that carry `ENGINE_TOKEN`. Change them before running anywhere that matters, in every service that names them, which `scripts/check-compose.sh` verifies.
 
 The stack publishes exactly one host port, the web UI, on `0.0.0.0:5173`, so
 other devices on your network can use it. Everything else (database, cache, object

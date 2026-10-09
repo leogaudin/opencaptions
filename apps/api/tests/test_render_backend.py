@@ -24,8 +24,8 @@ class _Client:
 
     def __exit__(self, *_: Any) -> None: ...
 
-    def post(self, url: str, json: dict[str, Any]) -> httpx.Response:
-        _Client.sent = {"url": url, "json": json}
+    def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> httpx.Response:
+        _Client.sent = {"url": url, "json": json, "headers": headers}
         return _Client.response
 
 
@@ -55,6 +55,12 @@ def test_engine_gets_a_presigned_upload_for_its_own_output(client: type[_Client]
     assert body["output_url"] == f"https://store/k.mp4?put_object&{render_backend.UPLOAD_GRANT_S}"
     assert body["fps"] == 30
     assert (result.output_key, result.frames_rendered, result.duration_ms) == ("k.mp4", 90, 12)
+
+
+def test_engine_is_shown_the_shared_token(client: type[_Client]) -> None:
+    EngineRenderBackend().render({"output_key": "k.mp4"})
+
+    assert client.sent["headers"] == {"x-engine-token": render_backend.settings.engine_token}
 
 
 def test_an_engine_error_names_the_status_and_detail(client: type[_Client]) -> None:

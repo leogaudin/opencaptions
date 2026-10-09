@@ -114,6 +114,7 @@ class Settings(BaseSettings):
 
     # ----- Rendering -----
     engine_url: str = "http://engine:3001"
+    engine_token: str = "opencaptions-dev-engine-token-change-me-for-any-exposed-host"
     # Where renders run. 'local' posts to the engine above, the only backend the
     # core ships; see app.services.render_backend for registering another.
     render_backend: str = "local"

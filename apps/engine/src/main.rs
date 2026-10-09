@@ -445,11 +445,36 @@ fn error(code: u16, kind: &str, detail: String) -> (u16, serde_json::Value) {
     )
 }
 
-fn handle(book: &FontBook<'static>, mut request: Request) {
+/// Whether the request carries the token the API shares with this server. The comparison
+/// looks at every byte, so its time says nothing about how much of a guess was right.
+fn authorised(request: &Request, token: &str) -> bool {
+    let sent = request
+        .headers()
+        .iter()
+        .find(|h| h.field.equiv("x-engine-token"))
+        .map_or("", |h| h.value.as_str());
+    token_matches(sent, token)
+}
+
+fn token_matches(sent: &str, token: &str) -> bool {
+    sent.len() == token.len()
+        && sent
+            .bytes()
+            .zip(token.bytes())
+            .fold(0, |diff, (a, b)| diff | (a ^ b))
+            == 0
+}
+
+fn handle(book: &FontBook<'static>, token: &str, mut request: Request) {
     let (status, body) = match (request.method(), request.url()) {
         (Method::Get, "/health") => (
             200,
             json!({ "status": "ok", "version": env!("CARGO_PKG_VERSION"), "service": "engine" }),
+        ),
+        (Method::Post, "/render") if !authorised(&request, token) => error(
+            401,
+            "unauthorised",
+            "missing or wrong x-engine-token".into(),
         ),
         (Method::Post, "/render") => {
             let mut raw = Vec::new();
@@ -529,20 +554,34 @@ fn main() {
         log("no_fonts", json!({ "dir": dir }));
         std::process::exit(1);
     }
+    let Ok(token) = std::env::var("ENGINE_TOKEN") else {
+        log("no_token", json!({ "need": "ENGINE_TOKEN" }));
+        std::process::exit(1);
+    };
+    let token = Arc::new(token);
     let server = Server::http(format!("0.0.0.0:{port}")).expect("bind");
     log(
         "listening",
         json!({ "port": port, "families": book.families() }),
     );
     for request in server.incoming_requests() {
-        let book = Arc::clone(&book);
-        std::thread::spawn(move || handle(&book, request));
+        let (book, token) = (Arc::clone(&book), Arc::clone(&token));
+        std::thread::spawn(move || handle(&book, &token, request));
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Colour;
+    use super::{Colour, token_matches};
+
+    #[test]
+    fn only_the_exact_token_is_accepted() {
+        assert!(token_matches("s3cret", "s3cret"));
+        assert!(!token_matches("", "s3cret"));
+        assert!(!token_matches("s3cre", "s3cret"));
+        assert!(!token_matches("s3cretx", "s3cret"));
+        assert!(!token_matches("S3cret", "s3cret"));
+    }
 
     #[test]
     fn hdr_is_kept_where_the_codec_can_carry_it_and_tone_mapped_where_not() {

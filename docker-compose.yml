@@ -204,6 +204,7 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0pencaptions00000000000000000dev}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-opencaptions-dev-secret-key-change-me-for-any-exposed-host}
       S3_BUCKET: ${S3_BUCKET:-opencaptions}
+      ENGINE_TOKEN: ${ENGINE_TOKEN:-opencaptions-dev-engine-token-change-me-for-any-exposed-host}
     image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
     build: { context: apps/api, target: runtime }
     develop:
@@ -230,6 +231,9 @@ services:
   engine:
     image: ghcr.io/leogaudin/opencaptions-engine:${OPENCAPTIONS_VERSION:-latest}
     build: apps/engine
+    # What the render worker presents; the engine refuses a render without it.
+    environment:
+      ENGINE_TOKEN: ${ENGINE_TOKEN:-opencaptions-dev-engine-token-change-me-for-any-exposed-host}
     develop:
       watch:
         - { path: apps/engine, action: rebuild, ignore: [target/] }
