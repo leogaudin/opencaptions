@@ -266,5 +266,15 @@
   "There are no words in it.": "Não há nenhuma palavra.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Esse arquivo não é SRT, WebVTT nem uma exportação JSON do OpenCaptions.",
   "{words} words in {segments} segments": "{words} palavras em {segments} segmentos",
-  "Edit JSON": "Editar JSON"
+  "Edit JSON": "Editar JSON",
+  "Load more": "Carregar mais",
+  "Failed to load projects: {error}": "Não foi possível carregar os projetos: {error}",
+  "Delete {name}": "Excluir {name}",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "Isso não parece um vídeo. Tente .mp4, .mov, .webm, .mkv ou .avi.",
+  "No video uploaded yet.": "Nenhum vídeo enviado ainda.",
+  "Waiting for transcription to complete to show the preview…": "Aguardando o fim da transcrição para mostrar a pré-visualização…",
+  "Cancel upload": "Cancelar envio",
+  "Uploading… {percent}%": "Enviando… {percent}%",
+  "The project was created, but transcription did not start: {error}": "O projeto foi criado, mas a transcrição não começou: {error}",
+  "Open project": "Abrir projeto"
 }

@@ -266,5 +266,15 @@
   "There are no words in it.": "其中没有单词。",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "该文件不是 SRT、WebVTT，也不是 OpenCaptions 的 JSON 导出。",
   "{words} words in {segments} segments": "{segments} 个分段，共 {words} 个单词",
-  "Edit JSON": "编辑 JSON"
+  "Edit JSON": "编辑 JSON",
+  "Load more": "加载更多",
+  "Failed to load projects: {error}": "无法加载项目：{error}",
+  "Delete {name}": "删除 {name}",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "这看起来不是视频。请尝试 .mp4、.mov、.webm、.mkv 或 .avi。",
+  "No video uploaded yet.": "尚未上传视频。",
+  "Waiting for transcription to complete to show the preview…": "正在等待转录完成以显示预览…",
+  "Cancel upload": "取消上传",
+  "Uploading… {percent}%": "正在上传… {percent}%",
+  "The project was created, but transcription did not start: {error}": "项目已创建，但转录未能开始：{error}",
+  "Open project": "打开项目"
 }

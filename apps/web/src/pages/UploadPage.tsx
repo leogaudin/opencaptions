@@ -6,8 +6,8 @@
  *
  * After upload + transcription kickoff, navigate to the editor.
  */
-import { type FormEvent, useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { LocalModelSelect } from "@/components/LocalModelSelect";
 import { VideoDropzone } from "@/components/VideoDropzone";
 import { useT } from "@/lib/i18n";
@@ -45,6 +45,14 @@ export function UploadPage() {
   const model = modelChoice ?? defaultModel;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Bytes sent of the file, 0 to 1; null before the first report. */
+  const [uploaded, setUploaded] = useState<number | null>(null);
+  /** A project that was created though its transcription did not start. */
+  const [orphan, setOrphan] = useState<string | null>(null);
+  const upload = useRef<AbortController | null>(null);
+
+  // Leaving the page cancels an upload in flight rather than finishing it unseen.
+  useEffect(() => () => upload.current?.abort(), []);
 
   const onPickFile = useCallback((f: File) => {
     setFile(f);
@@ -89,24 +97,37 @@ export function UploadPage() {
     }
 
     setSubmitting(true);
+    setUploaded(null);
+    const controller = new AbortController();
+    upload.current = controller;
     try {
-      const project =
+      const options = {
+        title: title.trim(),
+        provider,
+        language,
+        model: provider === "local" ? model || undefined : undefined,
+      };
+      const { project, transcriptionError } =
         mode === "file"
-          ? await startProjectFromFile(file!, {
-              title: title.trim(),
-              provider,
-              language,
-              model: provider === "local" ? model || undefined : undefined,
+          ? await startProjectFromFile(file!, options, {
+              signal: controller.signal,
+              onProgress: (sent, total) => setUploaded(total ? sent / total : null),
             })
-          : await startProjectFromUrl(videoUrl.trim(), {
-              title: title.trim(),
-              provider,
-              language,
-              model: provider === "local" ? model || undefined : undefined,
-            });
+          : await startProjectFromUrl(videoUrl.trim(), options);
+      if (transcriptionError) {
+        // The video is saved; sending the form again would make a second copy.
+        setOrphan(project.id);
+        setError(
+          t("The project was created, but transcription did not start: {error}", {
+            error: transcriptionError,
+          }),
+        );
+        setSubmitting(false);
+        return;
+      }
       nav(`/projects/${project.id}`);
     } catch (e) {
-      setError((e as Error).message);
+      if ((e as Error).name !== "AbortError") setError((e as Error).message);
       setSubmitting(false);
     }
   }
@@ -267,24 +288,48 @@ export function UploadPage() {
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
+            {orphan && (
+              <Link to={`/projects/${orphan}`} className="ml-2 font-semibold underline">
+                {t("Open project")}
+              </Link>
+            )}
+          </div>
+        )}
+
+        {submitting && uploaded !== null && uploaded < 1 && (
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(uploaded * 100)}
+            className="h-1.5 overflow-hidden rounded-full bg-muted"
+          >
+            <div
+              className="h-full bg-primary transition-[width] duration-200"
+              style={{ width: `${Math.round(uploaded * 100)}%` }}
+            />
           </div>
         )}
 
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
-            onClick={() => nav(-1)}
+            onClick={() => (submitting ? upload.current?.abort() : nav(-1))}
             className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
           >
-            {t("Cancel")}
+            {submitting && mode === "file" ? t("Cancel upload") : t("Cancel")}
           </button>
           <button
             type="submit"
-            disabled={submitting || (mode === "file" ? !file : !videoUrl.trim())}
+            disabled={submitting || !!orphan || (mode === "file" ? !file : !videoUrl.trim())}
             className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
             data-testid="submit"
           >
-            {submitting ? t("Creating…") : t("Create project")}
+            {submitting
+              ? uploaded !== null && uploaded < 1
+                ? t("Uploading… {percent}%", { percent: Math.round(uploaded * 100) })
+                : t("Creating…")
+              : t("Create project")}
           </button>
         </div>
       </form>

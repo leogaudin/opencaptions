@@ -30,6 +30,7 @@ CHECKS=(
   "web lint|working-directory: apps/web|npm run lint"
   "web build|npm run build|npm run build"
   "web typecheck|npm run typecheck|npm run typecheck"
+  "web unit tests|npm test|npm test"
   "engine clippy|cargo clippy --locked --all-targets|cargo clippy --locked --all-targets"
   "engine wasm clippy|wasm32-unknown-unknown -- -D warnings|wasm32-unknown-unknown -q -- -D warnings"
   "engine ios clippy|aarch64-apple-ios -- -D warnings|aarch64-apple-ios -q -- -D warnings"

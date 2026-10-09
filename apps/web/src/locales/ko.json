@@ -266,5 +266,15 @@
   "There are no words in it.": "단어가 없습니다.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "이 파일은 SRT, WebVTT, OpenCaptions JSON 내보내기가 아닙니다.",
   "{words} words in {segments} segments": "세그먼트 {segments}개, 단어 {words}개",
-  "Edit JSON": "JSON 편집"
+  "Edit JSON": "JSON 편집",
+  "Load more": "더 보기",
+  "Failed to load projects: {error}": "프로젝트를 불러오지 못했습니다: {error}",
+  "Delete {name}": "{name} 삭제",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "동영상이 아닌 것 같습니다. .mp4, .mov, .webm, .mkv 또는 .avi를 사용해 보세요.",
+  "No video uploaded yet.": "아직 업로드된 동영상이 없습니다.",
+  "Waiting for transcription to complete to show the preview…": "미리보기를 표시하려면 받아쓰기가 끝나기를 기다리는 중…",
+  "Cancel upload": "업로드 취소",
+  "Uploading… {percent}%": "업로드 중… {percent}%",
+  "The project was created, but transcription did not start: {error}": "프로젝트는 만들어졌지만 받아쓰기를 시작하지 못했습니다: {error}",
+  "Open project": "프로젝트 열기"
 }

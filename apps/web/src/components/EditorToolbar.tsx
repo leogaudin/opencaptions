@@ -56,9 +56,8 @@ export function EditorToolbar() {
   // the primitive fields that actually determine when exports should be refetched.
   const projectId = project?.id;
   const projectStatus = project?.status;
-  const projectUpdatedAt = project?.updated_at;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: projectStatus and projectUpdatedAt are intentional refetch triggers, exports change when status or updated_at change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: projectStatus is an intentional refetch trigger. Not updated_at: every autosave changes it, and the sizes on offer do not depend on the captions.
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -73,7 +72,7 @@ export function EditorToolbar() {
     return () => {
       cancelled = true;
     };
-  }, [projectId, projectStatus, projectUpdatedAt]);
+  }, [projectId, projectStatus]);
 
   if (!project) return null;
 
@@ -176,7 +175,7 @@ export function EditorToolbar() {
           ) : (
             <Download className="h-3.5 w-3.5" aria-hidden />
           )}
-          Download
+          {t("Download")}
         </button>
         <DownloadDialog
           open={downloading}

@@ -44,13 +44,13 @@ export function VideoDropzone({
   const onDrop = useCallback(
     (accepted: File[], rejections: FileRejection[]) => {
       if (rejections.length > 0) {
-        onReject?.("That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.");
+        onReject?.(t("That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi."));
         return;
       }
       const f = accepted[0];
       if (f) onFile(f);
     },
-    [onFile, onReject],
+    [onFile, onReject, t],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

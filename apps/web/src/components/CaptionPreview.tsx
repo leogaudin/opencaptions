@@ -404,9 +404,9 @@ export function CaptionPreview() {
   return (
     <div ref={container} className="flex h-full min-h-0 w-full items-center justify-center">
       {!project.video_storage_key ? (
-        note("No video uploaded yet.")
+        note(t("No video uploaded yet."))
       ) : shown.segments.length === 0 ? (
-        note("Waiting for transcription to complete to show the preview…")
+        note(t("Waiting for transcription to complete to show the preview…"))
       ) : previewBlocked ? (
         note(
           <>

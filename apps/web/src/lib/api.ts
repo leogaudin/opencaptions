@@ -82,7 +82,11 @@ async function request<T>(
     credentials: "same-origin",
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
+  return settle<T>(resp, skipAuthRedirect);
+}
 
+/** The one place a response becomes a value or an error, for `fetch` and uploads alike. */
+async function settle<T>(resp: Response, skipAuthRedirect = false): Promise<T> {
   if (resp.status === 204) {
     return undefined as T;
   }
@@ -196,11 +200,57 @@ export function getProject(projectId: string): Promise<Project> {
   return request<Project>(`/projects/${projectId}`);
 }
 
-export function createProject(title: string, videoFile: File): Promise<Project> {
+export interface UploadHooks {
+  /** Bytes sent so far, of the total. */
+  onProgress?: (sent: number, total: number) => void;
+  /** Abort the upload with this. */
+  signal?: AbortSignal;
+}
+
+/**
+ * POST with progress and cancel, which `fetch` cannot give a request body.
+ * Same CSRF header, cookie and error handling as {@link request}.
+ */
+function upload<T>(path: string, body: FormData, hooks: UploadHooks): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}${path}`);
+    xhr.withCredentials = true;
+    if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) hooks.onProgress?.(e.loaded, e.total);
+    };
+    xhr.onload = () => {
+      const resp = new Response(xhr.status === 204 ? null : xhr.responseText, {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        headers: { "content-type": xhr.getResponseHeader("content-type") ?? "" },
+      });
+      settle<T>(resp).then(resolve, reject);
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.onabort = () => reject(new DOMException("Upload cancelled", "AbortError"));
+    const { signal } = hooks;
+    if (signal) {
+      if (signal.aborted) {
+        reject(new DOMException("Upload cancelled", "AbortError"));
+        return;
+      }
+      signal.addEventListener("abort", () => xhr.abort(), { once: true });
+    }
+    xhr.send(body);
+  });
+}
+
+export function createProject(
+  title: string,
+  videoFile: File,
+  hooks: UploadHooks = {},
+): Promise<Project> {
   const fd = new FormData();
   fd.append("title", title);
   fd.append("video", videoFile);
-  return request<Project>("/projects", { method: "POST", body: fd });
+  return upload<Project>("/projects", fd, hooks);
 }
 
 /** Create a project from a direct video URL. Page links (YouTube) are not supported. */

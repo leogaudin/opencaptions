@@ -49,38 +49,49 @@ export function EditorPage() {
   }, [projectId, loadProject]);
 
   // Subscribe to job progress events
-  useProjectWebSocket(projectId, (msg) => {
-    if (msg.type === "job_progress" || msg.type === "job_started") {
-      // Resolve job type defensively: a job_progress event without a stage field
-      // must not be re-bucketed as transcription, prefer the stage the backend
-      // sent, then the type already known for this job, then fall back.
-      const jobId = String(msg.payload.job_id);
-      const existingJob = useEditorStore.getState().jobs.find((j) => j.id === jobId);
-      const resolvedType: "transcription" | "rendering" =
-        (msg.payload.stage as "transcription" | "rendering" | undefined) ??
-        existingJob?.type ??
-        "transcription";
-      upsertJob({
-        id: jobId,
-        project_id: String(projectId),
-        type: resolvedType,
-        status: "running",
-        progress: Number(msg.payload.progress ?? 0),
-        message: (msg.payload.message as string) ?? null,
-        error: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    } else if (msg.type === "job_succeeded") {
-      reloadProject();
-    } else if (
-      msg.type === "transcript_updated" ||
-      msg.type === "job_failed" ||
-      msg.type === "job_cancelled"
-    ) {
-      reloadProject();
-    }
-  });
+  useProjectWebSocket(
+    projectId,
+    (msg) => {
+      if (msg.type === "job_progress" || msg.type === "job_started") {
+        // Resolve job type defensively: a job_progress event without a stage field
+        // must not be re-bucketed as transcription, prefer the stage the backend
+        // sent, then the type already known for this job, then fall back.
+        const jobId = String(msg.payload.job_id);
+        const existingJob = useEditorStore.getState().jobs.find((j) => j.id === jobId);
+        const resolvedType: "transcription" | "rendering" =
+          (msg.payload.stage as "transcription" | "rendering" | undefined) ??
+          existingJob?.type ??
+          "transcription";
+        upsertJob({
+          id: jobId,
+          project_id: String(projectId),
+          type: resolvedType,
+          status: "running",
+          progress: Number(msg.payload.progress ?? 0),
+          message: (msg.payload.message as string) ?? null,
+          error: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      } else if (
+        msg.type === "job_succeeded" ||
+        msg.type === "job_failed" ||
+        msg.type === "job_cancelled"
+      ) {
+        // A finished download changes nothing the editor holds, so edits made while
+        // it was prepared must survive the reload. A finished transcription does
+        // replace the transcript.
+        const known = useEditorStore
+          .getState()
+          .jobs.find((j) => j.id === String(msg.payload.job_id));
+        const stage = (msg.payload.stage as string | undefined) ?? known?.type;
+        reloadProject({ keepLocalEdits: stage === "rendering" });
+      } else if (msg.type === "transcript_updated") {
+        reloadProject();
+      }
+    },
+    reloadProject,
+  );
 
   if (error) {
     return (

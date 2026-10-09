@@ -266,5 +266,15 @@
   "There are no words in it.": "単語が含まれていません。",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "このファイルはSRT、WebVTT、OpenCaptionsのJSONエクスポートのいずれでもありません。",
   "{words} words in {segments} segments": "{segments}個のセグメントに{words}単語",
-  "Edit JSON": "JSONを編集"
+  "Edit JSON": "JSONを編集",
+  "Load more": "さらに読み込む",
+  "Failed to load projects: {error}": "プロジェクトを読み込めませんでした: {error}",
+  "Delete {name}": "{name} を削除",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "動画ではないようです。.mp4、.mov、.webm、.mkv、.avi をお試しください。",
+  "No video uploaded yet.": "動画はまだアップロードされていません。",
+  "Waiting for transcription to complete to show the preview…": "文字起こしの完了を待ってプレビューを表示します…",
+  "Cancel upload": "アップロードをキャンセル",
+  "Uploading… {percent}%": "アップロード中… {percent}%",
+  "The project was created, but transcription did not start: {error}": "プロジェクトは作成されましたが、文字起こしを開始できませんでした: {error}",
+  "Open project": "プロジェクトを開く"
 }

@@ -266,5 +266,15 @@
   "There are no words in it.": "İçinde hiç kelime yok.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Bu dosya SRT, WebVTT veya OpenCaptions JSON dışa aktarımı değil.",
   "{words} words in {segments} segments": "{segments} bölümde {words} kelime",
-  "Edit JSON": "JSON’u düzenle"
+  "Edit JSON": "JSON’u düzenle",
+  "Load more": "Daha fazla yükle",
+  "Failed to load projects: {error}": "Projeler yüklenemedi: {error}",
+  "Delete {name}": "{name} projesini sil",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "Bu bir videoya benzemiyor. .mp4, .mov, .webm, .mkv veya .avi deneyin.",
+  "No video uploaded yet.": "Henüz video yüklenmedi.",
+  "Waiting for transcription to complete to show the preview…": "Önizlemeyi göstermek için transkripsiyonun bitmesi bekleniyor…",
+  "Cancel upload": "Yüklemeyi iptal et",
+  "Uploading… {percent}%": "Yükleniyor… %{percent}",
+  "The project was created, but transcription did not start: {error}": "Proje oluşturuldu ancak transkripsiyon başlamadı: {error}",
+  "Open project": "Projeyi aç"
 }

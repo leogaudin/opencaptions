@@ -1,7 +1,7 @@
 /**
  * useProjectWebSocket: subscribe to /ws/v1/projects/{id} and surface messages.
  *
- * The hook auto-reconnects with exponential backoff (max 10s).
+ * The hook auto-reconnects with jittered exponential backoff (max 10s).
  * Caller passes a handler invoked for every message except `ping`.
  */
 import { useEffect, useRef } from "react";
@@ -10,9 +10,13 @@ import type { WSMessage } from "@/types";
 export function useProjectWebSocket(
   projectId: string | null | undefined,
   onMessage: (msg: WSMessage) => void,
+  /** Called when the socket is open again after a drop, so the caller can catch up on what it missed. */
+  onResync?: () => void,
 ): void {
   const handlerRef = useRef(onMessage);
   handlerRef.current = onMessage;
+  const resyncRef = useRef(onResync);
+  resyncRef.current = onResync;
 
   useEffect(() => {
     if (!projectId) return;
@@ -20,6 +24,7 @@ export function useProjectWebSocket(
     let stopped = false;
     let ws: WebSocket | null = null;
     let reconnectTimer: number | null = null;
+    let reconnected = false;
 
     const connect = (): void => {
       if (stopped) return;
@@ -29,6 +34,7 @@ export function useProjectWebSocket(
 
       ws.onopen = () => {
         attempt = 0;
+        if (reconnected) resyncRef.current?.();
       };
       ws.onmessage = (e) => {
         try {
@@ -42,7 +48,10 @@ export function useProjectWebSocket(
       ws.onclose = () => {
         if (stopped) return;
         attempt++;
-        const delay = Math.min(10_000, 500 * 2 ** Math.min(attempt, 6));
+        reconnected = true;
+        // Jitter, so a restarted server is not hit by every tab at once.
+        const delay =
+          Math.min(10_000, 500 * 2 ** Math.min(attempt, 6)) * (0.75 + Math.random() / 2);
         reconnectTimer = window.setTimeout(connect, delay);
       };
       ws.onerror = () => {

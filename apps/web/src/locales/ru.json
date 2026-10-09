@@ -266,5 +266,15 @@
   "There are no words in it.": "В нём нет слов.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Этот файл не в формате SRT, WebVTT и не экспорт JSON из OpenCaptions.",
   "{words} words in {segments} segments": "Слов: {words}, сегментов: {segments}",
-  "Edit JSON": "Править JSON"
+  "Edit JSON": "Править JSON",
+  "Load more": "Показать ещё",
+  "Failed to load projects: {error}": "Не удалось загрузить проекты: {error}",
+  "Delete {name}": "Удалить {name}",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "Это не похоже на видео. Попробуйте .mp4, .mov, .webm, .mkv или .avi.",
+  "No video uploaded yet.": "Видео ещё не загружено.",
+  "Waiting for transcription to complete to show the preview…": "Ждём завершения расшифровки, чтобы показать предпросмотр…",
+  "Cancel upload": "Отменить загрузку",
+  "Uploading… {percent}%": "Загрузка… {percent}%",
+  "The project was created, but transcription did not start: {error}": "Проект создан, но расшифровка не началась: {error}",
+  "Open project": "Открыть проект"
 }

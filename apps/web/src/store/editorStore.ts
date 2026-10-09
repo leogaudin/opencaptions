@@ -35,6 +35,14 @@ interface Snapshot {
   captionOffsetMs: number;
 }
 
+interface LoadOptions {
+  /**
+   * Keep edits that are not saved yet instead of the server's copy. For the
+   * reload after a download, which must not discard what was typed meanwhile.
+   */
+  keepLocalEdits?: boolean;
+}
+
 interface EditorState {
   project: Project | null;
   transcript: Transcript | null;
@@ -43,7 +51,10 @@ interface EditorState {
   captionOffsetMs: number;
   /** Newest first. */
   jobs: Job[];
+  /** A project that could not be loaded; the only error that replaces the editor. */
   error: string | null;
+  /** A download that could not start; shown in the toolbar, edits stay. */
+  downloadError: string | null;
   /** The transcription or render in progress, for progress bars. */
   activeJobId: string | null;
   autosaveStatus: AutosaveStatus;
@@ -51,8 +62,8 @@ interface EditorState {
   /** What undo and redo step through: the earlier and later states of the edits. */
   history: History<Snapshot>;
 
-  loadProject: (projectId: string) => Promise<void>;
-  reloadProject: () => Promise<void>;
+  loadProject: (projectId: string, opts?: LoadOptions) => Promise<void>;
+  reloadProject: (opts?: LoadOptions) => Promise<void>;
   /** Changes of the same fields made close together (a slider) undo as one step. */
   setStyle: (s: Partial<StyleConfig>) => void;
   /** Clamped and autosaved. */
@@ -85,6 +96,7 @@ const initialState = {
   captionOffsetMs: 0,
   jobs: [],
   error: null,
+  downloadError: null,
   activeJobId: null,
   autosaveStatus: "idle",
   autosaveError: null,
@@ -143,7 +155,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
       }, SAVED_INDICATOR_MS);
       return true;
     } catch (e) {
-      set({ autosaveStatus: "error", autosaveError: message(e), error: message(e) });
+      // Not `error`: that would replace the editor, and the edits with it. The
+      // autosave retries, and the next edit does too.
+      set({ autosaveStatus: "error", autosaveError: message(e) });
       return false;
     }
   };
@@ -163,18 +177,24 @@ export const useEditorStore = create<EditorState>((set, get) => {
   return {
     ...initialState,
 
-    loadProject: async (projectId) => {
+    loadProject: async (projectId, opts = {}) => {
       set({ error: null });
       try {
         const project = await api.getProject(projectId);
         const active = project.active_job;
+        const keepLocal =
+          !!opts.keepLocalEdits && get().project?.id === projectId && autosave.dirty();
         set({
           project,
-          transcript: project.transcript,
-          style: project.style_config ?? defaultStyle,
-          captionOffsetMs: project.caption_offset_ms ?? 0,
-          // What was loaded is the start: nothing before it to go back to.
-          history: emptyHistory<Snapshot>(),
+          ...(keepLocal
+            ? {}
+            : {
+                transcript: project.transcript,
+                style: project.style_config ?? defaultStyle,
+                captionOffsetMs: project.caption_offset_ms ?? 0,
+                // What was loaded is the start: nothing before it to go back to.
+                history: emptyHistory<Snapshot>(),
+              }),
           // Restore live progress on refresh, before the WebSocket catches up.
           activeJobId: active?.id ?? null,
           jobs:
@@ -182,15 +202,16 @@ export const useEditorStore = create<EditorState>((set, get) => {
               ? [active, ...get().jobs]
               : get().jobs,
         });
-        autosave.markSaved();
+        if (keepLocal) autosave.release();
+        else autosave.markSaved();
       } catch (e) {
         set({ error: message(e) });
       }
     },
 
-    reloadProject: async () => {
+    reloadProject: async (opts) => {
       const id = get().project?.id;
-      if (id) await get().loadProject(id);
+      if (id) await get().loadProject(id, opts);
     },
 
     setStyle: (s) =>
@@ -234,6 +255,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       const { project } = get();
       if (!project) return;
       // The server hashes what it has stored, so pending edits must land first.
+      set({ downloadError: null });
       await autosave.flush();
       try {
         const options = getDownloadOptions();
@@ -248,7 +270,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           jobs: [pendingRender(project.id, result.job_id), ...get().jobs],
         });
       } catch (e) {
-        set({ error: message(e) });
+        set({ downloadError: message(e) });
       }
     },
 
@@ -258,6 +280,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
       await api.cancelJob(id);
       forgetDownload(id);
       set({ activeJobId: null });
+      // Edits held back while the download was prepared can be saved now.
+      autosave.release();
     },
 
     upsertJob: (j) => {

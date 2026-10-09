@@ -266,5 +266,15 @@
   "There are no words in it.": "Tidak ada kata di dalamnya.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Berkas ini bukan SRT, WebVTT, atau ekspor JSON OpenCaptions.",
   "{words} words in {segments} segments": "{words} kata dalam {segments} segmen",
-  "Edit JSON": "Edit JSON"
+  "Edit JSON": "Edit JSON",
+  "Load more": "Muat lebih banyak",
+  "Failed to load projects: {error}": "Gagal memuat proyek: {error}",
+  "Delete {name}": "Hapus {name}",
+  "That doesn't look like a video. Try .mp4, .mov, .webm, .mkv or .avi.": "Ini tidak tampak seperti video. Coba .mp4, .mov, .webm, .mkv, atau .avi.",
+  "No video uploaded yet.": "Belum ada video yang diunggah.",
+  "Waiting for transcription to complete to show the preview…": "Menunggu transkripsi selesai untuk menampilkan pratinjau…",
+  "Cancel upload": "Batalkan unggahan",
+  "Uploading… {percent}%": "Mengunggah… {percent}%",
+  "The project was created, but transcription did not start: {error}": "Proyek dibuat, tetapi transkripsi tidak dimulai: {error}",
+  "Open project": "Buka proyek"
 }

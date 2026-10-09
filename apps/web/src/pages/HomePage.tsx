@@ -23,13 +23,18 @@ export function HomePage() {
   const t = useT();
   const [items, setItems] = useState<ProjectListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     api
       .listProjects()
       .then((res) => {
-        if (!cancelled) setItems(res.items);
+        if (cancelled) return;
+        setItems(res.items);
+        setTotal(res.total);
       })
       .catch((e) => {
         if (!cancelled) setError((e as Error).message);
@@ -37,6 +42,42 @@ export function HomePage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    try {
+      const res = await api.listProjects(page + 1);
+      setPage(page + 1);
+      setTotal(res.total);
+      // A project made meanwhile shifts the pages: never show one twice.
+      setItems((prev) => {
+        const seen = new Set((prev ?? []).map((p) => p.id));
+        return [...(prev ?? []), ...res.items.filter((p) => !seen.has(p.id))];
+      });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page]);
+
+  // A project that finished transcribing: its row shows the new status, not 100%.
+  const handleSettled = useCallback((id: string) => {
+    api
+      .getProject(id)
+      .then((p) =>
+        setItems((prev) =>
+          prev
+            ? prev.map((x) =>
+                x.id === id ? { ...x, status: p.status, updated_at: p.updated_at } : x,
+              )
+            : prev,
+        ),
+      )
+      .catch(() => {
+        // The next visit to the list shows it.
+      });
   }, []);
 
   const handleDeleted = useCallback((id: string) => {
@@ -51,7 +92,7 @@ export function HomePage() {
     return (
       <div className={`w-full ${shellX} py-12`}>
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          Failed to load projects: {error}
+          {t("Failed to load projects: {error}", { error })}
         </div>
       </div>
     );
@@ -78,9 +119,28 @@ export function HomePage() {
       </div>
       <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((p) => (
-          <ProjectRow key={p.id} item={p} onDeleted={handleDeleted} onRenamed={handleRenamed} />
+          <ProjectRow
+            key={p.id}
+            item={p}
+            onDeleted={handleDeleted}
+            onRenamed={handleRenamed}
+            onSettled={handleSettled}
+          />
         ))}
       </ul>
+      {items.length < total && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            data-testid="load-more"
+            className="rounded-xl bg-muted px-6 py-2.5 text-sm font-semibold hover:bg-muted/70 disabled:opacity-50"
+          >
+            {t("Load more")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -161,10 +221,12 @@ function ProjectRow({
   item,
   onDeleted,
   onRenamed,
+  onSettled,
 }: {
   item: ProjectListItem;
   onDeleted: (id: string) => void;
   onRenamed: (id: string, title: string) => void;
+  onSettled: (id: string) => void;
 }) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
@@ -242,7 +304,7 @@ function ProjectRow({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              aria-label={`Delete ${item.title}`}
+              aria-label={t("Delete {name}", { name: item.title })}
               title={t("Delete project")}
               data-testid="delete-project"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white opacity-80 backdrop-blur transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
@@ -289,7 +351,7 @@ function ProjectRow({
           title={new Date(item.updated_at).toLocaleString()}
         >
           {item.status === "transcribing" ? (
-            <LiveProgress projectId={item.id} />
+            <LiveProgress projectId={item.id} onSettled={onSettled} />
           ) : (
             <StatusBadge status={item.status} />
           )}
@@ -312,15 +374,32 @@ function ProjectRow({
  * store object/array), per this codebase's Zustand identity rule. The hook
  * holds the handler in a ref, so this inline callback doesn't re-subscribe.
  */
-function LiveProgress({ projectId }: { projectId: string }) {
+function LiveProgress({
+  projectId,
+  onSettled,
+}: {
+  projectId: string;
+  onSettled: (id: string) => void;
+}) {
   const t = useT();
   const [pct, setPct] = useState<number | null>(null);
 
-  useProjectWebSocket(projectId, (msg) => {
-    if (msg.type === "job_progress" || msg.type === "job_started") {
-      setPct(Math.round(Number(msg.payload.progress ?? 0) * 100));
-    }
-  });
+  useProjectWebSocket(
+    projectId,
+    (msg) => {
+      if (msg.type === "job_progress" || msg.type === "job_started") {
+        setPct(Math.round(Number(msg.payload.progress ?? 0) * 100));
+      } else if (
+        msg.type === "job_succeeded" ||
+        msg.type === "job_failed" ||
+        msg.type === "job_cancelled"
+      ) {
+        onSettled(projectId);
+      }
+    },
+    // Whatever finished while the socket was down.
+    () => onSettled(projectId),
+  );
 
   return (
     <span className="flex items-center gap-1.5" data-testid="row-progress">
