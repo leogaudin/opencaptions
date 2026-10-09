@@ -48,7 +48,12 @@ export async function mockTranscribedProject(
   {
     transcript = HELLO,
     captionOffsetMs = 0,
-  }: { transcript?: Transcript; captionOffsetMs?: number } = {},
+    videoSize = { width: 1080, height: 1920 },
+  }: {
+    transcript?: Transcript;
+    captionOffsetMs?: number;
+    videoSize?: { width: number; height: number };
+  } = {},
 ): Promise<() => Record<string, unknown>> {
   const now = new Date().toISOString();
   let project: Record<string, unknown> = {
@@ -59,8 +64,8 @@ export async function mockTranscribedProject(
     style_config: null,
     caption_offset_ms: captionOffsetMs,
     video_storage_key: `projects/${MOCK_PROJECT_ID}/source.mp4`,
-    video_width: 1080,
-    video_height: 1920,
+    video_width: videoSize.width,
+    video_height: videoSize.height,
     video_fps: 30,
     video_duration: transcript.duration,
     error: null,

@@ -19,6 +19,8 @@ import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { StyleConfig, Transcript } from "@/types";
 
+/** The tallest picture the preview draws, however large and sharp the screen. */
+const MAX_SCENE_HEIGHT = 2160;
 const FALLBACK_WIDTH = 1080;
 const FALLBACK_HEIGHT = 1920;
 
@@ -373,10 +375,11 @@ export function CaptionPreview() {
   const displayWidth = Math.min(room.width, room.height * ratio);
   const displayHeight = displayWidth / ratio;
 
-  // Drawn at the resolution it is shown at, never above the export's: layout is
-  // proportional to frame height, so this is the export's picture at screen size.
+  // Drawn at the resolution it is shown at, whatever the video's own: the captions are vector, so a
+  // low-resolution video still gets sharp ones, and layout is proportional to frame height, so this
+  // is the export's picture at screen size.
   const dpr = typeof window === "undefined" ? 1 : window.devicePixelRatio;
-  const sceneHeight = Math.max(2, Math.round(Math.min(naturalHeight, displayHeight * dpr)));
+  const sceneHeight = Math.max(2, Math.round(Math.min(MAX_SCENE_HEIGHT, displayHeight * dpr)));
   const scene = useMemo<SceneInput>(
     () => ({
       transcript: shown,

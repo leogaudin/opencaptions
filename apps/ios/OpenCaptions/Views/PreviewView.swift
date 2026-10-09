@@ -275,12 +275,12 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         applyLive()
         guard let transcript = project.transcript, bounds.width > 0, bounds.height > 0 else { return }
 
-        // Drawn at the size it is shown at, never above the video's: layout is
-        // proportional to frame height, so this is the export's picture at screen size.
+        // Drawn at the size it is shown at, whatever the video's own: the captions are vector, so a
+        // low-resolution video still gets sharp ones, and layout is proportional to frame height, so
+        // this is the export's picture at screen size.
         let ratio = Double(project.videoWidth ?? 1080) / Double(project.videoHeight ?? 1920)
         let scale = min(UIScreen.main.scale, 2)
-        let natural = Double(project.videoHeight ?? 1920)
-        let height = max(2, Int(min(natural, bounds.height * scale).rounded()))
+        let height = max(2, Int(min(2160, bounds.height * scale).rounded()))
         let width = max(2, Int((Double(height) * ratio).rounded()))
         frameSize = CGSize(width: width, height: height)
 
