@@ -49,3 +49,12 @@ def test_the_default_font_ships_with_the_engine() -> None:
     # A new project must draw without fetching a font: the phone app works offline.
     fonts = _PRESETS.parents[3] / "engine" / "fonts"
     assert (fonts / "Poppins-ExtraBold.ttf").is_file() and (fonts / "Poppins-OFL.txt").is_file()
+
+
+def test_the_bold_presets_font_ships_with_the_engine() -> None:
+    # Montserrat Black is the one weight Google's 800 lookup cannot reach.
+    fonts = _PRESETS.parents[3] / "engine" / "fonts"
+    bold = next(p for p in _presets() if p["name"] == "Bold")
+    config = bold["config"]
+    assert isinstance(config, dict) and config["font"] == "Montserrat"
+    assert (fonts / "Montserrat-Black.ttf").is_file() and (fonts / "Montserrat-OFL.txt").is_file()

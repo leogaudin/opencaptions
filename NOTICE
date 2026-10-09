@@ -11,6 +11,7 @@ respective owners. This file summarises the significant ones.
 | OpenAI Whisper model weights (incl. `large-v3-turbo`) | Speech-to-text model | MIT | Downloaded at runtime, not shipped |
 | Inter | Default and fallback caption font | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
 | Poppins (ExtraBold) | Default caption font (the default style) | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
+| Montserrat (Black) | The Bold preset's caption font | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
 | Noto Sans (Arabic, Hebrew, Devanagari, Thai) | Glyph fallback for those scripts | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with their licence files |
 | Google Fonts families | Caption fonts chosen in the editor | Predominantly SIL OFL 1.1 | Fetched from Google on first use and kept in object storage, not shipped |
 | Anton (subset) | Engine test fixture | SIL OFL 1.1 | `apps/engine/testdata`, not in any image |
