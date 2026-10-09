@@ -142,8 +142,9 @@ extension EngineSuites {
         }
 
         @Test func frameRatesOfferedAreTheOtherOnesAndNameTheFile() throws {
-            #expect(ExportOptions.FrameRate.available(forSourceFps: 120) == [.original, .fps30, .fps60])
-            #expect(ExportOptions.FrameRate.available(forSourceFps: 59.94) == [.original, .fps30])
+            // Lowest first, the source's own rate (.original) in its place among the others.
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 120) == [.fps30, .fps60, .original])
+            #expect(ExportOptions.FrameRate.available(forSourceFps: 59.94) == [.fps30, .original])
             #expect(ExportOptions.FrameRate.available(forSourceFps: 30) == [.original, .fps60])
             #expect(ExportOptions.FrameRate.available(forSourceFps: 24) == [.original, .fps30, .fps60])
             #expect(ExportOptions(frameRate: .fps60).outputFps(source: 24) == 60, "above the source's is allowed")

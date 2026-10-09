@@ -44,9 +44,12 @@ the two scale on different hardware.
 4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate, green_screen}`
    computes a hash of everything that decides the output (transcript, timing
    offset, style, format and its encoder settings, size, fps). The options are
-   the iOS Save sheet's: a short side (2160, 1080, 720), which only ever lowers
+   the iOS Save sheet's: a short side (2160, 1080, 720), which may be above
    the source's, and a frame rate (30 or 60, the cap), which may be above the
-   source's: the picture's frames repeat, but the captions are drawn at every
+   source's. Both default to `"original"`, the video's own, which is what an API client that names
+   nothing gets; the editors never show that word, they list the values smallest first with
+   the video's own named by its number (`GET /exports` gives `source_resolution` and `source_fps` for it).
+   A frame rate above the source's repeats the picture's frames, but the captions are drawn at every
    output frame, so their animation is smoother. `green_screen` draws the captions over solid
    chroma green instead of the picture, with no sound, to key out in an editor (it is part
    of the hash, and the engine does not use the video at all). There is no quality choice: a download is a second encoding of the
@@ -419,8 +422,8 @@ that layer shows brighter than the player shows the file, so the two factors dif
 the same.
 
 **Save options.** Save opens a sheet first: the format (H.264, which plays everywhere, or HEVC, about a
-third smaller), the size (original, or 4K, 1080p, 720p by the short side, larger than the source too:
-a 144p video can be saved at 4K, the picture scaled up and the captions drawn sharp at the size saved), the frame rate (the source's, or 30 or 60: a lower one keeps evenly spaced frames, a higher
+third smaller), the size (absolute values, smallest first, such as 720p, 1080p and 4K by the short side, with the video's own size among them named by its pixels, and larger than the source too:
+a 144p video can be saved at 4K, the picture scaled up and the captions drawn sharp at the size saved), the frame rate (30 and 60 and the source's own, each by its number: a lower one keeps evenly spaced frames, a higher
 one repeats them while the captions are drawn at each, so they animate smoother) and, for an HDR source, whether it stays HDR (10-bit HEVC) or is tone-mapped down to an
 ordinary SDR video before the captions go on, and the background (the video, or a green screen: only the
 captions over solid green, always SDR, for an editor to key out; it is not remembered, so a later save is

@@ -527,6 +527,9 @@ class ExportChoices(BaseModel):
 
     resolutions: list[ExportResolution]
     frame_rates: list[ExportFrameRate]
+    source_resolution: int = Field(
+        description="The short side of the source's picture, in pixels: what 'original' is"
+    )
     source_fps: float | None = Field(default=None, description="The source's frame rate")
 
 

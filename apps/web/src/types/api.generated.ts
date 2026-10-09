@@ -968,6 +968,11 @@ export interface components {
             /** Frame Rates */
             frame_rates: ("original" | "30" | "60")[];
             /**
+             * Source Resolution
+             * @description The short side of the source's picture, in pixels: what 'original' is
+             */
+            source_resolution: number;
+            /**
              * Source Fps
              * @description The source's frame rate
              */

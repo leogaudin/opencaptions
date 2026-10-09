@@ -739,6 +739,7 @@ async def get_project_exports(
         available_frame_rates,
         available_resolutions,
         resolve_render_inputs,
+        source_short_side,
     )
 
     project_id = proj.id
@@ -769,6 +770,7 @@ async def get_project_exports(
         video=video_exports,
         choices=ExportChoices(
             resolutions=available_resolutions(proj),
+            source_resolution=source_short_side(proj),
             frame_rates=available_frame_rates(proj),
             source_fps=float(proj.video_fps) if proj.video_fps else None,
         ),

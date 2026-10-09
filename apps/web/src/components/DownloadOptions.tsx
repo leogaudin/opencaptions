@@ -1,20 +1,22 @@
 /**
  * Size, frame rate and background for a video download, the choices of the iOS Save sheet:
- * only what this video can offer (its own size and rate, and lower ones) is
- * shown, and a row with a single choice is left out. There is no quality
+ * only what this video can offer (its own size and rate, and the others) is
+ * shown, smallest first and each by its number (never "original"), and a row with a single
+ * choice is left out. There is no quality
  * choice: a download is made as good as each format does well.
  */
 import { Segmented } from "@/components/StyleFields";
 import { setDownloadOptions, useDownloadOptions } from "@/lib/downloadOptions";
-import { msg, useT } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import type { ExportChoices, RenderOptions } from "@/types";
 
-const SIZE_LABELS: Record<RenderOptions["resolution"], string> = {
-  original: msg("Original"),
-  "2160": "4K",
-  "1080": "1080p",
-  "720": "720p",
-};
+/** A size by its pixels. */
+const sizeLabel = (side: number) => (side === 2160 ? "4K" : `${side}p`);
+
+/** Smallest first: the choice reads as a scale, with the video's own size in its place. */
+function ascending<T extends string>(values: readonly T[], pixels: (value: T) => number): T[] {
+  return [...values].sort((a, b) => pixels(a) - pixels(b));
+}
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -35,27 +37,31 @@ export function DownloadOptions({ choices }: { choices: ExportChoices }) {
   const frameRate = choices.frame_rates.includes(options.frame_rate)
     ? options.frame_rate
     : "original";
-  const sourceFps = choices.source_fps ? `${Math.round(choices.source_fps)} fps` : t("Original");
+  // "original" is the video's own size and rate, which the buttons name by their numbers.
+  const sourceFps = Math.round(choices.source_fps ?? 30);
+  const sideOf = (v: RenderOptions["resolution"]) =>
+    v === "original" ? choices.source_resolution : Number(v);
+  const rateOf = (v: RenderOptions["frame_rate"]) => (v === "original" ? sourceFps : Number(v));
 
   return (
     <div className="flex flex-col gap-4" data-testid="download-options">
       {choices.resolutions.length > 1 && (
         <Row label={t("Size")}>
           <Segmented
-            options={choices.resolutions}
+            options={ascending(choices.resolutions, sideOf)}
             value={resolution}
             onChange={(v) => setDownloadOptions({ resolution: v })}
-            label={(v) => t(SIZE_LABELS[v])}
+            label={(v) => sizeLabel(sideOf(v))}
           />
         </Row>
       )}
       {choices.frame_rates.length > 1 && (
         <Row label={t("Frame rate")}>
           <Segmented
-            options={choices.frame_rates}
+            options={ascending(choices.frame_rates, rateOf)}
             value={frameRate}
             onChange={(v) => setDownloadOptions({ frame_rate: v })}
-            label={(v) => (v === "original" ? sourceFps : `${v} fps`)}
+            label={(v) => `${rateOf(v)} fps`}
           />
         </Row>
       )}

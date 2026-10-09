@@ -119,6 +119,7 @@ async def test_a_download_is_requested_and_fetched_with_its_options(
     assert choices == {
         "resolutions": ["original", "2160", "720"],
         "frame_rates": ["original", "60"],
+        "source_resolution": 1080,
         "source_fps": None,
     }
 

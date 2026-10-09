@@ -111,7 +111,7 @@ struct SaveOptionsSheet: View {
             SegmentedPills(
                 options: rates, selection: $frameRate,
                 label: { rate in
-                    if let value = rate.value { "\(Int(value)) fps" } else { "Original" }
+                    "\(Int((rate.value ?? project.videoFps ?? 30).rounded())) fps"
                 },
                 locked: { tier.locks(frameRate: $0, for: project) }, onLocked: { showPro = true })
         }
@@ -158,13 +158,10 @@ struct SaveOptionsSheet: View {
         }
     }
 
+    /// A size by its pixels. The video's own size is `.original`, named by its short side.
     private func label(for size: ExportOptions.Resolution) -> LocalizedStringKey {
-        switch size {
-        case .original: "Original"
-        case .p2160: "4K"
-        case .p1080: "1080p"
-        case .p720: "720p"
-        }
+        let side = size.shortSide ?? min(project.videoWidth ?? 1080, project.videoHeight ?? 1920)
+        return side == 2160 ? "4K" : "\(side)p"
     }
 
     /// The pixel size the choice makes, e.g. "1080 × 1920".

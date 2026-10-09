@@ -20,6 +20,7 @@ test.describe("Download options", () => {
           choices: {
             resolutions: ["original", "720"],
             frame_rates: ["original", "60"],
+            source_resolution: 1080,
             source_fps: 30,
           },
           subtitles: { srt: "", vtt: "", json_url: "" },
@@ -45,9 +46,17 @@ test.describe("Download options", () => {
     await page.goto(`/projects/${MOCK_PROJECT_ID}`);
     await page.getByTestId("download-open").click();
     const options = page.getByTestId("download-options");
-    await expect(options.getByRole("button", { name: "Original" })).toBeVisible();
+    // Absolute values, smallest first; the video's own size is named by its pixels.
+    await expect(options.getByRole("button", { name: "Original" })).toHaveCount(0);
+    await expect(options.getByRole("button", { name: /^(720p|1080p)$/ })).toHaveText([
+      "720p",
+      "1080p",
+    ]);
     await expect(options.getByRole("button", { name: "4K" })).toHaveCount(0);
-    await expect(options.getByRole("button", { name: "30 fps" })).toBeVisible();
+    await expect(options.getByRole("button", { name: /^\d+ fps$/ })).toHaveText([
+      "30 fps",
+      "60 fps",
+    ]);
     await expect(options.getByRole("button", { name: /best|balanced/i })).toHaveCount(0);
     await options.getByRole("button", { name: "720p" }).click();
     await options.getByRole("button", { name: "60 fps" }).click();

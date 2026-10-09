@@ -222,6 +222,12 @@ def _source_geometry(project: RenderableProject) -> tuple[int, int, float]:
     return width, height, max(_MIN_FPS, min(_MAX_FPS, fps))
 
 
+def source_short_side(project: RenderableProject) -> int:
+    """The short side of the project's own picture, in pixels (what ``"original"`` is)."""
+    width, height, _ = _source_geometry(project)
+    return min(width, height)
+
+
 def available_resolutions(project: RenderableProject) -> list[str]:
     """The sizes a project can be saved at: its own, and every other, larger ones too."""
     width, height, _ = _source_geometry(project)

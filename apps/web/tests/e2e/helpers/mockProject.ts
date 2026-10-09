@@ -100,7 +100,12 @@ export async function mockTranscribedProject(
       contentType: "application/json",
       body: JSON.stringify({
         video: [],
-        choices: { resolutions: ["original"], frame_rates: ["original"], source_fps: 30 },
+        choices: {
+          resolutions: ["original"],
+          frame_rates: ["original"],
+          source_resolution: 1080,
+          source_fps: 30,
+        },
         subtitles: { srt: "", vtt: "", json: "" },
       }),
     }),

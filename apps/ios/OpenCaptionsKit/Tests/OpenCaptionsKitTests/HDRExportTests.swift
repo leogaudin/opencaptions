@@ -170,9 +170,11 @@ extension EngineSuites {
             #expect(options(.p1080).outputSize(width: 720, height: 1280) == (1080, 1920), "upscaled")
             #expect(options(.p2160).outputSize(width: 256, height: 144) == (3840, 2160), "a 144p video at 4K")
             #expect(options(.p720).outputSize(width: 1000, height: 1777) == (720, 1278), "even")
-            #expect(ExportOptions.Resolution.available(forShortSide: 1080) == [.original, .p2160, .p720])
-            #expect(ExportOptions.Resolution.available(forShortSide: 2160) == [.original, .p1080, .p720])
-            #expect(ExportOptions.Resolution.available(forShortSide: 144) == [.original, .p2160, .p1080, .p720])
+            // Smallest first, the video's own size (.original) in its place among the others.
+            #expect(ExportOptions.Resolution.available(forShortSide: 1080) == [.p720, .original, .p2160])
+            #expect(ExportOptions.Resolution.available(forShortSide: 2160) == [.p720, .p1080, .original])
+            #expect(ExportOptions.Resolution.available(forShortSide: 144) == [.original, .p720, .p1080, .p2160])
+            #expect(ExportOptions.Resolution.available(forShortSide: 1440) == [.p720, .p1080, .original, .p2160])
         }
 
         @Test func theEstimateFollowsCodecSizeAndFrameRate() throws {

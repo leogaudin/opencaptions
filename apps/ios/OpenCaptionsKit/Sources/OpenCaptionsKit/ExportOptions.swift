@@ -31,10 +31,12 @@ public struct ExportOptions: Codable, Equatable, Sendable {
             }
         }
 
-        /// The choices for a video whose short side is `side`: its own size, and each other one, smaller
-        /// or larger (a size it already is would only repeat "original").
+        /// The choices for a video whose short side is `side`, smallest first: its own size (`.original`,
+        /// which a picker names by its pixels) and each other one, smaller or larger (a size it already
+        /// is would only repeat it).
         public static func available(forShortSide side: Int) -> [Resolution] {
-            [.original] + allCases.filter { $0.shortSide.map { $0 != side } ?? false }
+            ([.original] + allCases.filter { $0.shortSide.map { $0 != side } ?? false })
+                .sorted { ($0.shortSide ?? side) < ($1.shortSide ?? side) }
         }
     }
 
@@ -52,9 +54,11 @@ public struct ExportOptions: Codable, Equatable, Sendable {
             }
         }
 
-        /// The choices for a source at `fps`: its own rate, and the others (not one it already is).
+        /// The choices for a source at `fps`, lowest first: its own rate (`.original`, which a picker
+        /// names by its number) and the others (not one it already is).
         public static func available(forSourceFps fps: Double) -> [FrameRate] {
-            [.original] + allCases.filter { rate in rate.value.map { abs($0 - fps) > 0.5 } ?? false }
+            ([.original] + allCases.filter { rate in rate.value.map { abs($0 - fps) > 0.5 } ?? false })
+                .sorted { ($0.value ?? fps) < ($1.value ?? fps) }
         }
     }
 
