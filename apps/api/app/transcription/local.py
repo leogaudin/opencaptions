@@ -1,7 +1,9 @@
 """LocalWhisperProvider: runs faster-whisper in-process on CPU or GPU.
 
-Loads the model once per worker process (lazy), reuses for subsequent jobs.
-Reports progress via the supplied callback as segments stream in.
+Loads the model lazily, once per worker process, and keeps it for as long as that process
+lives. The compose file ends the process after every job (--max-tasks-per-child=1, see why
+there), so in that setup a job loads the model itself; reuse across jobs is for a worker
+started without that flag. Reports progress via the supplied callback as segments stream in.
 """
 
 from __future__ import annotations

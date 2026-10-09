@@ -146,6 +146,13 @@ services:
       # ⚠ 0 with no gpu profile = zero workers (jobs queue silently forever).
       #   1 with gpu profile active = two workers share the queue (GPU half-wasted).
       replicas: ${OC_CPU_TRANSCRIBERS:-1}
+    # --max-tasks-per-child=1 (here and on the GPU worker): a fresh process for every job. The
+    # speech model is several GB; with a process that keeps it, an idle stack holds that memory
+    # (and, on the GPU, its VRAM) for as long as it runs, and freeing a model inside a live
+    # process is not reliable. A process that exits frees it for certain, and a failed CUDA call
+    # takes down one job, not the worker. The price is one model load per job, small beside
+    # the transcription itself. On a machine that does nothing else, raise the number (100, say)
+    # to keep the model loaded between jobs.
     command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
 
   worker-transcription-gpu:

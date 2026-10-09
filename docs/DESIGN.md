@@ -25,7 +25,9 @@ browser ──▶ web (nginx: SPA + proxy) ──▶ api (FastAPI) ──▶ pos
 | `postgres`, `redis`, `garage` | Data, broker, and the S3-compatible object store. |
 
 Two queues, because a backlog of renders must never starve transcription, and
-the two scale on different hardware.
+the two scale on different hardware. A transcription worker handles one job and exits
+(`--max-tasks-per-child=1`), so a loaded speech model never outlives its job: an idle stack
+holds none of its memory, and a CUDA failure costs one job. The price is a model load per job.
 
 **When a job fails to finish.** Tasks are acknowledged late, so a task a crashed worker held
 is handed to another; an API restart therefore says nothing about running work and does not
