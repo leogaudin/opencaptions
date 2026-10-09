@@ -1341,12 +1341,12 @@ export interface components {
              */
             text_color: string;
             /**
-             * Highlight Color
-             * @default #7C3AED
+             * Highlight Colors
+             * @default [
+             *       "#7C3AED"
+             *     ]
              */
-            highlight_color: string;
-            /** Highlight Color End */
-            highlight_color_end?: string | null;
+            highlight_colors: string[];
             /**
              * Background
              * @default none

@@ -151,8 +151,13 @@ as their outline continued), a glow (a blurred halo in its own colour, laid down
 light), upper case (drawn, never stored: the transcript is untouched) and italic (the upright face sheared
 by about 11 degrees, so any font leans and no italic file has to be fetched). Every field after
 `shadow_color` is optional with a default of "off", so a style saved before it existed opens unchanged.
-One field exists for presets and has no control: `highlight_color_end`, which makes a sweep run as a
-gradient from the highlight colour to it across the line. A sweep paints each letter once, the highlight on
+The highlight is a list, `highlight_colors` (one to four hex colours, the first the primary; on both
+editors a row of pickers with a plus and a remove). Each animation uses it by one rule: a look that marks
+each word (the lit word, a box, a label, an underline, the cursor) takes the colours in turn, word by word;
+a single shape (the sliding box, the bar) is the primary; a sweep runs through all of them as a gradient
+across the line. A style with one colour looks exactly as before. Stored projects were migrated from the
+one `highlight_color` (Alembic 0005), and an iPhone project saved before the list still opens, its colour
+first. A sweep paints each letter once, the highlight on
 the side it has passed and the plain colour on the rest, so no soft edge of the plain word shows round it.
 The built-in presets that use them are Purple Punch (a box that slides between words), Karaoke, Bold
 (Montserrat Black, bundled with the engine, in capitals with a thick black outline carried out into a

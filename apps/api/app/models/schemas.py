@@ -1,7 +1,7 @@
 """Pydantic schemas for API I/O. Single source of truth for OpenAPI codegen."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -141,9 +141,11 @@ class StyleConfig(BaseModel):
     font: str = "Poppins"
     font_size: int = Field(default=64, ge=12, le=300)
     text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
-    highlight_color: str = Field(default="#7C3AED", pattern=r"^#[0-9A-Fa-f]{6}$")
-    # Where a sweep's colour ends: it runs from highlight_color to this across the line.
-    highlight_color_end: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    # What the animation paints in; the first is the primary. A look that marks each word takes them
+    # in turn, a single shape (the sliding box, the bar) is the primary, and a sweep runs through all.
+    highlight_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
+        default=["#7C3AED"], min_length=1, max_length=4
+    )
     background: Literal["none", "solid", "pill"] = "none"
     background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
     background_opacity: float = Field(default=0.0, ge=0.0, le=1.0)

@@ -77,15 +77,30 @@ fn white() -> Rgba {
     Rgba([255, 255, 255, 255])
 }
 
+impl Style {
+    /// The first highlight colour, what a single shape is painted in.
+    pub fn primary(&self) -> Rgba {
+        self.highlight_colors.first().copied().unwrap_or_else(white)
+    }
+
+    /// The colour the `index`th word of the transcript is marked in: the highlight colours in turn.
+    pub fn highlight(&self, index: usize) -> Rgba {
+        self.highlight_colors
+            .get(index % self.highlight_colors.len().max(1))
+            .copied()
+            .unwrap_or_else(white)
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct Style {
     pub font: String,
     pub font_size: f32,
     pub text_color: Rgba,
-    pub highlight_color: Rgba,
-    /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
-    #[serde(default)]
-    pub highlight_color_end: Option<Rgba>,
+    /// What the animation paints in: the first is the primary. A look that marks each word (the lit
+    /// word, a box, a label, an underline) takes them in turn, word by word; a single shape (the
+    /// sliding box, the bar) is the primary; a sweep runs through all of them across the line.
+    pub highlight_colors: Vec<Rgba>,
     pub background: Background,
     pub background_color: Rgba,
     pub background_opacity: f32,

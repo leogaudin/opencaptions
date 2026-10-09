@@ -44,6 +44,9 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   stickers: msg("Stickers"),
 };
 
+/** How many highlight colours a style holds, the API's limit. */
+export const MAX_HIGHLIGHT_COLORS = 4;
+
 export const CASES: readonly StyleConfig["text_case"][] = ["none", "upper"];
 export const CASE_NAMES: Record<StyleConfig["text_case"], string> = {
   none: msg("Normal"),

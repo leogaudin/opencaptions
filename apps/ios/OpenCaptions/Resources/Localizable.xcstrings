@@ -848,6 +848,83 @@
         }
       }
     },
+    "Add a highlight color": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une couleur de surbrillance"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir un color de resaltado"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hervorhebungsfarbe hinzufügen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj kolor wyróżnienia"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar uma cor de destaque"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi un colore di evidenziazione"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить цвет выделения"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vurgu rengi ekle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイライトの色を追加"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "강조 색상 추가"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加高亮颜色"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tambah warna sorotan"
+          }
+        }
+      }
+    },
     "Add captions that move": {
       "extractionState": "manual",
       "localizations": {
@@ -6161,67 +6238,67 @@
         }
       }
     },
-    "Highlight color": {
+    "Highlight colors": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couleur de surbrillance"
+            "value": "Couleurs de surbrillance"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Color de resaltado"
+            "value": "Colores de resaltado"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hervorhebungsfarbe"
+            "value": "Hervorhebungsfarben"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kolor wyróżnienia"
+            "value": "Kolory wyróżnienia"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cor de destaque"
+            "value": "Cores de destaque"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Colore di evidenziazione"
+            "value": "Colori di evidenziazione"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Цвет выделения"
+            "value": "Цвета выделения"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vurgu rengi"
+            "value": "Vurgu renkleri"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ハイライト色"
+            "value": "ハイライトの色"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "강조 색"
+            "value": "강조 색상"
           }
         },
         "zh-Hans": {
@@ -11316,6 +11393,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Server jarak jauh"
+          }
+        }
+      }
+    },
+    "Remove this highlight color": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer cette couleur de surbrillance"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar este color de resaltado"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Hervorhebungsfarbe entfernen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń ten kolor wyróżnienia"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remover esta cor de destaque"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rimuovi questo colore di evidenziazione"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убрать этот цвет выделения"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu vurgu rengini kaldır"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このハイライトの色を削除"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 강조 색상 제거"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除此高亮颜色"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hapus warna sorotan ini"
           }
         }
       }

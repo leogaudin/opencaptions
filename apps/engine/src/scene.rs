@@ -783,13 +783,13 @@ impl Scene {
             && let Some(path) = Rect::from_xywh(g.rect[0], g.rect[1], g.rect[2], g.rect[3])
                 .and_then(|r| rounded_rect(r, self.word_radius))
         {
-            let p = paint(colour(s.highlight_color, g.alpha));
+            let p = paint(colour(s.primary(), g.alpha));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
         if s.animation == Animation::Stickers {
             for (w, st) in line.words.iter().zip(states) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius * 1.6) {
-                    let p = paint(colour(s.highlight_color, 1.0));
+                    let p = paint(colour(s.highlight(w.index), 1.0));
                     canvas.fill_path(&path, &p, FillRule::Winding, pivot(w, st), None);
                 }
             }
@@ -797,7 +797,7 @@ impl Scene {
         if s.animation == Animation::HighlightBox {
             for (w, st) in line.words.iter().zip(states).filter(|(_, st)| st.on > 0.0) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius) {
-                    let p = paint(colour(s.highlight_color, st.on * st.opacity));
+                    let p = paint(colour(s.highlight(w.index), st.on * st.opacity));
                     let grow = WordState {
                         scale: st.box_scale,
                         ..*st
@@ -897,28 +897,32 @@ impl Scene {
             );
             Some(mask)
         };
-        // What a sweep paints with: the highlight colour, or a run from it to `highlight_color_end`
-        // across the whole line, so each word is a different part of it.
+        // What a sweep paints with: the one highlight colour, or a run through all of them across the
+        // whole line, so each word is a different part of it.
         let sweep = || -> Paint<'static> {
-            let ends = s.highlight_color_end.and_then(|end| {
+            let colours = &s.highlight_colors;
+            let run = (colours.len() > 1).then(|| {
+                let last = (colours.len() - 1) as f32;
+                let stops: Vec<_> = colours
+                    .iter()
+                    .enumerate()
+                    .map(|(i, c)| GradientStop::new(i as f32 / last, colour(*c, 1.0)))
+                    .collect();
                 LinearGradient::new(
                     Point::from_xy(line.anchor.x(), 0.0),
                     Point::from_xy(line.anchor.right().max(line.anchor.x() + 1.0), 0.0),
-                    vec![
-                        GradientStop::new(0.0, colour(s.highlight_color, 1.0)),
-                        GradientStop::new(1.0, colour(end, 1.0)),
-                    ],
+                    stops,
                     SpreadMode::Pad,
                     Transform::identity(),
                 )
             });
-            match ends {
+            match run.flatten() {
                 Some(shader) => Paint {
                     shader,
                     anti_alias: true,
                     ..Paint::default()
                 },
-                None => paint(colour(s.highlight_color, 1.0)),
+                None => paint(colour(s.primary(), 1.0)),
             }
         };
         for (w, st) in line.words.iter().zip(states) {
@@ -927,7 +931,7 @@ impl Scene {
                 Animation::WordHighlight
                 | Animation::WordPop
                 | Animation::WordBounce
-                | Animation::LyricFocus => mix(s.text_color, s.highlight_color, st.on),
+                | Animation::LyricFocus => mix(s.text_color, s.highlight(w.index), st.on),
                 Animation::None
                 | Animation::HighlightBox
                 | Animation::HighlightSlide
@@ -994,7 +998,7 @@ impl Scene {
                         thick,
                     );
                     if let Some(path) = rule.and_then(|r| rounded_rect(r, thick / 2.0)) {
-                        let p = paint(colour(s.highlight_color, 1.0));
+                        let p = paint(colour(s.highlight(w.index), 1.0));
                         canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
                     }
                 }
@@ -1008,7 +1012,7 @@ impl Scene {
                         s.font_size * 0.92,
                     );
                     if let Some(path) = cursor.and_then(|r| rounded_rect(r, width / 4.0)) {
-                        let p = paint(colour(s.highlight_color, st.on));
+                        let p = paint(colour(s.highlight(w.index), st.on));
                         canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
                     }
                 }
@@ -1020,7 +1024,7 @@ impl Scene {
             && let Some(path) = Rect::from_xywh(g.rect[0], g.rect[1], g.rect[2], g.rect[3])
                 .and_then(|r| rounded_rect(r, g.rect[3] / 2.0))
         {
-            let p = paint(colour(s.highlight_color, g.alpha));
+            let p = paint(colour(s.primary(), g.alpha));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
     }
@@ -1220,7 +1224,7 @@ mod tests {
             "transcript": { "duration": 10.0, "segments": [{ "words": words }] },
             "style": {
                 "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
-                "highlight_color": "#7C3AED", "background": "none",
+                "highlight_colors": ["#7C3AED"], "background": "none",
                 "background_color": "#000000", "background_opacity": 0.0,
                 "position_x": 0.5, "position_y": 0.84, "animation": animation,
                 "words_per_line": words_per_line, "word_spacing": 0,
@@ -1307,7 +1311,7 @@ mod tests {
         let base = input(animation, words, 3);
         let mut style = serde_json::to_value(serde_json::json!({
             "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
-            "highlight_color": "#FF0000", "background": "none",
+            "highlight_colors": ["#FF0000"], "background": "none",
             "background_color": "#000000", "background_opacity": 0.0,
             "position_x": 0.5, "position_y": 0.5, "animation": animation,
             "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
@@ -1871,7 +1875,7 @@ mod tests {
 
     #[test]
     fn a_filled_word_has_no_pale_fringe_of_the_plain_colour_under_it() {
-        let patch = serde_json::json!({ "highlight_color": "#FF0000", "font_size": 200 });
+        let patch = serde_json::json!({ "highlight_colors": ["#FF0000"], "font_size": 200 });
         let words = &[("hello", 0.0, 0.5)];
         let mut r = Renderer::new(Scene::new(&book(), styled("word_sweep", words, patch)));
         r.render(0.6);
@@ -1885,10 +1889,77 @@ mod tests {
     }
 
     #[test]
+    fn highlight_colours_are_taken_in_turn_and_the_first_is_the_primary() {
+        let mut style = input("word_pop", WORDS, 3).style;
+        let (red, green, blue) = (
+            Rgba([255, 0, 0, 255]),
+            Rgba([0, 255, 0, 255]),
+            Rgba([0, 0, 255, 255]),
+        );
+        style.highlight_colors = vec![red, green, blue];
+        assert_eq!(style.primary(), red);
+        assert_eq!(
+            [0, 1, 2, 3, 4].map(|i| style.highlight(i)),
+            [red, green, blue, red, green]
+        );
+        style.highlight_colors = vec![];
+        assert_eq!(
+            style.primary(),
+            Rgba([255, 255, 255, 255]),
+            "none: white, and no panic"
+        );
+        assert_eq!(style.highlight(7), style.primary());
+    }
+
+    /// How many pixels of the frame at `t` are close to `rgb` (a lit word's colour).
+    fn pixels_near(renderer: &mut Renderer, t: f32, rgb: [u8; 3]) -> usize {
+        renderer.render(t);
+        let near = |a: u8, b: u8| a.abs_diff(b) < 40;
+        renderer
+            .rgba()
+            .chunks(4)
+            .filter(|px| px[3] == 255 && (0..3).all(|c| near(px[c], rgb[c])))
+            .count()
+    }
+
+    #[test]
+    fn each_word_is_lit_in_the_next_colour_and_a_single_shape_keeps_the_primary() {
+        let words = &[("aaa", 0.0, 0.5), ("bbb", 0.5, 1.0)];
+        let patch = serde_json::json!({
+            "highlight_colors": ["#FF0000", "#00FF00"], "font_size": 200, "text_color": "#0000FF"
+        });
+        let mut pop = Renderer::new(Scene::new(
+            &book(),
+            styled("word_pop", words, patch.clone()),
+        ));
+        assert!(
+            pixels_near(&mut pop, 0.25, [255, 0, 0]) > 500,
+            "the first word is lit red"
+        );
+        assert!(
+            pixels_near(&mut pop, 0.75, [0, 255, 0]) > 500,
+            "the second is lit green"
+        );
+        assert_eq!(
+            pixels_near(&mut pop, 0.25, [0, 255, 0]),
+            0,
+            "and not green too"
+        );
+        // One box slides between the words: it is the primary on both.
+        let mut slide = Renderer::new(Scene::new(&book(), styled("highlight_slide", words, patch)));
+        assert!(pixels_near(&mut slide, 0.25, [255, 0, 0]) > 500);
+        assert!(
+            pixels_near(&mut slide, 0.9, [255, 0, 0]) > 500,
+            "still red on the second word"
+        );
+        assert_eq!(pixels_near(&mut slide, 0.9, [0, 255, 0]), 0);
+    }
+
+    #[test]
     fn a_gradient_sweep_runs_from_one_colour_to_the_other_across_the_line() {
         let words = &[("aaaa", 0.0, 0.5), ("bbbb", 0.5, 1.0)];
         let patch = serde_json::json!({
-            "highlight_color": "#FF0000", "highlight_color_end": "#0000FF", "font_size": 200
+            "highlight_colors": ["#FF0000", "#0000FF"], "font_size": 200
         });
         let mut r = Renderer::new(Scene::new(&book(), styled("word_sweep", words, patch)));
         r.render(1.0);

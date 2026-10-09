@@ -44,7 +44,7 @@ export function presetMatches(a: StyleConfig, b: StyleConfig): boolean {
   return (
     a.font === b.font &&
     a.text_color === b.text_color &&
-    a.highlight_color === b.highlight_color &&
+    a.highlight_colors.join() === b.highlight_colors.join() &&
     a.background === b.background &&
     a.background_color === b.background_color &&
     Math.abs(a.background_opacity - b.background_opacity) < 0.001 &&

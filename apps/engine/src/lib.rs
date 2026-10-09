@@ -445,7 +445,7 @@ mod tests {
                 { "text": "hello", "start": 0.0, "end": 1.0 }] }] },
             "style": {
                 "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
-                "highlight_color": "#7C3AED", "background": "none",
+                "highlight_colors": ["#7C3AED"], "background": "none",
                 "background_color": "#000000", "background_opacity": 0.0,
                 "position_x": 0.5, "position_y": 0.84, "animation": "word_highlight",
                 "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",

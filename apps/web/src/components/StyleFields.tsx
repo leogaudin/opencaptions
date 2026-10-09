@@ -43,6 +43,83 @@ export function ColorField({
   );
 }
 
+/** Colours to start a new highlight colour from: the next one not yet taken, as far as they go. */
+const ADDED_COLORS = ["#FFE600", "#22D3EE", "#FF4D8D", "#22E06B"];
+
+/**
+ * An ordered list of colours, the first being the primary. A colour change is a drag on a picker
+ * (so it arrives throttled); adding or removing one is a single step.
+ */
+export function ColorListField({
+  label,
+  value,
+  max,
+  addLabel,
+  removeLabel,
+  testId,
+  onChange,
+  onResize,
+}: {
+  label: string;
+  value: string[];
+  max: number;
+  addLabel: string;
+  removeLabel: string;
+  testId: string;
+  onChange: (v: string[]) => void;
+  onResize: (v: string[]) => void;
+}) {
+  return (
+    <Field label={label}>
+      <div className="flex flex-wrap items-center gap-2" data-testid={testId}>
+        {value.map((color, i) => (
+          // The list is edited in place and has no ids: the position is the identity.
+          // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+          <div key={i} className="flex items-center gap-1">
+            <input
+              type="color"
+              value={color}
+              data-testid={`${testId}-${i}`}
+              aria-label={`${label} ${i + 1}`}
+              onChange={(e) =>
+                onChange(value.map((c, j) => (j === i ? e.target.value.toUpperCase() : c)))
+              }
+              className="h-7 w-10 cursor-pointer rounded border border-border bg-background"
+            />
+            {i > 0 && (
+              <button
+                type="button"
+                aria-label={removeLabel}
+                data-testid={`${testId}-remove-${i}`}
+                onClick={() => onResize(value.filter((_, j) => j !== i))}
+                className="rounded px-1 text-sm leading-none text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+        {value.length < max && (
+          <button
+            type="button"
+            aria-label={addLabel}
+            data-testid={`${testId}-add`}
+            onClick={() =>
+              onResize([...value, ADDED_COLORS[value.length % ADDED_COLORS.length] ?? "#FFFFFF"])
+            }
+            className="h-7 w-7 rounded border border-dashed border-border text-sm leading-none text-muted-foreground hover:text-foreground"
+          >
+            +
+          </button>
+        )}
+      </div>
+      <code className="mt-1 block rounded bg-background/60 px-1.5 py-0.5 text-[11px] text-muted-foreground">
+        {value.join("  ")}
+      </code>
+    </Field>
+  );
+}
+
 export function SliderField({
   label,
   unit,
@@ -149,7 +226,7 @@ export function PresetSwatch({ config }: { config: StyleConfig }) {
           <span
             style={{
               color: config.text_color,
-              background: config.highlight_color,
+              background: config.highlight_colors[0],
               padding: "1px 3px",
               borderRadius: 3,
               marginLeft: 1,
@@ -158,7 +235,7 @@ export function PresetSwatch({ config }: { config: StyleConfig }) {
             a
           </span>
         ) : (
-          <span style={{ color: config.highlight_color }}>a</span>
+          <span style={{ color: config.highlight_colors[0] }}>a</span>
         )}
       </span>
     </span>

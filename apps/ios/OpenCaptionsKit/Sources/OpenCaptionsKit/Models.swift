@@ -117,9 +117,9 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var font: String
     public var fontSize: Int
     public var textColor: String
-    public var highlightColor: String
-    /// Where a sweep's colour ends: it runs from the highlight colour to this one across the line.
-    public var highlightColorEnd: String?
+    /// What the animation paints in; the first is the primary. A look that marks each word takes them in
+    /// turn, a single shape (the sliding box, the bar) is the primary, and a sweep runs through all of them.
+    public var highlightColors: [String]
     public var background: Background
     public var backgroundColor: String
     public var backgroundOpacity: Double
@@ -144,19 +144,17 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var italic: Bool
 
     public init(
-        font: String, fontSize: Int, textColor: String, highlightColor: String,
+        font: String, fontSize: Int, textColor: String, highlightColors: [String],
         background: Background, backgroundColor: String, backgroundOpacity: Double,
         positionX: Double, positionY: Double, animation: CaptionAnimation, wordsPerLine: Int,
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
-        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
-        highlightColorEnd: String? = nil
+        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false
     ) {
         self.font = font
         self.fontSize = fontSize
         self.textColor = textColor
-        self.highlightColor = highlightColor
-        self.highlightColorEnd = highlightColorEnd
+        self.highlightColors = highlightColors
         self.background = background
         self.backgroundColor = backgroundColor
         self.backgroundOpacity = backgroundOpacity
@@ -183,7 +181,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.init(
             font: try c.decode(String.self, forKey: .font), fontSize: try c.decode(Int.self, forKey: .fontSize),
             textColor: try c.decode(String.self, forKey: .textColor),
-            highlightColor: try c.decode(String.self, forKey: .highlightColor),
+            highlightColors: try Self.decodeHighlightColors(decoder, c),
             background: try c.decode(Background.self, forKey: .background),
             backgroundColor: try c.decode(String.self, forKey: .backgroundColor),
             backgroundOpacity: try c.decode(Double.self, forKey: .backgroundOpacity),
@@ -200,15 +198,29 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowBlur: try c.decodeIfPresent(Double.self, forKey: .glowBlur) ?? 0,
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
-            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
-            highlightColorEnd: try c.decodeIfPresent(String.self, forKey: .highlightColorEnd))
+            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false)
+    }
+
+    /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
+    /// end colour for a sweep): they become the first and second of the list.
+    private enum Earlier: String, CodingKey {
+        case highlightColor = "highlight_color"
+        case highlightColorEnd = "highlight_color_end"
+    }
+
+    private static func decodeHighlightColors(_ decoder: Decoder, _ c: KeyedDecodingContainer<CodingKeys>) throws -> [String] {
+        if let colors = try c.decodeIfPresent([String].self, forKey: .highlightColors), !colors.isEmpty { return colors }
+        let earlier = try decoder.container(keyedBy: Earlier.self)
+        let first = try earlier.decode(String.self, forKey: .highlightColor)
+        let end = try earlier.decodeIfPresent(String.self, forKey: .highlightColorEnd)
+        return [first] + [end].compactMap { $0 }
     }
 
     enum CodingKeys: String, CodingKey {
         case font
         case fontSize = "font_size"
         case textColor = "text_color"
-        case highlightColor = "highlight_color"
+        case highlightColors = "highlight_colors"
         case background
         case backgroundColor = "background_color"
         case backgroundOpacity = "background_opacity"
@@ -227,6 +239,5 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case glowColor = "glow_color"
         case textCase = "text_case"
         case italic
-        case highlightColorEnd = "highlight_color_end"
     }
 }

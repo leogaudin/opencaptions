@@ -243,14 +243,14 @@ final class Counter { var value = 0 }
         var look = try Repo.defaultStyle()
         look.wordsPerLine = 2
         look.font = "Anton"
-        look.highlightColor = "#123456"
+        look.highlightColors = ["#123456", "#654321"]
         look.fontSize = 104
         look.positionX = 0.5
         look.positionY = 0.9
         let preset = Preset(id: "p", name: "P", config: look)
         model.apply(preset)
         let style = model.project.styleConfig
-        #expect(style.font == "Anton" && style.highlightColor == "#123456", "the look")
+        #expect(style.font == "Anton" && style.highlightColors == ["#123456", "#654321"], "the look")
         #expect(style.fontSize == 77 && style.positionX == 0.3 && style.positionY == 0.2, "not the placement")
         #expect(style.wordsPerLine == 5, "nor how the lines are cut")
         #expect(style.matches(preset), "and it still reads as that preset")

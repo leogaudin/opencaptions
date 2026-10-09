@@ -25,7 +25,8 @@ import Testing
         let style = try JSONSerialization.jsonObject(
             with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any]
         #expect(style?["words_per_line"] as? Int == 3)
-        #expect(style?["highlight_color"] as? String == "#7C3AED")
+        #expect(style?["highlight_colors"] as? [String] == ["#7C3AED"])
+        #expect(style?["highlight_color"] == nil, "the single colour is gone from what is sent")
     }
 
     @Test func thePresetsAreTheSharedFile() throws {
@@ -48,7 +49,7 @@ import Testing
         style.positionY = 0.1
         style.wordsPerLine += 1
         #expect(style.matches(presets[1]), "size, place and words per line are the video's, not the look's")
-        style.highlightColor = "#010203"
+        style.highlightColors = ["#010203"]
         #expect(!style.matches(presets[1]))
     }
 
@@ -60,6 +61,24 @@ import Testing
         }
         let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
         #expect(old == (try Repo.defaultStyle()), "the missing fields take their defaults, which are the default look's")
+    }
+
+    @Test func aStyleSavedWithOneHighlightColourOpensWithThatColourFirst() throws {
+        var json = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
+        json.removeValue(forKey: "highlight_colors")
+        json["highlight_color"] = "#112233"
+        let one = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(one.highlightColors == ["#112233"])
+        // A build or two also saved the end of a sweep: it is the second colour.
+        json["highlight_color_end"] = "#445566"
+        let two = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(two.highlightColors == ["#112233", "#445566"])
+        // Nothing to read at all is an error, not a colour made up.
+        json.removeValue(forKey: "highlight_color")
+        #expect(throws: DecodingError.self) {
+            _ = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        }
     }
 
     @Test func aBackgroundChosenIsVisible() throws {

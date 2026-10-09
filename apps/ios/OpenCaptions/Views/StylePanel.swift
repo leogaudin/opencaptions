@@ -106,7 +106,7 @@ struct StylePanel: View {
                         .frame(maxWidth: 220)
                 }
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
-                Row("Highlight color") { ColorPicker("Highlight color", selection: color(\.highlightColor), supportsOpacity: false).labelsHidden() }
+                Row("Highlight colors") { highlightColors }
                 LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
                 LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
             }
@@ -263,6 +263,51 @@ struct StylePanel: View {
         Binding(
             get: { Double(model.project.styleConfig[keyPath: keyPath]) },
             set: { value in model.updateStyle { $0[keyPath: keyPath] = Int(value.rounded()) } })
+    }
+
+    /// How many highlight colours a style holds, the API's limit.
+    private static let maxHighlightColors = 4
+    /// Where a new highlight colour starts: the next of these, so it differs from the one before.
+    private static let addedColors = ["#FFE600", "#22D3EE", "#FF4D8D", "#22E06B"]
+
+    /// The highlight colours, the first being the primary: a picker for each, a way to drop all but the
+    /// first, and one to add another.
+    private var highlightColors: some View {
+        HStack(spacing: 10) {
+            ForEach(Array(style.highlightColors.enumerated()), id: \.offset) { index, _ in
+                HStack(spacing: 2) {
+                    ColorPicker("Highlight colors", selection: highlightColor(at: index), supportsOpacity: false)
+                        .labelsHidden()
+                    if index > 0 {
+                        Button { model.updateStyle { $0.highlightColors.remove(at: index) } } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textSecondary)
+                        }
+                        .accessibilityLabel("Remove this highlight color")
+                    }
+                }
+            }
+            if style.highlightColors.count < Self.maxHighlightColors {
+                Button {
+                    model.updateStyle { $0.highlightColors.append(Self.addedColors[$0.highlightColors.count % Self.addedColors.count]) }
+                } label: {
+                    Image(systemName: "plus.circle").foregroundStyle(Theme.textPrimary)
+                }
+                .accessibilityLabel("Add a highlight color")
+            }
+        }
+    }
+
+    private func highlightColor(at index: Int) -> Binding<Color> {
+        Binding(
+            get: {
+                let colors = model.project.styleConfig.highlightColors
+                return ColorHex.color(colors.indices.contains(index) ? colors[index] : "#FFFFFF")
+            },
+            set: { value in
+                model.updateStyle {
+                    if $0.highlightColors.indices.contains(index) { $0.highlightColors[index] = ColorHex.hex(value, withAlpha: false) }
+                }
+            })
     }
 
     private func color(_ keyPath: WritableKeyPath<StyleConfig, String>, alpha: Bool = false) -> Binding<Color> {

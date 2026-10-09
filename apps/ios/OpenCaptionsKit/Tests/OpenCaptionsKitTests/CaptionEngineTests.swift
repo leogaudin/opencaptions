@@ -22,7 +22,7 @@ extension EngineSuites {
             let before = try #require(await engine.render(at: 1.0))
             let plain = try Repo.defaultStyle()
             var big = plain
-            big.highlightColor = "#FF0000"
+            big.highlightColors = ["#FF0000"]
             big.fontSize = 90
             let frames = await engine.samples(of: [plain, big], words: ["Make", "it", "pop"], width: 600, height: 300)
             #expect(frames.count == 2)

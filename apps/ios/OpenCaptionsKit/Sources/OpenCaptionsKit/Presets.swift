@@ -58,7 +58,7 @@ extension StyleConfig {
     public func matches(_ preset: Preset) -> Bool {
         let p = preset.config
         return font == p.font && textColor == p.textColor
-            && highlightColor == p.highlightColor && background == p.background
+            && highlightColors == p.highlightColors && background == p.background
             && backgroundColor == p.backgroundColor
             && abs(backgroundOpacity - p.backgroundOpacity) < 0.001
             && animation == p.animation

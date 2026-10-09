@@ -13,7 +13,13 @@ import { type ReactNode, useState } from "react";
 import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
 import { FontPicker } from "@/components/FontPicker";
 import { PresetStrip, TileStrip } from "@/components/PresetStrip";
-import { ColorField, Field, Segmented, SliderField } from "@/components/StyleFields";
+import {
+  ColorField,
+  ColorListField,
+  Field,
+  Segmented,
+  SliderField,
+} from "@/components/StyleFields";
 import { msg, useT } from "@/lib/i18n";
 import { useLookPreviews } from "@/lib/presetPreviews";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
@@ -24,6 +30,7 @@ import {
   BACKGROUNDS,
   CASE_NAMES,
   CASES,
+  MAX_HIGHLIGHT_COLORS,
   withBackground,
 } from "@/lib/styleLooks";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
@@ -156,10 +163,15 @@ function TextPanel({
         value={style.text_color}
         onChange={(text_color) => throttled({ text_color })}
       />
-      <ColorField
-        label={t("Highlight color")}
-        value={style.highlight_color}
-        onChange={(highlight_color) => throttled({ highlight_color })}
+      <ColorListField
+        label={t("Highlight colors")}
+        value={style.highlight_colors}
+        max={MAX_HIGHLIGHT_COLORS}
+        addLabel={t("Add a highlight color")}
+        removeLabel={t("Remove this highlight color")}
+        testId="highlight-color"
+        onChange={(highlight_colors) => throttled({ highlight_colors })}
+        onResize={(highlight_colors) => setStyle({ highlight_colors })}
       />
       {/* Discrete: one dispatch per step, so it is not throttled. */}
       <SliderField

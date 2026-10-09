@@ -79,11 +79,13 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
             StyleConfig(**bad)  # type: ignore[arg-type]
 
 
-def test_style_config_gradient_end_defaults_to_off_and_is_validated() -> None:
-    assert StyleConfig().highlight_color_end is None
-    assert StyleConfig(highlight_color_end="#A855F7").highlight_color_end == "#A855F7"
-    with pytest.raises(ValidationError):
-        StyleConfig(highlight_color_end="red")
+def test_style_config_highlight_colours_are_one_to_four_hex_colours() -> None:
+    assert StyleConfig().highlight_colors == ["#7C3AED"]
+    four = ["#FFE600", "#22E06B", "#FF3B3B", "#00E5FF"]
+    assert StyleConfig(highlight_colors=four).highlight_colors == four
+    for bad in ([], ["#FFFFFF"] * 5, ["yellow"], ["#FFF"]):
+        with pytest.raises(ValidationError):
+            StyleConfig(highlight_colors=bad)
 
 
 def test_error_response_shape() -> None:
