@@ -7,6 +7,7 @@
  * since an instance holds one scene and the editor mounts more than one preview.
  */
 import { useEffect, useState } from "react";
+import { fontSource } from "@/lib/sources";
 import type { StyleConfig, Transcript } from "@/types";
 
 const BASE = "/engine";
@@ -238,7 +239,7 @@ function requestedFont(family: string): Promise<Uint8Array | null> {
   let font = requested.get(family);
   if (!font) {
     // An unknown family is drawn in the default face, as the export would be.
-    font = fetch(`/api/v1/fonts/${encodeURIComponent(family)}/file`)
+    font = fetch(fontSource(family))
       .then((r) => (r.ok ? r.arrayBuffer() : null))
       .then((b) => (b ? new Uint8Array(b) : null))
       .catch(() => null);

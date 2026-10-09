@@ -264,6 +264,27 @@ white), rounded corners, and the desktop's "burned-in subtitle" wordmark. It is 
 follows the system until the user chooses. Projects are a grid of poster cards; in the timeline the
 selected caption is yellow and the playhead is the page's ink colour.
 
+## The public demo
+
+`apps/web` has a second entry, `demo.html` (`src/demo/`, built with `vite.demo.config.ts`), that is
+the site at opencaptions.app: static files for Cloudflare Pages, no API, no account. It is the
+editor's own `CaptionPreview` and `PresetStrip` over three sample clips, so the captions are drawn by
+the same engine (WebAssembly) as in the editor and the download; nothing is drawn twice.
+
+- `src/lib/sources.ts` is the seam: where the preview reads a project's video and a font family.
+  The application's default is its API; the demo points them at `demo-public/demo/{clips,fonts}`.
+  `disableSaving()` in the editor store keeps edits in the page.
+- The clips are data: `demo-public/demo/clips.json` names each clip's video and transcript (the
+  API's `Transcript` shape). Replacing a clip is replacing its files and the manifest entry.
+- The engine's `.wasm` and fonts are not committed: the web Dockerfile's `demo-site` stage builds
+  them and the site (`make demo` writes `apps/web/dist-demo`). CI builds that stage on every run and
+  `publish-demo` deploys it with `wrangler pages deploy` on `main`, only when `CLOUDFLARE_API_TOKEN`
+  and `CLOUDFLARE_ACCOUNT_ID` are set (the Pages project is named `opencaptions`).
+- The fonts in `demo-public/demo/fonts` are the families the presets use (OFL), fetched once by
+  `apps/web/scripts/fetch-demo-fonts.mjs`; a family missing there is drawn in the default face.
+- It offers presets only: no upload, no export, no Pro or account feature exists in it to abuse.
+  `npm run dev:demo` needs the engine assets in `demo-public/engine` (the stage's output).
+
 ## Transcription
 
 A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:

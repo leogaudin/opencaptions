@@ -276,5 +276,20 @@
   "Cancel upload": "업로드 취소",
   "Uploading… {percent}%": "업로드 중… {percent}%",
   "The project was created, but transcription did not start: {error}": "프로젝트는 만들어졌지만 받아쓰기를 시작하지 못했습니다: {error}",
-  "Open project": "프로젝트 열기"
+  "Open project": "프로젝트 열기",
+  "Appearance": "화면 모드",
+  "System": "시스템",
+  "Light": "라이트",
+  "Dark": "다크",
+  "Follows your device until you choose, and is remembered in this browser.": "직접 선택하기 전에는 기기 설정을 따르며, 이 브라우저에 기억됩니다.",
+  "Docs": "문서",
+  "The demo could not be loaded.": "데모를 불러오지 못했습니다.",
+  "Tap the video to play or pause. Drag the caption to move it.": "영상을 탭해 재생하거나 일시정지하세요. 자막을 드래그해 옮길 수 있습니다.",
+  "Captions that": "스크롤을",
+  "stop the scroll": "멈추게 하는 자막",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "직접 호스팅하는 오픈소스 AI 자막. 스타일을 골라 샘플 영상에서 확인해 보세요.",
+  "Self-host it": "직접 호스팅하기",
+  "Get the iPhone app": "iPhone 앱 받기",
+  "iPhone app: coming soon": "iPhone 앱: 곧 출시",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions는 자유 소프트웨어(AGPL-3.0)입니다."
 }

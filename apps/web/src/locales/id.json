@@ -276,5 +276,20 @@
   "Cancel upload": "Batalkan unggahan",
   "Uploading… {percent}%": "Mengunggah… {percent}%",
   "The project was created, but transcription did not start: {error}": "Proyek dibuat, tetapi transkripsi tidak dimulai: {error}",
-  "Open project": "Buka proyek"
+  "Open project": "Buka proyek",
+  "Appearance": "Tampilan",
+  "System": "Sistem",
+  "Light": "Terang",
+  "Dark": "Gelap",
+  "Follows your device until you choose, and is remembered in this browser.": "Mengikuti perangkat Anda sampai Anda memilih, dan diingat di browser ini.",
+  "Docs": "Dokumentasi",
+  "The demo could not be loaded.": "Demo tidak dapat dimuat.",
+  "Tap the video to play or pause. Drag the caption to move it.": "Ketuk video untuk memutar atau menjeda. Seret teks untuk memindahkannya.",
+  "Captions that": "Teks yang",
+  "stop the scroll": "menghentikan scroll",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Teks AI sumber terbuka yang Anda host sendiri. Pilih gaya dan lihat di klip contoh.",
+  "Self-host it": "Host sendiri",
+  "Get the iPhone app": "Dapatkan aplikasi iPhone",
+  "iPhone app: coming soon": "Aplikasi iPhone: segera hadir",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions adalah perangkat lunak bebas, AGPL-3.0."
 }

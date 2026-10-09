@@ -239,6 +239,29 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  demo:
+    name: Build the public demo site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [lint-frontend, typecheck, engine]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build (static files, exported from the web Dockerfile's demo-site stage)
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/web
+          build-contexts: engine=apps/engine
+          target: demo-site
+          outputs: type=local,dest=dist-demo
+          cache-from: type=gha,scope=demo
+          cache-to: type=gha,scope=demo,mode=max
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-site
+          path: dist-demo
+          if-no-files-found: error
+
   publish:
     name: Publish images
     runs-on: ubuntu-latest
@@ -301,6 +324,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
+
+  publish-demo:
+    name: Publish the demo site (Cloudflare Pages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [e2e, demo]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    env:
+      # `secrets` may not appear in a step-level `if`, so decide once here.
+      CLOUDFLARE_CONFIGURED: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/download-artifact@v4
+        if: ${{ env.CLOUDFLARE_CONFIGURED == 'true' }}
+        with:
+          name: demo-site
+          path: dist-demo
+      - name: Deploy
+        if: ${{ env.CLOUDFLARE_CONFIGURED == 'true' }}
+        run: npx --yes wrangler@4 pages deploy dist-demo --project-name opencaptions --branch main
 
   publish-gpu:
     name: Publish GPU image (api only)

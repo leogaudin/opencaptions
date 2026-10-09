@@ -276,5 +276,20 @@
   "Cancel upload": "Отменить загрузку",
   "Uploading… {percent}%": "Загрузка… {percent}%",
   "The project was created, but transcription did not start: {error}": "Проект создан, но расшифровка не началась: {error}",
-  "Open project": "Открыть проект"
+  "Open project": "Открыть проект",
+  "Appearance": "Оформление",
+  "System": "Системная",
+  "Light": "Светлая",
+  "Dark": "Тёмная",
+  "Follows your device until you choose, and is remembered in this browser.": "Следует настройкам устройства, пока вы не выберете, и запоминается в этом браузере.",
+  "Docs": "Документация",
+  "The demo could not be loaded.": "Не удалось загрузить демо.",
+  "Tap the video to play or pause. Drag the caption to move it.": "Нажмите на видео, чтобы запустить или остановить. Перетащите субтитры, чтобы переместить их.",
+  "Captions that": "Субтитры, которые",
+  "stop the scroll": "останавливают скролл",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Субтитры с ИИ с открытым кодом, которые вы размещаете сами. Выберите стиль и посмотрите на примере.",
+  "Self-host it": "Развернуть у себя",
+  "Get the iPhone app": "Скачать приложение для iPhone",
+  "iPhone app: coming soon": "Приложение для iPhone: скоро",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions — свободное ПО, AGPL-3.0."
 }

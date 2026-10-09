@@ -276,5 +276,20 @@
   "Cancel upload": "アップロードをキャンセル",
   "Uploading… {percent}%": "アップロード中… {percent}%",
   "The project was created, but transcription did not start: {error}": "プロジェクトは作成されましたが、文字起こしを開始できませんでした: {error}",
-  "Open project": "プロジェクトを開く"
+  "Open project": "プロジェクトを開く",
+  "Appearance": "外観",
+  "System": "システム",
+  "Light": "ライト",
+  "Dark": "ダーク",
+  "Follows your device until you choose, and is remembered in this browser.": "選ぶまではデバイスの設定に従い、選択はこのブラウザに保存されます。",
+  "Docs": "ドキュメント",
+  "The demo could not be loaded.": "デモを読み込めませんでした。",
+  "Tap the video to play or pause. Drag the caption to move it.": "動画をタップして再生・一時停止。字幕をドラッグして動かせます。",
+  "Captions that": "スクロールを",
+  "stop the scroll": "止める字幕",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "自分でホストできるオープンソースのAI字幕。スタイルを選んでサンプル動画で確認できます。",
+  "Self-host it": "自分でホストする",
+  "Get the iPhone app": "iPhoneアプリを入手",
+  "iPhone app: coming soon": "iPhoneアプリ:近日公開",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptionsはフリーソフトウェア(AGPL-3.0)です。"
 }

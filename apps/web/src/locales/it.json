@@ -276,5 +276,20 @@
   "Cancel upload": "Annulla caricamento",
   "Uploading… {percent}%": "Caricamento… {percent}%",
   "The project was created, but transcription did not start: {error}": "Il progetto è stato creato, ma la trascrizione non è partita: {error}",
-  "Open project": "Apri il progetto"
+  "Open project": "Apri il progetto",
+  "Appearance": "Aspetto",
+  "System": "Sistema",
+  "Light": "Chiaro",
+  "Dark": "Scuro",
+  "Follows your device until you choose, and is remembered in this browser.": "Segue il dispositivo finché non scegli, e viene ricordato in questo browser.",
+  "Docs": "Documentazione",
+  "The demo could not be loaded.": "Impossibile caricare la demo.",
+  "Tap the video to play or pause. Drag the caption to move it.": "Tocca il video per riprodurre o mettere in pausa. Trascina il sottotitolo per spostarlo.",
+  "Captions that": "Sottotitoli che",
+  "stop the scroll": "fermano lo scroll",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Sottotitoli IA open source che ospiti tu. Scegli uno stile e guardalo su una clip di esempio.",
+  "Self-host it": "Ospitalo tu",
+  "Get the iPhone app": "Scarica l'app per iPhone",
+  "iPhone app: coming soon": "App per iPhone: in arrivo",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions è software libero, AGPL-3.0."
 }

@@ -28,6 +28,8 @@ node_modules/
 # Frontend build output
 apps/web/dist/
 apps/web/public/engine/
+apps/web/dist-demo/
+apps/web/demo-public/engine/
 apps/engine/target/
 
 # iOS: the engine xcframework and DerivedData are built, the Xcode project is generated

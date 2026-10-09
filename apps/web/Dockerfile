@@ -41,6 +41,15 @@ COPY . .
 COPY --from=preview-assets / public/engine/
 RUN npm run build
 
+# The public demo (opencaptions.app): static files for Cloudflare Pages, not part of the image.
+# `docker build --target demo-site -o apps/web/dist-demo ...` (make demo) exports them.
+FROM builder AS demo-build
+COPY --from=preview-assets / demo-public/engine/
+RUN npm run build:demo
+
+FROM scratch AS demo-site
+COPY --from=demo-build /app/dist-demo /
+
 FROM nginx:1.31-alpine AS runtime
 # The image lags its own distro: it ships packages Alpine has already patched
 # (libexpat 2.8.4 against CVE-2026-93990 at the time of writing). Upgrading here

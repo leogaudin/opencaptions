@@ -276,5 +276,20 @@
   "Cancel upload": "取消上传",
   "Uploading… {percent}%": "正在上传… {percent}%",
   "The project was created, but transcription did not start: {error}": "项目已创建，但转录未能开始：{error}",
-  "Open project": "打开项目"
+  "Open project": "打开项目",
+  "Appearance": "外观",
+  "System": "跟随系统",
+  "Light": "浅色",
+  "Dark": "深色",
+  "Follows your device until you choose, and is remembered in this browser.": "在你选择之前跟随设备，并保存在此浏览器中。",
+  "Docs": "文档",
+  "The demo could not be loaded.": "无法加载演示。",
+  "Tap the video to play or pause. Drag the caption to move it.": "点按视频即可播放或暂停。拖动字幕即可移动。",
+  "Captions that": "让人停下",
+  "stop the scroll": "滑动的字幕",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "可自行托管的开源 AI 字幕。选择样式,在示例视频上查看效果。",
+  "Self-host it": "自行托管",
+  "Get the iPhone app": "获取 iPhone 应用",
+  "iPhone app: coming soon": "iPhone 应用:即将推出",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions 是自由软件,采用 AGPL-3.0 许可。"
 }

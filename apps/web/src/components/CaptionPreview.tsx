@@ -15,6 +15,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
 import { useAttachVideo, useVideo } from "@/lib/playback";
+import { videoSource } from "@/lib/sources";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
 import type { StyleConfig, Transcript } from "@/types";
@@ -329,7 +330,7 @@ export function CaptionPreview() {
   // Keyed on the id so unrelated store writes keep the same src and the <video>
   // is never reloaded.
   const projectId = project?.id;
-  const videoSrc = projectId ? `/api/v1/projects/${projectId}/source` : "";
+  const videoSrc = projectId ? videoSource(projectId) : "";
   const video = useVideo();
   const attachVideo = useAttachVideo();
 

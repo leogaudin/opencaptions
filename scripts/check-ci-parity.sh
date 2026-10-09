@@ -44,11 +44,12 @@ CHECKS=(
   "end-to-end|test:e2e|test:e2e"
   "image builds|docker/build-push-action|docker build"
   "GPU image target|runtime-gpu|runtime-gpu"
+  "demo site build|demo-site|demo-site"
 )
 
 # Jobs that exist only to publish artifacts; the local gate deliberately stops
 # short of pushing anything.
-PUBLISH_ONLY_JOBS="publish publish-gpu"
+PUBLISH_ONLY_JOBS="publish publish-gpu publish-demo"
 
 failed=0
 
@@ -74,7 +75,7 @@ done
 
 # Any workflow job not accounted for above is drift by definition: it validates
 # something the local gate may not.
-KNOWN_JOBS="lint-backend lint-frontend engine typecheck test-backend compose-drift build e2e $PUBLISH_ONLY_JOBS"
+KNOWN_JOBS="lint-backend lint-frontend engine typecheck test-backend compose-drift build demo e2e $PUBLISH_ONLY_JOBS"
 workflow_jobs="$(awk '/^jobs:/{injobs=1; next} injobs && /^  [a-zA-Z0-9_-]+:/{gsub(/[: ]/,""); print}' "$WORKFLOW")"
 for job in $workflow_jobs; do
   case " $KNOWN_JOBS " in

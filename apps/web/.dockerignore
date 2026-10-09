@@ -8,3 +8,5 @@ playwright/.cache/
 .gitignore
 *.md
 public/engine/
+dist-demo/
+demo-public/engine/

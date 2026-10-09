@@ -113,7 +113,7 @@ images, which is what an end user does.
 | Path | Owns |
 |------|------|
 | `apps/api/` | FastAPI + Celery workers. Pydantic models, Alembic migrations, services, tasks. |
-| `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. |
+| `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. A second entry (`demo.html`, `src/demo/`) is the static public demo site (see `docs/DESIGN.md`). |
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
 | `apps/ios/` | The iPhone/iPad app: SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |

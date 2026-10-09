@@ -276,5 +276,20 @@
   "Cancel upload": "Yüklemeyi iptal et",
   "Uploading… {percent}%": "Yükleniyor… %{percent}",
   "The project was created, but transcription did not start: {error}": "Proje oluşturuldu ancak transkripsiyon başlamadı: {error}",
-  "Open project": "Projeyi aç"
+  "Open project": "Projeyi aç",
+  "Appearance": "Görünüm",
+  "System": "Sistem",
+  "Light": "Açık",
+  "Dark": "Koyu",
+  "Follows your device until you choose, and is remembered in this browser.": "Siz seçene kadar cihazınızı izler ve bu tarayıcıda hatırlanır.",
+  "Docs": "Belgeler",
+  "The demo could not be loaded.": "Demo yüklenemedi.",
+  "Tap the video to play or pause. Drag the caption to move it.": "Oynatmak veya duraklatmak için videoya dokunun. Altyazıyı taşımak için sürükleyin.",
+  "Captions that": "Kaydırmayı",
+  "stop the scroll": "durduran altyazılar",
+  "Open-source AI captions you host yourself. Pick a look and see it on a sample clip.": "Kendi sunucunuzda barındırdığınız açık kaynaklı yapay zekâ altyazıları. Bir stil seçin ve örnek klipte görün.",
+  "Self-host it": "Kendin barındır",
+  "Get the iPhone app": "iPhone uygulamasını edinin",
+  "iPhone app: coming soon": "iPhone uygulaması: çok yakında",
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions özgür yazılımdır, AGPL-3.0."
 }

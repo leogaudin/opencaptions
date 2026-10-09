@@ -213,6 +213,13 @@ step "Building images (api, engine, web)"
 IMAGES_BUILT=1
 (cd "$WORKTREE" && compose_ci build -q >/dev/null) || fail "image builds failed"
 
+# The public demo's static files come from the web Dockerfile's demo-site stage, which is what
+# the demo job exports; building it here proves the stage (and so the site) builds.
+step "Building the public demo site (apps/web demo-site stage)"
+(cd "$WORKTREE" && docker build -q --build-context engine=apps/engine --target demo-site \
+  -o "$WORKTREE/.ci-demo-site" apps/web >/dev/null) || fail "the demo site build failed"
+rm -rf "$WORKTREE/.ci-demo-site"
+
 # The GPU image is what publish-gpu pushes, so building it here is a rehearsal of that: worth
 # its several GB only when something it is made from changed (or when asked with --gpu).
 build_gpu=$FORCE_GPU

@@ -125,10 +125,18 @@ function pendingRender(projectId: string, jobId: string): Job {
 
 const message = (e: unknown) => (e as Error).message;
 
+// The public demo edits a project that exists nowhere: nothing is saved.
+let savingEnabled = true;
+
+/** For the demo: edits stay in the page, and no request is made for them. */
+export function disableSaving(): void {
+  savingEnabled = false;
+}
+
 export const useEditorStore = create<EditorState>((set, get) => {
   const edit = (patch: Partial<EditorState>) => {
     set(patch);
-    autosave.schedule();
+    if (savingEnabled) autosave.schedule();
   };
 
   const snapshot = (): Snapshot => {

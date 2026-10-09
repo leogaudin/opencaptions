@@ -10,9 +10,14 @@ import type { StyleConfig } from "@/types";
 export function PresetStrip({
   activeId,
   onPick,
+  className,
+  tileClassName,
 }: {
   activeId: string | undefined;
   onPick: (config: StyleConfig) => void;
+  /** Replaces the grid the tiles sit in (the public demo lays them out as a row). */
+  className?: string;
+  tileClassName?: string;
 }) {
   const previews = usePresetPreviews(BUILTIN_PRESETS);
   return (
@@ -28,6 +33,8 @@ export function PresetStrip({
         const preset = BUILTIN_PRESETS.find((p) => p.id === id);
         if (preset) onPick(preset.config);
       }}
+      className={className}
+      tileClassName={tileClassName}
     />
   );
 }
@@ -46,17 +53,18 @@ export function TileStrip({
   activeId,
   onPick,
   testIdPrefix = "preset",
+  className = "grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 p-1",
+  tileClassName = "",
 }: {
   tiles: readonly Tile[];
   activeId: string | undefined;
   onPick: (id: string) => void;
   testIdPrefix?: string;
+  className?: string;
+  tileClassName?: string;
 }) {
   return (
-    <div
-      data-testid={`${testIdPrefix}-strip`}
-      className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 p-1"
-    >
+    <div data-testid={`${testIdPrefix}-strip`} className={className}>
       {tiles.map((p) => {
         const active = p.id === activeId;
         return (
@@ -66,7 +74,7 @@ export function TileStrip({
             onClick={() => onPick(p.id)}
             data-testid={`${testIdPrefix}-${p.id}`}
             aria-pressed={active}
-            className={`rounded-[17px] p-1.5 text-xs font-semibold transition-shadow ${
+            className={`rounded-[17px] p-1.5 text-xs font-semibold transition-shadow ${tileClassName} ${
               active ? "ring-[2.5px] ring-primary" : "hover:ring-1 hover:ring-border"
             }`}
           >

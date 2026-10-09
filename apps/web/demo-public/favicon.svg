@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The app icon (apps/ios/OpenCaptions/Resources/Assets.xcassets/AppIcon.appiconset/icon.png), redrawn as vector. -->
+  <rect width="1024" height="1024" rx="224" fill="#FFE100"/>
+  <rect x="132" y="300" width="760" height="424" rx="96" fill="#0A0A0A"/>
+  <rect x="212" y="452" width="600" height="64" rx="32" fill="#FFFFFF"/>
+  <rect x="212" y="576" width="400" height="64" rx="32" fill="#FFE100"/>
+</svg>
