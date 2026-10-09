@@ -27,6 +27,9 @@ struct SettingsView: View {
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 10)
             ScrollView(.vertical) {
                 VStack(spacing: 24) {
+                    #if APPSTORE
+                        proSection
+                    #endif
                     appearanceSection
                     ServerSection()
                     transcriptionSection
@@ -121,6 +124,27 @@ struct SettingsView: View {
     }
 
     // MARK: Sections
+
+    #if APPSTORE
+        /// Where to buy Pro, and to restore it, without having to hit something that is locked.
+        private var proSection: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionLabel("OpenCaptions Pro")
+                Button {
+                    if !app.entitlements.isPro { showPro = true }
+                } label: {
+                    HStack {
+                        Text(app.entitlements.isPro ? "Pro is unlocked" : "Unlock Pro").font(.system(size: 16, weight: .medium))
+                        Spacer()
+                        Image(systemName: app.entitlements.isPro ? "checkmark.circle.fill" : "chevron.right")
+                            .foregroundStyle(app.entitlements.isPro ? Theme.accent : Theme.textSecondary)
+                    }
+                    .card()
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    #endif
 
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 10) {
