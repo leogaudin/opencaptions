@@ -58,7 +58,7 @@ public struct Project: Codable, Equatable, Sendable, Identifiable {
     public static var encoder: JSONEncoder {
         let e = JSONEncoder()
         e.dateEncodingStrategy = .iso8601
-        e.outputFormatting = [.sortedKeys, .prettyPrinted]
+        e.outputFormatting = [.sortedKeys]  // compact: written at every save, read by the list
         return e
     }
 

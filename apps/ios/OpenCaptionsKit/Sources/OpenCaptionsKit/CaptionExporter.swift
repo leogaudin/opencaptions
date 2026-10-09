@@ -206,6 +206,7 @@ public struct CaptionExporter: Sendable {
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
         var overlay: CIImage?
         var logged = 0
+        var reportedPercent = -1
         var framesWritten = 0
         /// Draws the captions for `time` over `sample`'s picture and writes the frame there.
         func write(_ sample: CMSampleBuffer, at time: CMTime) async throws {
@@ -259,7 +260,11 @@ public struct CaptionExporter: Sendable {
                 }
                 if duration > 0 {
                     let fraction = min(1, time.seconds / duration)
-                    progress(fraction)
+                    // Once per percent: the sheet redraws for each report, and a frame is not a percent.
+                    if Int(fraction * 100) != reportedPercent {
+                        reportedPercent = Int(fraction * 100)
+                        progress(fraction)
+                    }
                     if Int(fraction * 20) > logged {  // every 5%: where it was, and how much memory it held
                         logged = Int(fraction * 20)
                         Diagnostics.log("export \(Int(fraction * 100))% mem=\(Diagnostics.footprintMB())MB")

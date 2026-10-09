@@ -7,6 +7,8 @@ import SwiftUI
 @MainActor @Observable
 final class PresetPreviews {
     private(set) var images: [String: CGImage] = [:]
+    /// One for every tile drawn: a context owns GPU resources and is meant to be kept.
+    private static let context = CIContext()
     @ObservationIgnored private var loading = false
 
     /// Draws the tiles that are missing. Fonts a preset needs are fetched first (once).
@@ -40,7 +42,7 @@ final class PresetPreviews {
                 config.fontSize = 64
                 return config
             }, words: ["Make", "it", "pop"], width: width, height: height)
-        let context = CIContext()
+        let context = Self.context
         var images: [String: CGImage] = [:]
         for (look, frame) in zip(looks, frames) {
             guard let full = frame?.cgImage(using: context), let tile = full.cropping(to: crop) else { continue }

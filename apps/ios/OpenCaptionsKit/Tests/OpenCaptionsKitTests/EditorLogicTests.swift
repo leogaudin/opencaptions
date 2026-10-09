@@ -236,6 +236,16 @@ final class Counter { var value = 0 }
         #expect(model.saveState == .saved)
     }
 
+    @Test func savingDoesNotMoveTheStampThePreviewReadsAsAnEdit() async throws {
+        let (model, store) = try make()
+        model.setPosition(x: 0.3, y: 0.2)
+        let stamp = model.project.updatedAt
+        await model.flush()
+        #expect(model.saveState == .saved)
+        #expect(model.project.updatedAt == stamp, "a save is not an edit: the captions are not laid out again")
+        #expect(try store.load(model.project.id).styleConfig.positionX == 0.3, "and it was written")
+    }
+
     @Test func aPresetChangesTheLookButNotWhereHowBigOrHowManyWords() async throws {
         let (model, _) = try make()
         model.setPosition(x: 0.3, y: 0.2)

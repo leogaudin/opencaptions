@@ -153,6 +153,8 @@ struct EditorView: View {
         guard let source = app.store.sourceURL(for: model.project.id) else { return }
         await model.flush()
         playback.pause()
+        // A speech model held in memory is a gigabyte the export's frames may need.
+        app.transcriber.releaseModels()
         // Exports are named by content hash in the project's own folder, outside backups.
         guard let directory = try? app.store.rendersDirectory(for: model.project.id) else { return }
         let controller = ExportController(run: { [fonts = app.fontCache] project, source, progress in

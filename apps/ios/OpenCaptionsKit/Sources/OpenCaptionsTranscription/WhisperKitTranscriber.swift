@@ -26,6 +26,12 @@ public final class WhisperKitTranscriber: Transcriber {
         #endif
     }
 
+    /// Lets go of the model in memory, for work that needs the memory more (a save, with 4K frames in
+    /// flight): the next transcription loads it again.
+    public func releaseModels() {
+        Task { [pipelines] in await pipelines.release() }
+    }
+
     /// Starts loading a downloaded model into memory, so that it is ready (or nearly) by the time
     /// someone has picked a language and asked to transcribe. Loading is the longest wait there is,
     /// and the model stays loaded for the next transcription.

@@ -15,7 +15,23 @@ struct SettingsView: View {
     @State private var meteredFor: WhisperModel?
     @State private var clearingSaved = false
     @State private var failure: String?
+    @State private var sizes = Sizes()
     private let languages = TranscriptionLanguages.all
+
+    /// What is on disk. Read when `refresh` changes, not each time the page is drawn: a model's
+    /// download progress draws it many times a second, and each size is a walk through a folder.
+    private struct Sizes: Equatable {
+        var projects: Int64 = 0
+        var renders: Int64 = 0
+        var models: Int64 = 0
+        var perModel: [String: Int64] = [:]
+    }
+
+    private func measure() -> Sizes {
+        let usage = app.store.usage()
+        let perModel = Dictionary(uniqueKeysWithValues: WhisperModels.all.map { ($0.id, app.transcriber.sizeOnDisk($0.id)) })
+        return Sizes(projects: usage.projects, renders: usage.renders, models: perModel.values.reduce(0, +), perModel: perModel)
+    }
 
     var body: some View {
         // Read here so that a change of `refresh` draws the sizes again, without remaking the page
@@ -54,6 +70,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showPro) { ProSheet() }
         // Sizes (saved videos, models) are read when the tab is shown, so a save made since is counted.
         .onAppear { refresh += 1 }
+        .task(id: refresh) { sizes = measure() }
         .alert(
             alertTitle, isPresented: Binding(get: { prompt != nil }, set: { if !$0 { dismissPrompts() } }),
             presenting: prompt
@@ -195,7 +212,7 @@ struct SettingsView: View {
                     Text(model.label).font(.system(size: 16, weight: .semibold))
                     if app.entitlements.locks(model: model.id) { ProBadge() }
                 }
-                Text(downloaded ? "On this device · \(Self.size(app.transcriber.sizeOnDisk(model.id)))" : "\(model.megabytes) MB")
+                Text(downloaded ? "On this device · \(Self.size(sizes.perModel[model.id] ?? 0))" : "\(model.megabytes) MB")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 8)
@@ -220,21 +237,19 @@ struct SettingsView: View {
     }
 
     private var storageSection: some View {
-        let usage = app.store.usage()
-        let models = WhisperModels.all.reduce(Int64(0)) { $0 + app.transcriber.sizeOnDisk($1.id) }
-        return VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Storage")
             VStack(spacing: 14) {
-                storageRow("Projects", Self.size(usage.projects))
-                storageRow("Speech models", Self.size(models))
+                storageRow("Projects", Self.size(sizes.projects))
+                storageRow("Speech models", Self.size(sizes.models))
                 HStack {
                     Text("Cached videos").font(.system(size: 16, weight: .medium))
                     Spacer()
-                    Text(Self.size(usage.renders)).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
+                    Text(Self.size(sizes.renders)).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
                     Button("Clear") { clearingSaved = true }
                         .buttonStyle(PillButtonStyle())
-                        .disabled(usage.renders == 0)
-                        .opacity(usage.renders == 0 ? 0.4 : 1)
+                        .disabled(sizes.renders == 0)
+                        .opacity(sizes.renders == 0 ? 0.4 : 1)
                 }
             }
             .card()

@@ -64,6 +64,10 @@ public actor CaptionEngine {
     private var bundledFamilies: [String]?
     /// The scene last set, so a sample can be drawn and the real scene put back.
     private var scene: SceneInput?
+    /// When a font family could not be fetched, so it is not asked for again at every change of
+    /// the scene: offline, each would repeat the whole failed round trip before the caption drew.
+    private var missingFonts: [String: Date] = [:]
+    private static let fontRetryInterval: TimeInterval = 30
 
     // MARK: Buffers
 
@@ -312,7 +316,12 @@ extension CaptionEngine {
 
     public func ensureFont(_ family: String, cache: FontCache) async {
         guard !hasFont(family) else { return }
-        guard let data = await cache.data(for: family) else { return }
+        if let failed = missingFonts[family], Date().timeIntervalSince(failed) < Self.fontRetryInterval { return }
+        guard let data = await cache.data(for: family) else {
+            missingFonts[family] = Date()
+            return
+        }
+        missingFonts[family] = nil
         if !hasFont(family) { _ = addRequestedFont(family: family, data: data) }
     }
 }

@@ -129,7 +129,10 @@ public final class EditorModel {
     private func save() async {
         saveState = .saving
         do {
-            project = try store.save(project)
+            // The model keeps its own copy. Taking the stored one back would move `updatedAt`
+            // (the store rounds it to whole seconds), which the preview reads as an edit and
+            // lays the captions out again, a moment after every real one.
+            try store.save(project)
             saveState = .saved
         } catch {
             saveState = .failed(error.localizedDescription)
