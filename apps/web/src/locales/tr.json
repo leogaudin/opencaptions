@@ -291,5 +291,17 @@
   "Self-host it": "Kendin barındır",
   "Get the iPhone app": "iPhone uygulamasını edinin",
   "iPhone app: coming soon": "iPhone uygulaması: çok yakında",
-  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions özgür yazılımdır, AGPL-3.0."
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions özgür yazılımdır, AGPL-3.0.",
+  "On your device": "Cihazınızda",
+  "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "iPhone uygulaması, sözcükleri Whisper ile doğrudan telefonda yazabilir. Yükleme gerekmez.",
+  "Open source": "Açık kaynak",
+  "Read the code, build it yourself, or run the whole web editor on your own server.": "Kodu okuyun, kendiniz derleyin ya da web düzenleyicinin tamamını kendi sunucunuzda çalıştırın.",
+  "The same pixels everywhere": "Her yerde aynı pikseller",
+  "One Rust engine draws every caption in the browser, on the server and on the phone.": "Tek bir Rust motoru, her altyazıyı tarayıcıda, sunucuda ve telefonda çizer.",
+  "Use it where you work": "Çalıştığınız yerde kullanın",
+  "iPhone and iPad": "iPhone ve iPad",
+  "Caption, retime and save right on the phone.": "Altyazı ekleyin, zamanlamayı ayarlayın ve doğrudan telefonda kaydedin.",
+  "Your own server": "Kendi sunucunuz",
+  "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Zaman çizelgesi, altyazı dosyaları ve API içeren web düzenleyici, tek bir docker compose komutuyla çalışır.",
+  "Read the docs": "Belgeleri okuyun"
 }

@@ -155,6 +155,73 @@ function Demo() {
   );
 }
 
+function Facts() {
+  const t = useT();
+  const facts = [
+    [
+      t("On your device"),
+      t("The iPhone app can write the words on the phone itself, with Whisper. No upload needed."),
+    ],
+    [
+      t("Open source"),
+      t("Read the code, build it yourself, or run the whole web editor on your own server."),
+    ],
+    [
+      t("The same pixels everywhere"),
+      t("One Rust engine draws every caption in the browser, on the server and on the phone."),
+    ],
+  ];
+  return (
+    <section className="mx-auto grid max-w-5xl gap-8 px-4 pb-16 sm:grid-cols-3">
+      {facts.map(([title, body]) => (
+        <div key={title}>
+          <h3 className="text-base font-bold">{title}</h3>
+          <p className="mt-2 text-sm text-muted-foreground">{body}</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function Ways() {
+  const t = useT();
+  return (
+    <section className="mx-auto max-w-5xl px-4 pb-20">
+      <h2 className="font-[Montserrat] text-2xl font-black tracking-tight sm:text-3xl">
+        {t("Use it where you work")}
+      </h2>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
+          <h3 className="text-lg font-bold">{t("iPhone and iPad")}</h3>
+          <p className="flex-1 text-sm text-muted-foreground">
+            {t("Caption, retime and save right on the phone.")}
+          </p>
+          {APP_STORE_URL ? (
+            <a href={APP_STORE_URL} className={`${buttonClass} bg-primary text-primary-foreground`}>
+              {t("Get the iPhone app")}
+            </a>
+          ) : (
+            <span className="text-sm font-semibold text-muted-foreground">
+              {t("iPhone app: coming soon")}
+            </span>
+          )}
+        </article>
+        <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
+          <h3 className="text-lg font-bold">{t("Your own server")}</h3>
+          <p className="flex-1 text-sm text-muted-foreground">
+            {t(
+              "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.",
+            )}
+          </p>
+          <a href={DOCS_URL} className={`${buttonClass} bg-foreground text-background`}>
+            {t("Read the docs")}
+          </a>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 export function DemoApp() {
   const t = useT();
   return (
@@ -194,6 +261,8 @@ export function DemoApp() {
           </div>
         </section>
         <Demo />
+        <Facts />
+        <Ways />
       </main>
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
         {t("OpenCaptions is free software, AGPL-3.0.")}

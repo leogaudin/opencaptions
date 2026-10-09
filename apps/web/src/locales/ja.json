@@ -291,5 +291,17 @@
   "Self-host it": "自分でホストする",
   "Get the iPhone app": "iPhoneアプリを入手",
   "iPhone app: coming soon": "iPhoneアプリ:近日公開",
-  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptionsはフリーソフトウェア(AGPL-3.0)です。"
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptionsはフリーソフトウェア(AGPL-3.0)です。",
+  "On your device": "端末の中で",
+  "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "iPhoneアプリはWhisperで端末上で文字起こしできます。アップロードは不要です。",
+  "Open source": "オープンソース",
+  "Read the code, build it yourself, or run the whole web editor on your own server.": "コードを読み、自分でビルドし、Webエディターごと自分のサーバーで動かせます。",
+  "The same pixels everywhere": "どこでも同じピクセル",
+  "One Rust engine draws every caption in the browser, on the server and on the phone.": "1つのRustエンジンが、ブラウザ、サーバー、スマートフォンのすべての字幕を描画します。",
+  "Use it where you work": "作業する場所で使う",
+  "iPhone and iPad": "iPhoneとiPad",
+  "Caption, retime and save right on the phone.": "スマートフォン上で字幕の追加、タイミング調整、保存ができます。",
+  "Your own server": "自分のサーバー",
+  "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "タイムライン、字幕ファイル、APIを備えたWebエディターを、docker composeの1コマンドで起動できます。",
+  "Read the docs": "ドキュメントを読む"
 }

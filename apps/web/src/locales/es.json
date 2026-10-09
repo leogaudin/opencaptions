@@ -291,5 +291,17 @@
   "Self-host it": "Alójalo tú mismo",
   "Get the iPhone app": "Obtén la app para iPhone",
   "iPhone app: coming soon": "App para iPhone: próximamente",
-  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions es software libre, AGPL-3.0."
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions es software libre, AGPL-3.0.",
+  "On your device": "En tu dispositivo",
+  "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "La app para iPhone puede escribir las palabras en el propio teléfono, con Whisper. Sin subir nada.",
+  "Open source": "Código abierto",
+  "Read the code, build it yourself, or run the whole web editor on your own server.": "Lee el código, compílalo tú mismo o ejecuta todo el editor web en tu propio servidor.",
+  "The same pixels everywhere": "Los mismos píxeles en todas partes",
+  "One Rust engine draws every caption in the browser, on the server and on the phone.": "Un único motor en Rust dibuja cada subtítulo en el navegador, en el servidor y en el teléfono.",
+  "Use it where you work": "Úsalo donde trabajas",
+  "iPhone and iPad": "iPhone y iPad",
+  "Caption, retime and save right on the phone.": "Subtitula, ajusta los tiempos y guarda directamente en el teléfono.",
+  "Your own server": "Tu propio servidor",
+  "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "El editor web, con línea de tiempo, archivos de subtítulos y una API, con un solo comando docker compose.",
+  "Read the docs": "Leer la documentación"
 }

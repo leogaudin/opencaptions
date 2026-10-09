@@ -13,7 +13,8 @@
       (function () {
         try {
           var t = localStorage.getItem("opencaptions:theme");
-          var dark = t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          // Dark until a choice is made.
+          var dark = t !== "light";
           if (dark) document.documentElement.classList.add("dark");
         } catch (e) { /* localStorage may be blocked */ }
       })();

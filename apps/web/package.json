@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "predev:demo": "bash scripts/demo-engine.sh",
     "dev:demo": "vite -c vite.demo.config.ts",
     "build:demo": "tsc -b && vite build -c vite.demo.config.ts && mv dist-demo/demo.html dist-demo/index.html",
     "preview:demo": "vite preview -c vite.demo.config.ts --port 5174",

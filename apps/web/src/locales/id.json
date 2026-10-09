@@ -291,5 +291,17 @@
   "Self-host it": "Host sendiri",
   "Get the iPhone app": "Dapatkan aplikasi iPhone",
   "iPhone app: coming soon": "Aplikasi iPhone: segera hadir",
-  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions adalah perangkat lunak bebas, AGPL-3.0."
+  "OpenCaptions is free software, AGPL-3.0.": "OpenCaptions adalah perangkat lunak bebas, AGPL-3.0.",
+  "On your device": "Di perangkat Anda",
+  "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.": "Aplikasi iPhone dapat menulis kata-kata langsung di ponsel dengan Whisper. Tanpa unggah.",
+  "Open source": "Sumber terbuka",
+  "Read the code, build it yourself, or run the whole web editor on your own server.": "Baca kodenya, bangun sendiri, atau jalankan seluruh editor web di server Anda.",
+  "The same pixels everywhere": "Piksel yang sama di mana pun",
+  "One Rust engine draws every caption in the browser, on the server and on the phone.": "Satu mesin Rust menggambar setiap teks di browser, server, dan ponsel.",
+  "Use it where you work": "Gunakan di tempat Anda bekerja",
+  "iPhone and iPad": "iPhone dan iPad",
+  "Caption, retime and save right on the phone.": "Beri teks, atur waktu, dan simpan langsung di ponsel.",
+  "Your own server": "Server Anda sendiri",
+  "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Editor web dengan linimasa, berkas teks, dan API, dijalankan dengan satu perintah docker compose.",
+  "Read the docs": "Baca dokumentasi"
 }

@@ -283,7 +283,7 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
 - The fonts in `demo-public/demo/fonts` are the families the presets use (OFL), fetched once by
   `apps/web/scripts/fetch-demo-fonts.mjs`; a family missing there is drawn in the default face.
 - It offers presets only: no upload, no export, no Pro or account feature exists in it to abuse.
-  `npm run dev:demo` needs the engine assets in `demo-public/engine` (the stage's output).
+  `npm run dev:demo` puts the engine assets in `demo-public/engine` first (`scripts/demo-engine.sh`: cargo, else Docker). The demo opens dark until a visitor chooses.
 
 ## Transcription
 
