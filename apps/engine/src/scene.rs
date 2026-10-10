@@ -371,14 +371,20 @@ fn lift(anim: Animation) -> f32 {
     }
 }
 
+/// Outline, shadow and glow values are tuned on letters up to this size (every built-in look is). Past
+/// it they grow with the letters, so a caption at 200 keeps the weight of one at 100 instead of
+/// going thin; below it they stay as set, which keeps every saved look exactly as it was.
+const EFFECTS_REF_SIZE: f32 = 100.0;
+
 fn scaled(style: &Style, k: f32) -> Style {
+    let e = k * (style.font_size / EFFECTS_REF_SIZE).max(1.0);
     Style {
         font_size: style.font_size * k,
-        stroke_width: style.stroke_width * k,
-        shadow_blur: style.shadow_blur * k,
-        shadow_offset_x: style.shadow_offset_x * k,
-        shadow_offset_y: style.shadow_offset_y * k,
-        glow_blur: style.glow_blur * k,
+        stroke_width: style.stroke_width * e,
+        shadow_blur: style.shadow_blur * e,
+        shadow_offset_x: style.shadow_offset_x * e,
+        shadow_offset_y: style.shadow_offset_y * e,
+        glow_blur: style.glow_blur * e,
         ..style.clone()
     }
 }
@@ -1401,6 +1407,46 @@ mod tests {
             ),
         );
         assert!(upper.lines[0].words[0].slot.width() > lower.lines[0].words[0].slot.width());
+    }
+
+    #[test]
+    fn outlines_and_shadows_keep_their_weight_as_the_letters_grow() {
+        let effects = |font_size: u32| {
+            let patch = serde_json::json!({
+                "font_size": font_size, "stroke_width": 10, "shadow_blur": 4,
+                "shadow_offset_x": 8, "shadow_offset_y": 10, "glow_blur": 20
+            });
+            let s = scaled(
+                &styled("word_highlight", &[("a", 0.0, 1.0)], patch).style,
+                1.0,
+            );
+            // Each relative to the letters, so what a viewer sees as weight.
+            [
+                s.stroke_width,
+                s.shadow_blur,
+                s.shadow_offset_x,
+                s.shadow_offset_y,
+                s.glow_blur,
+            ]
+            .map(|v| v / s.font_size)
+        };
+        let at_100 = effects(100);
+        for (big, small) in effects(200).into_iter().zip(at_100) {
+            assert!((big - small).abs() < 1e-4, "{big} against {small}");
+        }
+        let at_300 = effects(300);
+        assert!(at_300.iter().zip(at_100).all(|(a, b)| (a - b).abs() < 1e-4));
+        // Smaller letters are left as they were set, so no saved look changes.
+        let small = scaled(
+            &styled(
+                "word_highlight",
+                &[("a", 0.0, 1.0)],
+                serde_json::json!({ "font_size": 50, "stroke_width": 10 }),
+            )
+            .style,
+            1.0,
+        );
+        assert_eq!(small.stroke_width, 10.0);
     }
 
     #[test]
