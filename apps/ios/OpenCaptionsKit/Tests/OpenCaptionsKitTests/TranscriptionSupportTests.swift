@@ -5,14 +5,34 @@ import Testing
 
 @Suite struct TranscriptionSupportTests {
     @Test func theModelTableIsAscendingAndTheDefaultIsInIt() {
-        let models = WhisperModels.all
-        #expect(Set(models.map(\.id)).count == models.count)
+        let models = WhisperModels.all.filter { !$0.isBuiltIn }
+        #expect(Set(WhisperModels.all.map(\.id)).count == WhisperModels.all.count)
         #expect(models.map(\.megabytes) == models.map(\.megabytes).sorted())
         #expect(WhisperModels.model(WhisperModels.defaultID)?.id == "large-v3-turbo")
         #expect(WhisperModels.all.allSatisfy { !$0.englishOnly }, "multilingual models only")
-        #expect(WhisperModels.all.map(\.megabytes) == WhisperModels.all.map(\.megabytes).sorted())
         #expect(WhisperModels.model("nonsense") == nil)
-        #expect(models.allSatisfy { !$0.variant.isEmpty && $0.megabytes > 0 })
+        #expect(models.allSatisfy { $0.megabytes > 0 })
+        #expect(models.filter { $0.engine == .whisperKit }.allSatisfy { !$0.variant.isEmpty }, "WhisperKit names a folder")
+    }
+
+    @Test func aModelThatCoversSomeLanguagesIsNeverAskedForAnother() throws {
+        let parakeet = try #require(WhisperModels.model("parakeet-tdt-0.6b-v3"))
+        #expect(parakeet.engine == .parakeet)
+        #expect(parakeet.covers("fr") && parakeet.covers("ru"))
+        #expect(!parakeet.covers("ja") && !parakeet.covers("tr") && !parakeet.covers("zh"))
+        #expect(parakeet.covers(nil) && parakeet.covers("auto"), "detecting is the model's business")
+        let whisper = try #require(WhisperModels.model("large-v3-turbo"))
+        #expect(whisper.covers("ja") && whisper.covers("tr"))
+    }
+
+    @Test func appleSpeechIsBuiltInAndOnlyWhereIOSHasIt() {
+        let apple = WhisperModels.model(WhisperModels.appleSpeechID)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            #expect(apple?.isBuiltIn == true)
+            #expect(apple?.engine == .appleSpeech)
+        } else {
+            #expect(apple == nil)
+        }
     }
 
     @Test func audioComesOutAs16kHzMono() async throws {

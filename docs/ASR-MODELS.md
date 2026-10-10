@@ -86,6 +86,16 @@ faster, language identification included).
   Cohere Transcribe (no better than Whisper here, 2.7 GB on disk, 2x real time), Canary 180M and
   SenseVoice (too inaccurate), Moonshine (English only).
 
+## On the phone
+
+Not measured: written from FluidAudio's own benchmarks and its source, and not compiled or run (no
+Mac). Parakeet v3 runs through FluidAudio on the Neural Engine, 480 MB; its first load on a given chip
+compiles the model once and the system keeps the result, which for Whisper takes minutes on an
+iPhone 14, and FluidAudio publishes no figure for it. Apple's `SpeechTranscriber` is offered on iOS 26 as
+a proof of concept: Apple's forums report time ranges missing on many results, so the app spreads a
+result's words over the time it has and logs how many words got a time of their own. Both are there to be
+measured on a phone against Whisper before anyone decides which should be the default.
+
 ## Not measured
 
 GPU speed (the published leaderboard figures put Parakeet far ahead, 1719x against 111 to 176x

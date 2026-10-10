@@ -72,7 +72,7 @@ public final class WhisperKitTranscriber: Transcriber {
 
     /// What a downloaded model takes on disk, in bytes (0 if it is not downloaded).
     public func sizeOnDisk(_ id: String) -> Int64 {
-        folder(for: id).map(Self.bytes(in:)) ?? 0
+        folder(for: id).map(DiskUsage.bytes(in:)) ?? 0
     }
 
     /// Removes a downloaded model. It downloads again the next time it is chosen.
@@ -94,12 +94,12 @@ public final class WhisperKitTranscriber: Transcriber {
         // disk (partial files are written as they arrive) against the model's known size
         // move steadily instead.
         let expected = Double(model.megabytes) * 1_000_000
-        let baseline = Self.bytes(in: modelsDirectory)
+        let baseline = DiskUsage.bytes(in: modelsDirectory)
         let directory = modelsDirectory
         let watcher = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(300))
-                let done = Double(max(0, Self.bytes(in: directory) - baseline))
+                let done = Double(max(0, DiskUsage.bytes(in: directory) - baseline))
                 progress(min(0.99, done / expected))
             }
         }
@@ -114,15 +114,6 @@ public final class WhisperKitTranscriber: Transcriber {
         values.isExcludedFromBackup = true
         try? excluded.setResourceValues(values)
         return folder
-    }
-
-    /// The size of everything under `directory`, partial downloads included.
-    private static func bytes(in directory: URL) -> Int64 {
-        let keys: [URLResourceKey] = [.fileSizeKey]
-        guard let files = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: keys) else { return 0 }
-        return files.reduce(into: Int64(0)) { total, file in
-            total += Int64((try? (file as? URL)?.resourceValues(forKeys: Set(keys)).fileSize) ?? 0)
-        }
     }
 
     /// The language of the loudest stretches of audio, or nil if the model cannot say.

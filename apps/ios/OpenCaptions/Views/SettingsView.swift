@@ -212,8 +212,16 @@ struct SettingsView: View {
                     Text(model.label).font(.system(size: 16, weight: .semibold))
                     if app.entitlements.locks(model: model.id) { ProBadge() }
                 }
-                Text(downloaded ? "On this device · \(Self.size(sizes.perModel[model.id] ?? 0))" : "\(model.megabytes) MB")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                Group {
+                    if model.isBuiltIn {
+                        Text("Built into iOS")
+                    } else if downloaded {
+                        Text("On this device · \(Self.size(sizes.perModel[model.id] ?? 0))")
+                    } else {
+                        Text("\(model.megabytes) MB")
+                    }
+                }
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 8)
             if let fraction = downloading[model.id] {
@@ -222,6 +230,8 @@ struct SettingsView: View {
                     ProgressView().controlSize(.small)
                 }
                 .foregroundStyle(Theme.textSecondary)
+            } else if model.isBuiltIn {
+                EmptyView()
             } else if downloaded {
                 Button { deleting = model } label: { Image(systemName: "trash") }
                     .buttonStyle(CircleButtonStyle())

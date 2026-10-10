@@ -402,7 +402,7 @@ app over three things it does not reimplement.
 | Piece | iOS |
 |---|---|
 | Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. One Swift actor, `CaptionEngine`, makes every call: the engine keeps one scene per process and allows its calls from any thread if they are serialized, which an actor guarantees. |
-| Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Core ML, Neural Engine), pinned, in its own SwiftPM target so the core tests do not build it. Its result is mapped to the same `Transcript` shape the way the server's local provider does, so transcripts are interchangeable. A `Transcriber` protocol sits in front, so a hosted endpoint can be a second conformance later. |
+| Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) and [FluidAudio](https://github.com/FluidInference/FluidAudio) (Parakeet) (Core ML, Neural Engine), pinned, in their own SwiftPM target so the core tests do not build them; iOS 26's `SpeechTranscriber` beside them. Its result is mapped to the same `Transcript` shape the way the server's local provider does, so transcripts are interchangeable. A `Transcriber` protocol sits in front, so a hosted endpoint can be a second conformance later. |
 | Decode, composite, encode | AVAssetReader decodes, the engine draws each overlay, Core Image composites, AVAssetWriter encodes (H.264, or 10-bit HEVC for HDR) with the audio re-encoded as AAC. The picture is baked upright at the size it is shown. |
 
 **Layout.** `project.yml` (XcodeGen; the `.xcodeproj` is generated, not committed)
@@ -449,8 +449,12 @@ Writes are atomic (a temporary file, then a rename). The project list is a scan 
 the folder, and an unreadable project is hidden rather than failing the list.
 Subtitle files (SRT, VTT) are only exported by the Docker product.
 
-**Models.** The desktop's ids, limited to what WhisperKit publishes and to a short list:
-Tiny, Base, Small, Large v3 Turbo and Large v3 (no English-only or superseded ones).
+**Models.** The desktop's ids, limited to a short list: the Whisper sizes WhisperKit publishes
+(Tiny, Base, Small, Large v3 Turbo and Large v3; no English-only or superseded ones), Parakeet v3
+(FluidAudio, Core ML: faster, 25 European languages, offered only for those), and on iOS 26 Apple's own
+`SpeechTranscriber` (built in, nothing to download, a language must be chosen). Each model names the engine
+that runs it (`WhisperModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
+reasons, with measurements, are `docs/ASR-MODELS.md`.
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection
 asks before a download. Loading a model into memory is the longest wait (the first time on a phone

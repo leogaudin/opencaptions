@@ -14,18 +14,21 @@ let package = Package(
     dependencies: [
         // Pinned exactly: a transcription change should be a deliberate bump.
         .package(url: "https://github.com/argmaxinc/argmax-oss-swift.git", exact: "1.1.0"),
+        // Parakeet (Core ML). Pinned for the same reason; its transcribe API has changed between releases.
+        .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.17.7"),
     ],
     targets: [
         .binaryTarget(name: "OpenCaptionsEngine", path: "../Build/OpenCaptionsEngine.xcframework"),
         .target(
             name: "OpenCaptionsKit", dependencies: ["OpenCaptionsEngine"],
             resources: [.process("Resources")]),
-        // WhisperKit lives in its own target so the core tests do not build it.
+        // WhisperKit and FluidAudio live in their own target so the core tests do not build them.
         .target(
             name: "OpenCaptionsTranscription",
             dependencies: [
                 "OpenCaptionsKit",
                 .product(name: "WhisperKit", package: "argmax-oss-swift"),
+                .product(name: "FluidAudio", package: "FluidAudio"),
             ]
         ),
         .testTarget(
