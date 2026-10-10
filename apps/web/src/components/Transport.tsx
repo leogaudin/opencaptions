@@ -8,6 +8,7 @@
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
+import { typing } from "@/lib/keyboard";
 import { useVideo, useVideoClock } from "@/lib/playback";
 import { formatTimecode } from "@/lib/time";
 
@@ -16,14 +17,6 @@ const BUTTON =
 /** Play is the one filled control: a solid disc, as in the iOS app. */
 const PLAY =
   "inline-flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:opacity-50";
-
-/** Whether a key press belongs to the field or control that has focus. */
-function typing(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
 
 export function Transport({
   duration,

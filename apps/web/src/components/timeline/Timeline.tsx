@@ -8,7 +8,7 @@
  * The edits themselves are the engine's (`CaptionEditor`), the same code the phone
  * app calls, and the engine applies the caption offset; this is only the UI.
  */
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize2, Redo2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { type PointerEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Transport } from "@/components/Transport";
 import { CaptionTrack } from "@/components/timeline/CaptionTrack";
@@ -20,7 +20,8 @@ import { clampZoom } from "@/lib/timelineScale";
 import type { Transcript } from "@/types";
 
 type Edge = "start" | "end";
-type Edit = (f: (t: Transcript) => Transcript) => void;
+/** An edit of the transcript; edits of one `group` made close together undo as one step. */
+type Edit = (f: (t: Transcript) => Transcript, group?: string) => void;
 
 /** What one wheel-delta unit does to the zoom (a pinch sends small deltas, a notch ~100). */
 const WHEEL_ZOOM = 0.0025;
@@ -38,6 +39,10 @@ export function Timeline({
   fps,
   title,
   onEdit,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: {
   video: HTMLVideoElement | null;
   /** Transcript as stored; the engine shows it shifted and writes edits back unshifted. */
@@ -50,6 +55,10 @@ export function Timeline({
   fps: number;
   title: string;
   onEdit: Edit;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }) {
   const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
@@ -195,7 +204,12 @@ export function Timeline({
     commitFrame.current = requestAnimationFrame(() => {
       commitFrame.current = 0;
       const p = pending.current;
-      if (p && editor) onEdit((t) => editor.retimeWord(t, p.index, p.edge, p.time, offsetMs));
+      if (p && editor) {
+        onEdit(
+          (t) => editor.retimeWord(t, p.index, p.edge, p.time, offsetMs),
+          `retime:${p.index}:${p.edge}`,
+        );
+      }
     });
   };
   useEffect(() => () => cancelAnimationFrame(commitFrame.current), []);
@@ -204,6 +218,28 @@ export function Timeline({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Transport duration={duration} fps={fps}>
+        <button
+          type="button"
+          data-testid="undo"
+          aria-label={t("Undo")}
+          title={t("Undo")}
+          disabled={!canUndo}
+          onClick={onUndo}
+          className={BUTTON}
+        >
+          <Undo2 className="h-4 w-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          data-testid="redo"
+          aria-label={t("Redo")}
+          title={t("Redo")}
+          disabled={!canRedo}
+          onClick={onRedo}
+          className={BUTTON}
+        >
+          <Redo2 className="h-4 w-4" aria-hidden />
+        </button>
         <button
           type="button"
           data-testid="zoom-out"

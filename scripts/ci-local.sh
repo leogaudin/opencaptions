@@ -197,6 +197,7 @@ step "Frontend lint, typecheck and production build"
 in_node apps/web '
   npm run lint
   npm run typecheck
+  npm test
   npm run build
 ' || fail "web validation failed"
 

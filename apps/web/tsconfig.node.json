@@ -7,10 +7,13 @@
     "skipLibCheck": true,
     "strict": true,
     "composite": true,
+    "emitDeclarationOnly": true,
+    // The unit tests run on Node's own TypeScript support, which wants the extension.
+    "allowImportingTsExtensions": true,
     "outDir": "node_modules/.tmp/tsc-node",
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tests/**/*.ts"]
+  "include": ["vite.config.ts", "playwright.config.ts", "tests/**/*.ts", "src/lib/history.ts", "src/lib/transcriptText.ts"]
 }

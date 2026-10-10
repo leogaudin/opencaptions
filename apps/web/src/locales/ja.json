@@ -251,5 +251,20 @@
   "Shadow right": "影を右へ",
   "Shadow down": "影を下へ",
   "Glow": "グロー",
-  "Glow color": "グローの色"
+  "Glow color": "グローの色",
+  "Undo": "元に戻す",
+  "Redo": "やり直す",
+  "Edit text": "テキストを編集",
+  "Edit transcript as text": "文字起こしをテキストで編集",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "1行に1単語です。単語、その開始または終了（秒）を変更するか、セグメント間で単語を移動してから、適用してください。適用は元に戻せます。",
+  "Transcript text": "文字起こしのテキスト",
+  "Import subtitles…": "字幕をインポート…",
+  "Apply": "適用",
+  "Not valid JSON: {message}": "JSONが正しくありません：{message}",
+  "The text must be an object with a list of segments, each with a list of words.": "テキストは、セグメントのリストを持つオブジェクトで、各セグメントが単語のリストを持つ必要があります。",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "セグメント{segment}、単語{word}：単語にはテキストと、秒単位の開始・終了が必要で、終了は開始より前にできません。",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "セグメント{segment}、単語{word}：直前の単語より前に始まっています。",
+  "There are no words in it.": "単語が含まれていません。",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "このファイルはSRT、WebVTT、OpenCaptionsのJSONエクスポートのいずれでもありません。",
+  "{words} words in {segments} segments": "{segments}個のセグメントに{words}単語"
 }

@@ -251,5 +251,20 @@
   "Shadow right": "Тень вправо",
   "Shadow down": "Тень вниз",
   "Glow": "Свечение",
-  "Glow color": "Цвет свечения"
+  "Glow color": "Цвет свечения",
+  "Undo": "Отменить",
+  "Redo": "Повторить",
+  "Edit text": "Править текст",
+  "Edit transcript as text": "Правка расшифровки как текста",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Одно слово на строку. Измените слово, его начало или конец (в секундах) либо переместите слова между сегментами, затем примените. Применение можно отменить.",
+  "Transcript text": "Текст расшифровки",
+  "Import subtitles…": "Импорт субтитров…",
+  "Apply": "Применить",
+  "Not valid JSON: {message}": "Некорректный JSON: {message}",
+  "The text must be an object with a list of segments, each with a list of words.": "Текст должен быть объектом со списком сегментов, в каждом из которых есть список слов.",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "Сегмент {segment}, слово {word}: слову нужны текст, начало и конец в секундах, причём конец не раньше начала.",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "Сегмент {segment}, слово {word}: начинается раньше предыдущего слова.",
+  "There are no words in it.": "В нём нет слов.",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Этот файл не в формате SRT, WebVTT и не экспорт JSON из OpenCaptions.",
+  "{words} words in {segments} segments": "Слов: {words}, сегментов: {segments}"
 }

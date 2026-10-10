@@ -15,6 +15,10 @@ export function TimelineDock() {
   const wordsPerLine = useEditorStore((s) => s.style.words_per_line);
   const offsetMs = useEditorStore((s) => s.captionOffsetMs);
   const editTranscript = useEditorStore((s) => s.editTranscript);
+  const canUndo = useEditorStore((s) => s.history.past.length > 0);
+  const canRedo = useEditorStore((s) => s.history.future.length > 0);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
 
   if (!project?.video_storage_key || !transcript || transcript.segments.length === 0) {
     return (
@@ -33,6 +37,10 @@ export function TimelineDock() {
       fps={project.video_fps || 30}
       title={project.title}
       onEdit={editTranscript}
+      canUndo={canUndo}
+      canRedo={canRedo}
+      onUndo={undo}
+      onRedo={redo}
     />
   );
 }

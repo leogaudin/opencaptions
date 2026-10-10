@@ -12,10 +12,18 @@ type Edge = "start" | "end";
 const edgeWord = (line: CaptionLine, edge: Edge): number =>
   edge === "start" ? line.from : line.from + line.count - 1;
 
+/** Always this much room between one clip and the next, so touching captions stay two clips. */
+const GAP_PX = 1;
+/** No clip is drawn narrower than this, however far the timeline is zoomed out. */
+const MIN_PX = 2;
+const HANDLE_PX = 6;
+
 /**
- * One block per on-screen caption line, at its shown time. A selected block has a
- * handle on each edge that retimes it; the engine decides how far an edge may go.
- * Times are as shown: the engine applies the caption offset.
+ * One flat clip per on-screen caption line, at its shown time, as in a video editor's track:
+ * square-ish, side by side with a hairline between, its text cut off at its edge. A selected
+ * clip has a handle on each edge that retimes it; on a clip too narrow to grab, the handles
+ * sit just outside it so they never cover each other. The engine decides how far an edge may
+ * go. Times are as shown: the engine applies the caption offset.
  */
 export function CaptionTrack({
   lines,
@@ -41,14 +49,13 @@ export function CaptionTrack({
     <>
       {lines.map((line) => {
         const isSelected = selected === line.from;
+        const width = Math.max((line.end - line.start) * pxPerSecond - GAP_PX, MIN_PX);
+        const tooNarrow = width < 4 * HANDLE_PX;
         return (
           <div
             key={line.from}
             className="absolute top-1.5 bottom-1.5"
-            style={{
-              left: line.start * pxPerSecond,
-              width: Math.max((line.end - line.start) * pxPerSecond, 0),
-            }}
+            style={{ left: line.start * pxPerSecond, width }}
           >
             <button
               type="button"
@@ -61,13 +68,13 @@ export function CaptionTrack({
                 seek(e.detail ? timeAt(e.clientX) : line.start);
               }}
               className={cn(
-                "h-full w-full min-w-1 overflow-hidden rounded-lg px-2 text-left text-[11px] font-bold",
+                "block h-full w-full overflow-hidden rounded-[3px] px-1.5 text-left text-[11px] font-semibold ring-1 ring-inset",
                 isSelected
-                  ? "bg-primary text-primary-foreground ring-1 ring-primary"
-                  : "bg-foreground/10 text-foreground ring-1 ring-foreground/20 hover:bg-foreground/15",
+                  ? "bg-primary text-primary-foreground ring-foreground/30"
+                  : "bg-muted text-foreground ring-foreground/15 hover:bg-foreground/15",
               )}
             >
-              <span className="pointer-events-none whitespace-nowrap">{line.text}</span>
+              <span className="pointer-events-none block truncate">{line.text}</span>
             </button>
             {isSelected &&
               (["start", "end"] as const).map((edge) => (
@@ -95,8 +102,14 @@ export function CaptionTrack({
                     onRetime(edgeWord(line, edge), edge, at);
                   }}
                   className={cn(
-                    "absolute inset-y-0.5 w-1.5 cursor-ew-resize rounded-full bg-foreground ring-1 ring-background",
-                    edge === "start" ? "left-0" : "right-0",
+                    "absolute inset-y-0 z-10 w-1.5 cursor-ew-resize rounded-[2px] bg-foreground ring-1 ring-background",
+                    edge === "start"
+                      ? tooNarrow
+                        ? "-left-1.5"
+                        : "left-0"
+                      : tooNarrow
+                        ? "-right-1.5"
+                        : "right-0",
                   )}
                 />
               ))}

@@ -251,5 +251,20 @@
   "Shadow right": "Bayangan ke kanan",
   "Shadow down": "Bayangan ke bawah",
   "Glow": "Cahaya",
-  "Glow color": "Warna cahaya"
+  "Glow color": "Warna cahaya",
+  "Undo": "Urungkan",
+  "Redo": "Ulangi",
+  "Edit text": "Edit teks",
+  "Edit transcript as text": "Edit transkrip sebagai teks",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Satu kata per baris. Ubah sebuah kata, awal atau akhirnya (dalam detik), atau pindahkan kata antarsegmen, lalu terapkan. Penerapan dapat diurungkan.",
+  "Transcript text": "Teks transkrip",
+  "Import subtitles…": "Impor subjudul…",
+  "Apply": "Terapkan",
+  "Not valid JSON: {message}": "JSON tidak valid: {message}",
+  "The text must be an object with a list of segments, each with a list of words.": "Teks harus berupa objek dengan daftar segmen, masing-masing berisi daftar kata.",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "Segmen {segment}, kata {word}: sebuah kata memerlukan teks, serta awal dan akhir dalam detik, dengan akhir tidak sebelum awal.",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "Segmen {segment}, kata {word}: dimulai sebelum kata yang mendahuluinya.",
+  "There are no words in it.": "Tidak ada kata di dalamnya.",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Berkas ini bukan SRT, WebVTT, atau ekspor JSON OpenCaptions.",
+  "{words} words in {segments} segments": "{words} kata dalam {segments} segmen"
 }

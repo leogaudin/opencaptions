@@ -78,3 +78,47 @@ test.describe("Editing a word on the preview", () => {
     await expect.poll(savedWords).toEqual(["beta"]);
   });
 });
+
+test.describe("Editing a word on a caption that follows a pause", () => {
+  // [a b] then, after 1.6 s of quiet at a 0.2 s pace, [c d]: the pause ends the first caption
+  // instead of three words being cut as [a b c] [d].
+  const AFTER_A_PAUSE: Transcript = {
+    schema_version: 1,
+    language: "en",
+    language_detection: "manual",
+    duration: 4,
+    segments: [
+      {
+        id: "a",
+        start: 0,
+        end: 2.4,
+        text: "a b c d",
+        words: [word("a", 0, 0.2), word("b", 0.2, 0.4), word("c", 2, 2.2), word("d", 2.2, 2.4)],
+      },
+    ],
+  };
+
+  test("the word under the pointer is the one renamed", async ({ page }) => {
+    const saved = await mockTranscribedProject(page, "Pause test", { transcript: AFTER_A_PAUSE });
+    await page.goto(`/projects/${MOCK_PROJECT_ID}`);
+    const handle = page.getByTestId("caption-handle");
+    await expect(handle).toBeVisible();
+    await page.evaluate(() => {
+      (document.querySelector("video") as HTMLVideoElement).currentTime = 2.3;
+    });
+    await expect(handle).toBeVisible();
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("caption not laid out");
+    // The second caption is [c d]: its right half is "d", word 3 of the transcript.
+    await handle.dblclick({ position: { x: box.width * 0.8, y: box.height / 2 } });
+    const input = page.getByTestId("caption-word-edit");
+    await expect(input).toHaveValue("d");
+    await input.fill("x");
+    await input.press("Enter");
+    await expect
+      .poll(() =>
+        (saved().transcript as Transcript).segments.flatMap((s) => s.words.map((w) => w.text)),
+      )
+      .toEqual(["a", "b", "c", "x"]);
+  });
+});

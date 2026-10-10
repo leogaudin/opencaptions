@@ -251,5 +251,20 @@
   "Shadow right": "Gölge sağa",
   "Shadow down": "Gölge aşağı",
   "Glow": "Parıltı",
-  "Glow color": "Parıltı rengi"
+  "Glow color": "Parıltı rengi",
+  "Undo": "Geri al",
+  "Redo": "Yinele",
+  "Edit text": "Metni düzenle",
+  "Edit transcript as text": "Çeviriyazıyı metin olarak düzenle",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Her satırda bir kelime. Bir kelimeyi, başlangıcını ya da bitişini (saniye cinsinden) değiştirin veya kelimeleri bölümler arasında taşıyın, sonra uygulayın. Uygulama geri alınabilir.",
+  "Transcript text": "Çeviriyazı metni",
+  "Import subtitles…": "Altyazı içe aktar…",
+  "Apply": "Uygula",
+  "Not valid JSON: {message}": "Geçersiz JSON: {message}",
+  "The text must be an object with a list of segments, each with a list of words.": "Metin, her biri bir kelime listesi içeren bir bölüm listesine sahip bir nesne olmalıdır.",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "Bölüm {segment}, kelime {word}: bir kelime için metin ile saniye cinsinden bir başlangıç ve bitiş gerekir; bitiş başlangıçtan önce olamaz.",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "Bölüm {segment}, kelime {word}: kendisinden önceki kelimeden önce başlıyor.",
+  "There are no words in it.": "İçinde hiç kelime yok.",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Bu dosya SRT, WebVTT veya OpenCaptions JSON dışa aktarımı değil.",
+  "{words} words in {segments} segments": "{segments} bölümde {words} kelime"
 }

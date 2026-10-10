@@ -34,6 +34,7 @@ the publish job pushes, so it is built when `apps/api/Dockerfile`, `pyproject.to
 ```bash
 make lint             # ruff + mypy (api), biome (web)
 make test-backend     # pytest
+make test-web         # the web's unit tests (node --test)
 make typecheck        # tsc -b project references (web)
 make test-engine      # the engine's Rust tests (in a pinned toolchain container)
 make typegen-check    # regenerate API types and fail if the committed file is stale

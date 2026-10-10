@@ -18,6 +18,7 @@ import { useT } from "@/lib/i18n";
 import { PlaybackProvider } from "@/lib/playback";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useProjectWebSocket } from "@/lib/useProjectWebSocket";
+import { useUndoShortcuts } from "@/lib/useUndoShortcuts";
 import { useEditorStore } from "@/store/editorStore";
 
 export function EditorPage() {
@@ -30,6 +31,7 @@ export function EditorPage() {
   const error = useEditorStore((s) => s.error);
 
   const desktop = useMediaQuery("(min-width: 768px)");
+  useUndoShortcuts();
 
   // Remember the splits across page loads. v4 replaced v3's `autoSaveId` prop with
   // this hook, which spreads defaultLayout and onLayoutChanged onto the Group.

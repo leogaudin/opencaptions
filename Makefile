@@ -57,6 +57,9 @@ lint-frontend:       ## Lint TS/JS (biome)
 typecheck:           ## Typecheck web project references
 	@$(WEB) typecheck
 
+test-web:            ## Run the web unit tests
+	@$(WEB) test
+
 test-backend:        ## Run pytest
 	@$(API) pytest
 

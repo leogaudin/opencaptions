@@ -81,10 +81,30 @@ test.describe("Timeline", () => {
     ]);
   });
 
-  test("an edge cannot cross the next line", async ({ page }) => {
+  test("an edge dragged into the next line pushes it along, but never past its end", async ({
+    page,
+  }) => {
     await timeline.getByTestId("timeline-line").first().click();
     await dragTo(page, timeline, timeline.getByTestId("timeline-end"), 3.5);
-    await expect.poll(() => savedWords(saved)[2]?.end).toBe(2.6);
+    // "four" (2.6 to 3) gives way down to its minimum length, and stays after "three".
+    await expect.poll(() => savedWords(saved)[2]?.end).toBeCloseTo(2.95, 1);
+    expect(savedWords(saved)[3]).toMatchObject({ text: "four", end: 3 });
+    expect(savedWords(saved)[3]?.start).toBeCloseTo(2.95, 1);
+  });
+
+  test("a drag is one undo step, and undo and redo walk it back and forth", async ({ page }) => {
+    const undo = page.getByTestId("undo");
+    await expect(undo).toBeDisabled();
+    await timeline.getByTestId("timeline-line").first().click();
+    await dragTo(page, timeline, timeline.getByTestId("timeline-end"), 2.2);
+    await expect.poll(() => savedWords(saved)[2]?.end).toBeCloseTo(2.2, 1);
+    await undo.click();
+    await expect.poll(() => savedWords(saved)[2]?.end).toBeCloseTo(1.7, 1);
+    await expect(undo).toBeDisabled();
+    await page.getByTestId("redo").click();
+    await expect.poll(() => savedWords(saved)[2]?.end).toBeCloseTo(2.2, 1);
+    await page.keyboard.press("ControlOrMeta+z");
+    await expect.poll(() => savedWords(saved)[2]?.end).toBeCloseTo(1.7, 1);
   });
 
   test("with a caption offset, the timeline shows shifted times and saves unshifted ones", async ({

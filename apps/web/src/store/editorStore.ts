@@ -11,6 +11,13 @@ import { clampCaptionOffsetMs } from "@/lib/captionOffset";
 import { getDownloadOptions } from "@/lib/downloadOptions";
 import { downloadWhenReady, forgetDownload, saveVideo } from "@/lib/downloads";
 import {
+  emptyHistory,
+  type History,
+  recordEdit,
+  redo as redoStep,
+  undo as undoStep,
+} from "@/lib/history";
+import {
   defaultStyle,
   type Job,
   type Project,
@@ -20,6 +27,13 @@ import {
 } from "@/types";
 
 type AutosaveStatus = "idle" | "saving" | "saved" | "error";
+
+/** What undo and redo put back: everything the editor changes, as the phone app records it. */
+interface Snapshot {
+  transcript: Transcript | null;
+  style: StyleConfig;
+  captionOffsetMs: number;
+}
 
 interface EditorState {
   project: Project | null;
@@ -34,14 +48,24 @@ interface EditorState {
   activeJobId: string | null;
   autosaveStatus: AutosaveStatus;
   autosaveError: string | null;
+  /** What undo and redo step through: the earlier and later states of the edits. */
+  history: History<Snapshot>;
 
   loadProject: (projectId: string) => Promise<void>;
   reloadProject: () => Promise<void>;
+  /** Changes of the same fields made close together (a slider) undo as one step. */
   setStyle: (s: Partial<StyleConfig>) => void;
   /** Clamped and autosaved. */
   setCaptionOffset: (ms: number) => void;
-  /** Applies a pure edit to the transcript: the engine's edits, the only way it changes. */
-  editTranscript: (f: (t: Transcript) => Transcript) => void;
+  /**
+   * Applies a pure edit to the transcript: the engine's edits, the only way it changes. Edits
+   * of one `group` made close together (a drag) undo as one step.
+   */
+  editTranscript: (f: (t: Transcript) => Transcript, group?: string) => void;
+  /** Swaps in a whole transcript (the raw editor, an import); one undo step. */
+  replaceTranscript: (t: Transcript) => void;
+  undo: () => void;
+  redo: () => void;
   startTranscription: (body?: {
     provider?: TranscriptionProvider;
     model?: string;
@@ -64,6 +88,7 @@ const initialState = {
   activeJobId: null,
   autosaveStatus: "idle",
   autosaveError: null,
+  history: emptyHistory<Snapshot>(),
 } satisfies Partial<EditorState>;
 
 const FINISHED = new Set<Job["status"]>(["completed", "failed", "cancelled"]);
@@ -93,6 +118,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
     set(patch);
     autosave.schedule();
   };
+
+  const snapshot = (): Snapshot => {
+    const { transcript, style, captionOffsetMs } = get();
+    return { transcript, style, captionOffsetMs };
+  };
+  /** The history with the editor as it is now added, to be set along with the edit. */
+  const remember = (group?: string) => recordEdit(get().history, snapshot(), group);
 
   const save = async (): Promise<boolean> => {
     const { project, transcript, style, captionOffsetMs } = get();
@@ -141,6 +173,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
           transcript: project.transcript,
           style: project.style_config ?? defaultStyle,
           captionOffsetMs: project.caption_offset_ms ?? 0,
+          // What was loaded is the start: nothing before it to go back to.
+          history: emptyHistory<Snapshot>(),
           // Restore live progress on refresh, before the WebSocket catches up.
           activeJobId: active?.id ?? null,
           jobs:
@@ -159,16 +193,34 @@ export const useEditorStore = create<EditorState>((set, get) => {
       if (id) await get().loadProject(id);
     },
 
-    setStyle: (s) => edit({ style: { ...get().style, ...s } }),
+    setStyle: (s) =>
+      edit({
+        history: remember(`style:${Object.keys(s).sort().join(",")}`),
+        style: { ...get().style, ...s },
+      }),
 
     setCaptionOffset: (ms) => {
       const clamped = clampCaptionOffsetMs(Math.round(ms));
-      if (clamped !== get().captionOffsetMs) edit({ captionOffsetMs: clamped });
+      if (clamped !== get().captionOffsetMs) {
+        edit({ history: remember("offset"), captionOffsetMs: clamped });
+      }
     },
 
-    editTranscript: (f) => {
+    editTranscript: (f, group) => {
       const t = get().transcript;
-      if (t) edit({ transcript: f(t) });
+      if (t) edit({ history: remember(group), transcript: f(t) });
+    },
+
+    replaceTranscript: (next) => edit({ history: remember(), transcript: next }),
+
+    undo: () => {
+      const step = undoStep(get().history, snapshot());
+      if (step) edit({ ...step.value, history: step.history });
+    },
+
+    redo: () => {
+      const step = redoStep(get().history, snapshot());
+      if (step) edit({ ...step.value, history: step.history });
     },
 
     startTranscription: async (body = {}) => {

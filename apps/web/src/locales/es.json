@@ -251,5 +251,20 @@
   "Shadow right": "Sombra a la derecha",
   "Shadow down": "Sombra hacia abajo",
   "Glow": "Resplandor",
-  "Glow color": "Color del resplandor"
+  "Glow color": "Color del resplandor",
+  "Undo": "Deshacer",
+  "Redo": "Rehacer",
+  "Edit text": "Editar texto",
+  "Edit transcript as text": "Editar la transcripción como texto",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Una palabra por línea. Cambia una palabra, su inicio o su fin (en segundos), o mueve palabras entre segmentos y luego aplica. Aplicar se puede deshacer.",
+  "Transcript text": "Texto de la transcripción",
+  "Import subtitles…": "Importar subtítulos…",
+  "Apply": "Aplicar",
+  "Not valid JSON: {message}": "JSON no válido: {message}",
+  "The text must be an object with a list of segments, each with a list of words.": "El texto debe ser un objeto con una lista de segmentos, cada uno con una lista de palabras.",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "Segmento {segment}, palabra {word}: una palabra necesita texto, un inicio y un fin en segundos, y el fin no puede ser anterior al inicio.",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "Segmento {segment}, palabra {word}: empieza antes que la palabra anterior.",
+  "There are no words in it.": "No hay ninguna palabra.",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Ese archivo no es SRT, WebVTT ni una exportación JSON de OpenCaptions.",
+  "{words} words in {segments} segments": "{words} palabras en {segments} segmentos"
 }

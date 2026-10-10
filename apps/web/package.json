@@ -12,6 +12,7 @@
     "lint": "biome check src/ tests/",
     "format": "biome format --write src/ tests/",
     "typecheck": "tsc -b --pretty false",
+    "test": "node --test \"tests/unit/**/*.test.ts\"",
     "test:e2e": "playwright test",
     "generate-types": "bash ../../scripts/generate-api-types.sh"
   },

@@ -215,11 +215,24 @@ mounted at a time, so there is one `<video>` and one engine whatever the width.
   A tap on the picture plays or pauses.
 - **Timeline.** A ruler over a video track and a caption track, with the
   playhead across them. Caption blocks are the engine's `lines`; a selected block's
-  edges retime through the engine. The ruler and both tracks seek by click or
-  drag. Ctrl/Cmd + wheel or a pinch zooms around the pointer, the buttons around
+  edges retime through the engine (a caption that touches its neighbour pushes
+  the neighbour's edge along, down to a minimum). Blocks are flat clips with a
+  hairline between them, so a zoomed-out timeline never turns them into
+  overlapping bubbles. The ruler and both tracks seek by click or drag. Ctrl/Cmd + wheel or a pinch zooms around the pointer, the buttons around
   the playhead, and Fit shows the whole video.
 - **Transport.** Play/pause, the timecode and mute; Space plays, the arrows step a
   frame.
+- **Undo and redo.** Buttons beside the zoom, Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z. As on
+  the phone, each step puts back a snapshot of the transcript, the style and the
+  offset (`lib/history.ts`, held by the editor store), and a run of one kind of
+  change (a slider, an edge drag) made close together is one step. Loading the
+  project starts the history afresh.
+- **Edit as text.** A dialog with the transcript as JSON, a word to a line, for what
+  the controls do not do yet (splitting or merging segments, retiming many words).
+  Applying checks it (`lib/transcriptText.ts`, which names the segment and word that
+  are wrong) and replaces the transcript as one undo step. The same dialog imports
+  a subtitle file (SRT, WebVTT with or without per-word times, or our JSON): it is
+  turned into the same text first, to look over before it is applied.
 - **Playback.** The one `<video>` is shared through a context. Its playing time
   never passes through React state: the timeline, playhead and timecode follow the
   element each frame and write to the DOM directly.

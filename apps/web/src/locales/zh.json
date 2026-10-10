@@ -251,5 +251,20 @@
   "Shadow right": "阴影向右",
   "Shadow down": "阴影向下",
   "Glow": "发光",
-  "Glow color": "发光颜色"
+  "Glow color": "发光颜色",
+  "Undo": "撤销",
+  "Redo": "重做",
+  "Edit text": "编辑文本",
+  "Edit transcript as text": "以文本形式编辑转写",
+  "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "每行一个单词。可以修改单词、它的开始或结束时间（秒），也可以在分段之间移动单词，然后应用。应用后可以撤销。",
+  "Transcript text": "转写文本",
+  "Import subtitles…": "导入字幕…",
+  "Apply": "应用",
+  "Not valid JSON: {message}": "JSON 无效：{message}",
+  "The text must be an object with a list of segments, each with a list of words.": "文本必须是包含分段列表的对象，每个分段都有单词列表。",
+  "Segment {segment}, word {word}: a word needs text, and a start and an end in seconds with the end not before the start.": "第 {segment} 段，第 {word} 个单词：单词需要文本以及以秒为单位的开始和结束时间，且结束不能早于开始。",
+  "Segment {segment}, word {word}: starts before the word that comes before it.": "第 {segment} 段，第 {word} 个单词：开始时间早于前一个单词。",
+  "There are no words in it.": "其中没有单词。",
+  "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "该文件不是 SRT、WebVTT，也不是 OpenCaptions 的 JSON 导出。",
+  "{words} words in {segments} segments": "{segments} 个分段，共 {words} 个单词"
 }

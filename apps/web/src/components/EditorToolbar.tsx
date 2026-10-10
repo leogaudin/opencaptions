@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { AutosaveIndicator } from "@/components/AutosaveIndicator";
 import { DownloadDialog } from "@/components/DownloadDialog";
 import { RetranscribeDialog } from "@/components/RetranscribeDialog";
+import { TranscriptTextDialog } from "@/components/TranscriptTextDialog";
 import * as api from "@/lib/api";
 import { usePendingDownload } from "@/lib/downloads";
 import { useT } from "@/lib/i18n";
@@ -155,6 +156,7 @@ export function EditorToolbar() {
               {transcript.language_detection === "auto" ? ` ${t("(auto-detected)")}` : ""}
             </span>
             <AutosaveIndicator />
+            <TranscriptTextDialog />
             <RetranscribeDialog current={transcript.language} />
           </>
         )}
