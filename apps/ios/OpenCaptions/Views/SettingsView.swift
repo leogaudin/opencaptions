@@ -11,8 +11,8 @@ struct SettingsView: View {
     @State private var refresh = 0
     @State private var showPro = false
     @State private var downloading: [String: Double] = [:]
-    @State private var deleting: WhisperModel?
-    @State private var meteredFor: WhisperModel?
+    @State private var deleting: SpeechModel?
+    @State private var meteredFor: SpeechModel?
     @State private var clearingSaved = false
     @State private var failure: String?
     @State private var sizes = Sizes()
@@ -29,7 +29,7 @@ struct SettingsView: View {
 
     private func measure() -> Sizes {
         let usage = app.store.usage()
-        let perModel = Dictionary(uniqueKeysWithValues: WhisperModels.all.map { ($0.id, app.transcriber.sizeOnDisk($0.id)) })
+        let perModel = Dictionary(uniqueKeysWithValues: SpeechModels.all.map { ($0.id, app.transcriber.sizeOnDisk($0.id)) })
         return Sizes(projects: usage.projects, renders: usage.renders, models: perModel.values.reduce(0, +), perModel: perModel)
     }
 
@@ -110,8 +110,8 @@ struct SettingsView: View {
     // screen asks share one, chosen by what is pending.
 
     private enum Prompt {
-        case deleteModel(WhisperModel)
-        case metered(WhisperModel)
+        case deleteModel(SpeechModel)
+        case metered(SpeechModel)
         case clearSaved
         case failure(String)
     }
@@ -192,7 +192,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Speech models")
             VStack(spacing: 0) {
-                ForEach(Array(WhisperModels.all.enumerated()), id: \.element.id) { index, model in
+                ForEach(Array(SpeechModels.all.enumerated()), id: \.element.id) { index, model in
                     if index > 0 { Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 16) }
                     modelRow(model)
                 }
@@ -204,7 +204,7 @@ struct SettingsView: View {
         }
     }
 
-    private func modelRow(_ model: WhisperModel) -> some View {
+    private func modelRow(_ model: SpeechModel) -> some View {
         let downloaded = app.transcriber.isDownloaded(model.id)
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
@@ -315,13 +315,13 @@ struct SettingsView: View {
 
     // MARK: Actions
 
-    private func requestDownload(_ model: WhisperModel) {
+    private func requestDownload(_ model: SpeechModel) {
         Task {
             if await NetworkCost.isExpensive() { meteredFor = model } else { startDownload(model) }
         }
     }
 
-    private func startDownload(_ model: WhisperModel) {
+    private func startDownload(_ model: SpeechModel) {
         downloading[model.id] = 0
         Task {
             UIApplication.shared.isIdleTimerDisabled = true
@@ -344,7 +344,7 @@ struct SettingsView: View {
         }
     }
 
-    private func delete(_ model: WhisperModel) {
+    private func delete(_ model: SpeechModel) {
         do {
             try app.transcriber.delete(model.id)
         } catch {

@@ -61,6 +61,11 @@
             return Transcript(language: code, languageDetection: .manual, duration: seconds, segments: segments)
         }
 
+        /// The languages this iOS can transcribe with Apple's model.
+        public static func supportedLanguageCodes() async -> Set<String> {
+            Set(await SpeechTranscriber.supportedLocales.compactMap { $0.language.languageCode?.identifier })
+        }
+
         /// The supported locale for a language code (the first, if Apple lists several regions).
         private static func locale(for code: String) async -> Locale? {
             await SpeechTranscriber.supportedLocales.first { $0.language.languageCode?.identifier == code }

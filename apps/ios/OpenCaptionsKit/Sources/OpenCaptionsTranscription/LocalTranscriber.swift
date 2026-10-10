@@ -2,8 +2,8 @@ import Foundation
 import OpenCaptionsKit
 
 /// The phone's own transcription: the model that was chosen, run by the engine that goes with it
-/// (`WhisperModel.engine`). The app talks to this and never to an engine, so a model is added by listing
-/// it in `WhisperModels` and, if it needs one, an engine here.
+/// (`SpeechModel.engine`). The app talks to this and never to an engine, so a model is added by listing
+/// it in `SpeechModels` and, if it needs one, an engine here.
 public final class LocalTranscriber: Transcriber {
     private let whisper: WhisperKitTranscriber
     private let parakeet = ParakeetTranscriber()
@@ -13,7 +13,7 @@ public final class LocalTranscriber: Transcriber {
     }
 
     private func engine(_ id: String) -> SpeechEngine {
-        WhisperModels.model(id)?.engine ?? .whisperKit
+        SpeechModels.model(id)?.engine ?? .whisperKit
     }
 
     public func isDownloaded(_ id: String) -> Bool {
@@ -44,14 +44,14 @@ public final class LocalTranscriber: Transcriber {
 
     /// Downloads a model, reporting the fraction done. Does nothing if it is there, or built in.
     public func download(_ id: String, progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws {
-        guard let model = WhisperModels.model(id) else { throw TranscriptionError.unknownModel(id) }
+        guard let model = SpeechModels.model(id) else { throw TranscriptionError.unknownModel(id) }
         switch model.engine {
         case .whisperKit: try await whisper.download(id, progress: progress)
         case .parakeet: try await parakeet.download(megabytes: model.megabytes, progress: progress)
         case .appleSpeech: break
         }
         // The default model is the one people use: have it loaded by the time they ask, as at launch.
-        if id == WhisperModels.defaultID { preload(id) }
+        if id == SpeechModels.defaultID { preload(id) }
     }
 
     /// Starts loading a downloaded model into memory, so that it is ready by the time someone has picked a

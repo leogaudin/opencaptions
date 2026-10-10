@@ -36,11 +36,11 @@ public final class WhisperKitTranscriber: Transcriber {
     /// someone has picked a language and asked to transcribe. Loading is the longest wait there is,
     /// and the model stays loaded for the next transcription.
     public func preload(_ id: String) {
-        guard let info = WhisperModels.model(id), let folder = folder(for: id) else { return }
+        guard let info = SpeechModels.model(id), let folder = folder(for: id) else { return }
         Task { _ = try? await pipeline(info, folder: folder) }
     }
 
-    private func pipeline(_ info: WhisperModel, folder: URL) async throws -> WhisperKit {
+    private func pipeline(_ info: SpeechModel, folder: URL) async throws -> WhisperKit {
         let base = modelsDirectory
         return try await pipelines.pipeline(for: info.id) {
             Loaded(
@@ -53,7 +53,7 @@ public final class WhisperKitTranscriber: Transcriber {
 
     /// Where a downloaded model lives, if it is there.
     public func folder(for id: String) -> URL? {
-        guard let model = WhisperModels.model(id) else { return nil }
+        guard let model = SpeechModels.model(id) else { return nil }
         let folder = modelsDirectory.appendingPathComponent(
             "models/argmaxinc/whisperkit-coreml/\(model.variant)", isDirectory: true)
         let contents = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
@@ -86,7 +86,7 @@ public final class WhisperKitTranscriber: Transcriber {
     public func download(
         _ id: String, progress: @escaping @Sendable (Double) -> Void = { _ in }
     ) async throws -> URL {
-        guard let model = WhisperModels.model(id) else { throw TranscriptionError.unknownModel(id) }
+        guard let model = SpeechModels.model(id) else { throw TranscriptionError.unknownModel(id) }
         if let folder = folder(for: id) { return folder }
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
         // WhisperKit reports progress per file, and a model is a few dozen small files and
@@ -140,7 +140,7 @@ public final class WhisperKitTranscriber: Transcriber {
         source: URL, language: String?, model: String,
         progress: @escaping @Sendable (Double, String) -> Void
     ) async throws -> Transcript {
-        guard let info = WhisperModels.model(model) else { throw TranscriptionError.unknownModel(model) }
+        guard let info = SpeechModels.model(model) else { throw TranscriptionError.unknownModel(model) }
         guard let folder = folder(for: model) else { throw TranscriptionError.modelNotDownloaded(model) }
 
         // The model loads while the audio is read (and may already be loaded, or loading, from

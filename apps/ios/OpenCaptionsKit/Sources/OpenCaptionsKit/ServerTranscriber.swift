@@ -19,7 +19,7 @@ public struct ServerCapabilities: Decodable, Equatable, Sendable {
     /// offers for its own (a server lists everything faster-whisper knows), in that order, plus the
     /// server's own default when it is something else (an operator's choice).
     public var leanModels: [Model] {
-        let ladder = WhisperModels.all.map(\.id)
+        let ladder = SpeechModels.all.map(\.id)
         let byID = Dictionary(models.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var lean = ladder.compactMap { byID[$0] }
         if let id = defaultModel, !ladder.contains(id) {

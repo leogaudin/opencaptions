@@ -72,6 +72,7 @@ app opens in a given state. They exist only in debug builds.
 | `OC_OPEN_FIRST=1` | Open the first project in the editor. |
 | `OC_SEEK=<seconds>` | Move the playhead there (so a given word is lit). |
 | `OC_SHOW_STYLE`, `OC_SHOW_SAVE`, `OC_SHOW_TRANSCRIBE`, `OC_SHOW_FONTS`, `OC_SHOW_IMPORT`, `OC_SHOW_CONNECT` | Open that sheet. |
+| `OC_LANGUAGE_STEP=1` | With the transcribe sheet, open its second step (the language list). |
 | `OC_STYLE_TAB`, `OC_TAB=settings`, `OC_EDIT_WORD` | Pick a style tab, open Settings, open a word's editor. |
 
 ## The photos

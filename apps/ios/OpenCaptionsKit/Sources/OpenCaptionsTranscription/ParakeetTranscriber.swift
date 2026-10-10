@@ -82,7 +82,7 @@ public final class ParakeetTranscriber: Transcriber {
     ) async throws -> Transcript {
         guard isDownloaded() else { throw TranscriptionError.modelNotDownloaded(model) }
         let requested = language.flatMap { $0 == "auto" ? nil : $0 }
-        if let requested, !WhisperModels.parakeetLanguages.contains(requested) {
+        if let requested, !SpeechModels.parakeetLanguages.contains(requested) {
             throw TranscriptionError.unsupportedLanguage(requested)
         }
 
@@ -119,7 +119,7 @@ public final class ParakeetTranscriber: Transcriber {
         let seconds = duration.isFinite ? duration : Double(samples.count) / AudioExtractor.sampleRate
         let transcript = TokenMapping.transcript(
             from: Self.tokens(of: result, duration: seconds), duration: seconds, requestedLanguage: requested,
-            languages: WhisperModels.parakeetLanguages)
+            languages: SpeechModels.parakeetLanguages)
         progress(1, KitStrings.localized("Done"))
         // Replacing someone's captions with nothing is never what they asked for.
         guard !transcript.segments.isEmpty else { throw TranscriptionError.noSpeech }

@@ -458,7 +458,7 @@ Subtitle files (SRT, VTT) are only exported by the Docker product.
 (Whisper Small, Large v3 Turbo and Large v3; no English-only or superseded ones), Parakeet v3
 (FluidAudio, Core ML: faster, 25 European languages, offered only for those), and on iOS 26 Apple's own
 `SpeechTranscriber` (built in, nothing to download, a language must be chosen). Each model names the engine
-that runs it (`WhisperModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
+that runs it (`SpeechModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
 reasons, with measurements, are `docs/ASR-MODELS.md`.
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection

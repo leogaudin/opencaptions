@@ -44,7 +44,7 @@ import Testing
         #expect(Entitlements.free.locks(model: "large-v3"))
         #expect(!Entitlements.free.locks(model: "large-v3-turbo"))
         #expect(!Entitlements.pro.locks(model: "large-v3"))
-        #expect(WhisperModels.model("large-v3") != nil, "and it is a model there is")
+        #expect(SpeechModels.model("large-v3") != nil, "and it is a model there is")
     }
 
     @Test func presetsSayWhichArePro() throws {

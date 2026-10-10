@@ -12,7 +12,7 @@ public enum SpeechEngine: Equatable, Sendable {
 
 /// A speech model the phone can run. The ids are the desktop's (`asr_models.py`) where it has the
 /// same model; for WhisperKit's, `variant` is the folder in `argmaxinc/whisperkit-coreml`.
-public struct WhisperModel: Equatable, Sendable, Identifiable {
+public struct SpeechModel: Equatable, Sendable, Identifiable {
     public let id: String
     public let label: String
     /// The folder in the Core ML repository (WhisperKit's models).
@@ -38,6 +38,9 @@ public struct WhisperModel: Equatable, Sendable, Identifiable {
         self.languages = languages
     }
 
+    /// Whether the model can work out the language by itself. Apple's cannot: a language has to be chosen.
+    public var detectsLanguage: Bool { engine != .appleSpeech }
+
     /// Whether the model can be asked for this language. `nil` (detect it) is always allowed:
     /// what a model does with a language it was not trained on is not up to the caller.
     public func covers(_ language: String?) -> Bool {
@@ -46,7 +49,7 @@ public struct WhisperModel: Equatable, Sendable, Identifiable {
     }
 }
 
-public enum WhisperModels {
+public enum SpeechModels {
     /// Parakeet TDT v3's 25 European languages.
     public static let parakeetLanguages: Set<String> = [
         "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de", "el", "hu", "it",
@@ -58,7 +61,7 @@ public enum WhisperModels {
 
     /// Ascending size. Downloaded on demand, never bundled. Short on purpose: no English-only
     /// models (the multilingual ones are as good in English), nothing superseded or redundant.
-    private static let downloadable: [WhisperModel] = [
+    private static let downloadable: [SpeechModel] = [
         .init(id: "small", label: "Whisper Small", variant: "openai_whisper-small_216MB", megabytes: 217),
         // FluidAudio's Core ML build of Parakeet TDT v3 (about 480 MB). Faster than Whisper for
         // somewhat more errors; see docs/ASR-MODELS.md.
@@ -69,11 +72,11 @@ public enum WhisperModels {
         .init(id: "large-v3", label: "Whisper Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
     ]
 
-    private static let appleSpeech = WhisperModel(
+    private static let appleSpeech = SpeechModel(
         id: appleSpeechID, label: "Apple Speech", megabytes: 0, engine: .appleSpeech)
 
     /// What this phone offers: the downloadable models, and Apple's where iOS has it.
-    public static var all: [WhisperModel] {
+    public static var all: [SpeechModel] {
         if #available(iOS 26.0, macOS 26.0, *) { return downloadable + [appleSpeech] }
         return downloadable
     }
@@ -82,7 +85,7 @@ public enum WhisperModels {
     /// selected when asking to transcribe and the one kept loaded at launch, whichever it is.
     public static let defaultID = "large-v3-turbo"
 
-    public static func model(_ id: String) -> WhisperModel? {
+    public static func model(_ id: String) -> SpeechModel? {
         all.first { $0.id == id }
     }
 }

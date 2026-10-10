@@ -51,7 +51,7 @@ import Testing
         let french = "Bonjour à tous, nous sommes réunis aujourd’hui pour parler de la forêt."
             .split(separator: " ").enumerated().map { token(" " + $1, Double($0), Double($0) + 0.5) }
         let transcript = TokenMapping.transcript(
-            from: french, duration: 12, requestedLanguage: "auto", languages: WhisperModels.parakeetLanguages)
+            from: french, duration: 12, requestedLanguage: "auto", languages: SpeechModels.parakeetLanguages)
         #expect(transcript.language == "fr")
         #expect(transcript.languageDetection == .auto)
     }
