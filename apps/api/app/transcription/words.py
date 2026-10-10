@@ -12,10 +12,10 @@ from uuid import uuid4
 
 from app.models.schemas import Transcript, TranscriptSegment, Word
 
-# Words this far apart are not one phrase. With voice detection on, Whisper decodes the speech with
-# the silence cut out, so one segment can hold the last words before a minute of quiet and the
-# first after it; the times are restored afterwards, the segment is not.
-SEGMENT_BREAK_S = 2.0
+# A silence is a pause when it is this many times the usual time from one word's start to the next's,
+# so it is judged against how fast the speaker talks, not against a clock. The engine holds the same
+# rule (`model::pauses`), and both are held to apps/engine/testdata/pauses.json.
+PAUSE_PERIODS = 3.0
 
 # A mark on its own belongs to the word before it, or to the word after it, by its kind.
 _TRAILING = frozenset(".,;:!?…。、，！？：；)]}»›”’")
@@ -73,10 +73,28 @@ def attach_stray_marks(words: list[Word]) -> list[Word]:
     return out
 
 
-def _split_at_pauses(words: list[Word]) -> list[list[Word]]:
+def pauses(words: list[Word]) -> list[int]:
+    """The index of every word that comes after a pause.
+
+    The usual time between words is the median start-to-start gap, which pauses (being few) do
+    not move. With voice detection on, Whisper decodes the speech with the silence cut out, so
+    one segment can hold the last words before a minute of quiet and the first after it; the
+    times are restored afterwards, the segment is not.
+    """
+    periods = sorted(
+        d for a, b in zip(words, words[1:], strict=False) if (d := b.start - a.start) > 0
+    )
+    if not periods:
+        return []
+    limit = PAUSE_PERIODS * periods[len(periods) // 2]
+    return [i for i in range(1, len(words)) if words[i].start - words[i - 1].end > limit]
+
+
+def _split_at(words: list[Word], first: int, breaks: set[int]) -> list[list[Word]]:
+    """`words` cut before each index in `breaks`, `first` being the index of the first of them."""
     pieces: list[list[Word]] = [[]]
-    for word in words:
-        if pieces[-1] and word.start - pieces[-1][-1].end >= SEGMENT_BREAK_S:
+    for offset, word in enumerate(words):
+        if pieces[-1] and first + offset in breaks:
             pieces.append([])
         pieces[-1].append(word)
     return pieces
@@ -97,14 +115,17 @@ def _segment_of(
 
 
 def clean_transcript(transcript: Transcript) -> Transcript:
-    """The transcript with stray marks joined and every segment ended at a long pause.
+    """The transcript with stray marks joined and every segment ended at a pause.
 
     A segment that needs neither is passed through as it came.
     """
+    joined = [attach_stray_marks(segment.words) for segment in transcript.segments]
+    breaks = set(pauses([word for words in joined for word in words]))
     segments: list[TranscriptSegment] = []
-    for segment in transcript.segments:
-        words = attach_stray_marks(segment.words)
-        pieces = _split_at_pauses(words)
+    first = 0
+    for segment, words in zip(transcript.segments, joined, strict=True):
+        pieces = _split_at(words, first, breaks)
+        first += len(words)
         if not words or (len(pieces) == 1 and len(words) == len(segment.words)):
             segments.append(segment)
             continue

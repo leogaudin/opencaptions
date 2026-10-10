@@ -165,21 +165,41 @@ impl Transcript {
     }
 }
 
-/// A silence this long ends a caption: words said further apart than this never share one, or the
-/// line would hang on screen through the whole pause with its first words long gone.
-pub const LINE_BREAK_S: f32 = 1.0;
+/// A silence is a pause when it is this many times the usual time from one word's start to the
+/// next's. It is judged against how fast the speaker talks, not against a clock: a second of quiet
+/// is a pause in a rap and not in a slow documentary.
+const PAUSE_PERIODS: f32 = 3.0;
+
+/// Where the speech pauses: the index of every word that comes after one. The usual time between
+/// words is the median start-to-start gap, which pauses (being few) do not move. The API holds the
+/// same rule, and both are held to `testdata/pauses.json`.
+pub fn pauses(words: &[&Word]) -> Vec<usize> {
+    let mut periods: Vec<f32> = words
+        .windows(2)
+        .map(|pair| pair[1].start - pair[0].start)
+        .filter(|d| d.is_finite() && *d > 0.0)
+        .collect();
+    if periods.is_empty() {
+        return vec![];
+    }
+    periods.sort_by(f32::total_cmp);
+    let limit = PAUSE_PERIODS * periods[periods.len() / 2];
+    (1..words.len())
+        .filter(|&i| words[i].start - words[i - 1].end > limit)
+        .collect()
+}
 
 /// How the words are cut into captions, as ranges of the flat word list: `per_line` words each,
-/// fewer where a pause of `LINE_BREAK_S` falls inside. The one rule for the scene and for the
-/// editors' timeline, so what is drawn and what is listed cannot disagree.
+/// fewer where the speech pauses, so words said minutes apart never share a caption. The one rule
+/// for the scene and for the editors' timeline, so what is drawn and what is listed cannot
+/// disagree.
 pub fn cut(words: &[&Word], per_line: usize) -> Vec<Range<usize>> {
     let per_line = per_line.max(1);
+    let mut pauses = pauses(words).into_iter().peekable();
     let mut lines = vec![];
     let mut from = 0;
     for i in 1..=words.len() {
-        let paused = words
-            .get(i)
-            .is_some_and(|next| next.start - words[i - 1].end >= LINE_BREAK_S);
+        let paused = pauses.next_if_eq(&i).is_some();
         if i == words.len() || i - from == per_line || paused {
             lines.push(from..i);
             from = i;
@@ -214,4 +234,56 @@ pub struct SceneInput {
     /// letter (see `scripts::fallback_families`), tried in this order before the bundled faces.
     #[serde(default)]
     pub fallback_fonts: Vec<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn word(start: f32, end: f32) -> Word {
+        Word {
+            text: "w".into(),
+            start,
+            end,
+            rest: Map::new(),
+        }
+    }
+
+    /// The cases the API's copy of the rule is held to as well.
+    #[test]
+    fn the_shared_pause_cases_hold() {
+        let cases: Vec<Value> =
+            serde_json::from_str(include_str!("../testdata/pauses.json")).unwrap();
+        assert!(cases.len() >= 8);
+        for case in cases {
+            let words: Vec<Word> = case["words"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|w| word(w[0].as_f64().unwrap() as f32, w[1].as_f64().unwrap() as f32))
+                .collect();
+            let refs: Vec<&Word> = words.iter().collect();
+            let expected: Vec<usize> = case["breaks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|i| i.as_u64().unwrap() as usize)
+                .collect();
+            assert_eq!(pauses(&refs), expected, "{}", case["name"]);
+        }
+    }
+
+    #[test]
+    fn captions_are_cut_by_count_and_at_pauses() {
+        // A word every half second, then a silence of a minute: 3 per line, then a new line.
+        let words: Vec<Word> = [0.0, 0.5, 1.0, 1.5, 61.0, 61.5]
+            .iter()
+            .map(|s| word(*s, s + 0.4))
+            .collect();
+        let refs: Vec<&Word> = words.iter().collect();
+        assert_eq!(cut(&refs, 3), vec![0..3, 3..4, 4..6]);
+        assert_eq!(cut(&refs, 10), vec![0..4, 4..6]);
+        assert_eq!(cut(&refs, 0), cut(&refs, 1), "a count of nothing is one");
+        assert!(cut(&[], 3).is_empty());
+    }
 }

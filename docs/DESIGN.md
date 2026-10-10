@@ -84,9 +84,12 @@ build produces byte-identical frames. Nothing else may draw captions.
   frame after a new scene), so the web preview copies and draws just that band
   while a video plays.
   Lines are the transcript's words in reading order, cut every `words_per_line`
-  words, or sooner where the speaker paused a second or more (`model::cut`, the one
-  rule the scene and the editors' line list share), so words said minutes apart
-  never share a caption. A line holds through short gaps and clears in long ones.
+  words, or sooner where the speaker paused (`model::cut`, the one rule the scene
+  and the editors' line list share), so words said minutes apart never share a
+  caption. A pause is a silence of three times the usual start-to-start time
+  between words in that transcript, so it is judged against the speaker's tempo
+  and not a clock (`model::pauses`; the API's copy is held to the same cases in
+  `apps/engine/testdata/pauses.json`). A line holds through short gaps and clears in long ones.
   `oc_active_index` is the flat index of the showing line's first word, not its
   number, because lines are no longer all the same length.
 - **Timing offset.** One global nudge of every caption against the audio
@@ -251,8 +254,9 @@ page opened mid-job reads the database: loading (or first downloading) the model
 transcribing, whose progress is written down every couple of seconds. Whatever the
 provider returns is then cleaned up in one place (`app/transcription/words.py`): a mark
 Whisper split off its word ("*rires" and "*") is joined back, and a segment is ended at a
-pause of two seconds or more, because with voice detection on Whisper decodes the speech
-with the silences cut out and can put words from either side of a long one in a segment.
+pause (the same tempo-relative rule as the captions'), because with voice detection on
+Whisper decodes the speech with the silences cut out and can put words from either side
+of a long one in a segment.
 
 ### The transcription API
 
