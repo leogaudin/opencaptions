@@ -76,6 +76,10 @@ a warm disk, via sherpa-onnx unless noted.
 On the whole film through the provider, Parakeet took 58 s against Whisper's 150 s (2.6x
 faster, language identification included).
 
+Language identification (Whisper base, three 30 s windows spread through the recording) named
+the language correctly for all 13 FLEURS languages, 0.91 to 1.00 sure; it decides whether Parakeet
+or Whisper gets a recording when the language was not chosen.
+
 ## What was chosen
 
 - **Default stays Whisper large-v3-turbo**: the most accurate on every language measured, 99
