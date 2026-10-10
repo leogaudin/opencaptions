@@ -82,6 +82,9 @@ typegen-check:       ## Regenerate types and fail if the committed file is stale
 check-versions:      ## Verify the manifests agree on the version
 	@./scripts/check-version-sync.sh
 
+check-ios-strings:   ## Verify every iOS permission purpose string is real text, not its key name
+	@./scripts/check-ios-strings.sh
+
 check-compose:       ## Verify docker-compose.yml's fallbacks agree with each other and the code
 	@./scripts/check-compose.sh
 

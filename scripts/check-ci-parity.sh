@@ -39,6 +39,7 @@ CHECKS=(
   "generated types gate|api.generated.ts|api.generated.ts"
   "compose fallbacks|check-compose.sh|check-compose.sh"
   "version sync|check-version-sync.sh|check-version-sync.sh"
+  "iOS purpose strings|check-ios-strings.sh|check-ios-strings.sh"
   "end-to-end|test:e2e|test:e2e"
   "image builds|docker/build-push-action|docker build"
   "GPU image target|runtime-gpu|runtime-gpu"

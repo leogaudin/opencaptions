@@ -128,6 +128,8 @@ jobs:
         run: bash scripts/check-compose.sh
       - name: Check the manifests agree on the version
         run: bash scripts/check-version-sync.sh
+      - name: Check the iOS permission purpose strings
+        run: bash scripts/check-ios-strings.sh
       # Keeps `make ci` honest: it is the documented acceptance criterion, so it
       # must keep covering everything this workflow covers.
       - name: Check local acceptance gate covers this workflow

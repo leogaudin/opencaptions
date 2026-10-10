@@ -149,8 +149,8 @@ docker run --rm -v "$WORKTREE":/repo:ro -w /repo "$ACTIONLINT_IMAGE" -no-color \
   || fail "actionlint found workflow errors"
 
 # --- Repository guards -----------------------------------------------------
-step "Repository guards (version sync, compose fallbacks)"
-in_node . 'bash scripts/check-version-sync.sh && bash scripts/check-compose.sh' \
+step "Repository guards (version sync, compose fallbacks, iOS strings)"
+in_node . 'bash scripts/check-version-sync.sh && bash scripts/check-compose.sh && bash scripts/check-ios-strings.sh' \
   || fail "repository guards failed"
 
 # --- Backend ---------------------------------------------------------------
