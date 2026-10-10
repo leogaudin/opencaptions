@@ -61,6 +61,9 @@ class LocalWhisperProvider(TranscriptionProvider):
             self._model_name = model_name
             return self._model
 
+    def prepare(self, model: str | None = None) -> None:
+        self._load_model(model or settings.whisper_model)
+
     def is_model_cached(self, model: str | None = None) -> bool:
         """Whether the weights are on disk, so a caller can say which is about to happen.
 
@@ -170,6 +173,17 @@ class LocalWhisperProvider(TranscriptionProvider):
             settings.whisper_vad_threshold,
             model_name,
         )
+        silent = _silent_stretches(segments, duration)
+        if silent:
+            logger.warning(
+                "no words for %d stretch(es) of %.0fs or more: %s. Real speech there was skipped "
+                "by voice detection (WHISPER_VAD_FILTER, WHISPER_VAD_THRESHOLD) or by the "
+                "no-speech check (WHISPER_NO_SPEECH_THRESHOLD); music or noise under it is the "
+                "usual cause",
+                len(silent),
+                SILENT_STRETCH_S,
+                ", ".join(f"{a:.0f}s-{b:.0f}s" for a, b in silent[:5]),
+            )
         if duration > 0 and last_word_end < duration * 0.75:
             logger.warning(
                 "transcript stops at %.1fs of %.1fs, the tail produced no words. If there is "
@@ -189,6 +203,23 @@ class LocalWhisperProvider(TranscriptionProvider):
             duration=duration,
             segments=segments,
         )
+
+
+# A stretch of audio this long with no word in it is worth a line in the log: it is either
+# silence or speech that was skipped, and from the transcript alone they look the same.
+SILENT_STRETCH_S = 15.0
+
+
+def _silent_stretches(
+    segments: list[TranscriptSegment], duration: float
+) -> list[tuple[float, float]]:
+    """The (start, end) of every stretch of `SILENT_STRETCH_S` or more with no word in it."""
+    edges = [(0.0, 0.0)] + [(s.start, s.end) for s in segments] + [(duration, duration)]
+    return [
+        (a_end, b_start)
+        for (_, a_end), (b_start, _) in zip(edges, edges[1:], strict=False)
+        if b_start - a_end >= SILENT_STRETCH_S
+    ]
 
 
 def _words_from_segment_text(seg: Any) -> list[Word]:

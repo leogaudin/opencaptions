@@ -14,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import tempfile
+import time
 from pathlib import Path
 from uuid import UUID
 
@@ -26,9 +27,15 @@ from app.services import progress
 from app.services.audio import AudioExtractionError, extract_audio, probe_duration
 from app.tasks.common import TaskContext
 from app.tasks.common import sync_session_factory as _sync_session_factory
+from app.transcription.words import clean_transcript
 
 # Names this pipeline in every event it publishes.
 STAGE = "transcription"
+
+# How often the progress of a running transcription is written down, not just broadcast. A
+# page opened or refreshed mid-job reads it from the database, so it cannot be left at the
+# stage's first message for the whole job.
+PROGRESS_SAVE_EVERY_S = 2.0
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +69,25 @@ def _transcribe_audio(
         STAGE,
     )
 
-    def _on_progress(fraction: float, message: str) -> None:
-        task.report_progress(fraction, message, STAGE)
+    transcription_provider.prepare(model)
+    # The weights are in; what follows is the work itself. Leaving the stage at "Loading
+    # model" until the first segment came back made a long first stretch (the voice
+    # detection pass and the first window) read as a model that would not load.
+    task.enter_stage(progress.TRANSCRIBING, STAGE)
 
-    return transcription_provider.transcribe(
+    saved_at = time.monotonic()
+
+    def _on_progress(fraction: float, message: str) -> None:
+        nonlocal saved_at
+        task.report_progress(fraction, message, STAGE)
+        if time.monotonic() - saved_at >= PROGRESS_SAVE_EVERY_S:
+            saved_at = time.monotonic()
+            task.set_job_status("running", progress=fraction, message=message)
+
+    transcript = transcription_provider.transcribe(
         str(audio_path), language=language, model=model, on_progress=_on_progress
     )
+    return clean_transcript(transcript)
 
 
 @celery_app.task(name="app.tasks.transcribe.transcribe_video", bind=True)

@@ -41,6 +41,14 @@ class TranscriptionProvider(ABC):
         """
         ...
 
+    def prepare(self, model: str | None = None) -> None:
+        """Load whatever transcribing needs (the weights) before `transcribe` starts.
+
+        Kept apart so a caller can say "Loading model" for the load and "Transcribing" for
+        the rest. Nothing to do for a hosted API.
+        """
+        return None
+
     def is_model_cached(self, model: str | None = None) -> bool:
         """Whether the model is ready locally, so a caller can warn before a download.
 

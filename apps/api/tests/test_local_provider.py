@@ -74,3 +74,24 @@ def test_unaligned_segment_is_kept_with_interpolated_timings(monkeypatch: Any) -
 def test_segment_with_neither_words_nor_text_is_skipped(monkeypatch: Any) -> None:
     transcript = _transcribe_with(monkeypatch, [_segment("   ", 5.0, 6.0, [])])
     assert transcript.segments == []
+
+
+def test_a_long_stretch_with_no_words_is_named_in_the_log(monkeypatch: Any, caplog: Any) -> None:
+    spoken = [
+        _segment("hello", 0.0, 1.0, [_fake_word(" hello", 0.0, 1.0)]),
+        _segment("again", 60.0, 61.0, [_fake_word(" again", 60.0, 61.0)]),
+    ]
+    with caplog.at_level("WARNING", logger="app.transcription.local"):
+        _transcribe_with(monkeypatch, spoken, duration=61.0)
+    assert "1s-60s" in caplog.text
+    assert "WHISPER_VAD_FILTER" in caplog.text
+
+
+def test_continuous_speech_logs_no_stretch(monkeypatch: Any, caplog: Any) -> None:
+    spoken = [
+        _segment("a", 0.0, 10.0, [_fake_word(" a", 0.0, 10.0)]),
+        _segment("b", 12.0, 20.0, [_fake_word(" b", 12.0, 20.0)]),
+    ]
+    with caplog.at_level("WARNING", logger="app.transcription.local"):
+        _transcribe_with(monkeypatch, spoken, duration=20.0)
+    assert "no words for" not in caplog.text

@@ -246,6 +246,14 @@ The provider and model are chosen per job, with the deployment's defaults
 preselected. The seam doesn't depend on the model, so any engine that yields
 words with timings fits behind it.
 
+A job moves through named stages, each stored on the job as well as broadcast, since a
+page opened mid-job reads the database: loading (or first downloading) the model, then
+transcribing, whose progress is written down every couple of seconds. Whatever the
+provider returns is then cleaned up in one place (`app/transcription/words.py`): a mark
+Whisper split off its word ("*rires" and "*") is joined back, and a segment is ended at a
+pause of two seconds or more, because with voice detection on Whisper decodes the speech
+with the silences cut out and can put words from either side of a long one in a segment.
+
 ### The transcription API
 
 What any OpenCaptions component calls to have speech transcribed on a backend, with no
