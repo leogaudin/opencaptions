@@ -35,6 +35,36 @@ as "Eat call", and missed "It's incredible, it's a new species" however the wind
 different model does not fix this either; a window that comes back empty though it is not quiet is
 decoded again in halves (`chunking.py`).
 
+### What Whisper still skips with the filter off
+
+On the same film, with the server's settings, Whisper still prints nothing for 19 stretches of over
+4 s (297 s in all), and 71 of Qwen3-ASR's 714 words fall inside them.
+It is not a token limit (the busiest 30 s window used 137 of its 448 tokens; 27 of 132 segments needed a
+temperature fallback, 4 had a compression ratio over 2.4) and not a threshold: with the hallucination,
+no-speech, log-probability and compression-ratio checks all off the same stretches stay empty (v2).
+It is how faster-whisper's long-form loop moves on. When the output for a 30 s window ends in a single
+timestamp, "no speech after the last timestamp", it adds the whole window to its position
+(`seek += segment_size` in `_split_segments_by_timestamps`), so what the model judged not to be speech
+after that point is never decoded. A sung chant at 126–156 s is the clearest case: Whisper printed
+nothing there in any setting, and decoding that audio as its own window found "I know we won't talk to
+the day, it's fun, hooray, hoorah, woo!" (Qwen heard the same lyrics differently).
+
+| Variant (large-v3-turbo int8, whole film) | Words | Speed | Empty stretches over 4 s | Qwen words inside them |
+|---|---|---|---|---|
+| v0 server settings | 744 | 3.5x | 19 | 71 |
+| v1 no hallucination guard | 760 | 4.3x | 17 | 72 |
+| v2 every check off | 972 | 4.9x | 17 | 104 |
+| v3 server's own 20 s windows, empty ones retried | 791 | 1.6x | 23 | 52 |
+| v4 as v3, no guard | 807 | 2.5x | 24 | 49 |
+| v6 server settings, each long gap decoded alone | 806 | 1.4x | 18 | 42 |
+
+Decoding the gaps is not free of invention, though. The film's 5:00 to 7:00 is almost without dialogue;
+decoding the gaps there added 34 words ("You're dead!", "No!" eight times, "Oh my God"), and over the score at
+the end it wrote "BOOM" five times in one pass and "I love you" six times in another, at word
+confidences of 0.97 to 1.00. Confidence does not tell sung or shouted words from invented ones. Filling
+gaps by default would trade missing lines for invented ones on this clip; deciding it needs clips with
+labelled dialogue, which exist for one film only.
+
 ## Accuracy (FLEURS test, 20 clips per language)
 
 Error rate in percent, lower is better: words, except Japanese and Chinese (characters). The
@@ -118,7 +148,9 @@ difference 0.07 s, 90th percentile 0.54 s, 6% over a second. The failure is the 
 non-speech: when a window opens on music or fighting, the aligner puts that word at the window's
 start. "Hello" came out at 12.7 s when it is said at 17.0 s, "I" 10.8 s early, "Guys", "We" and "Danger"
 2 to 3 s early (8 of the 24 window-opening words matched differ by over a second, two of those
-probably wrong matches). Visible as a caption on screen long before its word.
+probably wrong matches). Visible as a caption on screen long before its word. Pulling the first word to
+just before the second when they are over a second apart helps but is not a cure: window-opening words
+over a second off go from 5 to 3 ("Hello" and "I" fixed; three still 1.3 to 2.2 s off).
 
 **Its speed depends on the CPU.** bf16 is fast only with AMX or AVX512-BF16 (Sapphire Rapids and newer
 Xeons, Zen 4). English, same clips, `ONEDNN_MAX_CPU_ISA` capping what oneDNN may use (an
@@ -139,6 +171,15 @@ these same clips the 0.6B runs 4.2x, twice turbo.
 libraries (3.2 GB of `nvidia`, 5.4 GB for the environment); the CPU-only wheel is on PyTorch's own
 index, which the machine this was measured on could not reach, so no lockfile was produced.
 
+**The int8 route does not rescue it.** A community mixed int8/FP32 ONNX export of the 1.7B
+(`solavr/sherpa-onnx-qwen3-asr-1.7B-int8`, 4.4 GB; its author kept every self-attention projection in
+FP32 because plain int8 made the decoder loop) runs in sherpa-onnx without PyTorch, at 1.6 to 1.9x and
+4.7 to 5.5 GB here, but with 1.3 to 2 times the errors of bf16: English 4.1 (3.0 in bf16), German 4.7
+(3.6), French 9.0 (4.6), Turkish 18.8 (11.1), Polish 27.4 (14.8). Its decoder context is 512 tokens for
+prompt, audio and text together, so a long clip is cut short with only a log line: German read 14.9%
+until the clips were cut into windows of 18 s like the server's. It is also not faster than bf16 on a CPU
+with AMX; it might be on one without.
+
 **Verdict: not offered yet.** It is the best model for English and French by 2 to 3 points of error, and
 for those languages the sync defect, the 6 to 9 GB, the CPU dependence and the extra dependencies
 outweigh that for most self-hosters. What shipping it would take: an optional engine in the registry
@@ -146,12 +187,71 @@ that is listed only on a CPU with AMX or AVX512-BF16 (or a GPU); the token cap a
 aligner with the first-word defect handled; a decision for the languages the aligner lacks
 (Indonesian, where Qwen wins, would have no word times); a CPU-only torch in the lock.
 
+## Languages Whisper does not serve: Omnilingual ASR
+
+Meta's [Omnilingual ASR](https://huggingface.co/facebook/omniASR-CTC-1B) (CTC, Apache 2.0, 1,600+
+languages) has sherpa-onnx int8 builds from sherpa-onnx's maintainer
+(`csukuangfj2/sherpa-onnx-omnilingual-asr-1600-languages-1B-ctc-v2-int8-2026-02-05`). FLEURS, 15 clips
+per language, error % as WER (CER):
+
+| Language | Whisper turbo | Omnilingual 1B int8 (maintainer's build) | Same, a community build | 300M int8, a community build |
+|---|---|---|---|---|
+| Swahili | 29.3 (8.8) | **11.9 (3.0)** | 11.6 (3.2) | 22.0 (5.5) |
+| Hausa | 98.9 (38.4) | **23.0 (5.3)** | 22.5 (5.3) | 36.0 (8.2) |
+| Tamil | 76.2 (29.4) | **37.9 (10.3)** | 38.3 (12.5) | 48.4 (17.0) |
+| Yoruba | 96.3 (41.1) | **52.0 (16.3)** | 52.5 (16.2) | 53.8 (17.3) |
+| Amharic | 118.8 (97.2) | **58.3 (12.3)** | 60.5 (12.8) | 42.4 (11.4) |
+| Speed | 0.6 to 3.6x | 4.3x | 3.8x | 8.5x |
+
+(The community builds are `michsethowusu/sherpa-onnx-omnilingual-asr-1600-languages-ctc-v2`, a
+different int8 quantization of the same model: the files differ from the maintainer's.) Whisper is at 76
+to 119% word error on four of these five. The 1B takes 7 s to load and peaks at 1.3 GB; it needs no
+language, gives a time per character, and writes lowercase text with no punctuation, so captions from
+it cannot be cut at sentence ends and need cutting at pauses and length instead. It was not measured on
+languages Whisper does well, where it is expected to lose. Not wired into the server: that needs the
+segmentation above, the CTC token times, and a rule for which languages go to it (the user's choice, or
+Whisper's published per-language error).
+
+## Other models looked at, not measured
+
+From model cards and the Open ASR Leaderboard snapshot of May 2026 (English average WER;
+[arXiv 2510.06961](https://arxiv.org/html/2510.06961v4)); all of them need checking on this film
+and on CPU before anything is said about them.
+
+| Model | What it is | Why it matters here | Catch |
+|---|---|---|---|
+| [Granite Speech 4.1 2B](https://replicate.com/ibm-granite/granite-speech-4.1-2b) (IBM) | Speech LLM, Apache 2.0, 5.33% on the leaderboard | Top of the May snapshot | English, French, German, Spanish, Portuguese, Japanese only; no word times (the `-plus` variant adds them) |
+| [Cohere Transcribe](https://docs.cohere.com/docs/transcribe) (March 2026) | 2B encoder-decoder, 14 languages, 5.42% | Was #1 at launch | Gated; no timestamps or language detection. Measured here only as an int8 build, which may understate it as it did Qwen |
+| Canary-Qwen 2.5B (NVIDIA) | English speech LLM, CC-BY-4.0, 5.63% | Accurate English | English only |
+| [Canary-1B-v2](https://arxiv.org/abs/2509.14128) (NVIDIA) | 25 European languages, timestamps from NeMo Forced Aligner (sources differ on word or segment level), CC-BY-4.0 | Parakeet's bigger sibling with the same languages | A community sherpa int8 export exists (`fussraider/canary-1b-v2-sherpa-onnx-int8`); unvetted |
+| [Voxtral Mini 4B Realtime](https://huggingface.co/mistralai/voxtral-mini-4b-realtime-2602) (Mistral) | 13 languages, Apache 2.0, streaming | On-device focus | 4B, bf16; the on-device claim depends on a quantized build |
+
+## Quantization as met here
+
+Fewer bits per weight: smaller files and, because decoding mostly waits on memory, faster; the price is
+rounding error, which depends on the model more than on the format.
+
+| Format | Bytes per parameter | Large-v3-turbo (0.81B) | Where it runs, and what was seen here |
+|---|---|---|---|
+| float32 | 4 | 3.2 GB | Everywhere; the reference. Qwen 1.7B: 12.5 GB, no faster |
+| float16 / bfloat16 | 2 | 1.6 GB | GPUs and the Neural Engine natively. On a CPU only with AMX or AVX512-BF16 (Qwen: 2.2x, 1.2x or 0.6x by CPU) |
+| int8, weights | 1 | 0.8 GB | CPU (the main route), GPU. CTranslate2 here offers `int8`, `int8_float32`, `int16`, `float32` on CPU; Whisper turbo ran in `int8` throughout and was not compared with float16 |
+| int8, weights and activations | 1 | 0.8 GB | Needs int8 hardware paths (VNNI, ARM dot-product; Core ML on A17 Pro and M4 or later, per third-party guides: Apple's own documentation was not reachable) |
+| 4-bit (GGUF Q4_K_M, palettization) | 0.5 | 0.4 GB | llama.cpp on CPU and Metal; Core ML palettization on the Neural Engine (iOS 18 for 4-bit) |
+| mixed | between | | Sensitive layers kept wide: the Qwen 1.7B export keeps attention in FP32 |
+
+What it did here: Whisper (an encoder-decoder) takes int8 well; Qwen3-ASR (a language-model decoder)
+does not, and plain int8 of it made the decoder repeat itself (the 0.6B build: Polish 45% against 27% in
+bf16; the 1.7B author's own report of loops). Measure each model before trusting a build.
+
 ## What was chosen
 
 - **Default stays Whisper large-v3-turbo**: the most accurate or level on most languages measured, 99
   languages, 1.6 GB, and its speed does not depend on the CPU.
 - **Parakeet v3 is offered as the fast model** for its 25 languages, about 2.6x faster and half the
   memory. A recording in another language goes to Whisper, and the job says so.
+- **Candidate, not wired in: Omnilingual ASR 1B** for the languages Whisper cannot do (above): the
+  best model measured for them, and it needs no new dependency.
 - Not offered: Qwen3-ASR (above), Cohere Transcribe (no better than Whisper here, 2.7 GB on disk, 2x
   real time), Canary 180M and SenseVoice (too inaccurate), Moonshine (English only).
 
@@ -180,6 +280,7 @@ uv run scripts/asr-bench/fleurs.py large-v3-turbo,small all 20   # a faster-whis
 uv run scripts/asr-bench/fleurs.py parakeet,qwen3-0.6b,cohere en,fr,de 20   # the sherpa-onnx int8 builds
 uv run scripts/asr-bench/qwen3.py 1.7b en,fr,id 20                          # PyTorch bf16; 0.6b too, --no-hint
 ONEDNN_MAX_CPU_ISA=AVX2 uv run scripts/asr-bench/qwen3.py 1.7b en 4         # a CPU without AVX-512 or AMX
+uv run scripts/asr-bench/longtail.py                                           # Whisper against Omnilingual, 5 languages
 ```
 
 One engine per process if the memory column matters: the peak is the process's.
