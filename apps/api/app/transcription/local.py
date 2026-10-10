@@ -105,6 +105,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             if settings.whisper_vad_filter
             else None,
             no_speech_threshold=settings.whisper_no_speech_threshold,
+            hallucination_silence_threshold=settings.whisper_hallucination_silence_s,
             beam_size=5,
             # Whisper otherwise feeds its own previous output back as context, and
             # once that drifts it can stay drifted, emitting near-empty output for
@@ -178,21 +179,19 @@ class LocalWhisperProvider(TranscriptionProvider):
         silent = _silent_stretches(segments, duration)
         if silent:
             logger.warning(
-                "no words for %d stretch(es) of %.0fs or more: %s. Real speech there was skipped "
-                "by voice detection (WHISPER_VAD_FILTER, WHISPER_VAD_THRESHOLD) or by the "
-                "no-speech check (WHISPER_NO_SPEECH_THRESHOLD); music or noise under it is the "
-                "usual cause",
+                "no words for %d stretch(es) of %.0fs or more: %s. %s",
                 len(silent),
                 SILENT_STRETCH_S,
                 ", ".join(f"{a:.0f}s-{b:.0f}s" for a, b in silent[:5]),
+                _skipped_hint(),
             )
         if duration > 0 and last_word_end < duration * 0.75:
             logger.warning(
                 "transcript stops at %.1fs of %.1fs, the tail produced no words. If there is "
-                "speech there, try WHISPER_VAD_FILTER=false, a lower WHISPER_VAD_THRESHOLD, or a "
-                "larger model",
+                "speech there, try a larger model or a lower WHISPER_NO_SPEECH_THRESHOLD%s",
                 last_word_end,
                 duration,
+                ", or WHISPER_VAD_FILTER=false" if settings.whisper_vad_filter else "",
             )
 
         if on_progress:
@@ -222,6 +221,20 @@ def _silent_stretches(
         for (_, a_end), (b_start, _) in zip(edges, edges[1:], strict=False)
         if b_start - a_end >= SILENT_STRETCH_S
     ]
+
+
+def _skipped_hint() -> str:
+    """Where speech missing from a stretch usually went, for the log line naming the stretch."""
+    if settings.whisper_vad_filter:
+        return (
+            "Real speech there was skipped by voice detection (WHISPER_VAD_FILTER=false decodes "
+            "everything; WHISPER_VAD_THRESHOLD tunes it) or by the no-speech check "
+            "(WHISPER_NO_SPEECH_THRESHOLD); music or noise under it is the usual cause"
+        )
+    return (
+        "Everything was decoded, so Whisper heard no speech there; if there is some, music or "
+        "noise under it is the usual cause (WHISPER_NO_SPEECH_THRESHOLD, or a larger model)"
+    )
 
 
 def _words_from_segment_text(seg: Any) -> list[Word]:

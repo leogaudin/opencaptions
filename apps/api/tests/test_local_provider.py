@@ -21,7 +21,12 @@ def _segment(text: str, start: float, end: float, words: list[Any] | None) -> An
     return SimpleNamespace(text=text, start=start, end=end, words=words)
 
 
-def _transcribe_with(monkeypatch: Any, segments: list[Any], duration: float = 100.0) -> Any:
+def _transcribe_with(
+    monkeypatch: Any,
+    segments: list[Any],
+    duration: float = 100.0,
+    captured: dict[str, Any] | None = None,
+) -> Any:
     provider = LocalWhisperProvider()
     monkeypatch.setattr(provider, "_load_model", lambda _name: object())
 
@@ -39,9 +44,10 @@ def _transcribe_with(monkeypatch: Any, segments: list[Any], duration: float = 10
         "_load_model",
         lambda _name: SimpleNamespace(
             transcribe=lambda audio, **kwargs: (
+                captured.update(kwargs) if captured is not None else None,
                 iter(segments),
                 SimpleNamespace(language="en", duration=duration),
-            )
+            )[1:]
         ),
     )
     return provider.transcribe("/tmp/whatever.wav")
@@ -84,7 +90,32 @@ def test_a_long_stretch_with_no_words_is_named_in_the_log(monkeypatch: Any, capl
     with caplog.at_level("WARNING", logger="app.transcription.local"):
         _transcribe_with(monkeypatch, spoken, duration=61.0)
     assert "1s-60s" in caplog.text
-    assert "WHISPER_VAD_FILTER" in caplog.text
+    # Nothing was filtered out, so the log does not send anyone to tune a filter.
+    assert "Everything was decoded" in caplog.text
+    assert "WHISPER_VAD_THRESHOLD" not in caplog.text
+
+
+def test_a_long_stretch_names_the_voice_filter_when_it_is_on(monkeypatch: Any, caplog: Any) -> None:
+    monkeypatch.setattr("app.transcription.local.settings.whisper_vad_filter", True)
+    spoken = [
+        _segment("hello", 0.0, 1.0, [_fake_word(" hello", 0.0, 1.0)]),
+        _segment("again", 60.0, 61.0, [_fake_word(" again", 60.0, 61.0)]),
+    ]
+    with caplog.at_level("WARNING", logger="app.transcription.local"):
+        _transcribe_with(monkeypatch, spoken, duration=61.0)
+    assert "WHISPER_VAD_FILTER=false" in caplog.text
+
+
+def test_everything_is_decoded_by_default(monkeypatch: Any) -> None:
+    """The voice filter drops shouting and speech under loud music before Whisper sees it."""
+    captured: dict[str, Any] = {}
+    spoken = [_segment("hi", 0.0, 1.0, [_fake_word(" hi", 0.0, 1.0)])]
+    _transcribe_with(monkeypatch, spoken, captured=captured)
+    assert captured["vad_filter"] is False
+    assert captured["vad_parameters"] is None
+    # What replaces it against Whisper inventing words over silence.
+    assert captured["hallucination_silence_threshold"] == 2.0
+    assert captured["word_timestamps"] is True
 
 
 def test_continuous_speech_logs_no_stretch(monkeypatch: Any, caplog: Any) -> None:
