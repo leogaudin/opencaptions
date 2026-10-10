@@ -1,8 +1,8 @@
 # OpenCaptions for iOS
 
 The native app: everything runs on the phone, with no server and no accounts. It
-reuses the caption engine (`apps/engine`) for drawing and edits, WhisperKit for
-transcription, and AVFoundation for decode and encode. See
+reuses the caption engine (`apps/engine`) for drawing and edits, WhisperKit and Parakeet
+(FluidAudio) for transcription, and AVFoundation for decode and encode. See
 [`docs/DESIGN.md`](../../docs/DESIGN.md).
 
 ## Prerequisites (macOS only)

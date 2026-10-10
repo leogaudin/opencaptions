@@ -27,6 +27,9 @@ struct TranscribeSheet: View {
     private var onServer: Bool { (sourceChoice ?? app.useServer) && app.serverConnection != nil }
     private var downloaded: Bool { onServer || app.transcriber.isDownloaded(modelID) }
     private var busy: Bool { downloading != nil || model.isTranscribing }
+    /// The chosen model cannot transcribe the chosen language (Parakeet covers European languages only).
+    /// Left alone, it would produce nonsense, so the way forward is a different model or language.
+    private var uncovered: Bool { !onServer && !chosen.covers(language == "auto" ? nil : language) }
     /// After an unsure guess, auto-detect would only guess again: a language has to be chosen.
     private var mustChoose: Bool {
         if case .needsLanguage = model.transcription { return language == "auto" }
@@ -239,7 +242,16 @@ struct TranscribeSheet: View {
             .background(Theme.surface, in: .rect(cornerRadius: Theme.radius))
             .clipShape(.rect(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
-            Text(downloaded
+            if uncovered {
+                Label("This model does not transcribe the chosen language. Choose another model or another language.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
+            }
+            Text(chosen.isBuiltIn
+                ? "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen."
+                : downloaded
                 ? "Downloaded. Transcription runs on this device."
                 : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent iPhone.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
@@ -265,12 +277,15 @@ struct TranscribeSheet: View {
                     }
                 }
                 Spacer(minLength: 8)
-                if app.transcriber.isDownloaded(option.id) {
+                if !option.isBuiltIn, app.transcriber.isDownloaded(option.id) {
                     Image(systemName: "arrow.down.circle.fill").foregroundStyle(Theme.textSecondary)
                         .accessibilityLabel("Downloaded")
                 }
-                Text("\(option.megabytes) MB").font(.system(size: 13, weight: .medium).monospacedDigit())
-                    .foregroundStyle(Theme.textSecondary)
+                Group {
+                    if option.isBuiltIn { Text("Built in") } else { Text("\(option.megabytes) MB") }
+                }
+                .font(.system(size: 13, weight: .medium).monospacedDigit())
+                .foregroundStyle(Theme.textSecondary)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -290,6 +305,8 @@ struct TranscribeSheet: View {
         case "base": "Fast, good for most videos"
         case "small": "A balance of speed and accuracy"
         case "large-v3-turbo": "Most accurate for its speed"
+        case "parakeet-tdt-0.6b-v3": "Faster, 25 European languages"
+        case WhisperModels.appleSpeechID: "Apple's own, for the languages iOS offers"
         default: nil
         }
     }
@@ -300,7 +317,7 @@ struct TranscribeSheet: View {
                 Task { await begin(allowMetered: false) }
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(busy || mustChoose)
+            .disabled(busy || mustChoose || uncovered)
             Text(onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
         }

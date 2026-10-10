@@ -285,9 +285,11 @@ private func fixture(_ name: String) throws -> Data {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             return try decoder.decode(ServerCapabilities.self, from: Data(json.utf8))
         }
-        let everything = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo", "distil-large-v3"]
-        // The phone's own order and short list, whatever the server lists.
-        #expect(try caps(models: everything, default: "large-v3-turbo").leanModels.map(\.id) == WhisperModels.all.map(\.id))
+        let everything = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo", "distil-large-v3", "parakeet-tdt-0.6b-v3"]
+        // The phone's own order and short list, whatever the server lists; a model only the phone has
+        // (Apple's, built into iOS) is not the server's to offer.
+        let onTheServer = WhisperModels.all.map(\.id).filter { $0 != WhisperModels.appleSpeechID }
+        #expect(try caps(models: everything, default: "large-v3-turbo").leanModels.map(\.id) == onTheServer)
         // A server that offers fewer offers fewer.
         #expect(try caps(models: ["base", "large-v3"], default: "base").leanModels.map(\.id) == ["base", "large-v3"])
         // An operator's own default is kept, first, even off the ladder.

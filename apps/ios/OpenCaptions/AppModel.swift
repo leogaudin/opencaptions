@@ -8,7 +8,7 @@ import OpenCaptionsTranscription
 @MainActor @Observable
 final class AppModel {
     let store: ProjectStore
-    let transcriber: WhisperKitTranscriber
+    let transcriber: LocalTranscriber
     let fontCache: FontCache
     let fontCatalog: FontCatalog
     private let serverSettings = ServerSettings(secrets: KeychainSecretStore())
@@ -42,7 +42,7 @@ final class AppModel {
         else { fatalError("Application Support is unavailable") }
         store = ProjectStore(root: support.appendingPathComponent("Projects", isDirectory: true))
         // Weights are large and re-downloadable: never in a backup.
-        transcriber = WhisperKitTranscriber(modelsDirectory: support.appendingPathComponent("Models", isDirectory: true))
+        transcriber = LocalTranscriber(modelsDirectory: support.appendingPathComponent("Models", isDirectory: true))
         fontCache = FontCache(directory: support.appendingPathComponent("Fonts", isDirectory: true))
         fontCatalog = FontCatalog(directory: support.appendingPathComponent("Fonts", isDirectory: true))
         serverConnection = serverSettings.connection

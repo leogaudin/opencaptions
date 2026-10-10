@@ -309,6 +309,83 @@
         }
       }
     },
+    "Downloading the language from Apple…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargement de la langue depuis Apple…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando el idioma desde Apple…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprache wird von Apple geladen …"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobieranie języka od Apple…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baixando o idioma da Apple…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download della lingua da Apple…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка языка от Apple…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dil Apple’dan indiriliyor…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appleから言語をダウンロード中…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple에서 언어 다운로드 중…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在从 Apple 下载语言…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mengunduh bahasa dari Apple…"
+          }
+        }
+      }
+    },
     "It stopped making progress, so it was stopped. Please try again.": {
       "extractionState": "manual",
       "localizations": {
@@ -1306,6 +1383,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Belum ada teks untuk ditambahkan."
+          }
+        }
+      }
+    },
+    "This model does not transcribe %@. Choose another model.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce modèle ne transcrit pas cette langue (%@). Choisissez un autre modèle."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este modelo no transcribe este idioma (%@). Elige otro modelo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Modell transkribiert diese Sprache nicht (%@). Wähle ein anderes Modell."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten model nie transkrybuje tego języka (%@). Wybierz inny model."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este modelo não transcreve este idioma (%@). Escolha outro modelo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo modello non trascrive questa lingua (%@). Scegli un altro modello."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эта модель не распознаёт этот язык (%@). Выберите другую модель."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu model bu dili (%@) yazıya dökmez. Başka bir model seçin."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このモデルは%@の文字起こしに対応していません。別のモデルを選んでください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 모델은 %@ 받아쓰기를 지원하지 않습니다. 다른 모델을 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此模型不支持转录%@。请选择其他模型。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model ini tidak mentranskripsikan %@. Pilih model lain."
           }
         }
       }

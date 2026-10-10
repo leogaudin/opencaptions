@@ -1310,6 +1310,83 @@
         }
       }
     },
+    "Apple's own, for the languages iOS offers": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Celui d’Apple, pour les langues proposées par iOS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El de Apple, para los idiomas que ofrece iOS"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Von Apple, für die Sprachen, die iOS anbietet"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Własny model Apple, dla języków dostępnych w iOS"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O da Apple, para os idiomas que o iOS oferece"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quello di Apple, per le lingue offerte da iOS"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель Apple, для языков, которые поддерживает iOS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple’ın kendi modeli, iOS’un sunduğu diller için"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple純正。iOSが対応する言語向け"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 자체 모델, iOS가 지원하는 언어용"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 自带，适用于 iOS 支持的语言"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Milik Apple sendiri, untuk bahasa yang ditawarkan iOS"
+          }
+        }
+      }
+    },
     "As filmed (%lld fps).": {
       "extractionState": "manual",
       "localizations": {
@@ -1999,6 +2076,237 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kotak"
+          }
+        }
+      }
+    },
+    "Built in": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégré"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integriert"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wbudowany"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrato"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроена"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerleşik"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内蔵"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내장"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内置"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bawaan"
+          }
+        }
+      }
+    },
+    "Built into iOS": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégré à iOS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado en iOS"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In iOS integriert"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wbudowany w iOS"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado ao iOS"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrato in iOS"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроена в iOS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS’a yerleşik"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOSに内蔵"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS에 내장"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已内置于 iOS"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bawaan iOS"
+          }
+        }
+      }
+    },
+    "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégré à iOS. Apple télécharge chaque langue la première fois qu’elle est utilisée, et il faut choisir une langue."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado en iOS. Apple descarga cada idioma la primera vez que se usa, y hay que elegir un idioma."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In iOS integriert. Apple lädt jede Sprache bei der ersten Verwendung herunter, und eine Sprache muss gewählt werden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wbudowany w iOS. Apple pobiera każdy język przy pierwszym użyciu, a język trzeba wybrać."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado ao iOS. A Apple baixa cada idioma na primeira vez em que ele é usado, e é preciso escolher um idioma."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrato in iOS. Apple scarica ogni lingua la prima volta che viene usata, ed è necessario scegliere una lingua."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроена в iOS. Apple загружает каждый язык при первом использовании, а язык нужно выбрать."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS’a yerleşiktir. Apple her dili ilk kullanımda indirir ve bir dil seçilmelidir."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOSに内蔵されています。言語はAppleが初回の使用時にダウンロードします。言語を選ぶ必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS에 내장되어 있습니다. Apple이 각 언어를 처음 사용할 때 다운로드하며, 언어를 선택해야 합니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已内置于 iOS。Apple 会在首次使用时下载各语言，并且必须选择一种语言。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bawaan iOS. Apple mengunduh setiap bahasa saat pertama kali digunakan, dan bahasa harus dipilih."
           }
         }
       }
@@ -5233,6 +5541,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cepat, bagus untuk kebanyakan video"
+          }
+        }
+      }
+    },
+    "Faster, 25 European languages": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus rapide, 25 langues européennes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más rápido, 25 idiomas europeos"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schneller, 25 europäische Sprachen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Szybszy, 25 języków europejskich"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mais rápido, 25 idiomas europeus"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Più veloce, 25 lingue europee"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрее, 25 европейских языков"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha hızlı, 25 Avrupa dili"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "より高速、ヨーロッパ25言語"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 빠름, 유럽 25개 언어"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更快，支持 25 种欧洲语言"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lebih cepat, 25 bahasa Eropa"
           }
         }
       }
@@ -15628,6 +16013,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ruang tidak cukup: dibutuhkan sekitar %@ dan ponsel hanya punya %@ kosong. Pilih ukuran atau kecepatan bingkai yang lebih kecil, atau kosongkan ruang."
+          }
+        }
+      }
+    },
+    "This model does not transcribe the chosen language. Choose another model or another language.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce modèle ne transcrit pas la langue choisie. Choisissez un autre modèle ou une autre langue."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este modelo no transcribe el idioma elegido. Elige otro modelo u otro idioma."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Modell transkribiert die gewählte Sprache nicht. Wähle ein anderes Modell oder eine andere Sprache."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten model nie transkrybuje wybranego języka. Wybierz inny model lub inny język."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este modelo não transcreve o idioma escolhido. Escolha outro modelo ou outro idioma."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo modello non trascrive la lingua scelta. Scegli un altro modello o un’altra lingua."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эта модель не распознаёт выбранный язык. Выберите другую модель или другой язык."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu model seçilen dili yazıya dökmez. Başka bir model veya başka bir dil seçin."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このモデルは選択した言語の文字起こしに対応していません。別のモデルまたは別の言語を選んでください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 모델은 선택한 언어를 받아쓰지 못합니다. 다른 모델이나 다른 언어를 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此模型不支持转录所选语言。请选择其他模型或其他语言。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model ini tidak mentranskripsikan bahasa yang dipilih. Pilih model lain atau bahasa lain."
           }
         }
       }
