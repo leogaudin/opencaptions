@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     whisper_model: str = "large-v3-turbo"
     whisper_device: str = "auto"  # 'auto', 'cpu', 'cuda', 'cuda:0', etc.
     whisper_compute_type: str = "int8"
+    # Threads for the models that are not Whisper (sherpa-onnx); 0 uses every core the
+    # process may run on.
+    asr_threads: int = 0
     openai_api_key: str = ""
 
     # Another OpenCaptions backend to transcribe on (provider 'opencaptions'): its

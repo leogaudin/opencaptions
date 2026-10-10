@@ -290,11 +290,21 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
 
 A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 
-- `local`: faster-whisper on CPU or CUDA. Models download on first use into
-  `models/`. Everything is decoded: the voice-detection filter is off by default
-  (`WHISPER_VAD_FILTER`), because it takes shouting and speech over loud music for
-  non-speech and what it drops is never transcribed. The no-speech check and a
-  hallucination guard (`WHISPER_*`) stay on.
+- `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`
+  names. Models download on first use into `models/`.
+  - **faster-whisper** (CPU or CUDA) runs every Whisper size. Everything is decoded: the
+    voice-detection filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
+    and speech over loud music for non-speech and what it drops is never transcribed. The
+    no-speech check and a hallucination guard (`WHISPER_*`) stay on.
+  - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet v3 is the first. It
+    cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
+    for being "not speech", and decodes a window again in halves when it comes back empty
+    though it is not quiet. A model that covers only some languages is never given another:
+    the language is identified first (`language_id.py`) when it was not chosen, and a recording
+    outside the model's languages goes to the default Whisper model, which the job says.
+
+  Adding a model is adding an entry there (and an engine, if it needs one); nothing above the
+  provider seam changes. How the choices were made, with measurements, is `docs/ASR-MODELS.md`.
 - `openai`: the OpenAI API. Audio leaves the machine, so the UI says so whenever
   this provider is active.
 - `opencaptions`: another OpenCaptions backend, reached through its transcription

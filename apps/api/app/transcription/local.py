@@ -1,4 +1,4 @@
-"""LocalWhisperProvider: runs faster-whisper in-process on CPU or GPU.
+"""LocalWhisperProvider: runs faster-whisper in-process on CPU or GPU (the "faster-whisper" engine).
 
 Loads the model lazily, once per worker process, and keeps it for as long as that process
 lives. The compose file ends the process after every job (--max-tasks-per-child=1, see why
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class LocalWhisperProvider(TranscriptionProvider):
     """faster-whisper backed local transcription."""
 
-    name = "local"
+    name = "faster-whisper"
 
     def __init__(self) -> None:
         self._model: Any | None = None

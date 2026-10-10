@@ -43,10 +43,10 @@ from app.models.schemas import (
     TranscriptionCapabilities,
     TranscriptionCreated,
 )
+from app.services.asr_models import all_models
 from app.services.languages import all_languages, is_valid_language
 from app.services.upload import UploadTooLargeError, copy_capped
 from app.services.usage import USAGE_METADATA_KEY
-from app.services.whisper_models import all_models
 from app.storage import s3
 
 router = APIRouter(tags=["transcription"])
