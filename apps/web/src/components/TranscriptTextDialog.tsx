@@ -13,6 +13,7 @@ import { useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import {
   formatTranscript,
+  highlight,
   importSubtitles,
   type Parsed,
   parseTranscript,
@@ -23,6 +24,16 @@ import { useEditorStore } from "@/store/editorStore";
 /** Subtitle files read as text; the picker offers these. */
 const ACCEPT = ".srt,.vtt,.json,application/x-subrip,text/vtt,application/json";
 
+/** Shared by the textarea and the coloured copy under it, so the two line up letter for letter. */
+const EDITOR_TEXT = "m-0 whitespace-pre p-3 font-mono text-xs leading-5";
+const TOKEN_CLASS = {
+  key: "text-sky-700 dark:text-sky-300",
+  string: "text-emerald-700 dark:text-emerald-300",
+  number: "text-amber-700 dark:text-amber-300",
+  punctuation: "text-muted-foreground",
+  plain: "text-foreground",
+} as const;
+
 export function TranscriptTextDialog() {
   const t = useT();
   const transcript = useEditorStore((s) => s.transcript);
@@ -32,6 +43,7 @@ export function TranscriptTextDialog() {
   const [original, setOriginal] = useState("");
   const [importError, setImportError] = useState<TextError | null>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const colours = useRef<HTMLPreElement>(null);
 
   const parsed: Parsed | null = useMemo(
     () => (transcript && open ? parseTranscript(text, transcript) : null),
@@ -98,7 +110,7 @@ export function TranscriptTextDialog() {
           className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/70"
         >
           <Braces className="h-3.5 w-3.5" aria-hidden />
-          {t("Edit text")}
+          {t("Edit JSON")}
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -124,18 +136,39 @@ export function TranscriptTextDialog() {
             )}
           </Dialog.Description>
 
-          <textarea
-            data-testid="transcript-text"
-            aria-label={t("Transcript text")}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setImportError(null);
-            }}
-            spellCheck={false}
-            wrap="off"
-            className="h-[55vh] min-h-40 w-full resize-none overflow-auto whitespace-pre rounded-md border border-border bg-background p-3 font-mono text-xs leading-5 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
-          />
+          <div className="relative h-[55vh] min-h-40 rounded-md border border-border bg-background focus-within:ring-2 focus-within:ring-primary">
+            {/* The text drawn in colour sits under a transparent textarea that does the editing. */}
+            <pre
+              ref={colours}
+              aria-hidden
+              className={`${EDITOR_TEXT} pointer-events-none absolute inset-0 overflow-hidden`}
+            >
+              {highlight(text).map((token, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: the pieces are redrawn whole
+                <span key={i} className={TOKEN_CLASS[token.kind]}>
+                  {token.text}
+                </span>
+              ))}
+              {"\n "}
+            </pre>
+            <textarea
+              data-testid="transcript-text"
+              aria-label={t("Transcript text")}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setImportError(null);
+              }}
+              onScroll={(e) => {
+                if (!colours.current) return;
+                colours.current.scrollTop = e.currentTarget.scrollTop;
+                colours.current.scrollLeft = e.currentTarget.scrollLeft;
+              }}
+              spellCheck={false}
+              wrap="off"
+              className={`${EDITOR_TEXT} absolute inset-0 resize-none overflow-auto bg-transparent text-transparent caret-foreground focus:outline-hidden`}
+            />
+          </div>
 
           <p
             data-testid="transcript-text-status"

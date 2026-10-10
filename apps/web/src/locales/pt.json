@@ -254,7 +254,6 @@
   "Glow color": "Cor do brilho",
   "Undo": "Desfazer",
   "Redo": "Refazer",
-  "Edit text": "Editar texto",
   "Edit transcript as text": "Editar a transcrição como texto",
   "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Uma palavra por linha. Altere uma palavra, seu início ou seu fim (em segundos), ou mova palavras entre segmentos e depois aplique. Aplicar pode ser desfeito.",
   "Transcript text": "Texto da transcrição",
@@ -266,5 +265,6 @@
   "Segment {segment}, word {word}: starts before the word that comes before it.": "Segmento {segment}, palavra {word}: começa antes da palavra que vem antes dela.",
   "There are no words in it.": "Não há nenhuma palavra.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Esse arquivo não é SRT, WebVTT nem uma exportação JSON do OpenCaptions.",
-  "{words} words in {segments} segments": "{words} palavras em {segments} segmentos"
+  "{words} words in {segments} segments": "{words} palavras em {segments} segmentos",
+  "Edit JSON": "Editar JSON"
 }

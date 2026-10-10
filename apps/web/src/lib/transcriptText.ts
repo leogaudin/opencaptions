@@ -254,3 +254,23 @@ export function importSubtitles(text: string, base: Transcript): Parsed {
   if (!cues) return fail({ code: "format" });
   return build(cueGroups(cues), { ...base, language_detection: "manual" });
 }
+
+export type Token = { kind: "key" | "string" | "number" | "punctuation" | "plain"; text: string };
+
+/** The raw editor's JSON split into pieces to colour; the pieces join back to exactly `text`. */
+export function highlight(text: string): Token[] {
+  const pattern = /("(?:[^"\\\n]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}[\],:])/g;
+  const tokens: Token[] = [];
+  let last = 0;
+  for (const m of text.matchAll(pattern)) {
+    if (m.index > last) tokens.push({ kind: "plain", text: text.slice(last, m.index) });
+    if (m[1] !== undefined) {
+      tokens.push({ kind: m[2] ? "key" : "string", text: m[1] });
+      if (m[2]) tokens.push({ kind: "punctuation", text: m[2] });
+    } else if (m[3] !== undefined) tokens.push({ kind: "number", text: m[3] });
+    else tokens.push({ kind: "punctuation", text: m[4] ?? "" });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) tokens.push({ kind: "plain", text: text.slice(last) });
+  return tokens;
+}

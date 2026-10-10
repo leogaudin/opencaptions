@@ -254,7 +254,6 @@
   "Glow color": "Цвет свечения",
   "Undo": "Отменить",
   "Redo": "Повторить",
-  "Edit text": "Править текст",
   "Edit transcript as text": "Правка расшифровки как текста",
   "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Одно слово на строку. Измените слово, его начало или конец (в секундах) либо переместите слова между сегментами, затем примените. Применение можно отменить.",
   "Transcript text": "Текст расшифровки",
@@ -266,5 +265,6 @@
   "Segment {segment}, word {word}: starts before the word that comes before it.": "Сегмент {segment}, слово {word}: начинается раньше предыдущего слова.",
   "There are no words in it.": "В нём нет слов.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Этот файл не в формате SRT, WebVTT и не экспорт JSON из OpenCaptions.",
-  "{words} words in {segments} segments": "Слов: {words}, сегментов: {segments}"
+  "{words} words in {segments} segments": "Слов: {words}, сегментов: {segments}",
+  "Edit JSON": "Править JSON"
 }

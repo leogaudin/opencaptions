@@ -254,7 +254,6 @@
   "Glow color": "글로우 색상",
   "Undo": "실행 취소",
   "Redo": "다시 실행",
-  "Edit text": "텍스트 편집",
   "Edit transcript as text": "받아쓰기를 텍스트로 편집",
   "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "한 줄에 단어 하나입니다. 단어나 그 시작 또는 끝(초 단위)을 바꾸거나 단어를 세그먼트 사이로 옮긴 다음 적용하세요. 적용은 되돌릴 수 있습니다.",
   "Transcript text": "받아쓰기 텍스트",
@@ -266,5 +265,6 @@
   "Segment {segment}, word {word}: starts before the word that comes before it.": "세그먼트 {segment}, 단어 {word}: 바로 앞 단어보다 먼저 시작합니다.",
   "There are no words in it.": "단어가 없습니다.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "이 파일은 SRT, WebVTT, OpenCaptions JSON 내보내기가 아닙니다.",
-  "{words} words in {segments} segments": "세그먼트 {segments}개, 단어 {words}개"
+  "{words} words in {segments} segments": "세그먼트 {segments}개, 단어 {words}개",
+  "Edit JSON": "JSON 편집"
 }

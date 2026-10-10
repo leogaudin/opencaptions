@@ -254,7 +254,6 @@
   "Glow color": "グローの色",
   "Undo": "元に戻す",
   "Redo": "やり直す",
-  "Edit text": "テキストを編集",
   "Edit transcript as text": "文字起こしをテキストで編集",
   "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "1行に1単語です。単語、その開始または終了（秒）を変更するか、セグメント間で単語を移動してから、適用してください。適用は元に戻せます。",
   "Transcript text": "文字起こしのテキスト",
@@ -266,5 +265,6 @@
   "Segment {segment}, word {word}: starts before the word that comes before it.": "セグメント{segment}、単語{word}：直前の単語より前に始まっています。",
   "There are no words in it.": "単語が含まれていません。",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "このファイルはSRT、WebVTT、OpenCaptionsのJSONエクスポートのいずれでもありません。",
-  "{words} words in {segments} segments": "{segments}個のセグメントに{words}単語"
+  "{words} words in {segments} segments": "{segments}個のセグメントに{words}単語",
+  "Edit JSON": "JSONを編集"
 }

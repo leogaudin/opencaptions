@@ -254,7 +254,6 @@
   "Glow color": "Warna cahaya",
   "Undo": "Urungkan",
   "Redo": "Ulangi",
-  "Edit text": "Edit teks",
   "Edit transcript as text": "Edit transkrip sebagai teks",
   "One word to a line. Change a word, its start or its end (in seconds), or move words between segments, then apply. Applying can be undone.": "Satu kata per baris. Ubah sebuah kata, awal atau akhirnya (dalam detik), atau pindahkan kata antarsegmen, lalu terapkan. Penerapan dapat diurungkan.",
   "Transcript text": "Teks transkrip",
@@ -266,5 +265,6 @@
   "Segment {segment}, word {word}: starts before the word that comes before it.": "Segmen {segment}, kata {word}: dimulai sebelum kata yang mendahuluinya.",
   "There are no words in it.": "Tidak ada kata di dalamnya.",
   "That file is not SRT, WebVTT or an OpenCaptions JSON export.": "Berkas ini bukan SRT, WebVTT, atau ekspor JSON OpenCaptions.",
-  "{words} words in {segments} segments": "{words} kata dalam {segments} segmen"
+  "{words} words in {segments} segments": "{words} kata dalam {segments} segmen",
+  "Edit JSON": "Edit JSON"
 }

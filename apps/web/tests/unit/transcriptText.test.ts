@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   formatTranscript,
+  highlight,
   importSubtitles,
   type Parsed,
   parseTranscript,
@@ -208,5 +209,46 @@ first one
   it("skips a cue that has no words", () => {
     const text = "00:00:01,000 --> 00:00:02,000\n<i></i>\n\n00:00:03,000 --> 00:00:04,000\nHi\n";
     assert.deepEqual(texts(ok(importSubtitles(text, base))), [["Hi"]]);
+  });
+});
+
+describe("highlighting", () => {
+  it("splits the text into pieces that join back to it exactly", () => {
+    const text = formatTranscript(sample);
+    assert.equal(
+      highlight(text)
+        .map((t) => t.text)
+        .join(""),
+      text,
+    );
+    assert.equal(
+      highlight('{ nope "x')
+        .map((t) => t.text)
+        .join(""),
+      '{ nope "x',
+    );
+  });
+
+  it("tells keys from strings and numbers", () => {
+    const kinds = highlight('{ "text": "un", "start": 0.5 }').filter((t) => t.kind !== "plain");
+    assert.deepEqual(
+      kinds.map((t) => [t.kind, t.text]),
+      [
+        ["punctuation", "{"],
+        ["key", '"text"'],
+        ["punctuation", ":"],
+        ["string", '"un"'],
+        ["punctuation", ","],
+        ["key", '"start"'],
+        ["punctuation", ":"],
+        ["number", "0.5"],
+        ["punctuation", "}"],
+      ],
+    );
+  });
+
+  it("keeps an escaped quote inside its string", () => {
+    const [token] = highlight('"a\\"b"');
+    assert.deepEqual(token, { kind: "string", text: '"a\\"b"' });
   });
 });

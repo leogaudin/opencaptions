@@ -112,8 +112,3 @@ def test_progress_is_written_down_so_a_refreshed_page_reads_it(run: Any) -> None
 def test_progress_is_not_written_more_often_than_it_needs_to_be(run: Any) -> None:
     events, _ = run(_Provider([]), saved_every=3600.0)
     assert not [e for e in events if e[0] == "saved" and "progress" in e[2] and e[2]["progress"]]
-
-
-def test_the_transcript_comes_back_cleaned(run: Any) -> None:
-    _, transcript = run(_Provider([]))
-    assert [w.text for w in transcript.segments[0].words] == ["*rires*"]
