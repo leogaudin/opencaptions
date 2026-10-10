@@ -53,6 +53,7 @@ CHARACTER_SCORED = {"ja", "zh"}
 SHERPA = {
     "parakeet": ("csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
                  {"en", "fr", "de", "es", "it", "pt", "pl", "ru"}),
+    # The int8 build loses most of this model's accuracy; qwen3.py runs the real one (bf16, PyTorch).
     "qwen3-0.6b": ("csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25", set(LANGS)),
     "cohere": ("csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01",
                {"en", "fr", "de", "es", "it", "pt", "pl", "ja", "ko", "zh"}),
