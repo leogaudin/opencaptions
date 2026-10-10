@@ -276,7 +276,7 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
   `disableSaving()` in the editor store keeps edits in the page.
 - The clips are data: `demo-public/demo/clips.json` names each clip's video, transcript (the
   API's `Transcript` shape) and credit (shown in the footer; CC BY asks for it). `scripts/make-demo-clip.sh`
-  cuts one from a long film (9:16 crop, H.264 + AAC, 720x1280). Replacing a clip is replacing its files and the manifest entry.
+  cuts one from a long film (9:16 crop, H.264 + AAC, 1080x1920). Replacing a clip is replacing its files and the manifest entry.
 - The engine's `.wasm` and fonts are not committed: the web Dockerfile's `demo-site` stage builds
   them and the site (`make demo` writes `apps/web/dist-demo`). CI builds that stage on every run and
   `publish-demo` deploys it with `wrangler pages deploy` on `main`, only when `CLOUDFLARE_API_TOKEN`
