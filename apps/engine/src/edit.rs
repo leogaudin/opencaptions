@@ -72,27 +72,46 @@ pub fn lines(t: &Transcript, words_per_line: u32, offset_ms: i32) -> Vec<Line> {
         .collect()
 }
 
-/// Moves one edge of word `index` to `time` as shown (with the caption offset),
-/// kept between its neighbours and, where there is room, no shorter than
-/// MIN_WORD_S. The neighbour wins over the minimum, so words stay ordered and
-/// never overlap. The transcript keeps unshifted times, so the edit converts back.
+/// Moves one edge of word `index` to `time` as shown (with the caption offset). Past a
+/// neighbour that touches it, the neighbour gives way (a rolling edit): its facing edge is
+/// pushed along, down to MIN_WORD_S, and never lengthened, so two captions that meet can
+/// have the boundary between them dragged either way. Words stay ordered and never
+/// overlap, and where there is room the word keeps at least MIN_WORD_S; the neighbour wins
+/// over the minimum. The transcript keeps unshifted times, so the edit converts back.
 pub fn retime(t: &Transcript, index: usize, edge: Edge, time: f32, offset_ms: i32) -> Transcript {
     let time = time - offset_ms as f32 / 1000.0;
     let mut entries = flatten(t);
-    let prev_end = index
-        .checked_sub(1)
-        .and_then(|i| entries.get(i))
-        .map_or(0.0, |e| e.1.end);
-    let next_start = index
-        .checked_add(1)
-        .and_then(|i| entries.get(i))
-        .map_or(t.duration, |e| e.1.start);
-    let Some((_, w)) = entries.get_mut(index) else {
+    if index >= entries.len() {
         return t.clone();
-    };
+    }
     match edge {
-        Edge::Start => w.start = time.clamp(prev_end, prev_end.max(w.end - MIN_WORD_S)),
-        Edge::End => w.end = time.clamp(next_start.min(w.start + MIN_WORD_S), next_start),
+        Edge::Start => {
+            let before = index.checked_sub(1);
+            let (prev_start, prev_end) =
+                before.map_or((0.0, 0.0), |i| (entries[i].1.start, entries[i].1.end));
+            // The previous word may be shortened to the minimum, not below what it already is.
+            let floor = (prev_start + MIN_WORD_S).min(prev_end);
+            let w = &mut entries[index].1;
+            let start = time.clamp(floor, prev_end.max(w.end - MIN_WORD_S));
+            w.start = start;
+            if let Some(i) = before.filter(|_| start < prev_end) {
+                entries[i].1.end = start;
+            }
+        }
+        Edge::End => {
+            let after = (index + 1 < entries.len()).then_some(index + 1);
+            let (next_start, next_end) = after.map_or((t.duration, t.duration), |i| {
+                (entries[i].1.start, entries[i].1.end)
+            });
+            // The next word may be shortened to the minimum, not below what it already is.
+            let ceiling = next_start.max(next_end - MIN_WORD_S);
+            let w = &mut entries[index].1;
+            let end = time.clamp(next_start.min(w.start + MIN_WORD_S), ceiling);
+            w.end = end;
+            if let Some(i) = after.filter(|_| end > next_start) {
+                entries[i].1.start = end;
+            }
+        }
     }
     rebuild(t, entries)
 }
@@ -275,22 +294,23 @@ mod tests {
     }
 
     #[test]
-    fn retime_moves_one_edge_and_stops_at_the_neighbours() {
+    fn retime_moves_one_edge_and_a_touching_neighbour_gives_way() {
         let t = transcript();
         assert_eq!(
             words(&retime(&t, 0, Edge::Start, 0.2, 0))[0],
             ("one".into(), 0.2, 0.9)
         );
-        assert_eq!(
-            words(&retime(&t, 2, Edge::End, 3.5, 0))[2].2,
-            2.6,
-            "stops at four"
-        );
-        assert_eq!(
-            words(&retime(&t, 1, Edge::Start, 0.1, 0))[1].1,
-            0.9,
-            "stops at one"
-        );
+        // Four is in the way, so it is pushed along, down to its minimum.
+        let pushed = words(&retime(&t, 2, Edge::End, 3.5, 0));
+        assert_eq!(pushed[2].2, 3.0 - MIN_WORD_S);
+        assert_eq!(pushed[3], ("four".into(), 3.0 - MIN_WORD_S, 3.0));
+        // Two starts where one ends: dragging it back shortens one, to its minimum.
+        let rolled = words(&retime(&t, 1, Edge::Start, 0.1, 0));
+        assert_eq!(rolled[0], ("one".into(), 0.5, 0.5 + MIN_WORD_S));
+        assert_eq!(rolled[1].1, 0.5 + MIN_WORD_S);
+        // And dragging it on shortens two, leaving the boundary where it was put.
+        let on = words(&retime(&t, 1, Edge::Start, 1.0, 0));
+        assert_eq!((on[0].2, on[1].1), (0.9, 1.0));
         assert_eq!(
             words(&retime(&t, 3, Edge::End, 9.0, 0))[3].2,
             4.0,
@@ -301,6 +321,36 @@ mod tests {
             (words(&short)[1].2 - (0.9 + MIN_WORD_S)).abs() < 1e-6,
             "keeps a minimum"
         );
+    }
+
+    #[test]
+    fn retime_leaves_a_neighbour_alone_while_there_is_a_gap_to_move_through() {
+        let t = transcript();
+        let before = words(&t);
+        // Three ends at 1.7 and four starts at 2.6: both can move through the gap.
+        let extended = words(&retime(&t, 2, Edge::End, 2.0, 0));
+        assert_eq!(extended[2].2, 2.0);
+        assert_eq!(extended[3], before[3]);
+        let earlier = words(&retime(&t, 3, Edge::Start, 2.0, 0));
+        assert_eq!(earlier[3].1, 2.0);
+        assert_eq!(earlier[2], before[2]);
+    }
+
+    #[test]
+    fn a_line_starting_on_a_tiny_word_that_touches_the_last_can_still_be_moved() {
+        // A word of no length, right against the one before it: nothing to shrink and nowhere
+        // to go, which is how a start edge came to be stuck.
+        let t: Transcript = serde_json::from_value(json!({
+            "duration": 20.0,
+            "segments": [{ "id": "a", "start": 9.0, "end": 10.4, "text": "x oh I", "words": [
+                { "text": "x", "start": 9.0, "end": 10.0 },
+                { "text": "oh", "start": 10.0, "end": 10.0 },
+                { "text": "I", "start": 10.0, "end": 10.4 }] }]
+        }))
+        .unwrap();
+        let moved = words(&retime(&t, 1, Edge::Start, 9.6, 0));
+        assert_eq!(moved[1], ("oh".into(), 9.6, 10.0));
+        assert_eq!(moved[0].2, 9.6, "the word before gives way");
     }
 
     #[test]
