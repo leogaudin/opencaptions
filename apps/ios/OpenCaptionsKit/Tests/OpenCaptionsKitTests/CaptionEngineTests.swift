@@ -155,10 +155,11 @@ extension EngineSuites {
             #expect(abs(shifted[0].start - 1.0) < 1e-5 && abs(shifted[0].end - 2.2) < 1e-5)
         }
 
-        @Test func retimingStopsAtNeighboursAndWritesUnshiftedTimes() async throws {
+        @Test func retimingPushesNeighboursAlongAndWritesUnshiftedTimes() async throws {
             let t = try Repo.transcript()
             let past = try await engine.retimeWord(t, index: 2, edge: .end, time: 3.5, offsetMs: 0)
-            #expect(abs(past.words[2].end - 2.6) < 1e-5, "stops at four")
+            #expect(abs(past.words[2].end - 2.95) < 1e-5, "four gives way, down to its minimum")
+            #expect(abs(past.words[3].start - 2.95) < 1e-5 && past.words[3].end == t.words[3].end)
             let shown = try await engine.retimeWord(t, index: 2, edge: .end, time: 2.1, offsetMs: 500)
             #expect(abs(shown.words[2].end - 1.6) < 1e-5, "unshifted on write")
             let start = try await engine.retimeWord(t, index: 0, edge: .start, time: 0.2, offsetMs: 0)
