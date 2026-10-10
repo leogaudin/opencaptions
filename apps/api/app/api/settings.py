@@ -17,8 +17,8 @@ from app.models.schemas import (
     ModelOption,
     TranscriptionSettings,
 )
+from app.services.asr_models import all_models
 from app.services.languages import all_languages
-from app.services.whisper_models import all_models
 from app.transcription import remote
 
 router = APIRouter(prefix="/settings", tags=["settings"])
