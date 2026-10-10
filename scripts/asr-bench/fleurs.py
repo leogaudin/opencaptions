@@ -61,12 +61,13 @@ SHERPA = {
 
 
 def clips(code: str, count: int) -> list[tuple[np.ndarray, str]]:
-    """The first `count` test clips of a language (downloaded once, then cached)."""
+    """The first `count` test clips of a language (downloaded once, then cached). `code` is one of LANGS or
+    any FLEURS configuration name (`sw_ke`)."""
     import pyarrow.parquet as pq
     import soundfile as sf
     from huggingface_hub import hf_hub_download
 
-    path = hf_hub_download("google/fleurs", f"{LANGS[code]}/test/0000.parquet",
+    path = hf_hub_download("google/fleurs", f"{LANGS.get(code, code)}/test/0000.parquet",
                            repo_type="dataset", revision="refs/convert/parquet")
     out = []
     for row in pq.read_table(path).to_pylist()[:count]:
