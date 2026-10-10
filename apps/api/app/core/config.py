@@ -52,16 +52,22 @@ class Settings(BaseSettings):
     transcription_result_ttl_h: int = 24
     transcription_max_concurrent: int = 2
 
-    # Voice-activity filtering drops non-speech before decoding, which keeps
-    # Whisper from inventing words over music. It can also drop real speech under
-    # a loud bed, so it is switchable, and its threshold tunable: lower keeps more
-    # audio. Set WHISPER_VAD_FILTER=false to decode everything.
-    whisper_vad_filter: bool = True
+    # Voice-activity filtering is off: it decides what is speech with a model that
+    # takes shouting or speech over loud music for non-speech, and what it drops is
+    # never decoded, so whole lines go missing (on a test film it lost five of six
+    # lines that decoding everything found, whatever the threshold). Decoding
+    # everything costs more CPU on content with long silences; turn the filter on
+    # (WHISPER_VAD_FILTER=true) for talking-head recordings where that matters.
+    whisper_vad_filter: bool = False
     whisper_vad_threshold: float = 0.5
     # A window whose no-speech probability exceeds this, and whose average log
     # probability is below the log-prob floor, is treated as silence and skipped.
     # Raising it makes the decoder keep more marginal audio.
     whisper_no_speech_threshold: float = 0.6
+    # With word timings on, Whisper looping over silence or music is cut where a
+    # silence this long (seconds) follows a suspect segment. Without the voice filter
+    # this is what keeps invented text out of the quiet stretches.
+    whisper_hallucination_silence_s: float = 2.0
 
     # ----- Entitlements -----
     # Policy name registered in app.services.entitlements; 'unlimited' never denies.

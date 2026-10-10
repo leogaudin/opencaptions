@@ -291,7 +291,10 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
 A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 
 - `local`: faster-whisper on CPU or CUDA. Models download on first use into
-  `models/`. VAD and no-speech thresholds can be tuned (`WHISPER_*`).
+  `models/`. Everything is decoded: the voice-detection filter is off by default
+  (`WHISPER_VAD_FILTER`), because it takes shouting and speech over loud music for
+  non-speech and what it drops is never transcribed. The no-speech check and a
+  hallucination guard (`WHISPER_*`) stay on.
 - `openai`: the OpenAI API. Audio leaves the machine, so the UI says so whenever
   this provider is active.
 - `opencaptions`: another OpenCaptions backend, reached through its transcription
@@ -307,8 +310,8 @@ A job moves through named stages, each stored on the job as well as broadcast, s
 page opened mid-job reads the database: loading (or first downloading) the model, then
 transcribing, whose progress is written down every couple of seconds. Whatever the
 provider returns has its segments ended at a pause (`app/transcription/words.py`, the same
-tempo-relative rule as the captions'), because with voice detection on Whisper decodes the
-speech with the silences cut out and can put words from either side of a long one in a segment.
+tempo-relative rule as the captions'), because with voice detection on (or a model that
+decodes in windows) a segment can hold words from either side of a long silence.
 
 ### The transcription API
 
