@@ -4,6 +4,12 @@
     "NSLocalNetworkUsageDescription": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reaches an OpenCaptions server on your network to transcribe your videos there."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -81,6 +87,12 @@
     "NSPhotoLibraryAddUsageDescription": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saves the captioned video you export to your Photos library, so you can share it."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

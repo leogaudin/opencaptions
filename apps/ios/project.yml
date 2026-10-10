@@ -90,7 +90,7 @@ targets:
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
-        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Saves your captioned videos to Photos.
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Saves the captioned video you export to your Photos library, so you can share it.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.photography
       configs:
