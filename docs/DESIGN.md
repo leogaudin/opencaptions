@@ -84,7 +84,11 @@ build produces byte-identical frames. Nothing else may draw captions.
   frame after a new scene), so the web preview copies and draws just that band
   while a video plays.
   Lines are the transcript's words in reading order, cut every `words_per_line`
-  words. A line holds through short gaps and clears in long ones.
+  words, or sooner where the speaker paused a second or more (`model::cut`, the one
+  rule the scene and the editors' line list share), so words said minutes apart
+  never share a caption. A line holds through short gaps and clears in long ones.
+  `oc_active_index` is the flat index of the showing line's first word, not its
+  number, because lines are no longer all the same length.
 - **Timing offset.** One global nudge of every caption against the audio
   (`caption_offset_ms`, positive is later, times clamp at zero) is part of the
   scene, so the preview and the export shift identically. The edit calls take it

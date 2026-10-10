@@ -109,7 +109,6 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     private var isPlaying = false
     /// An HDR video's captions are drawn brighter than SDR white (see `CaptionFrame.hdrWhiteScale`).
     private var hdr = false
-    private var wordsPerLine = 3
     private var style: StyleConfig?
     private var frameSize = CGSize.zero
     private var caption: ActiveCaption?
@@ -271,7 +270,6 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
             sceneKey = nil  // draw it again in the new format
         }
         style = project.styleConfig
-        wordsPerLine = project.styleConfig.wordsPerLine
         applyLive()
         guard let transcript = project.transcript, bounds.width > 0, bounds.height > 0 else { return }
 
@@ -390,7 +388,7 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
     @objc private func doubleTapped(_ g: UITapGestureRecognizer) {
         guard !isPlaying, let caption,
             let index = CaptionGestures.wordIndex(
-                at: framePoint(g.location(in: self)), in: caption, wordsPerLine: wordsPerLine)
+                at: framePoint(g.location(in: self)), in: caption)
         else { return }
         onEditWord(index)
     }

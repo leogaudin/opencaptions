@@ -137,11 +137,11 @@ final class Counter { var value = 0 }
 
     @Test func aTapPicksTheWordUnderItAsAFlatTranscriptIndex() {
         let caption = ActiveCaption(
-            bounds: FrameRect(x: 0, y: 0, width: 100, height: 20), index: 2,
+            bounds: FrameRect(x: 0, y: 0, width: 100, height: 20), index: 6,
             words: [FrameRect(x: 0, y: 0, width: 40, height: 20), FrameRect(x: 50, y: 0, width: 40, height: 20)])
-        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 60, y: 5), in: caption, wordsPerLine: 3) == 7)
-        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 5, y: 5), in: caption, wordsPerLine: 3) == 6)
-        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 45, y: 5), in: caption, wordsPerLine: 3) == nil, "the gap")
+        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 60, y: 5), in: caption) == 7)
+        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 5, y: 5), in: caption) == 6)
+        #expect(CaptionGestures.wordIndex(at: CGPoint(x: 45, y: 5), in: caption) == nil, "the gap")
     }
 
     // MARK: Fonts

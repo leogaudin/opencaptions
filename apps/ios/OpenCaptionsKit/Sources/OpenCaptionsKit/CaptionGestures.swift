@@ -46,10 +46,10 @@ public enum CaptionGestures {
     }
 
     /// The transcript word under a tap at `point` (frame pixels), if it is on a word of
-    /// the active caption: word N of line L is flat word `L * wordsPerLine + N`.
-    public static func wordIndex(at point: CGPoint, in caption: ActiveCaption, wordsPerLine: Int) -> Int? {
+    /// the active caption: word N of a caption that starts at flat word F is flat word `F + N`.
+    public static func wordIndex(at point: CGPoint, in caption: ActiveCaption) -> Int? {
         caption.words.firstIndex { $0.contains(x: point.x, y: point.y) }
-            .map { caption.index * max(1, wordsPerLine) + $0 }
+            .map { caption.index + $0 }
     }
 
     /// Where the engine puts the middle of a block `extent` long when asked for `position` (0...1) in a

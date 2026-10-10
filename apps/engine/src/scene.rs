@@ -13,7 +13,7 @@ use tiny_skia::{
 };
 
 use crate::fonts::FontBook;
-use crate::model::{Animation, Background, Rgba, SceneInput, Style, TextCase, shifted};
+use crate::model::{Animation, Background, Rgba, SceneInput, Style, TextCase, cut, shifted};
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
 const REF_HEIGHT: f32 = 1920.0;
@@ -79,6 +79,8 @@ struct Placed {
 }
 
 struct Line {
+    /// Flat index of the line's first word in the transcript.
+    first: usize,
     start: f32,
     end: f32,
     words: Vec<Placed>,
@@ -589,10 +591,11 @@ impl Scene {
 
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
-        let lines = words
-            .chunks(style.words_per_line.max(1) as usize)
-            .enumerate()
-            .map(|(c, chunk)| {
+        let lines = cut(&words, style.words_per_line.max(1) as usize)
+            .into_iter()
+            .map(|range| {
+                let first = range.start;
+                let chunk = &words[range];
                 let texts: Vec<String> = chunk
                     .iter()
                     .map(|w| match style.text_case {
@@ -664,7 +667,7 @@ impl Scene {
                             ink_w: *adv,
                             baseline: top + baseline_in_row,
                             chars: texts[i].chars().count(),
-                            index: c * style.words_per_line.max(1) as usize + i,
+                            index: first + i,
                         });
                         x += slot_w + sep;
                     }
@@ -673,6 +676,7 @@ impl Scene {
                 // Room for the pop to grow a word past its slot.
                 let grow = inner_w.max(row_h) * lift(style.animation);
                 Line {
+                    first,
                     start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
                     end: shifted(chunk.last().map_or(0.0, |w| w.end), offset),
                     words: placed.into_iter().flatten().collect(),
@@ -1174,10 +1178,15 @@ impl Renderer {
         ))
     }
 
-    /// Index of the active line among all lines, so the editor can map a word
-    /// back to the transcript (word N of line L is flat word `L * words_per_line + N`).
+    /// Index of the active line among all lines.
     pub fn active_index(&self) -> Option<usize> {
         self.last.as_ref()?.0
+    }
+
+    /// Flat index of the active line's first word, so the editor can map a word back to the
+    /// transcript: word N of the line is transcript word `first + N`.
+    pub fn active_first_word(&self) -> Option<usize> {
+        Some(self.scene.lines[self.active_index()?].first)
     }
 
     /// Each active word's slot as (x, y, w, h) in frame pixels, in line order, for
@@ -1621,6 +1630,31 @@ mod tests {
                 .iter()
                 .all(|(x, _, w, _)| *x >= 0.0 && x + w <= 1080.0)
         );
+    }
+
+    #[test]
+    fn a_long_pause_ends_a_caption_instead_of_joining_words_minutes_apart() {
+        let words = [
+            ("one", 0.0, 0.5),
+            ("two", 0.5, 1.0),
+            ("three", 90.0, 90.5),
+            ("four", 90.5, 91.0),
+            ("five", 91.0, 91.5),
+        ];
+        let mut r = Renderer::new(Scene::new(&book(), input("word_highlight", &words, 3)));
+        r.render(0.3);
+        assert_eq!(r.active_first_word(), Some(0));
+        assert_eq!(r.active_word_rects().len(), 2, "one two, not three");
+        r.render(45.0);
+        assert_eq!(
+            r.active_index(),
+            None,
+            "nothing hangs on through the silence"
+        );
+        r.render(90.2);
+        assert_eq!(r.active_index(), Some(1));
+        assert_eq!(r.active_first_word(), Some(2), "word N of it is word 2 + N");
+        assert_eq!(r.active_word_rects().len(), 3, "three four five");
     }
 
     #[test]

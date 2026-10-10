@@ -1,13 +1,13 @@
 //! Caption edits, shared by every editor: the web through WebAssembly, the phone
 //! natively. Captions are the transcript's words in reading order, cut every
-//! `words_per_line` words exactly as the scene cuts them; edits address words by
+//! `words_per_line` words (fewer around a long pause) exactly as the scene cuts them; edits address words by
 //! that flat index and rebuild the segments around them. Text edits are one word
 //! at a time, so no edit ever has to invent a timing.
 
 use serde::Serialize;
 use serde_json::json;
 
-use crate::model::{Segment, Transcript, Word, shifted};
+use crate::model::{Segment, Transcript, Word, cut, shifted};
 
 /// The shortest a word may be made by retiming, in seconds.
 pub const MIN_WORD_S: f32 = 0.05;
@@ -57,16 +57,17 @@ pub fn snap_to_centre(x: f32, y: f32, width: f32, height: f32, threshold: f32) -
 /// The captions as shown: times carry the caption offset, as the scene's do.
 pub fn lines(t: &Transcript, words_per_line: u32, offset_ms: i32) -> Vec<Line> {
     let words: Vec<_> = t.words().collect();
-    let size = words_per_line.max(1) as usize;
-    words
-        .chunks(size)
-        .enumerate()
-        .map(|(n, chunk)| Line {
-            from: n * size,
-            count: chunk.len(),
-            start: shifted(chunk[0].start, offset_ms),
-            end: shifted(chunk[chunk.len() - 1].end, offset_ms),
-            text: join(chunk.iter().copied()),
+    cut(&words, words_per_line as usize)
+        .into_iter()
+        .map(|range| {
+            let chunk = &words[range.clone()];
+            Line {
+                from: range.start,
+                count: chunk.len(),
+                start: shifted(chunk[0].start, offset_ms),
+                end: shifted(chunk[chunk.len() - 1].end, offset_ms),
+                text: join(chunk.iter().copied()),
+            }
         })
         .collect()
 }
@@ -179,6 +180,34 @@ mod tests {
         t.words()
             .map(|w| (w.text.clone(), w.start, w.end))
             .collect()
+    }
+
+    #[test]
+    fn captions_break_at_a_long_pause_and_otherwise_every_n_words() {
+        let t: Transcript = serde_json::from_value(json!({
+            "schema_version": 1, "language": "en", "duration": 200.0,
+            "segments": [
+                { "id": "a", "start": 0.0, "end": 1.0, "text": "one two", "words": [
+                    { "text": "one", "start": 0.0, "end": 0.5 },
+                    { "text": "two", "start": 0.5, "end": 1.0 }] },
+                { "id": "b", "start": 120.0, "end": 121.5, "text": "three four five", "words": [
+                    { "text": "three", "start": 120.0, "end": 120.5 },
+                    { "text": "four", "start": 120.5, "end": 121.0 },
+                    { "text": "five", "start": 121.0, "end": 121.5 }] }
+            ]
+        }))
+        .unwrap();
+        let cut: Vec<_> = lines(&t, 3, 0)
+            .iter()
+            .map(|l| (l.from, l.count, l.text.clone()))
+            .collect();
+        assert_eq!(
+            cut,
+            [(0, 2, "one two".into()), (2, 3, "three four five".into())]
+        );
+        // Without the pause the same words are cut by count alone.
+        let counts: Vec<_> = lines(&t, 2, 0).iter().map(|l| (l.from, l.count)).collect();
+        assert_eq!(counts, [(0, 2), (2, 2), (4, 1)]);
     }
 
     #[test]

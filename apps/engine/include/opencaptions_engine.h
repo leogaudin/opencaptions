@@ -49,7 +49,7 @@ uint32_t oc_changed_top(void);
 uint32_t oc_changed_bottom(void);
 
 /* The caption showing at the last rendered time. */
-int32_t oc_active_index(void);      /* line index, or -1 */
+int32_t oc_active_index(void);      /* flat index of the line's first word (word N of it is transcript word index + N), or -1 */
 uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
 uint32_t oc_watermark_rect(void);   /* one quad; 0 without a watermark */
 uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */

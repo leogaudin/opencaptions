@@ -22,7 +22,7 @@ public struct FrameRect: Equatable, Sendable {
 public struct ActiveCaption: Equatable, Sendable {
     /// The block rectangle, for dragging the whole caption.
     public var bounds: FrameRect
-    /// Index among all lines: word N here is transcript word `index * wordsPerLine + N`.
+    /// Flat index of the caption's first word: word N here is transcript word `index + N`.
     public var index: Int
     /// Each word's rectangle in line order, for picking the word under a tap.
     public var words: [FrameRect]

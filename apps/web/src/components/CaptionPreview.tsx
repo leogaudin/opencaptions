@@ -90,7 +90,6 @@ function CaptionCanvas({
   const [paused, setPaused] = useState(true);
 
   const transcript = useEditorStore((s) => s.transcript);
-  const wordsPerLine = Math.max(1, scene.style.words_per_line);
   const setStyle = useEditorStore((s) => s.setStyle);
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
   const editTranscript = useEditorStore((s) => s.editTranscript);
@@ -224,7 +223,7 @@ function CaptionCanvas({
     );
     const word = active.words[j];
     if (!word) return;
-    const index = active.index * wordsPerLine + j;
+    const index = active.index + j;
     const text = transcript.segments.flatMap((s) => s.words)[index]?.text;
     if (text === undefined) return;
     resolved.current = false;

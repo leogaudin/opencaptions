@@ -6,6 +6,7 @@
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Value};
+use std::ops::Range;
 
 /// A straight-alpha colour parsed from `#RRGGBB` or `#RRGGBBAA`.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -162,6 +163,29 @@ impl Transcript {
     pub fn words(&self) -> impl Iterator<Item = &Word> {
         self.segments.iter().flat_map(|s| &s.words)
     }
+}
+
+/// A silence this long ends a caption: words said further apart than this never share one, or the
+/// line would hang on screen through the whole pause with its first words long gone.
+pub const LINE_BREAK_S: f32 = 1.0;
+
+/// How the words are cut into captions, as ranges of the flat word list: `per_line` words each,
+/// fewer where a pause of `LINE_BREAK_S` falls inside. The one rule for the scene and for the
+/// editors' timeline, so what is drawn and what is listed cannot disagree.
+pub fn cut(words: &[&Word], per_line: usize) -> Vec<Range<usize>> {
+    let per_line = per_line.max(1);
+    let mut lines = vec![];
+    let mut from = 0;
+    for i in 1..=words.len() {
+        let paused = words
+            .get(i)
+            .is_some_and(|next| next.start - words[i - 1].end >= LINE_BREAK_S);
+        if i == words.len() || i - from == per_line || paused {
+            lines.push(from..i);
+            from = i;
+        }
+    }
+    lines
 }
 
 /// A transcript time as it is shown: moved by the caption offset (positive means

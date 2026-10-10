@@ -255,12 +255,13 @@ mod abi {
         }
     }
 
-    /// Index of the active line, or -1 when no caption shows.
+    /// Flat index of the active line's first word (word N of the line is transcript word
+    /// `index + N`), or -1 when no caption shows.
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_active_index() -> i32 {
         lock(&RENDERER)
             .as_ref()
-            .and_then(|r| r.active_index())
+            .and_then(|r| r.active_first_word())
             .map_or(-1, |i| i as i32)
     }
 

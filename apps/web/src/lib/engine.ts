@@ -72,7 +72,7 @@ export interface Rect {
 export interface ActiveCaption {
   /** The block rectangle, for dragging the whole caption. */
   bounds: Rect;
-  /** Index of this line among all lines: word N here is transcript word `index * wordsPerLine + N`. */
+  /** Flat index of this line's first word: word N here is transcript word `index + N`. */
   index: number;
   /** Each word's rectangle in line order, for picking the word under a double-click. */
   words: Rect[];
@@ -113,8 +113,8 @@ export interface CaptionEditor {
     threshold: number,
   ): SnappedPosition;
   /**
-   * The captions, cut every `wordsPerLine` words as the export cuts them, with
-   * times as shown (the caption offset applied).
+   * The captions, cut every `wordsPerLine` words (fewer around a long pause) as the export
+   * cuts them, with times as shown (the caption offset applied).
    */
   lines(t: Transcript, wordsPerLine: number, offsetMs: number): CaptionLine[];
   /**
