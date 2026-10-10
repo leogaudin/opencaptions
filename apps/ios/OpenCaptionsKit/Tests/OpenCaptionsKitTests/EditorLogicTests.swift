@@ -355,8 +355,12 @@ final class Counter { var value = 0 }
             model.retime(index: 2, edge: .end, time: time)
         }
         await model.settled()
+        // The last request was past four, so four gives way down to its minimum (the engine's rolling
+        // edit: `retime_moves_one_edge_and_a_touching_neighbour_gives_way`) and three stops there.
         let end = try #require(model.transcript?.words[2].end)
-        #expect(abs(end - 2.6) < 1e-4, "the last request was past four, so it stops at four")
+        let four = try #require(model.transcript?.words[3])
+        #expect(abs(end - 2.95) < 1e-4, "three stops where four is down to its minimum")
+        #expect(abs(four.start - 2.95) < 1e-4 && four.end == 3.0, "four gave way and was not lengthened")
         #expect(model.transcript?.words[0].start == 0.5, "nothing else moved")
     }
 
