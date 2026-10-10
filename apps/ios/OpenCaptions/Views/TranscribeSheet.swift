@@ -301,10 +301,8 @@ struct TranscribeSheet: View {
 
     private static func hint(_ id: String) -> LocalizedStringKey? {
         switch id {
-        case "tiny": "Fastest, least accurate"
-        case "base": "Fast, good for most videos"
-        case "small": "A balance of speed and accuracy"
-        case "large-v3-turbo": "Most accurate for its speed"
+        case "small": "For older iPhones"
+        case WhisperModels.defaultID: "The one to use: nearly as accurate as Large v3, and much faster"
         case "parakeet-tdt-0.6b-v3": "Faster, 25 European languages"
         case WhisperModels.appleSpeechID: "Apple's own, for the languages iOS offers"
         default: nil

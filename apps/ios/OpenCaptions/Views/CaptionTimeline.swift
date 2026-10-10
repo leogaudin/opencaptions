@@ -268,7 +268,7 @@ private struct TimelineRuler: View {
                 let x = origin + t * px
                 context.fill(Path(CGRect(x: x, y: size.height - 8, width: 1, height: 8)), with: .color(Theme.textSecondary.opacity(0.6)))
                 context.draw(
-                    Text(TimelineScale.tickLabel(t, step: step)).font(.system(size: 10, weight: .medium).monospacedDigit())
+                    Text(TimelineScale.tickLabel(t, step: step)).font(.system(size: 10, weight: .medium, design: .monospaced))
                         .foregroundStyle(Theme.textSecondary),
                     at: CGPoint(x: x + 3, y: size.height / 2 - 2), anchor: .leading)
             }

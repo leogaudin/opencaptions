@@ -26,7 +26,7 @@ make ios-build     # build the app for the Apple-silicon simulator
 ```
 
 `ios-test` and `ios-build` need `ios-engine` first. `OC_WHISPER_E2E=1 make ios-test` also runs one
-test that downloads the `tiny` model and transcribes real speech (network, about a minute;
+test that downloads the `small` model and transcribes real speech (network, about a minute;
 `OC_WHISPER_MODELS=<dir>` keeps the model between runs). Open `apps/ios/OpenCaptions.xcodeproj`
 in Xcode to run on a simulator or device.
 

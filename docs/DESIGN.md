@@ -455,7 +455,7 @@ the folder, and an unreadable project is hidden rather than failing the list.
 Subtitle files (SRT, VTT) are only exported by the Docker product.
 
 **Models.** The desktop's ids, limited to a short list: the Whisper sizes WhisperKit publishes
-(Tiny, Base, Small, Large v3 Turbo and Large v3; no English-only or superseded ones), Parakeet v3
+(Whisper Small, Large v3 Turbo and Large v3; no English-only or superseded ones), Parakeet v3
 (FluidAudio, Core ML: faster, 25 European languages, offered only for those), and on iOS 26 Apple's own
 `SpeechTranscriber` (built in, nothing to download, a language must be chosen). Each model names the engine
 that runs it (`WhisperModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The

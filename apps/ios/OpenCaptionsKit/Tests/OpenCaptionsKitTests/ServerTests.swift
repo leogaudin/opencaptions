@@ -291,9 +291,9 @@ private func fixture(_ name: String) throws -> Data {
         let onTheServer = WhisperModels.all.map(\.id).filter { $0 != WhisperModels.appleSpeechID }
         #expect(try caps(models: everything, default: "large-v3-turbo").leanModels.map(\.id) == onTheServer)
         // A server that offers fewer offers fewer.
-        #expect(try caps(models: ["base", "large-v3"], default: "base").leanModels.map(\.id) == ["base", "large-v3"])
+        #expect(try caps(models: ["small", "large-v3"], default: "small").leanModels.map(\.id) == ["small", "large-v3"])
         // An operator's own default is kept, first, even off the ladder.
-        #expect(try caps(models: ["tiny", "my-finetune"], default: "my-finetune").leanModels.map(\.id) == ["my-finetune", "tiny"])
+        #expect(try caps(models: ["small", "my-finetune"], default: "my-finetune").leanModels.map(\.id) == ["my-finetune", "small"])
         // A hosted server fixes the model and lists none.
         #expect(try caps(models: [], default: nil).leanModels.isEmpty)
     }

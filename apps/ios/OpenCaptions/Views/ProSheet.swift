@@ -34,14 +34,23 @@ struct ProSheet: View {
                 if let message = app.purchases.message {
                     Text(message).font(.system(size: 13)).foregroundStyle(Theme.danger)
                 }
-                Button("Unlock Pro") { Task { await app.purchases.buy() } }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(app.purchases.product == nil || app.purchases.isBusy)
-                HStack(spacing: 10) {
-                    Button("Restore purchases") { Task { await app.purchases.restore() } }
-                        .buttonStyle(SecondaryButtonStyle()).disabled(app.purchases.isBusy)
-                    Button("Not now") { dismiss() }.buttonStyle(SecondaryButtonStyle())
+                Button { Task { await app.purchases.buy() } } label: {
+                    if app.purchases.isBusy {
+                        ProgressView().tint(.black).frame(maxWidth: .infinity)
+                    } else {
+                        Text("Unlock Pro")
+                    }
                 }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(app.purchases.product == nil || app.purchases.isBusy)
+                VStack(spacing: 14) {
+                    Button("Restore purchases") { Task { await app.purchases.restore() } }
+                        .disabled(app.purchases.isBusy)
+                    Button("Not now") { dismiss() }
+                }
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(maxWidth: .infinity)
             #elseif DEBUG
                 Button("Unlock Pro (debug)") {
                     app.setTier(.pro)
@@ -61,6 +70,8 @@ struct ProSheet: View {
         .presentationBackground(Theme.background)
         .presentationCornerRadius(24)
         .tint(Theme.accent)
+        // Once Pro is owned (bought here, restored, or approved elsewhere) there is nothing left to offer.
+        .onChange(of: app.entitlements.isPro) { _, isPro in if isPro { dismiss() } }
         #if APPSTORE
             // A price that did not load when the app started (no connection yet) is asked for again here.
             .task { await app.purchases.loadProduct() }

@@ -274,7 +274,7 @@ struct EditorView: View {
                     } else {
                         ProgressView().tint(Theme.accent)
                     }
-                    Text(message).font(.system(size: 14, weight: .semibold)).lineLimit(2)
+                    Text(message).font(.system(size: 14, weight: .semibold))
                     Spacer(minLength: 0)
                 }
                 if fraction > 0 { ProgressView(value: fraction).tint(Theme.accent) }

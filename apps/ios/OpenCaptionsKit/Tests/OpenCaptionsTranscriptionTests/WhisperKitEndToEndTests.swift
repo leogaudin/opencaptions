@@ -22,13 +22,13 @@ struct WhisperKitEndToEndTests {
         let models = ProcessInfo.processInfo.environment["OC_WHISPER_MODELS"].map(URL.init(fileURLWithPath:))
             ?? FileManager.default.temporaryDirectory.appendingPathComponent("oc-models")
         let transcriber = WhisperKitTranscriber(modelsDirectory: models)
-        try await transcriber.download("tiny")
-        #expect(transcriber.isDownloaded("tiny"))
+        try await transcriber.download("small")
+        #expect(transcriber.isDownloaded("small"))
 
         let audio = try speech("Hello world. This is a test of open captions.")
         let progress = ProgressLog()
         let transcript = try await transcriber.transcribe(
-            source: audio, language: "en", model: "tiny", progress: { f, m in progress.add(f, m) })
+            source: audio, language: "en", model: "small", progress: { f, m in progress.add(f, m) })
 
         let spoken = transcript.words.map { $0.text.lowercased().trimmingCharacters(in: .punctuationCharacters) }
         #expect(spoken.contains("hello"), "heard: \(spoken)")
@@ -53,10 +53,10 @@ extension WhisperKitEndToEndTests {
         let models = ProcessInfo.processInfo.environment["OC_WHISPER_MODELS"].map(URL.init(fileURLWithPath:))
             ?? FileManager.default.temporaryDirectory.appendingPathComponent("oc-models")
         let transcriber = WhisperKitTranscriber(modelsDirectory: models)
-        try await transcriber.download("base")
+        try await transcriber.download("small")
         let audio = try speech("[[slnc 9000]] " + sentence, voice: voice)
         let transcript = try await transcriber.transcribe(
-            source: audio, language: nil, model: "base", progress: { _, _ in })
+            source: audio, language: nil, model: "small", progress: { _, _ in })
         #expect(transcript.language == code, "detected \(transcript.language) for \(voice): \(transcript.words.map(\.text))")
         #expect(transcript.languageDetection == .auto)
         #expect(transcript.words.count >= 8)

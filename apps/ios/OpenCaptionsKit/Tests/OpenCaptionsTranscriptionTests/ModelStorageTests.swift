@@ -16,14 +16,14 @@ import Testing
 
     @Test func aModelIsDownloadedMeasuredAndDeleted() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("oc-models-\(UUID())")
-        let transcriber = try fakeModel("base", in: root, bytes: 12_345)
-        #expect(transcriber.isDownloaded("base"))
-        #expect(!transcriber.isDownloaded("tiny"))
-        #expect(transcriber.sizeOnDisk("base") == 12_345)
-        #expect(transcriber.sizeOnDisk("tiny") == 0)
-        try transcriber.delete("base")
-        #expect(!transcriber.isDownloaded("base"))
-        #expect(transcriber.sizeOnDisk("base") == 0)
-        try transcriber.delete("base")  // nothing to delete is not an error
+        let transcriber = try fakeModel("small", in: root, bytes: 12_345)
+        #expect(transcriber.isDownloaded("small"))
+        #expect(!transcriber.isDownloaded("large-v3-turbo"))
+        #expect(transcriber.sizeOnDisk("small") == 12_345)
+        #expect(transcriber.sizeOnDisk("large-v3-turbo") == 0)
+        try transcriber.delete("small")
+        #expect(!transcriber.isDownloaded("small"))
+        #expect(transcriber.sizeOnDisk("small") == 0)
+        try transcriber.delete("small")  // nothing to delete is not an error
     }
 }

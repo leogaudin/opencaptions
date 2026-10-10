@@ -50,6 +50,8 @@ public final class LocalTranscriber: Transcriber {
         case .parakeet: try await parakeet.download(megabytes: model.megabytes, progress: progress)
         case .appleSpeech: break
         }
+        // The default model is the one people use: have it loaded by the time they ask, as at launch.
+        if id == WhisperModels.defaultID { preload(id) }
     }
 
     /// Starts loading a downloaded model into memory, so that it is ready by the time someone has picked a

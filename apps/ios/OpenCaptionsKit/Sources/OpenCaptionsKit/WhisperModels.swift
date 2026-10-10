@@ -59,16 +59,14 @@ public enum WhisperModels {
     /// Ascending size. Downloaded on demand, never bundled. Short on purpose: no English-only
     /// models (the multilingual ones are as good in English), nothing superseded or redundant.
     private static let downloadable: [WhisperModel] = [
-        .init(id: "tiny", label: "Tiny", variant: "openai_whisper-tiny", megabytes: 77),
-        .init(id: "base", label: "Base", variant: "openai_whisper-base", megabytes: 147),
-        .init(id: "small", label: "Small", variant: "openai_whisper-small_216MB", megabytes: 217),
+        .init(id: "small", label: "Whisper Small", variant: "openai_whisper-small_216MB", megabytes: 217),
         // FluidAudio's Core ML build of Parakeet TDT v3 (about 480 MB). Faster than Whisper for
         // somewhat more errors; see docs/ASR-MODELS.md.
         .init(
             id: "parakeet-tdt-0.6b-v3", label: "Parakeet v3", megabytes: 480, engine: .parakeet,
             languages: parakeetLanguages),
-        .init(id: "large-v3-turbo", label: "Large v3 Turbo", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
-        .init(id: "large-v3", label: "Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
+        .init(id: "large-v3-turbo", label: "Whisper Large v3 Turbo", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
+        .init(id: "large-v3", label: "Whisper Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
     ]
 
     private static let appleSpeech = WhisperModel(
@@ -80,7 +78,8 @@ public enum WhisperModels {
         return downloadable
     }
 
-    /// Large v3 quality at two thirds of the size and much faster; the one to recommend.
+    /// Large v3 quality at two thirds of the size and much faster; the one to recommend. It is the model
+    /// selected when asking to transcribe and the one kept loaded at launch, whichever it is.
     public static let defaultID = "large-v3-turbo"
 
     public static func model(_ id: String) -> WhisperModel? {

@@ -48,6 +48,10 @@
             do {
                 let found = try await Product.products(for: [Self.productID])
                 product = found.first
+                if let product {
+                    // A price in the wrong currency is the storefront's, not the app's: say which it is.
+                    Diagnostics.log("purchases: \(product.displayPrice) in \(product.priceFormatStyle.locale.identifier), storefront \(await Storefront.current?.countryCode ?? "unknown")")
+                }
                 if found.isEmpty {
                     Diagnostics.log("purchases: the store offered no product for \(Self.productID) (payments allowed: \(AppStore.canMakePayments))")
                 }

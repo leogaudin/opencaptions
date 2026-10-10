@@ -57,10 +57,10 @@ private struct Timecode: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(TimelineScale.timecode(playback.time))
-                .font(.system(size: 16, weight: .semibold).monospacedDigit())
+                .font(.system(size: 16, weight: .semibold, design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
             Text(TimelineScale.timecode(duration))
-                .font(.system(size: 12, weight: .medium).monospacedDigit())
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundStyle(Theme.textSecondary)
         }
         .accessibilityElement(children: .ignore)
