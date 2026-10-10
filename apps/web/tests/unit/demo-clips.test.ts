@@ -13,7 +13,14 @@ interface Word {
 }
 
 const manifest = read("clips.json") as {
-  clips: { id: string; video: string; transcript: string; duration: number; language: string }[];
+  clips: {
+    id: string;
+    video: string;
+    transcript: string;
+    duration: number;
+    language: string;
+    credit?: Record<string, string>;
+  }[];
 };
 
 describe("demo clips", () => {
@@ -27,6 +34,12 @@ describe("demo clips", () => {
       test("its files exist", () => {
         assert.ok(existsSync(new URL(`clips/${clip.video}`, DIR)), clip.video);
         assert.ok(existsSync(new URL(`clips/${clip.transcript}`, DIR)), clip.transcript);
+      });
+
+      test("its credit, when it has one, is complete", () => {
+        for (const key of ["title", "author", "url", "license", "licenseUrl"]) {
+          if (clip.credit) assert.ok(clip.credit[key], `credit.${key}`);
+        }
       });
 
       test("its transcript is in order and inside the video", () => {

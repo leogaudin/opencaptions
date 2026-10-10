@@ -305,5 +305,6 @@
   "Same pixels everywhere": "どこでも同じピクセル",
   "Tap the video to play or pause.": "動画をタップして再生・一時停止。",
   "Turn the sound on": "音声をオンにする",
-  "Turn the sound off": "音声をオフにする"
+  "Turn the sound off": "音声をオフにする",
+  "Clips are cropped and trimmed.": "クリップはトリミング・短縮しています。"
 }

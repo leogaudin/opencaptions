@@ -189,6 +189,40 @@ function IconBadge({ icon: Icon }: { icon: typeof Code }) {
   );
 }
 
+/** The clips' credits: CC BY asks for the title, the author, the licence and a note of changes. */
+function Credits() {
+  const t = useT();
+  const [clips, setClips] = useState<Clip[]>([]);
+  useEffect(() => {
+    loadManifest()
+      .then(setClips)
+      .catch(() => undefined);
+  }, []);
+  const credited = clips.filter((c) => c.credit);
+  if (credited.length === 0) return null;
+  return (
+    <p className="mx-auto mb-3 max-w-3xl px-4" data-testid="clip-credits">
+      {credited.map((c, i) => {
+        const credit = c.credit as NonNullable<Clip["credit"]>;
+        return (
+          <span key={c.id}>
+            {i > 0 && " · "}
+            <a href={credit.url} className="underline">
+              {credit.title}
+            </a>{" "}
+            {credit.author} (
+            <a href={credit.licenseUrl} className="underline">
+              {credit.license}
+            </a>
+            )
+          </span>
+        );
+      })}{" "}
+      {t("Clips are cropped and trimmed.")}
+    </p>
+  );
+}
+
 function Facts() {
   const t = useT();
   const facts = [
@@ -309,6 +343,7 @@ export function DemoApp() {
         <Ways />
       </main>
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
+        <Credits />
         {t("OpenCaptions is free software, AGPL-3.0.")}
       </footer>
     </div>

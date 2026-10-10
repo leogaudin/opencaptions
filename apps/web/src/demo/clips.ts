@@ -16,14 +16,24 @@ export interface Clip {
   height: number;
   duration: number;
   fps: number;
+  /** Where the film comes from, shown in the page's footer (CC BY asks for it). */
+  credit?: { title: string; author: string; url: string; license: string; licenseUrl: string };
 }
 
 const BASE = "/demo";
 
-export async function loadManifest(): Promise<Clip[]> {
-  const r = await fetch(`${BASE}/clips.json`);
-  if (!r.ok) throw new Error(`clips.json: ${r.status}`);
-  return ((await r.json()) as { clips: Clip[] }).clips;
+let manifest: Promise<Clip[]> | undefined;
+
+/** Fetched once: the demo and its footer both read it. */
+export function loadManifest(): Promise<Clip[]> {
+  manifest ??= fetch(`${BASE}/clips.json`).then(async (r) => {
+    if (!r.ok) throw new Error(`clips.json: ${r.status}`);
+    return ((await r.json()) as { clips: Clip[] }).clips;
+  });
+  manifest.catch(() => {
+    manifest = undefined;
+  });
+  return manifest;
 }
 
 export const clipVideoUrl = (clip: Pick<Clip, "video">): string => `${BASE}/clips/${clip.video}`;
