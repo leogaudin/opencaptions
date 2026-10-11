@@ -75,6 +75,17 @@ public final class LocalTranscriber: Transcriber {
         source: URL, language: String?, model: String,
         progress: @escaping @Sendable (Double, String) -> Void
     ) async throws -> Transcript {
+        let transcript = try await transcribeWithEngine(source: source, language: language, model: model, progress: progress)
+        // Whatever the engine invented past the end of the video is not kept; if nothing else is left, there was no speech.
+        let bounded = transcript.withinDuration()
+        guard !bounded.segments.isEmpty else { throw TranscriptionError.noSpeech }
+        return bounded
+    }
+
+    private func transcribeWithEngine(
+        source: URL, language: String?, model: String,
+        progress: @escaping @Sendable (Double, String) -> Void
+    ) async throws -> Transcript {
         switch engine(model) {
         case .whisperKit:
             return try await whisper.transcribe(source: source, language: language, model: model, progress: progress)
