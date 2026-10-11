@@ -99,6 +99,14 @@ demo:                ## Build the public demo site into apps/web/dist-demo (stat
 	@docker build -q --build-context engine=apps/engine --target demo-site \
 	 -o apps/web/dist-demo apps/web >/dev/null && echo "Wrote apps/web/dist-demo"
 
+docs:                ## Serve the documentation with live reload on http://localhost:3000
+	@docker run --rm -it -p 3000:3000 -v "$$PWD":/repo -v opencaptions-docs-modules:/repo/apps/docs/node_modules \
+	 -w /repo/apps/docs node:24-bookworm-slim sh -c 'npm ci --no-audit --no-fund && npm start'
+
+docs-build:          ## Build the documentation into apps/docs/dist (static files for docs.opencaptions.app)
+	@docker build -q --build-context docs=docs --target docs-site -o apps/docs/dist apps/docs >/dev/null \
+	 && echo "Wrote apps/docs/dist"
+
 ios-engine:          ## Build the engine into apps/ios/Build/OpenCaptionsEngine.xcframework
 	$(IOS_ONLY)
 	@apps/engine/scripts/build-apple.sh

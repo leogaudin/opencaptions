@@ -1,0 +1,29 @@
+{
+  "name": "opencaptions-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The OpenCaptions documentation site (Docusaurus). The pages are the Markdown files in ../../docs.",
+  "scripts": {
+    "start": "docusaurus start --host 0.0.0.0",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve --host 0.0.0.0",
+    "clear": "docusaurus clear",
+    "typecheck": "tsc"
+  },
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "@docusaurus/core": "^3.10.2",
+    "@docusaurus/preset-classic": "^3.10.2",
+    "@docusaurus/theme-search-algolia": "^3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "^3.10.2",
+    "@docusaurus/tsconfig": "^3.10.2",
+    "@docusaurus/types": "^3.10.2",
+    "typescript": "~5.9"
+  }
+}

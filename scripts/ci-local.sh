@@ -220,6 +220,13 @@ step "Building the public demo site (apps/web demo-site stage)"
   -o "$WORKTREE/.ci-demo-site" apps/web >/dev/null) || fail "the demo site build failed"
 rm -rf "$WORKTREE/.ci-demo-site"
 
+# The documentation site is the Markdown of docs/ built by the docs Dockerfile's docs-site stage,
+# which is what the docs job exports; a broken link or a bad page fails the build.
+step "Building the documentation site (apps/docs docs-site stage)"
+(cd "$WORKTREE" && docker build -q --build-context docs=docs --target docs-site \
+  -o "$WORKTREE/.ci-docs-site" apps/docs >/dev/null) || fail "the documentation site build failed"
+rm -rf "$WORKTREE/.ci-docs-site"
+
 # The GPU image is what publish-gpu pushes, so building it here is a rehearsal of that: worth
 # its several GB only when something it is made from changed (or when asked with --gpu).
 build_gpu=$FORCE_GPU
