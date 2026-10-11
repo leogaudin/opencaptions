@@ -53,7 +53,7 @@ test.describe("Hosted mode", () => {
     await page.goto("/upload");
     await expect(page.getByTestId("title")).toBeVisible();
     await expect(page.locator("select#provider")).toHaveCount(0);
-    await expect(page.getByTestId("model-select")).toHaveCount(0);
+    await expect(page.getByTestId("model-list")).toHaveCount(0);
 
     await page.goto(`/projects/${PROJECT_ID}`);
     // The timing offset is on the style panel's Timing tab.

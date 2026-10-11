@@ -55,7 +55,10 @@ async def get_settings(
             ],
             available_models=[]
             if hosted
-            else [ModelOption(id=m.id, label=m.label, note=m.note) for m in all_models()],
+            else [
+                ModelOption(id=m.id, label=m.label, note=m.note, languages=m.language_codes)
+                for m in all_models()
+            ],
         ),
         limits=LimitsSettings(
             max_upload_size_mb=env_settings.max_upload_size_mb,

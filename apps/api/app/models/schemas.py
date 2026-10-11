@@ -393,6 +393,11 @@ class ModelOption(BaseModel):
         description="Size/speed tradeoff hint, a bigger model means a larger "
         "first-run download and slower CPU transcription."
     )
+    languages: list[str] | None = Field(
+        default=None,
+        description="ISO 639-1 codes the model transcribes; null when it takes any language "
+        "Whisper does.",
+    )
 
 
 class TranscriptionCapabilities(BaseModel):

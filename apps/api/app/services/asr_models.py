@@ -28,6 +28,11 @@ class AsrModelInfo:
     # Hugging Face repository holding the files (engines other than faster-whisper).
     repo: str | None = None
 
+    @property
+    def language_codes(self) -> list[str] | None:
+        """`languages` as a sorted list for the API; None when the model takes any language."""
+        return None if self.languages is None else sorted(self.languages)
+
 
 # Parakeet TDT v3 (NVIDIA): the 25 European languages it was trained on.
 _PARAKEET_V3_LANGUAGES = frozenset(

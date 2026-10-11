@@ -46,6 +46,18 @@ async def test_get_settings_exposes_available_models(first_client: AsyncClient) 
 
 
 @pytest.mark.asyncio
+async def test_a_model_says_which_languages_it_transcribes(first_client: AsyncClient) -> None:
+    """The language list in the UI follows the model: Whisper takes any language (null), Parakeet
+    only the 25 European ones it was trained on."""
+    r = await first_client.get("/api/v1/settings")
+    by_id = {m["id"]: m for m in r.json()["transcription"]["available_models"]}
+    assert by_id["large-v3-turbo"]["languages"] is None
+    parakeet = by_id["parakeet-tdt-0.6b-v3"]["languages"]
+    assert parakeet == sorted(parakeet) and len(parakeet) == 25
+    assert "fr" in parakeet and "ja" not in parakeet
+
+
+@pytest.mark.asyncio
 async def test_get_settings_default_model_is_in_available_models(
     first_client: AsyncClient,
 ) -> None:

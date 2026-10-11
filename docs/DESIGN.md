@@ -306,6 +306,12 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
 
 ## Transcription
 
+The web app and the iPhone app both ask in two steps: where to transcribe and with which model, then
+the spoken language, from a searchable list with a flag for each that follows the model (the API says
+which languages a model takes: `ModelOption.languages`, null for Whisper, which takes any). There is no
+"detect it" choice in either app: a language is always chosen, starting from the last one used, else the
+device's or the browser's. The API still accepts `auto` for its other clients.
+
 A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 
 - `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`

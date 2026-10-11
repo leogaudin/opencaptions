@@ -10,7 +10,7 @@ OpenCaptions adds animated, word-by-word captions to a video. It has no accounts
 
 HOW TO TRY IT
 1. Tap + on the Projects screen and pick any video with speech from Photos.
-2. Tap Transcribe, choose the language (or leave it on automatic) and tap the button. Speech recognition runs on the device. The first time, the app downloads the speech model it needs (by default "Large v3 Turbo", about 627 MB; a smaller one, about 217 MB, can be chosen in Settings), so an internet connection is required once, and Wi-Fi is advisable.
+2. Tap Transcribe, choose the model and tap Next, then choose the spoken language and tap the button. Speech recognition runs on the device. The first time, the app downloads the speech model it needs (by default "Large v3 Turbo", about 627 MB; a smaller one, about 217 MB, can be chosen in Settings), so an internet connection is required once, and Wi-Fi is advisable.
 3. Pick a look in the style sheet, move the caption on the video, tap a word to correct it, and use Save to export the captioned video to Photos.
 
 IN-APP PURCHASE

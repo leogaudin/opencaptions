@@ -14,6 +14,7 @@ const PRODUCT_MODEL_IDS = [
   "medium",
   "large-v3",
   "large-v3-turbo",
+  "parakeet-tdt-0.6b-v3",
 ] as const;
 
 /**

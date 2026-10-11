@@ -46,10 +46,11 @@ test.describe("Local Whisper model selection", () => {
       mimeType: "video/mp4",
       buffer: Buffer.from("not decoded because upload is intercepted"),
     });
-    await page.getByTestId("model-select").selectOption("small");
+    await page.getByTestId("model-small").click();
+    await page.getByTestId("next").click();
     await page.getByTestId("submit").click();
     await expect.poll(() => bodies.length).toBe(1);
-    expect(bodies[0]).toMatchObject({ provider: "local", model: "small", language: "auto" });
+    expect(bodies[0]).toMatchObject({ provider: "local", model: "small", language: "en" });
 
     await page.goto("/upload");
     await page.getByTestId("file-input").setInputFiles({
@@ -58,19 +59,47 @@ test.describe("Local Whisper model selection", () => {
       buffer: Buffer.from("intercepted"),
     });
     await page.locator("select#provider").selectOption("openai");
+    await page.getByTestId("next").click();
     await page.getByTestId("submit").click();
     await expect.poll(() => bodies.length).toBe(2);
-    expect(bodies[1]).toMatchObject({ provider: "openai", language: "auto" });
+    expect(bodies[1]).toMatchObject({ provider: "openai", language: "en" });
     expect(bodies[1]).not.toHaveProperty("model");
 
     await page.goto("/upload");
     await page.getByTestId("mode-url").click();
     await page.getByTestId("video-url").fill("https://example.com/video.mp4");
     await page.getByTestId("title").fill("URL model test");
-    await page.getByTestId("model-select").selectOption("small");
+    await page.getByTestId("model-small").click();
+    await page.getByTestId("next").click();
     await page.getByTestId("submit").click();
     await expect.poll(() => bodies.length).toBe(3);
-    expect(bodies[2]).toMatchObject({ provider: "local", model: "small", language: "auto" });
+    expect(bodies[2]).toMatchObject({ provider: "local", model: "small", language: "en" });
+  });
+
+  test("the language step follows the model and never offers auto-detect", async ({ page }) => {
+    await page.goto("/upload");
+    await page.getByTestId("file-input").setInputFiles({
+      name: "languages.mp4",
+      mimeType: "video/mp4",
+      buffer: Buffer.from("not sent"),
+    });
+    // Whisper takes any language; Parakeet only the European ones it was trained on.
+    await page.getByTestId("model-small").click();
+    await page.getByTestId("next").click();
+    await expect(page.getByTestId("language-list")).toBeVisible();
+    await expect(page.getByTestId("language-ja")).toBeVisible();
+    await expect(page.getByTestId("language-auto")).toHaveCount(0);
+    await expect(page.getByTestId("language-en").locator("input")).toBeChecked();
+
+    await page.getByTestId("back").click();
+    await page.getByTestId("model-parakeet-tdt-0.6b-v3").click();
+    await page.getByTestId("next").click();
+    await expect(page.getByTestId("language-fr")).toBeVisible();
+    await expect(page.getByTestId("language-ja")).toHaveCount(0);
+
+    await page.getByTestId("language-search").fill("deu");
+    await expect(page.getByTestId("language-de")).toBeVisible();
+    await expect(page.getByTestId("language-fr")).toHaveCount(0);
   });
 
   test("unchanged editor picker preserves defaults; changed picker selects local model", async ({

@@ -8,6 +8,7 @@ import { AlertTriangle, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { LocalModelSelect } from "@/components/LocalModelSelect";
 import { useT } from "@/lib/i18n";
+import { languagesForModel } from "@/lib/transcriptionLanguages";
 import { useTranscriptionSettings } from "@/lib/useTranscriptionSettings";
 import { useEditorStore } from "@/store/editorStore";
 
@@ -20,10 +21,12 @@ export function RetranscribeDialog({ current }: { current: string }) {
       active?.type === "transcription" || (s.project?.status === "transcribing" && !active);
     return !s.project?.video_storage_key || transcribing;
   });
-  const { languages, models, defaultModel } = useTranscriptionSettings();
+  const { languages: supported, models, defaultModel } = useTranscriptionSettings();
   const [open, setOpen] = useState(false);
   const [language, setLanguage] = useState(current);
   const [model, setModel] = useState<string | null>(null);
+  // The languages follow the model chosen here.
+  const languages = languagesForModel(supported, models, model ?? defaultModel);
 
   function onOpenChange(next: boolean): void {
     if (next) {
@@ -86,13 +89,12 @@ export function RetranscribeDialog({ current }: { current: string }) {
               onChange={(e) => setLanguage(e.target.value)}
               className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs"
             >
-              <option value="auto">{t("Auto-detect")}</option>
               {languages.map((l) => (
                 <option key={l.code} value={l.code}>
                   {l.label}
                 </option>
               ))}
-              {current !== "auto" && !languages.some((l) => l.code === current) && (
+              {!languages.some((l) => l.code === current) && (
                 <option value={current}>
                   {current.toUpperCase()} {t("(current)")}
                 </option>

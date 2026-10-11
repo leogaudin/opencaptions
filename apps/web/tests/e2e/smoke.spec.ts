@@ -25,25 +25,35 @@ test.describe("OpenCaptions UI", () => {
     await page.goto("/upload");
     await expect(page.getByTestId("dropzone")).toBeVisible();
     await expect(page.getByTestId("title")).toBeVisible();
-    await expect(page.getByTestId("submit")).toBeVisible();
+    await expect(page.getByTestId("next")).toBeVisible();
   });
 
   test("local model picker shows the useful size ladder and configured default", async ({
     page,
   }) => {
     await page.goto("/upload");
-    const picker = page.getByTestId("model-select");
-    await expect(picker).toBeVisible();
+    const list = page.getByTestId("model-list");
+    await expect(list).toBeVisible();
 
     const response = await page.request.get("/api/v1/settings");
     expect(response.ok()).toBeTruthy();
     const settings = await response.json();
-    await expect(picker).toHaveValue(settings.transcription.model);
+    await expect(
+      page.getByTestId(`model-${settings.transcription.model}`).locator("input"),
+    ).toBeChecked();
 
-    const values = await picker
-      .locator("option")
-      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
-    expect(values).toEqual(["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"]);
+    const ids = await list
+      .locator("label")
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-testid")?.slice(6)));
+    expect(ids).toEqual([
+      "tiny",
+      "base",
+      "small",
+      "medium",
+      "large-v3",
+      "large-v3-turbo",
+      "parakeet-tdt-0.6b-v3",
+    ]);
   });
 
   test("nav from home to upload works", async ({ page }) => {
@@ -53,9 +63,9 @@ test.describe("OpenCaptions UI", () => {
     await expect(page).toHaveURL(/\/upload$/);
   });
 
-  test("submit is disabled until a file is chosen", async ({ page }) => {
+  test("next is disabled until a file is chosen", async ({ page }) => {
     await page.goto("/upload");
-    await expect(page.getByTestId("submit")).toBeDisabled();
+    await expect(page.getByTestId("next")).toBeDisabled();
   });
 
   test("privacy disclosure shows when OpenAI provider is selected", async ({ page }) => {

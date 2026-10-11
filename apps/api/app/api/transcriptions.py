@@ -96,7 +96,10 @@ async def capabilities(
         instance_name=settings.instance_name,
         models=[]
         if hosted
-        else [ModelOption(id=m.id, label=m.label, note=m.note) for m in all_models()],
+        else [
+            ModelOption(id=m.id, label=m.label, note=m.note, languages=m.language_codes)
+            for m in all_models()
+        ],
         default_model=None if hosted else settings.whisper_model,
         languages=[LanguageOption(code=lang.code, label=lang.label) for lang in all_languages()],
         max_upload_mb=settings.max_upload_size_mb,

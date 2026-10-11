@@ -1125,6 +1125,11 @@ export interface components {
              * @description Size/speed tradeoff hint, a bigger model means a larger first-run download and slower CPU transcription.
              */
             note: string;
+            /**
+             * Languages
+             * @description ISO 639-1 codes the model transcribes; null when it takes any language Whisper does.
+             */
+            languages?: string[] | null;
         };
         /**
          * PasswordResetConfirm

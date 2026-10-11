@@ -55,9 +55,10 @@ test.describe("Transcribing on another OpenCaptions server", () => {
     });
     await page.locator("select#provider").selectOption("opencaptions");
     await expect(page.getByText(/your audio will be sent to gpu\.example\.org/i)).toBeVisible();
+    await page.getByTestId("next").click();
     await page.getByTestId("submit").click();
     await expect.poll(() => bodies.length).toBe(1);
-    expect(bodies[0]).toMatchObject({ provider: "opencaptions", language: "auto" });
+    expect(bodies[0]).toMatchObject({ provider: "opencaptions", language: "en" });
     expect(bodies[0]).not.toHaveProperty("model");
   });
 

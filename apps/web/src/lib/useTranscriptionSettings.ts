@@ -6,7 +6,7 @@ import type { AppSettingsResponse } from "@/types";
 /**
  * Settings as the transcription UI needs them. Everything is empty until the
  * request returns, and stays empty if it fails: the UI then offers only
- * auto-detect and the deployment default, which is a working choice.
+ * the deployment default, which is a working choice.
  */
 export function useTranscriptionSettings() {
   const [settings, setSettings] = useState<AppSettingsResponse | null>(null);
