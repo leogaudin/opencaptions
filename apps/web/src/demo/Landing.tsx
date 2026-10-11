@@ -28,6 +28,8 @@ const linkClass =
   "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground";
 const buttonClass =
   "inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-opacity hover:opacity-90";
+/** Links that leave the page open in a new tab, so the demo stays where it is. */
+export const external = { target: "_blank", rel: "noopener noreferrer" } as const;
 const h2Class = "font-[Montserrat] text-2xl font-black tracking-tight sm:text-3xl";
 
 /** The demo's frame and its player's box: the page holds the same space before the demo loads. */
@@ -62,10 +64,10 @@ function Nav() {
         OpenCaptions
       </a>
       <nav className="flex items-center gap-4 sm:gap-6">
-        <a href={DOCS_URL} className={linkClass}>
+        <a href={DOCS_URL} {...external} className={linkClass}>
           {t("Docs")}
         </a>
-        <a href={GITHUB_URL} className={linkClass}>
+        <a href={GITHUB_URL} {...external} className={linkClass}>
           GitHub
         </a>
         <ThemeButton />
@@ -93,11 +95,19 @@ function Hero() {
         )}
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-        <a href={GITHUB_URL} className={`${buttonClass} bg-primary text-primary-foreground`}>
+        <a
+          href={GITHUB_URL}
+          {...external}
+          className={`${buttonClass} bg-primary text-primary-foreground`}
+        >
           {t("Self-host it")}
         </a>
         {APP_STORE_URL ? (
-          <a href={APP_STORE_URL} className={`${buttonClass} bg-muted text-foreground`}>
+          <a
+            href={APP_STORE_URL}
+            {...external}
+            className={`${buttonClass} bg-muted text-foreground`}
+          >
             {t("Get the iPhone app")}
           </a>
         ) : (
@@ -229,7 +239,11 @@ function Ways() {
             {t("Caption, retime and save right on the phone.")}
           </p>
           {APP_STORE_URL ? (
-            <a href={APP_STORE_URL} className={`${buttonClass} bg-primary text-primary-foreground`}>
+            <a
+              href={APP_STORE_URL}
+              {...external}
+              className={`${buttonClass} bg-primary text-primary-foreground`}
+            >
               {t("Get the iPhone app")}
             </a>
           ) : (
@@ -246,7 +260,11 @@ function Ways() {
               "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.",
             )}
           </p>
-          <a href={DOCS_URL} className={`${buttonClass} bg-foreground text-background`}>
+          <a
+            href={DOCS_URL}
+            {...external}
+            className={`${buttonClass} bg-foreground text-background`}
+          >
             {t("Read the docs")}
           </a>
         </article>
@@ -306,13 +324,13 @@ function Footer({ credits }: { credits?: ReactNode }) {
     <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
       <LanguageLinks />
       <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-        <a href={DOCS_URL} className={linkClass}>
+        <a href={DOCS_URL} {...external} className={linkClass}>
           {t("Docs")}
         </a>
-        <a href={GITHUB_URL} className={linkClass}>
+        <a href={GITHUB_URL} {...external} className={linkClass}>
           GitHub
         </a>
-        <a href={PRIVACY_URL} className={linkClass}>
+        <a href={PRIVACY_URL} {...external} className={linkClass}>
           {t("Privacy")}
         </a>
       </nav>

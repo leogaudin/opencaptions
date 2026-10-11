@@ -12,7 +12,7 @@ import { PlaybackProvider, useVideo } from "@/lib/playback";
 import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
 import { useEditorStore } from "@/store/editorStore";
 import { type Clip, loadClip, loadManifest } from "./clips";
-import { demoFrameClass, Page, playerBoxClass } from "./Landing";
+import { demoFrameClass, external, Page, playerBoxClass } from "./Landing";
 
 /**
  * Plays the clip as it loads (muted, unless the visitor asked for less motion), and again and again.
@@ -160,11 +160,11 @@ function Credits() {
         return (
           <span key={c.id}>
             {i > 0 && " · "}
-            <a href={credit.url} className="underline">
+            <a href={credit.url} {...external} className="underline">
               {credit.title}
             </a>{" "}
             {credit.author} (
-            <a href={credit.licenseUrl} className="underline">
+            <a href={credit.licenseUrl} {...external} className="underline">
               {credit.license}
             </a>
             )

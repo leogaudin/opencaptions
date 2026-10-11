@@ -240,8 +240,10 @@ describe("demo pages: what a crawler that runs no script reads", () => {
     for (const code of codes()) {
       const body = (pages[code] as DemoHtml).body;
       for (const [tag] of body.matchAll(/<img[^>]*>/g)) assert.match(tag, /\salt="/, tag);
-      for (const [, url] of body.matchAll(/href="(https?:[^"]*)"/g)) {
+      for (const [tag, url] of body.matchAll(/<a [^>]*href="(https?:[^"]*)"[^>]*>/g)) {
         assert.match(url as string, /^https:\/\//, url);
+        assert.match(tag, /target="_blank"/, `${url} opens in this tab`);
+        assert.match(tag, /rel="noopener noreferrer"/, `${url} has no rel`);
       }
     }
   });
