@@ -232,7 +232,7 @@ struct SettingsView: View {
             if let fraction = downloading[model.id] {
                 HStack(spacing: 8) {
                     Text("\(Int(fraction * 100))%").font(.system(size: 13, weight: .bold).monospacedDigit())
-                    ProgressView().controlSize(.small)
+                    Spinner().controlSize(.small)
                 }
                 .foregroundStyle(Theme.textSecondary)
             } else if model.isBuiltIn {

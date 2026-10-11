@@ -268,12 +268,12 @@ struct EditorView: View {
                         Text("\(Int(fraction * 100))%").font(.system(size: 20, weight: .heavy).monospacedDigit())
                             .foregroundStyle(Theme.textPrimary)
                     } else {
-                        ProgressView().tint(Theme.accent)
+                        Spinner()
                     }
                     Text(message).font(.system(size: 14, weight: .semibold))
                     Spacer(minLength: 0)
                 }
-                if fraction > 0 { ProgressView(value: fraction).tint(Theme.accent) }
+                if fraction > 0 { ProgressBar(value: fraction) }
                 HStack {
                     Text("Keep OpenCaptions open until this finishes.")
                         .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)

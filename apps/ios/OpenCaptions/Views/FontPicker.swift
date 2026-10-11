@@ -128,7 +128,7 @@ struct FontPickerSheet: View {
                         Button("Try again") { Task { await loadCatalog() } }.buttonStyle(PillButtonStyle(prominent: true))
                     }
                 } else {
-                    ProgressView()
+                    Spinner()
                 }
                 Spacer()
             } else {

@@ -1,79 +1,79 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "Checking for missed speech (%lld of %lld)…": {
+    "Second pass (%lld of %lld)…": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recherche de paroles manquées (%lld sur %lld)…"
+            "value": "Seconde passe (%lld sur %lld)…"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buscando voz omitida (%lld de %lld)…"
+            "value": "Segunda pasada (%lld de %lld)…"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suche nach übersehener Sprache (%lld von %lld) …"
+            "value": "Zweiter Durchgang (%lld von %lld) …"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Szukanie pominiętej mowy (%lld z %lld)…"
+            "value": "Drugie przejście (%lld z %lld)…"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Procurando fala perdida (%lld de %lld)…"
+            "value": "Segunda passada (%lld de %lld)…"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ricerca del parlato mancante (%lld di %lld)…"
+            "value": "Seconda passata (%lld di %lld)…"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Поиск пропущенной речи (%lld из %lld)…"
+            "value": "Второй проход (%lld из %lld)…"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kaçan konuşma aranıyor (%lld / %lld)…"
+            "value": "İkinci geçiş (%lld / %lld)…"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "聞き逃した音声を確認中（%lld/%lld）…"
+            "value": "2回目の確認中（%lld/%lld）…"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "놓친 음성 확인 중 (%lld/%lld)…"
+            "value": "두 번째 패스 (%lld/%lld)…"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在查找遗漏的语音（%lld/%lld）…"
+            "value": "第二遍处理（%lld/%lld）…"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Memeriksa ucapan yang terlewat (%lld dari %lld)…"
+            "value": "Putaran kedua (%lld dari %lld)…"
           }
         }
       }

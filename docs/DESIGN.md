@@ -187,7 +187,7 @@ The font row opens a list of the fonts in use, each name in its own face (a name
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.
 
-**Missed speech.** Whisper skips a whole 30 s window it judges silent, which music and noisy
+**Missed speech.** (Shown as "Second pass (n of m)…".) Whisper skips a whole 30 s window it judges silent, which music and noisy
 speech trigger, leaving a hole in the captions with good ones on either side. After the main
 pass, every stretch of 6 s or more without words that is not quiet (at most 12) is decoded twice
 without that judgement, the second window shifted, and only the words both readings give are kept

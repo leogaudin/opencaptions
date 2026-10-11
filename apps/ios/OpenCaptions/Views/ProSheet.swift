@@ -85,7 +85,7 @@ struct ProSheet: View {
             if let price = app.purchases.displayPrice {
                 Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
             } else if app.purchases.isLoadingProduct {
-                ProgressView()
+                Spinner()
             } else {
                 Button("Try again") { Task { await app.purchases.loadProduct() } }
                     .font(.system(size: 15, weight: .semibold))

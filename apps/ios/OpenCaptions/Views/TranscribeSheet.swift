@@ -165,11 +165,11 @@ struct TranscribeSheet: View {
             Text("Downloading the model").font(.system(size: 15, weight: .bold))
             if fraction >= 0.99 {
                 HStack(spacing: 10) {
-                    ProgressView().controlSize(.small)
+                    Spinner().controlSize(.small)
                     Text("Finishing up…").font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
                 }
             } else {
-                ProgressView(value: fraction).tint(Theme.accent)
+                ProgressBar(value: fraction)
                 Text("\(Int(fraction * 100))% of \(chosen.megabytes) MB")
                     .font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.textSecondary)
             }
@@ -284,7 +284,7 @@ struct TranscribeSheet: View {
                 Text(serverProblem).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
             } else if serverModels == nil {
                 HStack(spacing: 10) {
-                    ProgressView().controlSize(.small)
+                    Spinner().controlSize(.small)
                     Text("Asking \(app.serverConnection?.displayName ?? "the server")…")
                         .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
                 }

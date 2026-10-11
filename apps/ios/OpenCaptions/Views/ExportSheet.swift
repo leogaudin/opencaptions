@@ -24,7 +24,7 @@ struct ExportSheet: View {
                     Text(reason).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
             case .idle:
-                ProgressView()
+                Spinner()
             }
         }
         .padding(.horizontal, 24)
@@ -48,7 +48,7 @@ struct ExportSheet: View {
                 Spacer()
                 TimeLeft(fraction: fraction, startedAt: controller.startedAt)
             }
-            ProgressView(value: fraction).tint(Theme.accent)
+            ProgressBar(value: fraction)
             Text("Adding the captions to your video. Keep OpenCaptions open until it finishes.")
                 .font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
             Button("Cancel") {

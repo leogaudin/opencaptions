@@ -206,7 +206,7 @@ public final class WhisperKitTranscriber: Transcriber {
             try Task.checkCancellation()
             let inside = min(samples.count, Int(gap.lowerBound * rate))..<min(samples.count, Int(gap.upperBound * rate))
             guard !TranscriptGaps.isQuiet(samples[inside], rate: rate) else { continue }
-            progress(1, KitStrings.localized("Checking for missed speech (\(index + 1) of \(gaps.count))…"))
+            progress(1, KitStrings.localized("Second pass (\(index + 1) of \(gaps.count))…"))
             let first = await read(from: gap.lowerBound - 0.3, to: gap.upperBound + 0.3)
             guard !first.isEmpty else { continue }
             let second = await read(from: min(gap.lowerBound + 0.9, gap.upperBound - 2), to: gap.upperBound + 1.3)

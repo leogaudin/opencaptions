@@ -171,7 +171,7 @@ struct ProjectsView: View {
 
     private var importingCard: some View {
         VStack(spacing: 12) {
-            ProgressView().tint(Theme.accent)
+            Spinner()
             Text(importing ?? "").font(.system(size: 15, weight: .semibold))
         }
         .padding(.horizontal, 28).padding(.vertical, 22)
@@ -261,7 +261,7 @@ struct ProjectCard: View {
     @ViewBuilder private var status: some View {
         if let model = app.openEditor(for: project.id), case .running(let fraction, _) = model.transcription {
             HStack(spacing: 6) {
-                ProgressView().controlSize(.mini).tint(Theme.accent)
+                Spinner().controlSize(.mini)
                 Text(fraction > 0 ? "Transcribing… \(Int(fraction * 100))%" : "Transcribing…")
                     .foregroundStyle(Theme.textSecondary)
             }

@@ -57,7 +57,7 @@ struct StyleTile: View {
                     if let image {
                         Image(decorative: image, scale: 1).resizable().scaledToFill()
                     } else {
-                        ProgressView().controlSize(.small)
+                        Spinner().controlSize(.small)
                     }
                 }
                 .aspectRatio(156.0 / 87.0, contentMode: .fit)
