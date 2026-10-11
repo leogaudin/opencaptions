@@ -9,12 +9,14 @@ started without that flag. Reports progress via the supplied callback as segment
 from __future__ import annotations
 
 import logging
+import wave
 from threading import Lock
 from typing import Any
 from uuid import uuid4
 
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
+from app.transcription import chunking
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.device import resolve_compute_type, resolve_device
 
@@ -118,6 +120,8 @@ class LocalWhisperProvider(TranscriptionProvider):
         duration: float = float(info.duration or 0.0)
         was_auto = whisper_lang is None
 
+        # The first pass reports up to this share; the second look, when it runs, the rest.
+        first_pass_share = _first_pass_share()
         segments: list[TranscriptSegment] = []
         dropped_alignments = 0
         for seg in segments_iter:
@@ -149,7 +153,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             )
             segments.append(seg_obj)
             if on_progress and duration > 0:
-                fraction = min(1.0, max(0.0, seg_obj.end / duration))
+                fraction = min(1.0, max(0.0, seg_obj.end / duration)) * first_pass_share
                 on_progress(fraction, f"Transcribed {seg_obj.end:.1f}s / {duration:.1f}s")
 
         if dropped_alignments:
@@ -157,6 +161,10 @@ class LocalWhisperProvider(TranscriptionProvider):
                 "word alignment failed on %d segment(s); timings interpolated across each span",
                 dropped_alignments,
             )
+
+        segments = self._second_look(
+            whisper, audio_path, segments, detected_lang, duration, on_progress
+        )
 
         # A transcript that covers only the start of a video is the one failure
         # users actually report, and it is invisible from the output alone. Say how
@@ -204,6 +212,98 @@ class LocalWhisperProvider(TranscriptionProvider):
             duration=duration,
             segments=segments,
         )
+
+    @staticmethod
+    def _second_look(
+        whisper: Any,
+        audio_path: str,
+        segments: list[TranscriptSegment],
+        language: str,
+        duration: float,
+        on_progress: ProgressCallback | None,
+    ) -> list[TranscriptSegment]:
+        """The segments, plus whatever a second look finds in the long stretches with no words.
+
+        See `chunking.second_look` for why a stretch can be empty though someone speaks in it.
+        A recording that cannot be read again is returned as it was, and so is any when the
+        second look is off.
+        """
+        if not settings.whisper_fill_gaps or duration <= 0:
+            return segments
+        gaps = chunking.long_gaps(
+            [(w.start, w.end) for seg in segments for w in seg.words],
+            duration,
+            settings.whisper_fill_gap_s,
+        )
+        if not gaps:
+            return segments
+        try:
+            samples = chunking.read_wav(audio_path)
+        except (OSError, EOFError, wave.Error):
+            logger.warning(
+                "second look skipped: %s could not be read again as a WAV file", audio_path
+            )
+            return segments
+        if on_progress:
+            on_progress(0.9, "Looking again at long stretches with no words")
+
+        def decode(window: Any) -> chunking.Words:
+            found, _ = whisper.transcribe(
+                window,
+                language=language,
+                word_timestamps=True,
+                vad_filter=False,
+                no_speech_threshold=settings.whisper_no_speech_threshold,
+                hallucination_silence_threshold=settings.whisper_hallucination_silence_s,
+                beam_size=5,
+                condition_on_previous_text=False,
+            )
+            return [
+                (
+                    (w.word or "").strip(),
+                    float(w.start or 0.0),
+                    float(w.end or 0.0),
+                    float(getattr(w, "probability", 1.0) or 1.0),
+                )
+                for seg in found
+                for w in seg.words or []
+                if (w.word or "").strip()
+            ]
+
+        kept = chunking.second_look(
+            decode, samples, gaps, budget_s=duration * settings.whisper_fill_budget
+        )
+        logger.info(
+            "second look at %d stretch(es) with no words: %d word(s) found", len(gaps), len(kept)
+        )
+        added: list[TranscriptSegment] = []
+        for gap_start, gap_end in gaps:
+            words = [
+                Word(
+                    text=text,
+                    start=max(gap_start, start),
+                    end=min(gap_end, max(end, start)),
+                    confidence=min(1.0, max(0.0, confidence)),
+                )
+                for text, start, end, confidence in kept
+                if gap_start - 0.05 <= start < gap_end
+            ]
+            if words:
+                added.append(
+                    TranscriptSegment(
+                        id=str(uuid4()),
+                        words=words,
+                        start=words[0].start,
+                        end=words[-1].end,
+                        text=" ".join(w.text for w in words),
+                    )
+                )
+        return sorted(segments + added, key=lambda seg: seg.start)
+
+
+def _first_pass_share() -> float:
+    """The share of the progress bar the first pass fills; the second look has the rest."""
+    return 0.9 if settings.whisper_fill_gaps else 1.0
 
 
 # A stretch of audio this long with no word in it is worth a line in the log: it is either

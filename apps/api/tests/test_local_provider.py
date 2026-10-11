@@ -126,3 +126,71 @@ def test_continuous_speech_logs_no_stretch(monkeypatch: Any, caplog: Any) -> Non
     with caplog.at_level("WARNING", logger="app.transcription.local"):
         _transcribe_with(monkeypatch, spoken, duration=20.0)
     assert "no words for" not in caplog.text
+
+
+def _provider_with_second_look(
+    monkeypatch: Any, first_pass: list[Any], readings: list[list[Any]], duration: float = 130.0
+) -> tuple[Any, list[Any]]:
+    """A provider whose model gives `first_pass` for the file and `readings` for the windows after."""
+    import numpy as np
+
+    monkeypatch.setattr("app.transcription.local.settings.whisper_fill_gaps", True)
+    provider = LocalWhisperProvider()
+    windows_seen: list[Any] = []
+    queue = list(readings)
+
+    def transcribe(audio: Any, **_kwargs: Any) -> Any:
+        if isinstance(audio, str):
+            return iter(first_pass), SimpleNamespace(language="en", duration=duration)
+        windows_seen.append(audio)
+        words = queue.pop(0) if queue else []
+        return iter([SimpleNamespace(text="", start=0.0, end=1.0, words=words)]), SimpleNamespace()
+
+    monkeypatch.setattr(
+        provider, "_load_model", lambda _name: SimpleNamespace(transcribe=transcribe)
+    )
+    loud = (0.1 * np.sin(np.arange(int(duration * 16000)) * 0.1)).astype(np.float32)
+    monkeypatch.setattr("app.transcription.local.chunking.read_wav", lambda _path: loud)
+    return provider, windows_seen
+
+
+_SPOKEN = [
+    _segment("hello", 0.0, 1.0, [_fake_word(" hello", 0.0, 1.0)]),
+    _segment("again", 60.0, 61.0, [_fake_word(" again", 60.0, 61.0)]),
+]
+
+
+def test_a_long_empty_stretch_gets_a_second_look(monkeypatch: Any) -> None:
+    # The gap is 1 s to 60 s (the budget is half of the 130 s); the windows start at 0.7 s and 1.9 s,
+    # so a word at 5.7 s is 5.0 s and 3.8 s in.
+    provider, seen = _provider_with_second_look(
+        monkeypatch,
+        _SPOKEN,
+        [
+            [_fake_word(" Run!", 5.0, 5.4), _fake_word(" noise", 9.0, 9.4)],
+            [_fake_word(" run", 3.8, 4.2)],
+        ],
+    )
+    transcript = provider.transcribe("/tmp/whatever.wav")
+    assert [s.text for s in transcript.segments] == ["hello", "Run!", "again"]
+    found = transcript.segments[1].words[0]
+    assert abs(found.start - 5.7) < 1e-6
+    assert len(seen) == 2
+
+
+def test_the_second_look_is_off_by_default(monkeypatch: Any) -> None:
+    provider, seen = _provider_with_second_look(monkeypatch, _SPOKEN, [])
+    monkeypatch.setattr("app.transcription.local.settings.whisper_fill_gaps", False)
+    transcript = provider.transcribe("/tmp/whatever.wav")
+    assert [s.text for s in transcript.segments] == ["hello", "again"]
+    assert seen == []
+
+
+def test_a_recording_that_cannot_be_read_again_keeps_its_first_pass(monkeypatch: Any) -> None:
+    provider, _ = _provider_with_second_look(monkeypatch, _SPOKEN, [])
+
+    def unreadable(_path: str) -> Any:
+        raise FileNotFoundError
+
+    monkeypatch.setattr("app.transcription.local.chunking.read_wav", unreadable)
+    assert [s.text for s in provider.transcribe("/tmp/whatever.wav").segments] == ["hello", "again"]

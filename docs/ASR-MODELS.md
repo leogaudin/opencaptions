@@ -58,6 +58,29 @@ the day, it's fun, hooray, hoorah, woo!" (Qwen heard the same lyrics differently
 | v4 as v3, no guard | 807 | 2.5x | 24 | 49 |
 | v6 server settings, each long gap decoded alone | 806 | 1.4x | 18 | 42 |
 
+### The second look, and why it is off by default
+
+`chunking.second_look` (`WHISPER_FILL_GAPS=true`) decodes each long empty stretch that is not quiet
+again alone, twice with the window shifted 0.9 s, and keeps only the words both readings give within
+1.5 s. Invented text differs between the two readings; speech comes out of both. It is a property of
+Whisper's retries, though, and that is what makes it expensive and what bounds its use:
+
+- **Cost.** The whole film went from 188 s to 976 s (3.4x to 0.6x real time). Whisper's temperature
+  fallback retries hard over music and noise, 15 to 20 s per stretch. The rule kept 13 of 63 candidate
+  words on this film ("Ugh! Run!", "Guys?", "What? Is that… No! No!", two "Oh").
+- **No cheap version.** Without the fallback (greedy, or beam 5 at temperature 0) the decode loops
+  ("Oh my God" over and over, "Ahhhh…" for a whole stretch) and the two readings loop identically, so
+  the agreement test passes them.
+- **It reads what Whisper reads.** Some of the film's stretches have words only Qwen or Parakeet hear
+  ("I can't swim", the chant), which no amount of re-reading with Whisper finds.
+- **Whisper is not reproducible on this content.** Two runs of the identical first pass differ by
+  about 170 of 734 words, because the fallback samples at temperature above 0. Differences in the
+  second look's output need that noise subtracted before they mean anything.
+
+Whether a stretch holds speech can only be settled by listening. The film's 18 stretches were put in a
+page with the audio and what each model heard (not kept in the repo) for the film's owner, and the policy
+waits on that verdict.
+
 Decoding the gaps is not free of invention, though. The film's 5:00 to 7:00 is almost without dialogue;
 decoding the gaps there added 34 words ("You're dead!", "No!" eight times, "Oh my God"), and over the score at
 the end it wrote "BOOM" five times in one pass and "I love you" six times in another, at word

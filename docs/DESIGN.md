@@ -295,7 +295,11 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
   - **faster-whisper** (CPU or CUDA) runs every Whisper size. Everything is decoded: the
     voice-detection filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The
-    no-speech check and a hallucination guard (`WHISPER_*`) stay on.
+    no-speech check and a hallucination guard (`WHISPER_*`) stay on. faster-whisper still
+    moves on from a window when the model says "no speech after here", leaving some loud
+    stretches empty; `WHISPER_FILL_GAPS=true` decodes each long empty stretch again, twice,
+    keeping only the words both readings give (`chunking.second_look`). Off by default: it
+    costs several times the transcription time on action content (`docs/ASR-MODELS.md`).
   - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet v3 is the first. It
     cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
     for being "not speech", and decodes a window again in halves when it comes back empty

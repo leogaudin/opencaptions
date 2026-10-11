@@ -71,6 +71,18 @@ class Settings(BaseSettings):
     # silence this long (seconds) follows a suspect segment. Without the voice filter
     # this is what keeps invented text out of the quiet stretches.
     whisper_hallucination_silence_s: float = 2.0
+    # faster-whisper moves on from a 30 s window when the model says "no speech after
+    # here", and never decodes what the window still holds: shouting or singing over
+    # music can come back as a long empty stretch. With this on, each empty stretch of
+    # whisper_fill_gap_s seconds that is not quiet is decoded again alone, twice with
+    # the window shifted, and only words both readings give are kept (text invented over
+    # music differs between the two). Off by default: on a 10-minute film it costs about
+    # five times the transcription time (Whisper retries hard over non-speech) for a
+    # dozen words, and the second look examines at most whisper_fill_budget of the
+    # recording. WHISPER_FILL_GAPS=true to try it on your own recordings.
+    whisper_fill_gaps: bool = False
+    whisper_fill_gap_s: float = 5.0
+    whisper_fill_budget: float = 0.5
 
     # ----- Entitlements -----
     # Policy name registered in app.services.entitlements; 'unlimited' never denies.
