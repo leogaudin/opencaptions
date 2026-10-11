@@ -77,16 +77,47 @@ Whisper's retries, though, and that is what makes it expensive and what bounds i
   about 170 of 734 words, because the fallback samples at temperature above 0. Differences in the
   second look's output need that noise subtracted before they mean anything.
 
-Whether a stretch holds speech can only be settled by listening. The film's 18 stretches were put in a
-page with the audio and what each model heard (not kept in the repo) for the film's owner, and the policy
-waits on that verdict.
+### What the stretches hold, by ear
 
-Decoding the gaps is not free of invention, though. The film's 5:00 to 7:00 is almost without dialogue;
-decoding the gaps there added 34 words ("You're dead!", "No!" eight times, "Oh my God"), and over the score at
-the end it wrote "BOOM" five times in one pass and "I love you" six times in another, at word
-confidences of 0.97 to 1.00. Confidence does not tell sung or shouted words from invented ones. Filling
-gaps by default would trade missing lines for invented ones on this clip; deciding it needs clips with
-labelled dialogue, which exist for one film only.
+The film's 18 long empty stretches were put in a page with the audio and what each model heard; its
+owner listened to all of them. Of the 17 that can be judged: five hold nothing (mostly silence with a
+hello-like sound at the very end in the first, music and unclear sounds in two more, instrumental music in
+the last two), and twelve hold something Whisper's first pass never printed:
+
+- speech: "Guys" twice (6); "This isn't funny", "Guys", then "We were just gonna…" (7); "What? Is that
+  it? No! No! No! No! No!" after a run of Oh and Ah (11); a muffled "No, I can't swim, I can't swim" (12);
+  "You'll join them" and "I'll give you" at the two ends of a long stretch of Oh and Ah (16); "Guys" and
+  something before it (5); "Huh" before unclear singing (3, which the owner would as soon see as nothing);
+- interjections, which the owner counts as correct captions: "Oh" (4, 15), "Ah" (9, 10), "Ugh" (2).
+
+Each reading scored against that, in words (an interjection counts as real only where there is one):
+
+| Reading | Real words | Fake words | Stretches found (of 12) |
+|---|---|---|---|
+| Whisper, first window | 32 | 28 | 7 |
+| Whisper, window shifted | 23 | 23 | 9 |
+| Whisper, either | 55 | 51 | 10 |
+| Whisper, only words both give (the rule above) | 12 | 1 ("Run!" after "Ugh!") | 5 |
+| Whisper: interjections from either, other words only when both agree | 44 | 2 | 9 |
+| Qwen3-ASR 1.7B | 29 | 40 | 7, including the two Whisper never finds (7, 12) |
+| Parakeet v3 | 2 | 6 | 1 |
+
+- Whisper's invented text sits in the five stretches with nothing in them ("Let's pray, let's pray",
+  "No, no, it's crazy, what the fuzz?", "I'll see you next", "RBA RBA", "I love you" five times, and once a
+  Russian subtitle line with the language forced to English). It differs from one window to the next; real
+  speech and the interjections mostly do not, which is why agreement works and why it loses the Ohs and Ahs
+  Whisper reads in one window only.
+- Word confidence does not separate real from invented: real readings range from 0.03 to 0.92 mean
+  confidence and fake ones from 0.16 to 0.74.
+- The fifth row was devised after the verdicts, on the same 18 stretches, with an English list of
+  interjections: it is a hypothesis for other recordings to confirm, not a result.
+- The two stretches only Qwen reads right (7 and 12) are dialogue over loud music, which its model card
+  lists as a trained condition (speech, singing and songs with background music). Its invented words are
+  lyrics-like text over unclear singing (3) and instrumental music (18).
+- An earlier version of this section called 34 words added in 5:00 to 7:00 invented. Several are the Oh
+  and Ah and "What is that, no" that this listening confirmed; the Russian line, "RBA RBA" and "I love you"
+  are the invented ones. A reading is neither all-fake nor all-real, which is the reason to keep listening
+  and not to decide from an expectation.
 
 ## Accuracy (FLEURS test, 20 clips per language)
 
@@ -230,8 +261,10 @@ per language, error % as WER (CER):
 different int8 quantization of the same model: the files differ from the maintainer's.) Whisper is at 76
 to 119% word error on four of these five. The 1B takes 7 s to load and peaks at 1.3 GB; it needs no
 language, gives a time per character, and writes lowercase text with no punctuation, so captions from
-it cannot be cut at sentence ends and need cutting at pauses and length instead. It was not measured on
-languages Whisper does well, where it is expected to lose. Not wired into the server: that needs the
+it cannot be cut at sentence ends and need cutting at pauses and length instead. On the mainstream
+languages Whisper does well it loses by about a factor of two (FLEURS, 20 clips, 1B int8: German 8.7 against
+Whisper's 3.6, English 10.5 against 5.2, Spanish 4.2 against 1.9, French 13.1 against 7.4, Indonesian 9.6
+against 8.8), so it is for the languages Whisper cannot do, never a general default. Not wired into the server: that needs the
 segmentation above, the CTC token times, and a rule for which languages go to it (the user's choice, or
 Whisper's published per-language error).
 
@@ -246,7 +279,7 @@ and on CPU before anything is said about them.
 | [Granite Speech 4.1 2B](https://replicate.com/ibm-granite/granite-speech-4.1-2b) (IBM) | Speech LLM, Apache 2.0, 5.33% on the leaderboard | Top of the May snapshot | English, French, German, Spanish, Portuguese, Japanese only; no word times (the `-plus` variant adds them) |
 | [Cohere Transcribe](https://docs.cohere.com/docs/transcribe) (March 2026) | 2B encoder-decoder, 14 languages, 5.42% | Was #1 at launch | Gated; no timestamps or language detection. Measured here only as an int8 build, which may understate it as it did Qwen |
 | Canary-Qwen 2.5B (NVIDIA) | English speech LLM, CC-BY-4.0, 5.63% | Accurate English | English only |
-| [Canary-1B-v2](https://arxiv.org/abs/2509.14128) (NVIDIA) | 25 European languages, timestamps from NeMo Forced Aligner (sources differ on word or segment level), CC-BY-4.0 | Parakeet's bigger sibling with the same languages | A community sherpa int8 export exists (`fussraider/canary-1b-v2-sherpa-onnx-int8`); unvetted |
+| [Canary-1B-v2](https://arxiv.org/abs/2509.14128) (NVIDIA) | 25 European languages, timestamps from NeMo Forced Aligner (sources differ on word or segment level), CC-BY-4.0 | Parakeet's bigger sibling with the same languages; [the paper's FLEURS table](https://arxiv.org/pdf/2509.14128) has it level with or behind Whisper large-v3 on English and Russian and far ahead on Greek, Maltese and the Nordic languages | The one community sherpa int8 export tried (`fussraider/canary-1b-v2-sherpa-onnx-int8`) gave German 4.0 and French 5.9 (Whisper turbo 3.6, 7.4) but English 38.6 and Spanish 52.4, so it is broken or mis-prompted for some languages; stopped, and an official export would be needed |
 | [Voxtral Mini 4B Realtime](https://huggingface.co/mistralai/voxtral-mini-4b-realtime-2602) (Mistral) | 13 languages, Apache 2.0, streaming | On-device focus | 4B, bf16; the on-device claim depends on a quantized build |
 
 ## Quantization as met here
