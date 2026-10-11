@@ -16,8 +16,10 @@ import { demoFrameClass, external, Page, playerBoxClass } from "./Landing";
 
 /**
  * Plays the clip as it loads (muted, unless the visitor asked for less motion), and again and again.
- * A change of clip, when there is more than one, loads a new source into the same <video>. The sound
- * is a button.
+ * It only plays while it can be seen: a hidden tab or a player scrolled out of view pauses it, so
+ * the page costs no decoding and no drawing then, and it picks up again when it is back. A change
+ * of clip, when there is more than one, loads a new source into the same <video>. The sound is a
+ * button.
  */
 function Player() {
   const t = useT();
@@ -28,12 +30,44 @@ function Player() {
     video.muted = true;
     video.loop = true;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const start = (): void => {
-      if (!reduced) video.play().catch(() => undefined);
+    let tabShown = !document.hidden;
+    let inView = true;
+    let resume = false; // it was playing when it was hidden
+    const seen = (): boolean => tabShown && inView;
+    const play = (): void => {
+      resume = false;
+      video.play().catch(() => undefined);
     };
-    start();
+    const sync = (): void => {
+      if (!seen()) {
+        resume ||= !video.paused;
+        video.pause();
+      } else if (resume) {
+        play();
+      }
+    };
+    const start = (): void => {
+      if (reduced) return;
+      if (seen()) play();
+      else resume = true;
+    };
+    const onVisibility = (): void => {
+      tabShown = !document.hidden;
+      sync();
+    };
+    const observer = new IntersectionObserver((entries) => {
+      inView = entries[entries.length - 1]?.isIntersecting ?? true;
+      sync();
+    });
+    observer.observe(video);
+    document.addEventListener("visibilitychange", onVisibility);
     video.addEventListener("loadeddata", start);
-    return () => video.removeEventListener("loadeddata", start);
+    start();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      video.removeEventListener("loadeddata", start);
+    };
   }, [video]);
   if (!video) return null;
   const label = muted ? t("Turn the sound on") : t("Turn the sound off");
