@@ -44,16 +44,19 @@ const MIN_SAID_S: f32 = 0.08;
 const MAX_TYPING_S: f32 = 0.6;
 /// The watermark is drawn in the application's default face.
 /// How far a bounced word rises past its size, and how far it leans (degrees), left and right in turn.
-const BOUNCE: f32 = 0.28;
+const BOUNCE: f32 = 0.18;
 const BOUNCE_TILT: f32 = 5.0;
 /// A label's lean (degrees) and how far the word being said lifts it.
 const STICKER_TILT: f32 = 3.0;
 const STICKER_LIFT: f32 = 0.12;
-/// Lyric focus: how dim and how soft (a share of the font size) a word is before it is said, and
-/// how much larger the word being said is.
+/// Lyric focus: how dim and how soft (a share of the font size) a word is before it is said.
 const FOCUS_DIM: f32 = 0.35;
 const FOCUS_BLUR: f32 = 0.05;
-const FOCUS_SCALE: f32 = 0.06;
+/// The marker stroke of the underline: its thickness and how far it rises above the baseline, as
+/// shares of the font size, and how far it runs past the word at each end.
+const MARKER_THICK: f32 = 0.3;
+const MARKER_RISE: f32 = 0.2;
+const MARKER_OVERHANG: f32 = 0.04;
 /// How long the sliding box takes to cross to the next word.
 const SLIDE_S: f32 = 0.18;
 /// The line bar: its distance under the line and its thickness, as shares of the font size.
@@ -339,13 +342,12 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             }
         }
         Animation::LyricFocus => {
-            // Soft and dim until said; the word being said is sharp, bright and larger; a word already
-            // said stays sharp and readable.
+            // Soft and dim until said; the word being said is sharp and bright; a word already said
+            // stays sharp and readable. It does not change size: the line stays still.
             let lit = pulse(t, w, MOTION_S, linear);
             let said = reached(t, w, MOTION_S);
             WordState {
                 on: lit,
-                scale: 1.0 + FOCUS_SCALE * lit,
                 opacity: FOCUS_DIM + (1.0 - FOCUS_DIM) * (0.6 * said + 0.4 * lit),
                 soften: 1.0 - said,
                 ..steady
@@ -368,7 +370,6 @@ fn lift(anim: Animation) -> f32 {
     match anim {
         Animation::WordBounce => BOUNCE,
         Animation::Stickers => STICKER_LIFT,
-        Animation::LyricFocus => FOCUS_SCALE,
         _ => POP,
     }
 }
@@ -1122,8 +1123,27 @@ impl Scene {
                 None => paint(colour(s.primary(), 1.0)),
             }
         };
-        for (w, st) in line.words.iter().zip(states) {
+        // A word that has grown is drawn after the smaller ones, so it covers its neighbours rather
+        // than slipping behind them (the sort is stable: words of one size keep their order).
+        let mut order: Vec<usize> = (0..states.len()).collect();
+        order.sort_by(|&a, &b| states[a].scale.total_cmp(&states[b].scale));
+        for (w, st) in order.iter().map(|&i| (&line.words[i], &states[i])) {
             let Some(path) = &w.glyphs else { continue };
+            // The underline is a marker stroke laid under the letters, left to right as the word is said.
+            if s.animation == Animation::WordUnderline && st.fill > 0.0 {
+                let thick = s.font_size * MARKER_THICK;
+                let over = s.font_size * MARKER_OVERHANG;
+                let stroke = Rect::from_xywh(
+                    w.ink_x - over,
+                    w.baseline - s.font_size * MARKER_RISE,
+                    (w.ink_w * st.fill + 2.0 * over).max(1.0),
+                    thick,
+                );
+                if let Some(band) = stroke.and_then(|r| rounded_rect(r, thick / 2.0)) {
+                    let p = paint(colour(s.highlight(w.index), 1.0));
+                    canvas.fill_path(&band, &p, FillRule::Winding, Transform::identity(), None);
+                }
+            }
             let fill = match s.animation {
                 Animation::WordHighlight
                 | Animation::WordPop
@@ -1216,19 +1236,6 @@ impl Scene {
                 }
             }
             match s.animation {
-                Animation::WordUnderline if st.fill > 0.0 => {
-                    let thick = (s.font_size * 0.075).max(2.0);
-                    let rule = Rect::from_xywh(
-                        w.ink_x,
-                        w.baseline + s.font_size * 0.1,
-                        (w.ink_w * st.fill).max(1.0),
-                        thick,
-                    );
-                    if let Some(path) = rule.and_then(|r| rounded_rect(r, thick / 2.0)) {
-                        let p = paint(colour(s.highlight(w.index), 1.0));
-                        canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
-                    }
-                }
                 Animation::Typewriter if st.on > 0.0 => {
                     // The cursor sits where the next letter goes, for as long as the word is being said.
                     let width = (s.font_size * 0.07).max(2.0);
@@ -2150,7 +2157,7 @@ mod tests {
             word_state(Animation::WordBounce, one, 0.25),
             word_state(Animation::WordBounce, two, 0.75),
         );
-        assert!(a.scale > 1.2 && b.scale > 1.2, "both are larger while said");
+        assert!(a.scale > 1.1 && b.scale > 1.1, "both are larger while said");
         assert!(a.tilt < 0.0 && b.tilt > 0.0, "and lean opposite ways");
         assert_eq!(
             word_state(Animation::WordBounce, two, 0.0).tilt,
@@ -2167,7 +2174,7 @@ mod tests {
         let (before, now, after) = (at(0.2), at(0.75), at(1.4));
         assert_eq!((before.soften, before.opacity), (1.0, FOCUS_DIM));
         assert_eq!((now.soften, now.opacity), (0.0, 1.0));
-        assert!(now.scale > 1.0);
+        assert_eq!(now.scale, 1.0, "the word being said does not grow");
         assert_eq!(after.soften, 0.0, "a word that was said stays in focus");
         assert!(after.opacity > FOCUS_DIM && after.opacity < 1.0);
     }
@@ -2615,11 +2622,11 @@ mod tests {
         ("word_pop", 0xda614d49f56c55f4),
         ("word_fade", 0x44ed1a5d9329ca4e),
         ("word_sweep", 0x76a12a545f6c55d2),
-        ("word_underline", 0x814cc3e43cbcd80d),
+        ("word_underline", 0xfb9619a6926772c7),
         ("typewriter", 0x774d718bfa4e3047),
         ("none", 0xfe846054695b2f5c),
-        ("word_bounce", 0x9b22e3d1ae08a039),
-        ("lyric_focus", 0xff7ba296ae71a528),
+        ("word_bounce", 0x7ccda292d88c19ac),
+        ("lyric_focus", 0xf67ff5ba29429af2),
         ("highlight_slide", 0x88314a33e4a554f9),
         ("line_bar", 0x6b1e7afb5365656d),
         ("stickers", 0x5c9bad18f058c1c7),

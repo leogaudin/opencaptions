@@ -180,8 +180,9 @@ first. A sweep paints each letter once, the highlight on
 the side it has passed and the plain colour on the rest, so no soft edge of the plain word shows round it.
 The built-in presets that use them are Purple Punch (a box that slides between words), Karaoke, Bold
 (Montserrat Black, bundled with the engine, in capitals with a thick black outline carried out into a
-hard black extrusion), Boom, Lyric, Documentary,
-Gradient, Stickers, Plain (subtitles that do not move), Neon, Typewriter, Handwritten and Elegant.
+hard black extrusion), Boom (the word being said grows and is drawn over its neighbours), Lyric (soft
+until said, and the line never changes size), Stickers, Plain (subtitles that do not move), Neon,
+Typewriter and Handwritten (a marker stroke laid under the words as they are said).
 The font row opens a list of the fonts in use, each name in its own face (a name-only subset
 fetched from Google, a few KB), and "More fonts" opens the whole Google Fonts catalog (the same
 one the server lists), searchable. The caption itself is always drawn by the engine.
