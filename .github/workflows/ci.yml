@@ -326,7 +326,7 @@ jobs:
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
 
   publish-demo:
-    name: Publish the demo site (Cloudflare Pages)
+    name: Publish the demo site (Cloudflare Worker)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [e2e, demo]

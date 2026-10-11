@@ -1,0 +1,30 @@
+# OpenCaptions
+
+> OpenCaptions is free, open-source software (AGPL-3.0) that adds animated, word-by-word captions to videos. It transcribes speech with Whisper in about 100 languages, on an iPhone or on your own server, and exports a captioned video (MP4, WebM or ProRes), SRT or VTT subtitle files, or captions on a green screen.
+
+Key facts:
+
+- Open source under AGPL-3.0. Self-hosted with Docker Compose: download one `docker-compose.yml` and run `docker compose up -d`. A GPU is optional.
+- An iPhone and iPad app transcribes on the device with Whisper. No account is needed.
+- No tracking and no analytics. Videos stay on the device or on your own server unless you choose another transcription provider.
+- One Rust engine draws the captions in the browser (WebAssembly), on the server and on the iPhone, so the preview is the export.
+- Whisper handles about 100 spoken languages; captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts; the interface is available in 13 languages.
+- The iPhone app is free to use, with an optional one-time Pro purchase and no subscription.
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/leogaudin/opencaptions/main/README.md): features and quick start
+- [Self-hosting](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/SELF-HOSTING.md): configuration, the HTTP API, security, GPU acceleration, backups
+- [Design](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/DESIGN.md): the services, the caption engine and the iOS app
+- [Speech models](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/ASR-MODELS.md): the speech models that were measured, and the one chosen
+- [Privacy policy](https://raw.githubusercontent.com/leogaudin/opencaptions/main/PRIVACY.md)
+
+## Source
+
+- [GitHub repository](https://github.com/leogaudin/opencaptions)
+- [License: AGPL-3.0](https://raw.githubusercontent.com/leogaudin/opencaptions/main/LICENSE)
+
+## Optional
+
+- [Contributing](https://raw.githubusercontent.com/leogaudin/opencaptions/main/CONTRIBUTING.md)
+- [Security policy](https://raw.githubusercontent.com/leogaudin/opencaptions/main/SECURITY.md)

@@ -9,6 +9,8 @@
 Transcribe with Whisper, style every word, and export a burned-in video or subtitle files.
 Nothing leaves your machine unless you say so.
 
+**[opencaptions.app](https://opencaptions.app)**: try the looks on a sample clip, right in your browser.
+
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![CI](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml/badge.svg)](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml)
 [![Status](https://img.shields.io/badge/status-pre--v0.1-orange.svg)](#status)

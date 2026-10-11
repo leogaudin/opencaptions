@@ -277,11 +277,21 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
   `disableSaving()` in the editor store keeps edits in the page.
 - The clips are data: `demo-public/demo/clips.json` names each clip's video, transcript (the
   API's `Transcript` shape) and credit (shown in the footer; CC BY asks for it). `scripts/make-demo-clip.sh`
-  cuts one from a long film (9:16 crop, H.264 + AAC; the current one is 720x1280, 14 s, about 1.4 MB, which Pages serves with range requests like any CDN, so it is not worth a separate bucket). Replacing a clip is replacing its files and the manifest entry; with more than one, the page shows a chip for each.
+  cuts one from a long film (9:16 crop, H.264 + AAC; the current one is 720x1280, 14 s, about 1.4 MB, which Cloudflare serves with range requests like any CDN, so it is not worth a separate bucket). Replacing a clip is replacing its files and the manifest entry; with more than one, the page shows a chip for each.
 - The engine's `.wasm` and fonts are not committed: the web Dockerfile's `demo-site` stage builds
   them and the site (`make demo` writes `apps/web/dist-demo`). CI builds that stage on every run and
   `publish-demo` deploys it with `wrangler deploy --assets` on `main`, only when `CLOUDFLARE_API_TOKEN`
   and `CLOUDFLARE_ACCOUNT_ID` are set (the Worker is named `opencaptions`).
+- The page is found by what it says, without running script: `src/demo/Landing.tsx` holds its words
+  and has no browser-only code, so the build renders it to HTML (`scripts/demo-prerender.ts`, a plugin
+  in `vite.demo.config.ts`) and React replaces it when the demo is ready. `src/demo/seo.ts` is the one
+  place for the title, description, cards, icons and structured data (written into `<head>` at
+  `demo.html`'s `<!--seo-head-->`); its FAQ (`src/demo/faq.ts`) is the text shown on the page.
+  Files for crawlers are in `demo-public/`: `robots.txt` (everyone welcome, the AI crawlers named),
+  `sitemap.xml`, `llms.txt`, the icons and `site.webmanifest`, and `og.png` (the link preview,
+  rebuilt by `scripts/make-og-image.swift`). `tests/unit/demo-seo.test.ts` checks all of it. When the
+  App Store link exists, set `APP_STORE_URL` in `links.ts` (the page and the structured data follow)
+  and update `llms.txt`.
 - The fonts in `demo-public/demo/fonts` are the families the presets use (OFL), fetched once by
   `apps/web/scripts/fetch-demo-fonts.mjs`; a family missing there is drawn in the default face.
 - It offers presets only: no upload, no export, no Pro or account feature exists in it to abuse.

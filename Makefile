@@ -95,7 +95,7 @@ check-compose:       ## Verify docker-compose.yml's fallbacks agree with each ot
 
 IOS_ONLY := @test "$$(uname)" = Darwin || { echo "needs macOS + Xcode, see apps/ios/README.md"; exit 1; }
 
-demo:                ## Build the public demo site into apps/web/dist-demo (static files for Cloudflare Pages)
+demo:                ## Build the public demo site into apps/web/dist-demo (static files for a Cloudflare Worker)
 	@docker build -q --build-context engine=apps/engine --target demo-site \
 	 -o apps/web/dist-demo apps/web >/dev/null && echo "Wrote apps/web/dist-demo"
 

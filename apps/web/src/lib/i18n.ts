@@ -65,8 +65,12 @@ function isLanguage(code: string | null | undefined): code is LanguageCode {
   return LANGUAGES.some((l) => l.code === code);
 }
 
-/** The saved choice, else the browser's first language that is offered, else English. */
+/**
+ * The saved choice, else the browser's first language that is offered, else English. Outside a
+ * browser (the demo page is prerendered at build time) it is English, whatever the machine says.
+ */
 function initialLanguage(): LanguageCode {
+  if (typeof document === "undefined") return "en";
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (isLanguage(saved)) return saved;
@@ -87,7 +91,7 @@ const listeners = new Set<() => void>();
 export const languageReady: Promise<void> = loadLanguage(current);
 
 function announce(): void {
-  document.documentElement.lang = current;
+  if (typeof document !== "undefined") document.documentElement.lang = current;
   for (const listener of listeners) listener();
 }
 announce();
@@ -136,6 +140,7 @@ export function useT(): typeof translate {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    () => current,
     () => current,
   );
   return translate;

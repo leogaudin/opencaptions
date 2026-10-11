@@ -41,7 +41,7 @@ COPY . .
 COPY --from=preview-assets / public/engine/
 RUN npm run build
 
-# The public demo (opencaptions.app): static files for Cloudflare Pages, not part of the image.
+# The public demo (opencaptions.app): static files for a Cloudflare Worker, not part of the image.
 # `docker build --target demo-site -o apps/web/dist-demo ...` (make demo) exports them.
 FROM builder AS demo-build
 COPY --from=preview-assets / demo-public/engine/
