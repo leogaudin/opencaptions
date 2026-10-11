@@ -269,7 +269,7 @@ selected caption is yellow and the playhead is the page's ink colour.
 
 `apps/web` has a second entry, `demo.html` (`src/demo/`, built with `vite.demo.config.ts`), that is
 the site at opencaptions.app: static files for Cloudflare Pages, no API, no account. It is the
-editor's own `CaptionPreview` and `PresetStrip` over three sample clips, so the captions are drawn by
+editor's own `CaptionPreview` and `PresetStrip` over one sample clip (it loops), so the captions are drawn by
 the same engine (WebAssembly) as in the editor and the download; nothing is drawn twice.
 
 - `src/lib/sources.ts` is the seam: where the preview reads a project's video and a font family.
@@ -277,7 +277,7 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
   `disableSaving()` in the editor store keeps edits in the page.
 - The clips are data: `demo-public/demo/clips.json` names each clip's video, transcript (the
   API's `Transcript` shape) and credit (shown in the footer; CC BY asks for it). `scripts/make-demo-clip.sh`
-  cuts one from a long film (9:16 crop, H.264 + AAC, 1080x1920). Replacing a clip is replacing its files and the manifest entry.
+  cuts one from a long film (9:16 crop, H.264 + AAC; the current one is 720x1280, 14 s, about 1.4 MB, which Pages serves with range requests like any CDN, so it is not worth a separate bucket). Replacing a clip is replacing its files and the manifest entry; with more than one, the page shows a chip for each.
 - The engine's `.wasm` and fonts are not committed: the web Dockerfile's `demo-site` stage builds
   them and the site (`make demo` writes `apps/web/dist-demo`). CI builds that stage on every run and
   `publish-demo` deploys it with `wrangler pages deploy` on `main`, only when `CLOUDFLARE_API_TOKEN`

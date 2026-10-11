@@ -1,6 +1,6 @@
 /**
  * The public demo (opencaptions.app): the editor's own preview and its own preset tiles over a
- * few sample clips. No API, no account, nothing saved; the captions are drawn by the engine,
+ * sample clip. No API, no account, nothing saved; the captions are drawn by the engine,
  * exactly as in the editor and the download.
  */
 import { Code, Layers, Moon, Server, Smartphone, Sun, Volume2, VolumeX } from "lucide-react";
@@ -61,8 +61,9 @@ function Nav() {
 }
 
 /**
- * Plays each clip as it loads (muted, unless the visitor asked for less motion), also after a
- * change of clip, which loads a new source into the same <video>. The sound is a button.
+ * Plays the clip as it loads (muted, unless the visitor asked for less motion), and again and again.
+ * A change of clip, when there is more than one, loads a new source into the same <video>. The sound
+ * is a button.
  */
 function Player() {
   const t = useT();
@@ -71,6 +72,7 @@ function Player() {
   useEffect(() => {
     if (!video) return;
     video.muted = true;
+    video.loop = true;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const start = (): void => {
       if (!reduced) video.play().catch(() => undefined);
@@ -149,23 +151,25 @@ function Demo() {
           {loaded && <Player />}
         </div>
         <div className="w-full min-w-0 md:max-w-md">
-          <div className="mb-3 flex flex-wrap gap-2" data-testid="clip-chips">
-            {clips.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                aria-pressed={c.id === clipId}
-                onClick={() => setClipId(c.id)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                  c.id === clipId
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground hover:bg-muted/70"
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+          {clips.length > 1 && (
+            <div className="mb-3 flex flex-wrap gap-2" data-testid="clip-chips">
+              {clips.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-pressed={c.id === clipId}
+                  onClick={() => setClipId(c.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    c.id === clipId
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground hover:bg-muted/70"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          )}
           <PresetStrip
             activeId={active?.id}
             onPick={(config) => setStyle(presetLook(config))}
@@ -218,7 +222,7 @@ function Credits() {
           </span>
         );
       })}{" "}
-      {t("Clips are cropped and trimmed.")}
+      {t("The clip is cropped and trimmed.")}
     </p>
   );
 }

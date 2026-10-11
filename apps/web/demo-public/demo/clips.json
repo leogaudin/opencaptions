@@ -1,37 +1,22 @@
 {
   "clips": [
     {
-      "id": "man",
-      "label": "Interview",
+      "id": "sprite_fright",
+      "label": "Animated film",
       "language": "en",
-      "video": "man.mp4",
-      "transcript": "man.json",
-      "width": 540,
-      "height": 960,
-      "duration": 12.0,
-      "fps": 30
-    },
-    {
-      "id": "cat",
-      "label": "Pet",
-      "language": "en",
-      "video": "cat.mp4",
-      "transcript": "cat.json",
-      "width": 540,
-      "height": 960,
-      "duration": 12.0,
-      "fps": 30
-    },
-    {
-      "id": "pierogi_pl",
-      "label": "Cooking (Polish)",
-      "language": "pl",
-      "video": "pierogi_pl.mp4",
-      "transcript": "pierogi_pl.json",
-      "width": 540,
-      "height": 960,
-      "duration": 12.0,
-      "fps": 30
+      "video": "sprite_fright.mp4",
+      "transcript": "sprite_fright.json",
+      "width": 720,
+      "height": 1280,
+      "duration": 14.3,
+      "fps": 30,
+      "credit": {
+        "title": "Sprite Fright",
+        "author": "Blender Studio",
+        "url": "https://studio.blender.org/projects/sprite-fright/",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
     }
   ]
 }
