@@ -97,7 +97,7 @@ test.describe("Local Whisper model selection", () => {
     await expect(page.getByTestId("language-fr")).toBeVisible();
     await expect(page.getByTestId("language-ja")).toHaveCount(0);
 
-    await page.getByTestId("language-search").fill("deu");
+    await page.getByTestId("language-search").fill("germ");
     await expect(page.getByTestId("language-de")).toBeVisible();
     await expect(page.getByTestId("language-fr")).toHaveCount(0);
   });
