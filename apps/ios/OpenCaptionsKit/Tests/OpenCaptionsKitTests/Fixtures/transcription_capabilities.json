@@ -2,8 +2,8 @@
   "api_version": 1,
   "instance_name": "Home GPU",
   "models": [
-    { "id": "large-v3-turbo", "label": "Large v3 Turbo", "note": "Fast and accurate" },
-    { "id": "large-v3", "label": "Large v3", "note": "Most accurate" }
+    { "id": "large-v3-turbo", "label": "Large v3 Turbo", "note": "Fast and accurate", "languages": null },
+    { "id": "large-v3", "label": "Large v3", "note": "Most accurate", "languages": ["en", "fr"] }
   ],
   "default_model": "large-v3-turbo",
   "languages": [
