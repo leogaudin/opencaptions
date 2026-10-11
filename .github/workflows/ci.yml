@@ -344,7 +344,7 @@ jobs:
           path: dist-demo
       - name: Deploy
         if: ${{ env.CLOUDFLARE_CONFIGURED == 'true' }}
-        run: npx --yes wrangler@4 pages deploy dist-demo --project-name opencaptions --branch main
+        run: npx --yes wrangler@4 deploy --assets dist-demo --name opencaptions --compatibility-date 2026-10-01
 
   publish-gpu:
     name: Publish GPU image (api only)
