@@ -394,6 +394,7 @@ struct TranscribeSheet: View {
                     HStack(spacing: 6) {
                         Text(option.label).font(.system(size: 16, weight: .semibold))
                         if locked { ProBadge() }
+                        ModelSourceTag(model: option)
                     }
                     if let hint = Self.hint(option.id) {
                         Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)

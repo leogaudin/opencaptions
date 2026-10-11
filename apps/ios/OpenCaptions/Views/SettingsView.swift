@@ -211,6 +211,7 @@ struct SettingsView: View {
                 HStack(spacing: 6) {
                     Text(model.label).font(.system(size: 16, weight: .semibold))
                     if app.entitlements.locks(model: model.id) { ProBadge() }
+                    ModelSourceTag(model: model)
                 }
                 Group {
                     if model.isBuiltIn {

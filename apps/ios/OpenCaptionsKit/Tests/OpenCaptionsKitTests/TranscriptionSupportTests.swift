@@ -25,6 +25,11 @@ import Testing
         #expect(whisper.covers("ja") && whisper.covers("tr"))
     }
 
+    @Test func aModelSaysWhereItComesFrom() {
+        #expect(SpeechModels.all.filter { $0.source == .apple }.allSatisfy { $0.isBuiltIn })
+        #expect(SpeechModels.all.filter { !$0.isBuiltIn }.allSatisfy { $0.source == .huggingFace })
+    }
+
     @Test func onlyAppleSpeechNeedsALanguageChosen() {
         #expect(SpeechModels.all.filter { !$0.detectsLanguage }.map(\.engine) == (SpeechModels.model(SpeechModels.appleSpeechID) == nil ? [] : [.appleSpeech]))
     }
