@@ -1,4 +1,10 @@
-# OpenCaptions design
+---
+sidebar_position: 2
+title: "Architecture"
+description: "How OpenCaptions is built. The services, how a job flows from upload to download, the Rust caption engine behind the preview and the export, the data, security, and the iPhone app."
+---
+
+# Architecture
 
 OpenCaptions turns a video into a captioned one: it transcribes the speech with
 word timings, lets you edit and style the captions, and renders them into the
@@ -192,7 +198,7 @@ speech trigger, leaving a hole in the captions with good ones on either side. Af
 pass, every stretch of 6 s or more without words that is not quiet (at most 12) is decoded twice
 without that judgement, the second window shifted, and only the words both readings give are kept
 (`TranscriptGaps`; text invented over music differs between the two). On by default on the phone;
-the server's version is opt-in (`WHISPER_FILL_GAPS`, `docs/ASR-MODELS.md`). Not yet timed on a phone.
+the server's version is opt-in (`WHISPER_FILL_GAPS`, `docs/project/speech-model-benchmarks.md`). Not yet timed on a phone.
 
 **Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
 can be changed, its size and length) before it is imported; cancelling throws the copy away.
@@ -266,6 +272,24 @@ white), rounded corners, and the desktop's "burned-in subtitle" wordmark. It is 
 follows the system until the user chooses. Projects are a grid of poster cards; in the timeline the
 selected caption is yellow and the playhead is the page's ink colour.
 
+## The documentation site
+
+The documentation is plain Markdown in `docs/`, so GitHub shows it as it is, and `apps/docs` builds the same
+files into a static site with [Docusaurus](https://docusaurus.io) (the intended home is `docs.opencaptions.app`).
+The site owns no content. Its sidebar is generated from the folders (`_category_.json` names and orders a
+folder, a page's `sidebar_position` orders it), so a new page needs no entry anywhere.
+
+- `.md` files are read as CommonMark (`markdown.format: "detect"`), so a page has no JSX and reads the same on GitHub.
+  Links between pages are relative `.md` links; links to the code are absolute GitHub URLs. A broken link or anchor
+  fails the build (`onBrokenLinks`, `onBrokenAnchors`, `onBrokenMarkdownLinks`).
+- Search is `@easyops-cn/docusaurus-search-local`: an index built with the site and searched in the browser,
+  so no service and no query leaves the page.
+- `apps/docs/Dockerfile` builds it in a container, with the pages as a named context
+  (`--build-context docs=docs`, read through `DOCS_PATH`), and its `docs-site` stage holds only the static files.
+  The `docs` CI job and `make ci` run that build, `make docs-build` writes it to `apps/docs/dist`, and `make docs`
+  serves it with live reload.
+- It is deployed as static files, like the demo. Nothing publishes it from CI yet.
+
 ## The public demo
 
 `apps/web` has a second entry, `demo.html` (`src/demo/`, built with `vite.demo.config.ts`), that is
@@ -323,7 +347,7 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
     moves on from a window when the model says "no speech after here", leaving some loud
     stretches empty; `WHISPER_FILL_GAPS=true` decodes each long empty stretch again, twice,
     keeping only the words both readings give (`chunking.second_look`). Off by default: it
-    costs several times the transcription time on action content (`docs/ASR-MODELS.md`).
+    costs several times the transcription time on action content (`docs/project/speech-model-benchmarks.md`).
   - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet v3 is the first. It
     cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
     for being "not speech", and decodes a window again in halves when it comes back empty
@@ -332,7 +356,7 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
     outside the model's languages goes to the default Whisper model, which the job says.
 
   Adding a model is adding an entry there (and an engine, if it needs one); nothing above the
-  provider seam changes. How the choices were made, with measurements, is `docs/ASR-MODELS.md`.
+  provider seam changes. How the choices were made, with measurements, is `docs/project/speech-model-benchmarks.md`.
 - `openai`: the OpenAI API. Audio leaves the machine, so the UI says so whenever
   this provider is active.
 - `opencaptions`: another OpenCaptions backend, reached through its transcription
@@ -482,7 +506,7 @@ Subtitle files (SRT, VTT) are only exported by the Docker product.
 (FluidAudio, Core ML: faster, 25 European languages, offered only for those), and on iOS 26 Apple's own
 `SpeechTranscriber` (built in, nothing to download, a language must be chosen). Each model names the engine
 that runs it (`SpeechModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
-reasons, with measurements, are `docs/ASR-MODELS.md`.
+reasons, with measurements, are `docs/project/speech-model-benchmarks.md`.
 They are downloaded on demand into a backup-excluded folder and never bundled. The
 default is Large v3 Turbo (the best quality for its size), and a metered connection
 asks before a download. Loading a model into memory is the longest wait (the first time on a phone
@@ -565,5 +589,5 @@ shows its progress.
 ## Licence
 
 AGPL-3.0-only: anyone may self-host or modify it, and a hosted fork must publish
-its changes. Contributors accept the [CLA](../CLA.md), which lets the maintainer
+its changes. Contributors accept the [CLA](https://github.com/leogaudin/opencaptions/blob/main/CLA.md), which lets the maintainer
 also ship their code where the AGPL can't go, such as the App Store.

@@ -55,6 +55,8 @@ bash scripts/generate-api-types.sh                                    # after ch
 
 The web preview is the engine's WebAssembly build: `make engine-wasm` once for `npm run dev`.
 The iOS app has its own [README](apps/ios/README.md).
+The documentation is the Markdown in `docs/`, built into a site by `apps/docs` (Docusaurus): `make docs`
+serves it with live reload and `make docs-build` builds it, and a broken link fails the build.
 
 ## Before you open a pull request
 

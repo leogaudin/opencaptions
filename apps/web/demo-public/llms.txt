@@ -14,9 +14,13 @@ Key facts:
 ## Docs
 
 - [README](https://raw.githubusercontent.com/leogaudin/opencaptions/main/README.md): features and quick start
-- [Self-hosting](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/SELF-HOSTING.md): configuration, the HTTP API, security, GPU acceleration, backups
-- [Design](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/DESIGN.md): the services, the caption engine and the iOS app
-- [Speech models](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/ASR-MODELS.md): the speech models that were measured, and the one chosen
+- [Quick start](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/getting-started/quick-start.md): run it with one Docker Compose file
+- [Self-hosting](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/self-hosting/installation.md): requirements, services, data, scaling and updates
+- [Configuration](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/self-hosting/configuration.md): every setting and its default
+- [Security](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/self-hosting/security.md): what to change before exposing it
+- [HTTP API](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/reference/api.md): upload, transcribe, export, from a script
+- [Design](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/project/architecture.md): the services, the caption engine and the iOS app
+- [Speech models](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/project/speech-model-benchmarks.md): the speech models that were measured, and the one chosen
 - [Privacy policy](https://raw.githubusercontent.com/leogaudin/opencaptions/main/PRIVACY.md)
 
 ## Source

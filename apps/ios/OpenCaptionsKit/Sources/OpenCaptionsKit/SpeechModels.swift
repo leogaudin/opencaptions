@@ -61,7 +61,7 @@ public enum SpeechModels {
     private static let downloadable: [SpeechModel] = [
         .init(id: "small", label: "Whisper Small", variant: "openai_whisper-small_216MB", megabytes: 217),
         // FluidAudio's Core ML build of Parakeet TDT v3 (about 480 MB). Faster than Whisper for
-        // somewhat more errors; see docs/ASR-MODELS.md.
+        // somewhat more errors; see docs/project/speech-model-benchmarks.md.
         .init(
             id: "parakeet-tdt-0.6b-v3", label: "Parakeet v3", megabytes: 480, engine: .parakeet,
             languages: parakeetLanguages),

@@ -1,3 +1,9 @@
+---
+sidebar_position: 3
+title: "Speech model benchmarks"
+description: "Which speech models OpenCaptions measured, how they compare on accuracy and speed across 13 languages, and why Whisper Large v3 Turbo is the default with Parakeet as the fast option."
+---
+
 # Speech models: what we measured and what we chose
 
 The local provider runs Whisper (faster-whisper) and, as an option, Parakeet v3 (sherpa-onnx).

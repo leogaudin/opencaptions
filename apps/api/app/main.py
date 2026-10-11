@@ -70,7 +70,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     if settings.default_credentials_in_use:
         logger.warning(
             "Using the shipped development credentials (%s). Change them before exposing this "
-            "instance beyond a trusted network; see docs/SELF-HOSTING.md.",
+            "instance beyond a trusted network; see docs/self-hosting/security.md.",
             ", ".join(c.upper() for c in settings.default_credentials_in_use),
         )
 

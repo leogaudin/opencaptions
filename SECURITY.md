@@ -30,7 +30,7 @@ chance to land before publishing details.
 OpenCaptions has per-account authentication (server-side sessions). The web port listens on
 every interface and signup is open by default, so a stock install is reachable, and usable, by
 anyone on the local network. Hardening a public host is the operator's job (see the
-[security section of the self-hosting guide](docs/SELF-HOSTING.md#security)); reports about an
+[security section of the self-hosting guide](docs/self-hosting/security.md)); reports about an
 instance's own configuration are configuration issues, not vulnerabilities.
 
 Transcription can leave the machine: with the `openai` or `opencaptions` provider, or when a

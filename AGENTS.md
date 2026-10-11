@@ -10,7 +10,7 @@ the push is expected to be green. Before that:
 
 - [ ] Added or updated tests covering what you touched
 - [ ] `make ci` passes (or `make ci-staged` before committing)
-- [ ] Checked whether your change invalidates anything in `docs/DESIGN.md`, the iOS README, or this file, and updated it
+- [ ] Checked whether your change invalidates anything in `docs/` (the guides and `docs/project/architecture.md`), the iOS README, or this file, and updated it
 
 `make ci` is safe to run while your own stack is up: it validates a clean
 snapshot of committed source in pinned containers, and its end-to-end stack runs
@@ -40,6 +40,7 @@ make test-engine      # the engine's Rust tests (in a pinned toolchain container
 make typegen-check    # regenerate API types and fail if the committed file is stale
 make check-versions   # the manifests agree on the version
 make check-compose    # docker-compose.yml fallbacks agree with each other and config.py
+make docs-build       # build the documentation site (a broken link or anchor fails it)
 ```
 
 iOS needs macOS with full Xcode, and is **not** part of `make ci` (it has its own
@@ -69,7 +70,7 @@ images, which is what an end user does.
 
 2. **`apps/web/src/types/api.generated.ts` is generated, never hand-edit it.** After changing `apps/api/app/models/schemas.py`, regenerate with `bash scripts/generate-api-types.sh` from the repo root. CI runs `git diff --exit-code` on this file. The hand-written types in `apps/web/src/types/index.ts` deliberately derive from the generated file so `tsc` catches API drift at compile time.
 
-3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic, integer blur, no platform maths, so both builds produce byte-identical frames. See `docs/DESIGN.md`.
+3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic, integer blur, no platform maths, so both builds produce byte-identical frames. See `docs/project/architecture.md`.
 
 4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format and its encoder settings + dimensions + fps) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
 
@@ -100,7 +101,7 @@ images, which is what an end user does.
     host port, do not add one back for convenience. Reach a service with
     `docker compose exec`, and the API through the web origin
     (`localhost:5173/api/v1/...`). The bind address is a documented security
-    property (docs/SELF-HOSTING.md, SECURITY.md); changing it is an edit to that line, not a variable.
+    property (docs/self-hosting/security.md, SECURITY.md); changing it is an edit to that line, not a variable.
 
 13. **Transcription between OpenCaptions components uses the transcription API and
     the shared `Transcript` schema** (`app/api/transcriptions.py`; the `opencaptions`
@@ -113,12 +114,13 @@ images, which is what an end user does.
 | Path | Owns |
 |------|------|
 | `apps/api/` | FastAPI + Celery workers. Pydantic models, Alembic migrations, services, tasks. |
-| `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. A second entry (`demo.html`, `src/demo/`) is the static public demo site (see `docs/DESIGN.md`). |
+| `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. A second entry (`demo.html`, `src/demo/`) is the static public demo site (see `docs/project/architecture.md`). |
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
 | `apps/ios/` | The iPhone/iPad app: SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
 | `scripts/` | `ci-local.sh` (acceptance gate), `check-ci-parity.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
-| `docs/DESIGN.md` | The design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
+| `docs/` | The documentation, plain Markdown (guides, self-hosting, reference), built into the site in `apps/docs/`. `docs/project/architecture.md` is the design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
+| `apps/docs/` | The documentation site (Docusaurus). It owns no content: the pages are `docs/`. A broken link fails its build, which `make ci` runs. |
 | `Makefile` | All lifecycle targets (`up`, `watch`, `test`, `lint`, `generate-types`, etc). |
 
 ## Conventions

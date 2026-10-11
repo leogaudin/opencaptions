@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     # ----- Auth / sessions -----
     registration_enabled: bool = True
 
-    # Self-hosted (False) or run for other people (True). See docs/DESIGN.md.
+    # Self-hosted (False) or run for other people (True). See docs/project/architecture.md.
     hosted_mode: bool = False
 
     # False so one code path serves http://localhost; authentication never

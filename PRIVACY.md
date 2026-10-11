@@ -1,7 +1,7 @@
 # Privacy Policy
 
 *Last updated: 8 October 2026. Applies to the OpenCaptions iPhone and iPad app. The self-hosted web
-app runs on your own server and keeps nothing anywhere else; see [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).*
+app runs on your own server and keeps nothing anywhere else; see [docs/self-hosting/installation.md](docs/self-hosting/installation.md).*
 
 OpenCaptions does not collect your data. There is no account, no analytics, no advertising, and no
 tracking, and the app has no servers of ours to send anything to.

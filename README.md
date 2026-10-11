@@ -49,13 +49,15 @@ To build from source instead, clone the repository and run `docker compose up -d
 (or `make up`).
 
 > The web UI listens on every interface and signup is open. On a shared network or a public
-> host, read [Security](docs/SELF-HOSTING.md#security) first.
+> host, read [Security](docs/self-hosting/security.md) first.
 
 ## More
 
-- [Self-hosting](docs/SELF-HOSTING.md): configuration, the HTTP API, security, GPU acceleration,
-  backups
-- [Design](docs/DESIGN.md): how it works, including the engine and the iOS app
+- [Documentation](docs/index.md): the guides, self-hosting, the HTTP API and the reference. It is
+  plain Markdown here, and the same files are built into a [Docusaurus](apps/docs) site
+- [Self-hosting](docs/self-hosting/installation.md): installation, configuration, security, GPU
+  acceleration, backups
+- [Architecture](docs/project/architecture.md): how it works, including the engine and the iOS app
 - [iOS app](apps/ios/README.md): building and running it
 - [Contributing](CONTRIBUTING.md): dev setup and the acceptance gate (`make ci`)
 - [Security policy](SECURITY.md): threat model and reporting a vulnerability

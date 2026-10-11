@@ -3,7 +3,7 @@
 The native app: everything runs on the phone, with no server and no accounts. It
 reuses the caption engine (`apps/engine`) for drawing and edits, WhisperKit and Parakeet
 (FluidAudio) for transcription, and AVFoundation for decode and encode. See
-[`docs/DESIGN.md`](../../docs/DESIGN.md).
+[`docs/project/architecture.md`](../../docs/project/architecture.md).
 
 ## Prerequisites (macOS only)
 
@@ -32,7 +32,7 @@ in Xcode to run on a simulator or device.
 
 Transcription runs on the phone by default. Settings → "Where to transcribe" can point it at
 another OpenCaptions server instead (paste the link the web app's Account page makes when you
-create a key); see "Transcribing on a server" in `docs/DESIGN.md`.
+create a key); see "Transcribing on a server" in `docs/project/architecture.md`.
 
 ## Layout
 

@@ -8,7 +8,7 @@ import Foundation
 /// in a clip someone wants captioned, so every long hole that is not quiet is decoded again without
 /// that judgement, twice with the window shifted, and only the words both readings give are kept:
 /// text invented over music differs from one window to the next, speech does not. (The server does
-/// the same, `chunking.second_look`, measured in docs/ASR-MODELS.md.)
+/// the same, `chunking.second_look`, measured in docs/project/speech-model-benchmarks.md.)
 public enum TranscriptGaps {
     /// The shortest stretch of audio without a word that is looked at again.
     public static let minimum: Double = 6
