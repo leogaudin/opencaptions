@@ -24,6 +24,15 @@ public enum TranscriptionLanguages {
 
     /// The languages a model can be asked for, in alphabetical order of their names. Apple's model
     /// offers only the languages this iOS has it for.
+    /// The language to start from: the one remembered if the list has it, else the device's, else the first.
+    public static func initial(
+        stored: String, among list: [TranscriptionLanguage],
+        device: String = Locale.current.language.languageCode?.identifier ?? "en"
+    ) -> String {
+        if list.contains(where: { $0.code == stored }) { return stored }
+        return (list.first { $0.code == device } ?? list.first)?.code ?? device
+    }
+
     public static func offered(by model: SpeechModel) async -> [TranscriptionLanguage] {
         var languages = all.filter { model.covers($0.code) }
         #if canImport(Speech) && compiler(>=6.2)

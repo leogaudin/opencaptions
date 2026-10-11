@@ -19,4 +19,12 @@ import Testing
         let whisper = try #require(SpeechModels.model("large-v3-turbo"))
         #expect(await TranscriptionLanguages.offered(by: whisper).count == TranscriptionLanguages.all.count)
     }
+
+    @Test func theStartingLanguageIsTheRememberedOneElseTheDevicesElseTheFirst() {
+        let list = [TranscriptionLanguage(code: "de", label: "German"), TranscriptionLanguage(code: "fr", label: "French")]
+        #expect(TranscriptionLanguages.initial(stored: "fr", among: list, device: "de") == "fr")
+        #expect(TranscriptionLanguages.initial(stored: "", among: list, device: "fr") == "fr", "nothing remembered: the device's")
+        #expect(TranscriptionLanguages.initial(stored: "auto", among: list, device: "de") == "de", "the old auto choice is dropped")
+        #expect(TranscriptionLanguages.initial(stored: "ja", among: list, device: "es") == "de", "not offered: the first")
+    }
 }

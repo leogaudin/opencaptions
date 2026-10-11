@@ -5,8 +5,6 @@ public enum TranscriptionError: Error, Equatable, Sendable, LocalizedError {
     case modelNotDownloaded(String)
     case noAudio
     case noSpeech
-    /// Auto-detect could not tell the language apart; `guess` is its best one.
-    case unsureLanguage(guess: String)
     /// The chosen model does not transcribe this language (an ISO 639-1 code).
     case unsupportedLanguage(String)
 
@@ -16,7 +14,6 @@ public enum TranscriptionError: Error, Equatable, Sendable, LocalizedError {
         case .modelNotDownloaded(let id): String(localized: "The \(id) model has not been downloaded.", bundle: .module)
         case .noAudio: String(localized: "This video has no audio to transcribe.", bundle: .module)
         case .noSpeech: String(localized: "No speech was found in this video.", bundle: .module)
-        case .unsureLanguage: String(localized: "The language of this video could not be told. Choose it and try again.", bundle: .module)
         case .unsupportedLanguage(let code):
             String(localized: "This model does not transcribe \(Locale.current.localizedString(forLanguageCode: code) ?? code). Choose another model.", bundle: .module)
         }

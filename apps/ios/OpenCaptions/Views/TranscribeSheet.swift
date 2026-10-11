@@ -12,7 +12,7 @@ struct TranscribeSheet: View {
 
     @State private var modelID = SpeechModels.defaultID
     /// Remembered between runs: someone who picks Spanish once is probably transcribing Spanish.
-    @AppStorage("transcribeLanguage") private var language = "auto"
+    @AppStorage("transcribeLanguage") private var language = ""
     @State private var downloading: Double?
     @State private var askAboutData = false
     @State private var failure: String?
@@ -31,15 +31,6 @@ struct TranscribeSheet: View {
     private var onServer: Bool { (sourceChoice ?? app.useServer) && app.serverConnection != nil }
     private var downloaded: Bool { onServer || app.transcriber.isDownloaded(modelID) }
     private var busy: Bool { downloading != nil || model.isTranscribing }
-    /// Whether the chosen model can work out the language itself (the server's always can).
-    private var detects: Bool { onServer || chosen.detectsLanguage }
-    /// After an unsure guess, auto-detect would only guess again: a language has to be chosen.
-    private var afterUnsureGuess: Bool {
-        if case .needsLanguage = model.transcription { return true }
-        return false
-    }
-    private var offersAuto: Bool { detects && !afterUnsureGuess }
-    private var mustChoose: Bool { language == "auto" && !offersAuto }
     @State private var serverModels: ServerCapabilities?
     @State private var serverModelID: String?
     @State private var serverProblem: String?
@@ -72,7 +63,6 @@ struct TranscribeSheet: View {
             if !onServer, downloaded { app.transcriber.preload(modelID) }
         }
         .onAppear {
-            if afterUnsureGuess { showLanguages = true }
             #if DEBUG
                 if ProcessInfo.processInfo.environment["OC_LANGUAGE_STEP"] != nil { showLanguages = true }
             #endif
@@ -143,25 +133,11 @@ struct TranscribeSheet: View {
                 ScrollView(.vertical) {
                     VStack(spacing: 16) {
                         if let downloading { downloadCard(downloading) }
-                        if case .needsLanguage(let guess) = model.transcription {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Label("Not sure which language this is", systemImage: "questionmark.circle.fill")
-                                    .font(.system(size: 14, weight: .semibold))
-                                Text("The best guess was \(Locale.current.localizedString(forLanguageCode: guess) ?? guess), but it is far from certain. Choose the language to go on.")
-                                    .font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
-                            }
-                            .fixedSize(horizontal: false, vertical: true)
-                            .card()
-                        }
                         if let failure {
                             Text(failure).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
                         }
                         languageSearch
                         languageList
-                        if !detects {
-                            Text("This model cannot tell the language by itself, so one has to be chosen.")
-                                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
-                        }
                     }
                     .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
                     .containerRelativeFrame(.horizontal)
@@ -174,7 +150,7 @@ struct TranscribeSheet: View {
                 Task { await begin(allowMetered: false) }
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(busy || mustChoose || !offered.contains { $0.code == language } && language != "auto"))
+            .disabled(busy || !offered.contains { $0.code == language }))
         }
         .background(Theme.background)
         .navigationBarBackButtonHidden()
@@ -224,11 +200,8 @@ struct TranscribeSheet: View {
     private var languageList: some View {
         let rows = shownLanguages
         return LazyVStack(spacing: 0) {
-            if offersAuto, search.isEmpty {
-                languageRow(code: "auto", flag: "\u{2728}", label: String(localized: "Auto-detect"))
-            }
             ForEach(rows) { option in
-                if offersAuto && search.isEmpty || option.id != rows.first?.id {
+                if option.id != rows.first?.id {
                     Rectangle().fill(Theme.stroke).frame(height: 1).padding(.leading, 16)
                 }
                 languageRow(code: option.code, flag: option.flag, label: option.label)
@@ -258,14 +231,9 @@ struct TranscribeSheet: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    /// The choice must be one the model offers: a language it does not know falls back to detecting, and a
-    /// model that cannot detect gets the device's language (or the first one it has).
+    /// The choice must be one the model offers: otherwise the device's language, or the first it has.
     private func keepLanguageValid() {
-        let known = offered.contains { $0.code == language }
-        if language == "auto" ? offersAuto : known { return }
-        if offersAuto { language = "auto"; return }
-        let device = Locale.current.language.languageCode?.identifier ?? "en"
-        language = (offered.first { $0.code == device } ?? offered.first)?.code ?? "auto"
+        language = TranscriptionLanguages.initial(stored: language, among: offered)
     }
 
     // MARK: Pieces
@@ -394,7 +362,6 @@ struct TranscribeSheet: View {
                     HStack(spacing: 6) {
                         Text(option.label).font(.system(size: 16, weight: .semibold))
                         if locked { ProBadge() }
-                        ModelSourceTag(model: option)
                     }
                     if let hint = Self.hint(option.id) {
                         Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
@@ -450,7 +417,7 @@ struct TranscribeSheet: View {
             guard let server = app.serverTranscriber else { return }
             model.startTranscription(
                 with: server, model: serverModelID ?? serverModels?.defaultModel ?? "",
-                language: language == "auto" ? nil : language)
+                language: language)
             dismiss()
             return
         }
@@ -478,7 +445,7 @@ struct TranscribeSheet: View {
             downloading = nil
         }
         model.startTranscription(
-            with: app.transcriber, model: modelID, language: language == "auto" ? nil : language)
+            with: app.transcriber, model: modelID, language: language)
         dismiss()
     }
 }

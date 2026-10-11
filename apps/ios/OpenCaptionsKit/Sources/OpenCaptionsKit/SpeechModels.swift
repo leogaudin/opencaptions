@@ -10,12 +10,6 @@ public enum SpeechEngine: Equatable, Sendable {
     case appleSpeech
 }
 
-/// Where a speech model is fetched from.
-public enum ModelSource: Equatable, Sendable {
-    case huggingFace
-    case apple
-}
-
 /// A speech model the phone can run. The ids are the desktop's (`asr_models.py`) where it has the
 /// same model; for WhisperKit's, `variant` is the folder in `argmaxinc/whisperkit-coreml`.
 public struct SpeechModel: Equatable, Sendable, Identifiable {
@@ -43,12 +37,6 @@ public struct SpeechModel: Equatable, Sendable, Identifiable {
         self.engine = engine
         self.languages = languages
     }
-
-    /// Where the model comes from, for the person to see: a download from Hugging Face, or the one iOS has.
-    public var source: ModelSource { engine == .appleSpeech ? .apple : .huggingFace }
-
-    /// Whether the model can work out the language by itself. Apple's cannot: a language has to be chosen.
-    public var detectsLanguage: Bool { engine != .appleSpeech }
 
     /// Whether the model can be asked for this language. `nil` (detect it) is always allowed:
     /// what a model does with a language it was not trained on is not up to the caller.

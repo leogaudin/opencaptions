@@ -6,7 +6,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppModel.self) private var app
     @AppStorage(Appearance.storageKey) private var appearance = Appearance.system
-    @AppStorage("transcribeLanguage") private var language = "auto"
+    @AppStorage("transcribeLanguage") private var language = ""
 
     @State private var refresh = 0
     @State private var showPro = false
@@ -17,6 +17,12 @@ struct SettingsView: View {
     @State private var failure: String?
     @State private var sizes = Sizes()
     private let languages = TranscriptionLanguages.all
+    /// The language shown: the one remembered, or the device's until one is chosen.
+    private var shownLanguage: Binding<String> {
+        Binding(
+            get: { TranscriptionLanguages.initial(stored: language, among: languages) },
+            set: { language = $0 })
+    }
 
     /// What is on disk. Read when `refresh` changes, not each time the page is drawn: a model's
     /// download progress draws it many times a second, and each size is a walk through a folder.
@@ -176,14 +182,13 @@ struct SettingsView: View {
             HStack {
                 Text("Spoken language").font(.system(size: 16, weight: .medium))
                 Spacer()
-                Picker("Spoken language", selection: $language) {
-                    Text("Auto-detect").tag("auto")
+                Picker("Spoken language", selection: shownLanguage) {
                     ForEach(languages) { Text($0.label).tag($0.code) }
                 }
                 .labelsHidden().pickerStyle(.menu).tint(Theme.textPrimary)
             }
             .card()
-            Text("What the transcribe sheet starts with. Auto-detect works best on clear speech.")
+            Text("What the transcribe sheet starts with.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
         }
     }
@@ -211,7 +216,6 @@ struct SettingsView: View {
                 HStack(spacing: 6) {
                     Text(model.label).font(.system(size: 16, weight: .semibold))
                     if app.entitlements.locks(model: model.id) { ProBadge() }
-                    ModelSourceTag(model: model)
                 }
                 Group {
                     if model.isBuiltIn {

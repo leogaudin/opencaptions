@@ -116,26 +116,6 @@ public final class WhisperKitTranscriber: Transcriber {
         return folder
     }
 
-    /// The language of the loudest stretches of audio, or nil if the model cannot say.
-    private func detectLanguage(of samples: [Float], with pipe: WhisperKit) async throws -> String? {
-        var verdicts: [[String: Float]] = []
-        for window in LanguageGuess.loudestWindows(in: samples) {
-            if let verdict = try? await pipe.detectLangauge(audioArray: Array(samples[window])) {
-                verdicts.append(verdict.langProbs)
-            }
-        }
-        let winner = LanguageGuess.winner(of: verdicts)
-        // Kept in the diagnostics: a wrong guess makes the model translate the speech into that language.
-        let tops = verdicts.map { v in v.sorted { $0.value > $1.value }.prefix(3).map { "\($0.key) \(String(format: "%.2f", $0.value))" }.joined(separator: ", ") }
-        Diagnostics.log("language detection: \(winner.map { "\($0.language) \(String(format: "%.2f", $0.confidence))" } ?? "none") from \(tops.map { "[\($0)]" }.joined(separator: " "))")
-        guard let winner else { return nil }
-        // Too unsure to force on the model: the user is asked, and the loaded model is kept for the retry.
-        guard winner.confidence >= LanguageGuess.minimumConfidence else {
-            throw TranscriptionError.unsureLanguage(guess: winner.language)
-        }
-        return winner.language
-    }
-
     public func transcribe(
         source: URL, language: String?, model: String,
         progress: @escaping @Sendable (Double, String) -> Void
@@ -160,18 +140,12 @@ public final class WhisperKitTranscriber: Transcriber {
         progress(0, KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
         let pipe = try await loading.value.pipe
 
-        var lang = language.flatMap { $0 == "auto" ? nil : $0 }
-        // Judge the language from where the speech is, not from the first 30 seconds. An
-        // English-only model has nothing to detect.
-        if lang == nil, !info.englishOnly {
-            progress(0, KitStrings.localized("Detecting the language…"))
-            lang = try await detectLanguage(of: samples, with: pipe)
-        }
-        // `detectLanguage` must be asked for when nothing else decided: left alone WhisperKit
-        // assumes English, and the model then transcribes other speech as an English translation.
+        // The language is always chosen (the screen offers no "detect"): left alone WhisperKit would
+        // assume English and translate other speech, so a missing one is the device's.
+        let lang = language.flatMap { $0 == "auto" ? nil : $0 } ?? Locale.current.language.languageCode?.identifier ?? "en"
         let options = DecodingOptions(
             task: .transcribe, language: lang, temperatureFallbackCount: Self.fallbackRetries,
-            detectLanguage: lang == nil && !info.englishOnly, skipSpecialTokens: true, wordTimestamps: true)
+            skipSpecialTokens: true, wordTimestamps: true)
         // Decoding reports per 30-second window, so a short clip is one step and the fraction
         // stays 0 until it ends; the screen shows a spinner until there is a fraction.
         let covered = pipe.progress
@@ -185,7 +159,7 @@ public final class WhisperKitTranscriber: Transcriber {
         var transcript = TranscriptMapping.transcript(from: results, duration: seconds, requestedLanguage: requested)
         if !transcript.segments.isEmpty {
             transcript = try await fillGaps(
-                in: transcript, samples: samples, duration: seconds, language: lang ?? transcript.language,
+                in: transcript, samples: samples, duration: seconds, language: lang,
                 pipe: pipe, progress: progress)
         }
         progress(1, KitStrings.localized("Done"))

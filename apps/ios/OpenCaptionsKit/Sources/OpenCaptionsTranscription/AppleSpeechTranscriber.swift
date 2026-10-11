@@ -8,7 +8,7 @@
     /// and keeps it, per language, so there is nothing for the app to fetch, size or delete; it is here to be
     /// measured against Whisper and Parakeet, above all on how many words come back with a time of their own.
     ///
-    /// It cannot detect a language, so a transcription with none chosen asks for one.
+    /// It cannot detect a language: with none given it takes the device's.
     @available(iOS 26.0, macOS 26.0, *)
     public struct AppleSpeechTranscriber: Transcriber {
         public init() {}
@@ -19,7 +19,6 @@
         ) async throws -> Transcript {
             let requested = language.flatMap { $0 == "auto" ? nil : $0 }
             let code = requested ?? Locale.current.language.languageCode?.identifier ?? "en"
-            guard requested != nil else { throw TranscriptionError.unsureLanguage(guess: code) }
             guard let locale = await Self.locale(for: code) else { throw TranscriptionError.unsupportedLanguage(code) }
 
             progress(0, KitStrings.localized("Reading the audio…"))

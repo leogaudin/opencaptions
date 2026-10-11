@@ -1464,83 +1464,6 @@
         }
       }
     },
-    "Auto-detect": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Auto"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Авто"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Otomatik"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自動検出"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "자동 감지"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自动检测"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Otomatis"
-          }
-        }
-      }
-    },
     "Back": {
       "extractionState": "manual",
       "localizations": {
@@ -9105,83 +9028,6 @@
         }
       }
     },
-    "Not sure which language this is": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Langue incertaine"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se sabe con certeza el idioma"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sprache nicht sicher erkannt"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nie wiadomo, jaki to język"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Não há certeza do idioma"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lingua non rilevata con certezza"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Язык определён неуверенно"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dilden emin olunamadı"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "言語を特定できませんでした"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "언어를 확신할 수 없습니다"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法确定语言"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bahasa tidak dapat dipastikan"
-          }
-        }
-      }
-    },
     "Not transcribed": {
       "extractionState": "manual",
       "localizations": {
@@ -15040,83 +14886,6 @@
         }
       }
     },
-    "The best guess was %@, but it is far from certain. Choose the language to go on.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La meilleure estimation était %@, mais elle est loin d’être sûre. Choisissez la langue pour continuer."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La mejor suposición fue %@, pero está lejos de ser segura. Elige el idioma para continuar."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die beste Vermutung war %@, aber sie ist alles andere als sicher. Wähle die Sprache, um fortzufahren."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Najlepsze przypuszczenie to %@, ale jest dalekie od pewnego. Wybierz język, aby kontynuować."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O melhor palpite foi %@, mas está longe de ser certo. Escolha o idioma para continuar."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La stima migliore era %@, ma è tutt’altro che certa. Scegli la lingua per continuare."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Лучшее предположение — %@, но оно далеко не точное. Выберите язык, чтобы продолжить."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En iyi tahmin %@ idi, ancak kesin olmaktan uzak. Devam etmek için dili seçin."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最も有力な推測は%@でしたが、確実ではありません。続けるには言語を選んでください。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "가장 유력한 추측은 %@였지만 확실하지 않습니다. 계속하려면 언어를 선택하세요."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最可能的是%@，但远不能确定。请选择语言以继续。"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Perkiraan terbaik adalah %@, tetapi jauh dari pasti. Pilih bahasanya untuk melanjutkan."
-          }
-        }
-      }
-    },
     "The clipboard does not hold an OpenCaptions link.": {
       "extractionState": "manual",
       "localizations": {
@@ -16043,89 +15812,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ruang tidak cukup: dibutuhkan sekitar %@ dan ponsel hanya punya %@ kosong. Pilih ukuran atau kecepatan bingkai yang lebih kecil, atau kosongkan ruang."
-          }
-        }
-      }
-    },
-    "This model cannot tell the language by itself, so one has to be chosen.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This model cannot tell the language by itself, so one has to be chosen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce modèle ne sait pas reconnaître la langue seul : il faut en choisir une."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Este modelo no sabe detectar el idioma por sí solo, así que hay que elegir uno."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dieses Modell erkennt die Sprache nicht selbst, deshalb muss eine gewählt werden."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ten model nie rozpozna języka sam, więc trzeba go wybrać."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Este modelo não identifica o idioma sozinho, então é preciso escolher um."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Questo modello non riconosce da solo la lingua, quindi va scelta."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Эта модель не определяет язык сама, поэтому язык нужно выбрать."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu model dili kendisi algılayamaz, bu yüzden birini seçmelisin."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このモデルは言語を自動で判別できないため、言語を選ぶ必要があります。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이 모델은 언어를 스스로 알아내지 못해서 직접 골라야 합니다."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此模型无法自动识别语言，需要手动选择。"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model ini tidak dapat mengenali bahasa sendiri, jadi pilih salah satu."
           }
         }
       }
@@ -17978,79 +17664,78 @@
         }
       }
     },
-    "What the transcribe sheet starts with. Auto-detect works best on clear speech.": {
-      "extractionState": "manual",
+    "What the transcribe sheet starts with.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La langue proposée au départ dans la feuille de transcription. La détection automatique fonctionne mieux sur une voix claire."
+            "value": "La langue proposée au départ dans la feuille de transcription."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Con lo que empieza la hoja de transcripción. La detección automática funciona mejor con voz clara."
+            "value": "Con lo que empieza la hoja de transcripción."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Womit das Transkriptionsblatt startet. Die automatische Erkennung funktioniert bei klarer Sprache am besten."
+            "value": "Womit das Transkriptionsblatt startet."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Od czego zaczyna się arkusz transkrypcji. Automatyczne wykrywanie działa najlepiej przy wyraźnej mowie."
+            "value": "Od czego zaczyna się arkusz transkrypcji."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Com o que a tela de transcrição começa. A detecção automática funciona melhor com fala clara."
+            "value": "Com o que a tela de transcrição começa."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Con cosa parte la schermata di trascrizione. Il rilevamento automatico funziona meglio con un parlato chiaro."
+            "value": "Con cosa parte la schermata di trascrizione."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "С чего начинается окно расшифровки. Автоопределение лучше работает с чёткой речью."
+            "value": "С чего начинается окно расшифровки."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çeviriyazı ekranının başlangıç değeri. Otomatik algılama net konuşmada en iyi çalışır."
+            "value": "Çeviriyazı ekranının başlangıç değeri."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "文字起こし画面の初期設定です。自動検出は明瞭な音声でいちばんよく働きます。"
+            "value": "文字起こし画面の初期設定です。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "받아쓰기 화면의 기본값입니다. 자동 감지는 또렷한 음성에서 가장 잘 작동합니다."
+            "value": "받아쓰기 화면의 기본값입니다."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "转写界面的默认设置。自动检测对清晰的语音效果最好。"
+            "value": "转写界面的默认设置。"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pilihan awal layar transkripsi. Deteksi otomatis bekerja paling baik pada ucapan yang jelas."
+            "value": "Pilihan awal layar transkripsi."
           }
         }
       }
