@@ -56,17 +56,23 @@ export async function renderDemo(
   }
 }
 
-/** `demo.html` with its head tags and its body filled in (English, or the language of `code`). */
-export function fillPage(html: string, page: DemoHtml, code = "en"): string {
+/**
+ * `demo.html` with its head tags and its body filled in (English, or the language of `code`). Without
+ * `withBody` the body stays empty: the dev server loads the styles with the script, so a prerendered
+ * body would show unstyled until then.
+ */
+export function fillPage(html: string, page: DemoHtml, code = "en", withBody = true): string {
   if (!html.includes(HEAD_PLACEHOLDER) || !html.includes(ROOT_ELEMENT)) {
     throw new Error("demo.html has lost the placeholders the prerender fills in");
   }
-  if (!page.body.includes("<h1")) throw new Error("the prerendered demo page has no heading");
+  if (withBody && !page.body.includes("<h1")) {
+    throw new Error("the prerendered demo page has no heading");
+  }
   // Functions, not strings: the page may contain "$&" and the like, which a string would expand.
   return html
     .replace('<html lang="en">', () => `<html lang="${code}">`)
     .replace(HEAD_PLACEHOLDER, () => page.head)
-    .replace(ROOT_ELEMENT, () => `<div id="root">${page.body}</div>`);
+    .replace(ROOT_ELEMENT, () => (withBody ? `<div id="root">${page.body}</div>` : ROOT_ELEMENT));
 }
 
 /**

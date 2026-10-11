@@ -37,7 +37,8 @@ const demoPage: Plugin = {
     const code = LANGUAGE_PATH.exec(ctx.originalUrl ?? "")?.[1] ?? "en";
     const pages = await renderDemo({ only: code, server: ctx.server });
     const page = pages[code] ?? (pages.en as NonNullable<(typeof pages)[string]>);
-    return fillPage(html, page, pages[code] ? code : "en");
+    // In dev the styles arrive with the script, so only the head is filled in (no unstyled body).
+    return fillPage(html, page, pages[code] ? code : "en", !ctx.server);
   },
   async closeBundle() {
     if (!outDir) return;
