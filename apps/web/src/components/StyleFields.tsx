@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { RangeInput } from "@/components/RangeInput";
 import { hexToRgba } from "@/lib/utils";
 import type { StyleConfig } from "@/types";
@@ -17,6 +17,52 @@ export function Field({ label, children }: { label: ReactNode; children: ReactNo
   );
 }
 
+/**
+ * A colour picker that owns its value while it is being used. The native picker keeps open and
+ * sends a colour with each move of the pointer; writing the style's colour back into the input
+ * after every one of them (what a controlled input does, with the style one frame behind because
+ * the updates are throttled) puts the picker back where it was, and the browser's picker then
+ * drops the choice. So the input is uncontrolled, and follows the style only when it is not
+ * the one being used: a look picked, a colour removed.
+ */
+function ColorInput({
+  value,
+  onChange,
+  ...rest
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className: string;
+  "aria-label"?: string;
+  "data-testid"?: string;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const using = useRef(false);
+  // Follows the style, unless the visitor is mid-choice (the style catches up with them).
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    if (el.value.toUpperCase() === value.toUpperCase()) using.current = false;
+    else if (!using.current) el.value = value;
+  }, [value]);
+  return (
+    <input
+      {...rest}
+      ref={input}
+      type="color"
+      defaultValue={value}
+      onChange={(e) => {
+        using.current = true;
+        onChange(e.target.value.toUpperCase());
+      }}
+      onBlur={(e) => {
+        using.current = false;
+        if (e.target.value.toUpperCase() !== value.toUpperCase()) e.target.value = value;
+      }}
+    />
+  );
+}
+
 export function ColorField({
   label,
   value,
@@ -29,10 +75,9 @@ export function ColorField({
   return (
     <Field label={label}>
       <div className="flex items-center gap-2">
-        <input
-          type="color"
+        <ColorInput
           value={value}
-          onChange={(e) => onChange(e.target.value.toUpperCase())}
+          onChange={onChange}
           className="h-7 w-10 cursor-pointer rounded border border-border bg-background"
         />
         <code className="rounded bg-background/60 px-1.5 py-0.5 text-[11px] text-muted-foreground">
@@ -76,14 +121,11 @@ export function ColorListField({
           // The list is edited in place and has no ids: the position is the identity.
           // biome-ignore lint/suspicious/noArrayIndexKey: see above.
           <div key={i} className="flex items-center gap-1">
-            <input
-              type="color"
+            <ColorInput
               value={color}
               data-testid={`${testId}-${i}`}
               aria-label={`${label} ${i + 1}`}
-              onChange={(e) =>
-                onChange(value.map((c, j) => (j === i ? e.target.value.toUpperCase() : c)))
-              }
+              onChange={(next) => onChange(value.map((c, j) => (j === i ? next : c)))}
               className="h-7 w-10 cursor-pointer rounded border border-border bg-background"
             />
             {i > 0 && (

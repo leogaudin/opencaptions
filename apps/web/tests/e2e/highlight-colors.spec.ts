@@ -24,6 +24,24 @@ test.describe("Highlight colors", () => {
   const savedColors = () =>
     (saved().style_config as { highlight_colors?: string[] } | null)?.highlight_colors;
 
+  test("the picker keeps the colors it is given while it is open", async ({ page }) => {
+    // The browser's picker stays open and sends a color per move. If the page wrote the style's
+    // (older) color back into the input after each, the picker would be put back and drop the choice.
+    const kept = await page.getByTestId("highlight-color-0").evaluate((el: HTMLInputElement) => {
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      const afterEach: string[] = [];
+      for (const hex of ["#112233", "#445566", "#778899"]) {
+        set?.call(el, hex);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        afterEach.push(el.value.toUpperCase());
+      }
+      return afterEach;
+    });
+    expect(kept).toEqual(["#112233", "#445566", "#778899"]);
+    await expect.poll(savedColors).toEqual(["#778899"]);
+    await expect(page.getByTestId("highlight-color-0")).toHaveValue("#778899");
+  });
+
   test("changing the highlight color is saved and is what the preview draws", async ({ page }) => {
     await pickColor(page.getByTestId("highlight-color-0"), "#ff0000");
     await expect.poll(savedColors).toEqual(["#FF0000"]);
