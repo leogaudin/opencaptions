@@ -49,7 +49,7 @@ CHECKS=(
 
 # Jobs that exist only to publish artifacts; the local gate deliberately stops
 # short of pushing anything.
-PUBLISH_ONLY_JOBS="publish publish-gpu publish-demo"
+PUBLISH_ONLY_JOBS="publish publish-gpu publish-demo smoke-published"
 
 failed=0
 

@@ -325,6 +325,36 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
 
+  # The README's promise: copy docker-compose.yml alone into an empty directory, `docker compose up -d`,
+  # and it runs, from images anyone can pull. This is that, against the images just published, so a
+  # missing tag or a broken image is found here and not by the first person who tries it. A release
+  # tag is tried as a user gets it (no version set, so `latest`); a branch by its own commit.
+  smoke-published:
+    name: Smoke the published images (the compose file alone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [publish]
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Copy only the compose file
+        run: mkdir "$RUNNER_TEMP/oc" && cp docker-compose.yml "$RUNNER_TEMP/oc/"
+      - name: Start it as a user would
+        run: |
+          cd "$RUNNER_TEMP/oc"
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then export OPENCAPTIONS_VERSION="sha-${GITHUB_SHA::7}"; fi
+          docker compose up -d --wait --wait-timeout 600
+      - name: The app answers
+        run: |
+          curl -fsS --retry 10 --retry-delay 3 --retry-all-errors http://localhost:5173/api/v1/health
+          curl -fsS -o /dev/null http://localhost:5173/
+      - name: Logs
+        if: ${{ failure() }}
+        run: cd "$RUNNER_TEMP/oc" && docker compose logs --no-color --tail 200
+      - name: Stop
+        if: ${{ always() }}
+        run: cd "$RUNNER_TEMP/oc" && docker compose down -v
+
   publish-demo:
     name: Publish the demo site (Cloudflare Worker)
     runs-on: ubuntu-latest
