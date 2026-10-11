@@ -194,8 +194,10 @@ public final class WhisperKitTranscriber: Transcriber {
         return transcript
     }
 
-    /// Decodes again each long stretch without words, without Whisper's "this window is silent"
-    /// judgement, which skips a whole window of music or noisy speech (see `TranscriptGaps`).
+    /// Decodes again each long stretch without words that is not quiet, without Whisper's "this
+    /// window is silent" judgement, which skips a whole window of music or noisy speech (see
+    /// `TranscriptGaps`). Each stretch is read twice, the second window shifted, and only the words
+    /// both readings give are kept.
     private func fillGaps(
         in transcript: Transcript, samples: [Float], duration: Double, language: String,
         pipe: WhisperKit, progress: @escaping @Sendable (Double, String) -> Void
@@ -209,16 +211,39 @@ public final class WhisperKitTranscriber: Transcriber {
         options.noSpeechThreshold = nil
         options.logProbThreshold = nil
         options.firstTokenLogProbThreshold = nil
+
+        /// The words of one window of the audio, with times from the start of the recording.
+        func read(from lower: Double, to upper: Double) async -> [Word] {
+            let start = max(0, lower)
+            let first = Int(start * rate)
+            let last = min(samples.count, Int(upper * rate))
+            guard last - first > Int(rate) else { return [] }
+            guard let results = try? await pipe.transcribe(audioArray: Array(samples[first..<last]), decodeOptions: options)
+            else { return [] }
+            let window = TranscriptMapping.transcript(
+                from: results, duration: Double(last - first) / rate, requestedLanguage: language)
+            return window.segments.flatMap(\.words).map {
+                Word(text: $0.text, start: $0.start + start, end: $0.end + start, confidence: $0.confidence)
+            }
+        }
+
         var fills: [(gap: ClosedRange<Double>, transcript: Transcript)] = []
         for (index, gap) in gaps.enumerated() {
             try Task.checkCancellation()
+            let inside = min(samples.count, Int(gap.lowerBound * rate))..<min(samples.count, Int(gap.upperBound * rate))
+            guard !TranscriptGaps.isQuiet(samples[inside], rate: rate) else { continue }
             progress(1, KitStrings.localized("Checking for missed speech (\(index + 1) of \(gaps.count))…"))
-            let from = max(0, Int(gap.lowerBound * rate))
-            let to = min(samples.count, Int(gap.upperBound * rate))
-            guard to - from > Int(rate) else { continue }
-            guard let results = try? await pipe.transcribe(audioArray: Array(samples[from..<to]), decodeOptions: options)
-            else { continue }
-            fills.append((gap, TranscriptMapping.transcript(from: results, duration: gap.upperBound - gap.lowerBound, requestedLanguage: language)))
+            let first = await read(from: gap.lowerBound - 0.3, to: gap.upperBound + 0.3)
+            guard !first.isEmpty else { continue }
+            let second = await read(from: min(gap.lowerBound + 0.9, gap.upperBound - 2), to: gap.upperBound + 1.3)
+            let words = TranscriptGaps.agreed(first, second)
+                .filter { $0.start >= gap.lowerBound - 0.05 && $0.start < gap.upperBound }
+                .map { Word(text: $0.text, start: max(0, $0.start - gap.lowerBound), end: max(0, $0.end - gap.lowerBound), confidence: $0.confidence) }
+            guard let begin = words.first, let end = words.last else { continue }
+            let segment = TranscriptSegment(
+                id: "fill", words: words, start: begin.start, end: end.end,
+                text: words.map(\.text).joined(separator: " "))
+            fills.append((gap, Transcript(language: language, languageDetection: .manual, duration: gap.upperBound - gap.lowerBound, segments: [segment])))
         }
         return TranscriptGaps.merge(transcript, fills: fills)
     }

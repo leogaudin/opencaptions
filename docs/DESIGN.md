@@ -188,9 +188,10 @@ one the server lists), searchable. The caption itself is always drawn by the eng
 
 **Missed speech.** Whisper skips a whole 30 s window it judges silent, which music and noisy
 speech trigger, leaving a hole in the captions with good ones on either side. After the main
-pass, every stretch of 12 s or more without words is decoded again without that judgement
-(`TranscriptGaps`), and the result is kept only if it looks like speech (a few words, not one
-line repeated).
+pass, every stretch of 6 s or more without words that is not quiet (at most 12) is decoded twice
+without that judgement, the second window shifted, and only the words both readings give are kept
+(`TranscriptGaps`; text invented over music differs between the two). On by default on the phone;
+the server's version is opt-in (`WHISPER_FILL_GAPS`, `docs/ASR-MODELS.md`). Not yet timed on a phone.
 
 **Importing.** A picked video is copied somewhere the app owns and then shown (a poster, a name that
 can be changed, its size and length) before it is imported; cancelling throws the copy away.

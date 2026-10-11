@@ -36,11 +36,18 @@ import Testing
         #expect(merged.segments[1].words.map(\.start) == [2, 3, 4])
     }
 
-    @Test func inventedSpeechIsNotKept() {
-        let base = transcript([(0, 1)], duration: 40)
-        let one = Transcript(
-            language: "en", languageDetection: .manual, duration: 10,
-            segments: [TranscriptSegment(id: "x", words: [Word(text: "Thank", start: 0, end: 1)], start: 0, end: 1, text: "Thank")])
-        #expect(TranscriptGaps.merge(base, fills: [(5...39, one)]).segments.count == 1)
+    @Test func onlyWordsBothReadingsGiveAreKept() {
+        let first = [Word(text: "Guys?", start: 5, end: 6), Word(text: "Boom", start: 8, end: 9), Word(text: "run", start: 10, end: 11)]
+        let second = [Word(text: "guys!", start: 5.4, end: 6), Word(text: "run", start: 20, end: 21)]
+        #expect(TranscriptGaps.agreed(first, second).map(\.text) == ["Guys?"], "Boom is in one reading, run is at another time")
+        #expect(TranscriptGaps.agreed(first, []).isEmpty)
+    }
+
+    @Test func quietAudioIsQuietAndLoudAudioIsNot() {
+        let silence = [Float](repeating: 0, count: 160_000)
+        let loud = (0..<160_000).map { Float(0.1 * sin(Double($0) * 0.1)) }
+        #expect(TranscriptGaps.isQuiet(silence[...]))
+        #expect(!TranscriptGaps.isQuiet(loud[...]))
+        #expect(TranscriptGaps.isQuiet(loud[0..<100]), "too short to judge is not worth decoding")
     }
 }
