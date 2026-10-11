@@ -336,7 +336,10 @@ export function UploadPage() {
         <div className="flex items-center justify-end gap-2">
           {step === 1 ? (
             <>
+              {/* Keyed so Next and Create project are two elements: one button changing its type
+                  during its own click would submit the form. */}
               <button
+                key="cancel"
                 type="button"
                 onClick={() => nav(-1)}
                 className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
@@ -344,6 +347,7 @@ export function UploadPage() {
                 {t("Cancel")}
               </button>
               <button
+                key="next"
                 type="button"
                 onClick={goNext}
                 disabled={!!orphan || (mode === "file" ? !file : !videoUrl.trim())}
@@ -356,6 +360,7 @@ export function UploadPage() {
           ) : (
             <>
               <button
+                key="back"
                 type="button"
                 onClick={() => (submitting ? upload.current?.abort() : setStep(1))}
                 data-testid="back"
@@ -364,6 +369,7 @@ export function UploadPage() {
                 {submitting && mode === "file" ? t("Cancel upload") : t("Back")}
               </button>
               <button
+                key="submit"
                 type="submit"
                 disabled={submitting || !!orphan}
                 className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
