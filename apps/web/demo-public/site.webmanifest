@@ -1,7 +1,7 @@
 {
   "name": "OpenCaptions",
   "short_name": "OpenCaptions",
-  "description": "Free, open-source animated video captions: Whisper transcription on your iPhone or your own server.",
+  "description": "Free, open-source animated video captions: transcribe on your iPhone or your own server.",
   "start_url": "/",
   "display": "browser",
   "background_color": "#ffffff",

@@ -1,8 +1,8 @@
 /**
- * The public demo's HTML: the tags for its <head> and the body of the page, rendered from the same
- * components the browser runs (`src/demo/prerender.tsx`). Search engines and AI assistants mostly do
- * not run scripts, so without this they would read an empty page. Used by the demo build
- * (`vite.demo.config.ts`) and by the tests.
+ * The public demo's HTML: the tags for each page's <head> and the body of the page, rendered from the
+ * same components the browser runs (`src/demo/prerender.tsx`), in every language the page is in.
+ * Search engines and AI assistants mostly do not run scripts, so without this they would read an
+ * empty page. Used by the demo build (`vite.demo.config.ts`) and by the tests.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,14 +21,19 @@ export interface DemoHtml {
 }
 
 interface PrerenderModule {
-  headTags(): string;
-  renderPage(): string;
+  languages: string[];
+  renderLanguage(code: string): Promise<DemoHtml>;
 }
 
-/** Renders the page, in the given dev server or in one made for the purpose. */
-export async function renderDemo(server?: ViteDevServer): Promise<DemoHtml> {
+/**
+ * Renders the page in one language (`only`) or in all of them, keyed by language code, in the given
+ * dev server or in one made for the purpose.
+ */
+export async function renderDemo(
+  options: { only?: string; server?: ViteDevServer } = {},
+): Promise<Record<string, DemoHtml>> {
   const vite =
-    server ??
+    options.server ??
     (await createServer({
       root: ROOT,
       configFile: false,
@@ -40,20 +45,40 @@ export async function renderDemo(server?: ViteDevServer): Promise<DemoHtml> {
     }));
   try {
     const mod = (await vite.ssrLoadModule(ENTRY)) as PrerenderModule;
-    return { head: mod.headTags(), body: mod.renderPage() };
+    const pages: Record<string, DemoHtml> = {};
+    // One after the other: the language is state of the module they all read.
+    for (const code of options.only ? [options.only] : mod.languages) {
+      pages[code] = await mod.renderLanguage(code);
+    }
+    return pages;
   } finally {
-    if (!server) await vite.close();
+    if (!options.server) await vite.close();
   }
 }
 
-/** `demo.html` with its head tags and its body filled in. */
-export function fillPage(html: string, page: DemoHtml): string {
+/** `demo.html` with its head tags and its body filled in (English, or the language of `code`). */
+export function fillPage(html: string, page: DemoHtml, code = "en"): string {
   if (!html.includes(HEAD_PLACEHOLDER) || !html.includes(ROOT_ELEMENT)) {
     throw new Error("demo.html has lost the placeholders the prerender fills in");
   }
   if (!page.body.includes("<h1")) throw new Error("the prerendered demo page has no heading");
-  // A function, not a string: the page may contain "$&" and the like, which a string would expand.
+  // Functions, not strings: the page may contain "$&" and the like, which a string would expand.
   return html
+    .replace('<html lang="en">', () => `<html lang="${code}">`)
     .replace(HEAD_PLACEHOLDER, () => page.head)
     .replace(ROOT_ELEMENT, () => `<div id="root">${page.body}</div>`);
+}
+
+/**
+ * The built English page (its scripts and styles are the same in every language) as the page of
+ * another language: its head tags, its body and its `lang`.
+ */
+export function localizePage(built: string, english: DemoHtml, page: DemoHtml, code: string): string {
+  for (const part of [english.head, english.body, '<html lang="en">']) {
+    if (!built.includes(part)) throw new Error("the built demo page is not the one that was prerendered");
+  }
+  return built
+    .replace('<html lang="en">', () => `<html lang="${code}">`)
+    .replace(english.head, () => page.head)
+    .replace(english.body, () => page.body);
 }

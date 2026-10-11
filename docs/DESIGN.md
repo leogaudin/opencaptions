@@ -287,6 +287,12 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
   in `vite.demo.config.ts`) and React replaces it when the demo is ready. `src/demo/seo.ts` is the one
   place for the title, description, cards, icons and structured data (written into `<head>` at
   `demo.html`'s `<!--seo-head-->`); its FAQ (`src/demo/faq.ts`) is the text shown on the page.
+  The page exists in every language of the interface: English at `/`, the others at `/<code>/`
+  (`src/demo/pages.ts`), each prerendered in its language with its own title, description, canonical
+  address and `hreflang` links to all the others; the footer links them as plain anchors. The address
+  names the language: a visitor at `/` whose browser (or saved choice) is another language is sent to
+  that page, and one who picked English stays. A new language is a new `locales/<code>.json` plus its
+  entries in `pages.ts` and `sitemap.xml`; the tests fail until all agree.
   Files for crawlers are in `demo-public/`: `robots.txt` (everyone welcome, the AI crawlers named),
   `sitemap.xml`, `llms.txt`, the icons and `site.webmanifest`, and `og.png` (the link preview,
   rebuilt by `scripts/make-og-image.swift`). `tests/unit/demo-seo.test.ts` checks all of it. When the

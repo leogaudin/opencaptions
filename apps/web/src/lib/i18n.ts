@@ -61,7 +61,7 @@ export async function loadLanguage(code: LanguageCode): Promise<void> {
 
 const STORAGE_KEY = "language";
 
-function isLanguage(code: string | null | undefined): code is LanguageCode {
+export function isLanguage(code: string | null | undefined): code is LanguageCode {
   return LANGUAGES.some((l) => l.code === code);
 }
 
@@ -100,14 +100,23 @@ export function getLanguage(): LanguageCode {
   return current;
 }
 
-export function setLanguage(code: LanguageCode): void {
+/** Keeps a language as the visitor's choice, for the next visit. */
+export function rememberLanguage(code: LanguageCode): void {
   try {
     localStorage.setItem(STORAGE_KEY, code);
   } catch {
     // The choice just is not remembered.
   }
-  // Switch once its translations have arrived, so the text changes in one step.
-  void loadLanguage(code).then(() => {
+}
+
+/**
+ * Switches to a language once its translations have arrived, so the text changes in one step. The
+ * choice is remembered unless `remember` is false (a page whose address names its language, or the
+ * prerender, is not a choice).
+ */
+export function setLanguage(code: LanguageCode, remember = true): Promise<void> {
+  if (remember) rememberLanguage(code);
+  return loadLanguage(code).then(() => {
     current = code;
     announce();
   });

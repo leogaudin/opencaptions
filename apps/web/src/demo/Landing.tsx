@@ -17,11 +17,12 @@ import {
   Sun,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useT } from "@/lib/i18n";
+import { getLanguage, LANGUAGES, rememberLanguage, useT } from "@/lib/i18n";
 import { iconButtonClass } from "@/lib/ui";
 import { useTheme } from "@/lib/useTheme";
 import { FAQ } from "./faq";
-import { APP_STORE_URL, COMPOSE_URL, DOCS_URL, GITHUB_URL, PRIVACY_URL } from "./links";
+import { APP_STORE_URL, DOCS_URL, GITHUB_URL, PRIVACY_URL } from "./links";
+import { HREFLANG, pagePath } from "./pages";
 
 const linkClass =
   "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground";
@@ -88,7 +89,7 @@ function Hero() {
       </h1>
       <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
         {t(
-          "Add word-by-word captions to any video. Open source and private: Whisper writes the words in about 100 languages, on your iPhone or on your own server.",
+          "Add word-by-word captions to any video. Open source and private: transcribe on your iPhone or on your own server, with the speech model you choose.",
         )}
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
@@ -128,7 +129,7 @@ function HowItWorks() {
     },
     {
       title: t("Get the words"),
-      body: t("Whisper transcribes the speech and times every word, in about 100 languages."),
+      body: t("A speech model of your choice writes the words and gives each one its timing."),
     },
     {
       title: t("Pick a look and export"),
@@ -169,17 +170,15 @@ function Facts() {
     },
     {
       icon: Languages,
-      title: t("About 100 languages"),
+      title: t("Your choice of speech model"),
       body: t(
-        "Whisper understands about 100 spoken languages, and captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts.",
+        "Whisper covers about 100 languages, Parakeet is fast in 25 European ones, and Apple Speech is built into iOS. Captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts.",
       ),
     },
     {
       icon: Smartphone,
       title: t("On your device"),
-      body: t(
-        "The iPhone app can write the words on the phone itself, with Whisper. No upload needed.",
-      ),
+      body: t("The iPhone app writes the words on the phone itself. No upload needed."),
     },
     {
       icon: Download,
@@ -242,14 +241,11 @@ function Ways() {
         <article className="flex min-w-0 flex-col gap-3 rounded-2xl bg-muted p-6">
           <IconBadge icon={Server} />
           <h3 className="text-lg font-bold">{t("Your own server")}</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="flex-1 text-sm text-muted-foreground">
             {t(
               "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.",
             )}
           </p>
-          <pre className="flex-1 whitespace-pre-wrap break-all rounded-xl bg-background p-3 text-xs leading-relaxed">
-            <code>{`curl -O ${COMPOSE_URL}\ndocker compose up -d`}</code>
-          </pre>
           <a href={DOCS_URL} className={`${buttonClass} bg-foreground text-background`}>
             {t("Read the docs")}
           </a>
@@ -276,10 +272,39 @@ function Faq() {
   );
 }
 
+/** Links to the page in each language: plain anchors, so a search engine finds every translation. */
+function LanguageLinks() {
+  const t = useT();
+  const current = getLanguage();
+  return (
+    <nav
+      aria-label={t("Language")}
+      className="mx-auto mb-5 flex max-w-3xl flex-wrap items-center justify-center gap-x-4 gap-y-1.5 px-4"
+    >
+      {LANGUAGES.map(({ code, name }) => (
+        <a
+          key={code}
+          href={pagePath(code)}
+          hrefLang={HREFLANG[code]}
+          lang={code}
+          aria-current={code === current ? "page" : undefined}
+          onClick={() => rememberLanguage(code)}
+          className={`text-xs transition-colors hover:text-foreground ${
+            code === current ? "font-semibold text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {name}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 function Footer({ credits }: { credits?: ReactNode }) {
   const t = useT();
   return (
     <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
+      <LanguageLinks />
       <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
         <a href={DOCS_URL} className={linkClass}>
           {t("Docs")}

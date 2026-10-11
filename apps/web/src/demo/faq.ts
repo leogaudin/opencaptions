@@ -10,7 +10,7 @@ export const FAQ: readonly { q: string; a: string }[] = [
   {
     q: msg("What is OpenCaptions?"),
     a: msg(
-      "OpenCaptions is free, open-source software that adds animated, word-by-word captions to videos. It transcribes the speech with Whisper, lets you style and correct every caption, and exports a captioned video or subtitle files. It runs on your iPhone and on your own server.",
+      "OpenCaptions is free, open-source software that adds animated, word-by-word captions to videos. It transcribes the speech with a model you choose, such as Whisper, Parakeet or Apple Speech, lets you style and correct every caption, and exports a captioned video or subtitle files. It runs on your iPhone and on your own server.",
     ),
   },
   {
@@ -28,13 +28,13 @@ export const FAQ: readonly { q: string; a: string }[] = [
   {
     q: msg("Which languages does it support?"),
     a: msg(
-      "Whisper transcribes about 100 languages. Captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts, and the interface is available in 13 languages.",
+      "Whisper transcribes about 100 languages and Parakeet 25 European ones, and Apple Speech covers the languages iOS offers. Captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts, and the interface is available in 13 languages.",
     ),
   },
   {
     q: msg("How do I host it myself?"),
     a: msg(
-      "Download one docker-compose.yml file and run docker compose up -d, then open localhost:5173, create an account and drop in a video. A GPU is optional and makes transcription faster.",
+      "With Docker: download one file, start it with a single command, and open the editor in your browser. A GPU is optional and makes transcription faster.",
     ),
   },
   {
