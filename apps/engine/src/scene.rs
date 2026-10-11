@@ -475,7 +475,7 @@ fn add_row(sums: &mut [u32], row: &[u8]) {
 fn slide(src: &[u8], out: &mut [u8], radius: usize, span: u32) {
     let len = src.len() / 4;
     let mut acc = [0u32; 4];
-    for px in src.chunks_exact(4).take(radius.min(len - 1) + 1) {
+    for px in src.as_chunks::<4>().0.iter().take(radius.min(len - 1) + 1) {
         for c in 0..4 {
             acc[c] += u32::from(px[c]);
         }
@@ -502,10 +502,10 @@ fn slide(src: &[u8], out: &mut [u8], radius: usize, span: u32) {
 fn ink_extent(data: &[u8], w: usize, h: usize) -> Option<(usize, usize, usize, usize)> {
     let (mut left, mut top, mut right, mut bottom) = (w, h, 0, 0);
     for (y, row) in data.chunks_exact(w * 4).enumerate().take(h) {
-        let Some(first) = row.chunks_exact(4).position(|p| p != [0; 4]) else {
+        let Some(first) = row.as_chunks::<4>().0.iter().position(|p| *p != [0; 4]) else {
             continue;
         };
-        let last = row.chunks_exact(4).rposition(|p| p != [0; 4])?;
+        let last = row.as_chunks::<4>().0.iter().rposition(|p| *p != [0; 4])?;
         left = left.min(first);
         right = right.max(last + 1);
         top = top.min(y);
@@ -2600,7 +2600,7 @@ mod tests {
             renderer.render(t);
             let width = renderer.scene().width as usize;
             for (row, line) in renderer.rgba().chunks_exact(width * 4).enumerate() {
-                for (col, px) in line.chunks_exact(4).enumerate() {
+                for (col, px) in line.as_chunks::<4>().0.iter().enumerate() {
                     let inside = (x as usize..(x + w) as usize).contains(&col)
                         && (y as usize..(y + h) as usize).contains(&row);
                     assert!(inside || px[3] == 0, "ink at ({col}, {row}) at {t} s");
