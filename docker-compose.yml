@@ -7,6 +7,10 @@
 #
 # `build:` and `develop:` are only read when building or watching, so an end user
 # who has this file alone is never affected by the paths they name.
+#
+# The images default to `edge` (the latest main) until the first release; the release makes
+# `latest` exist, and these four defaults then become `latest`. Pin a release with
+# OPENCAPTIONS_VERSION=0.1.0 in the shell. CI starts this file alone against what it published.
 
 name: opencaptions
 
@@ -57,7 +61,7 @@ x-oc-depends: &oc-depends
 
 # The API image, which the api and the workers all run.
 x-oc-api: &oc-api
-  image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}
+  image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-edge}
   build: { context: apps/api, target: runtime }
   develop:
     watch:
@@ -162,7 +166,7 @@ services:
       # Forced, not defaulted. Missing CUDA falls back to CPU and says so in /health.
       WHISPER_DEVICE: cuda
       WHISPER_COMPUTE_TYPE: float16
-    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-latest}-gpu
+    image: ghcr.io/leogaudin/opencaptions-api:${OPENCAPTIONS_VERSION:-edge}-gpu
     build: { context: apps/api, target: runtime-gpu }
     profiles: ["gpu"]
     command: ["celery", "-A", "app.core.celery_app", "worker", "-Q", "transcription", "--concurrency=1", "--prefetch-multiplier=1", "--max-tasks-per-child=1", "--loglevel=info"]
@@ -198,7 +202,7 @@ services:
   # Draws the captions and encodes the export. Holds no storage credentials: each
   # render request carries a presigned read of the source and write of the output.
   engine:
-    image: ghcr.io/leogaudin/opencaptions-engine:${OPENCAPTIONS_VERSION:-latest}
+    image: ghcr.io/leogaudin/opencaptions-engine:${OPENCAPTIONS_VERSION:-edge}
     build: apps/engine
     # What the render worker presents; the engine refuses a render without it.
     environment:
@@ -212,7 +216,7 @@ services:
     stop_grace_period: 2m
 
   web:
-    image: ghcr.io/leogaudin/opencaptions-web:${OPENCAPTIONS_VERSION:-latest}
+    image: ghcr.io/leogaudin/opencaptions-web:${OPENCAPTIONS_VERSION:-edge}
     # The preview is the engine compiled to WebAssembly, so the build needs it too.
     build: { context: apps/web, additional_contexts: { engine: apps/engine } }
     develop:
