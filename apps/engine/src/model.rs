@@ -50,7 +50,7 @@ pub enum Layout {
     Stack,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Animation {
     WordHighlight,
@@ -75,12 +75,34 @@ pub enum Animation {
     LineBar,
     /// Every word sits on its own label, tilted left and right in turn; the word being said lifts.
     Stickers,
-    /// The word being said is pushed into its extrusion, face sinking toward the back.
+    /// The word being said is raised out of the page: its face lifts off an extrusion that grows.
     WordPress,
     /// Each word's letters rise into place one after another as it is said.
     LetterRise,
-    /// Each word slams in, dropping from twice its size, and the line jolts as it lands.
+    /// Each word slams in, dropping from 1.7 times its size, and the line jolts as it lands.
     WordSlam,
+}
+
+impl Animation {
+    /// Every animation, in the order the API and the editors list them.
+    pub const ALL: [Animation; 16] = [
+        Animation::WordHighlight,
+        Animation::HighlightBox,
+        Animation::WordPop,
+        Animation::WordFade,
+        Animation::WordSweep,
+        Animation::WordUnderline,
+        Animation::Typewriter,
+        Animation::None,
+        Animation::WordBounce,
+        Animation::LyricFocus,
+        Animation::HighlightSlide,
+        Animation::LineBar,
+        Animation::Stickers,
+        Animation::WordPress,
+        Animation::LetterRise,
+        Animation::WordSlam,
+    ];
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
@@ -343,6 +365,36 @@ impl SceneInput {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_animation_is_in_the_list_once_and_in_order() {
+        // An exhaustive match: a new animation does not compile until it is placed here, and
+        // then `ALL` must hold it at the same place.
+        let place = |a: Animation| match a {
+            Animation::WordHighlight => 0,
+            Animation::HighlightBox => 1,
+            Animation::WordPop => 2,
+            Animation::WordFade => 3,
+            Animation::WordSweep => 4,
+            Animation::WordUnderline => 5,
+            Animation::Typewriter => 6,
+            Animation::None => 7,
+            Animation::WordBounce => 8,
+            Animation::LyricFocus => 9,
+            Animation::HighlightSlide => 10,
+            Animation::LineBar => 11,
+            Animation::Stickers => 12,
+            Animation::WordPress => 13,
+            Animation::LetterRise => 14,
+            Animation::WordSlam => 15,
+        };
+        for (i, a) in Animation::ALL.into_iter().enumerate() {
+            assert_eq!(place(a), i, "{a:?} is out of place");
+            // Each is named by its snake_case name, which is what the API and the editors send.
+            let name = serde_json::to_value(a).unwrap();
+            assert_eq!(serde_json::from_value::<Animation>(name).unwrap(), a);
+        }
+    }
 
     fn word(start: f32, end: f32) -> Word {
         Word {

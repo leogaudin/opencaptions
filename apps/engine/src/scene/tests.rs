@@ -30,6 +30,20 @@ fn input(animation: &str, words: &[(&str, f32, f32)], words_per_line: u32) -> Sc
     .unwrap()
 }
 
+/// Every animation's name, as the style names it.
+fn animation_names() -> Vec<String> {
+    Animation::ALL
+        .into_iter()
+        .map(|a| {
+            serde_json::to_value(a)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string()
+        })
+        .collect()
+}
+
 fn json_word(t: &str, s: f32, e: f32) -> serde_json::Value {
     serde_json::json!({ "text": t, "start": s, "end": e })
 }
@@ -770,29 +784,12 @@ fn a_stack_scales_a_short_row_by_three_at_most() {
 
 #[test]
 fn every_animation_draws_inside_the_lines_bounds_in_a_stack() {
-    for anim in [
-        "word_highlight",
-        "highlight_box",
-        "word_pop",
-        "word_fade",
-        "word_sweep",
-        "word_underline",
-        "typewriter",
-        "none",
-        "word_bounce",
-        "lyric_focus",
-        "highlight_slide",
-        "line_bar",
-        "stickers",
-        "word_press",
-        "letter_rise",
-        "word_slam",
-    ] {
+    for anim in animation_names() {
         let patch = serde_json::json!({
             "stroke_width": 4, "stroke_color": "#000000",
             "shadow_blur": 6, "shadow_color": "#000000B0"
         });
-        let scene = stacked(anim, POSTER, patch);
+        let scene = stacked(&anim, POSTER, patch);
         let bounds = scene.lines[0].bounds;
         let mut r = Renderer::new(scene);
         for t in [0.1, 0.45, 0.9, 1.3, 1.9] {
@@ -1296,32 +1293,6 @@ fn a_gradient_sweep_runs_from_one_colour_to_the_other_across_the_line() {
     assert!(right.1 > right.0, "and its end is blue");
 }
 
-#[test]
-fn every_animation_draws() {
-    for anim in [
-        "word_highlight",
-        "highlight_box",
-        "word_pop",
-        "word_fade",
-        "word_sweep",
-        "word_underline",
-        "typewriter",
-        "none",
-        "word_bounce",
-        "lyric_focus",
-        "highlight_slide",
-        "line_bar",
-        "stickers",
-        "word_press",
-        "letter_rise",
-        "word_slam",
-    ] {
-        let mut r = Renderer::new(Scene::new(&book(), input(anim, WORDS, 3)));
-        r.render(0.6);
-        assert!(r.rgba().iter().any(|&b| b != 0), "{anim} drew nothing");
-    }
-}
-
 /// FNV-1a over a frame's bytes: a fingerprint of every pixel.
 fn fingerprint(bytes: &[u8], mut h: u64) -> u64 {
     for &b in bytes {
@@ -1336,13 +1307,14 @@ const GOLDEN_TIMES: [f32; 5] = [0.0, 0.25, 0.6, 1.2, 3.2];
 /// Draws a scene through `GOLDEN_TIMES` and returns one fingerprint of all the frames,
 /// after checking that each frame, drawn on the renderer that kept the last one, is the
 /// frame a fresh renderer draws at that time: the incremental redraw changes nothing.
-fn golden(mut input: SceneInput) -> u64 {
+fn golden(mut input: SceneInput) -> (u64, bool) {
     // Half size: layout is proportional to the frame's height, so this is the same
     // picture, a quarter of the pixels.
     (input.width, input.height) = (540, 960);
     let book = book();
     let mut kept = Renderer::new(Scene::new(&book, input.clone()));
     let mut all = 0xcbf2_9ce4_8422_2325;
+    let mut inked = false;
     for t in GOLDEN_TIMES {
         kept.render(t);
         let mut fresh = Renderer::new(Scene::new(&book, input.clone()));
@@ -1351,33 +1323,17 @@ fn golden(mut input: SceneInput) -> u64 {
             kept.rgba() == fresh.rgba(),
             "the frame at {t} s differs between an incremental and a fresh redraw"
         );
+        inked |= kept.rgba().iter().any(|&b| b != 0);
         all = fingerprint(kept.rgba(), all);
     }
-    all
+    (all, inked)
 }
 
 /// Every look the engine can draw, as (name, style patch, animation).
 fn golden_cases() -> Vec<(String, SceneInput)> {
     let mut cases = Vec::new();
-    for anim in [
-        "word_highlight",
-        "highlight_box",
-        "word_pop",
-        "word_fade",
-        "word_sweep",
-        "word_underline",
-        "typewriter",
-        "none",
-        "word_bounce",
-        "lyric_focus",
-        "highlight_slide",
-        "line_bar",
-        "stickers",
-        "word_press",
-        "letter_rise",
-        "word_slam",
-    ] {
-        cases.push((anim.to_string(), styled(anim, WORDS, serde_json::json!({}))));
+    for anim in animation_names() {
+        cases.push((anim.clone(), styled(&anim, WORDS, serde_json::json!({}))));
     }
     let effects = [
         (
@@ -1465,7 +1421,8 @@ fn frames_are_byte_for_byte_what_they_were() {
     let got: Vec<(String, u64)> = golden_cases()
         .into_iter()
         .map(|(name, input)| {
-            let h = golden(input);
+            let (h, inked) = golden(input);
+            assert!(inked, "{name} drew nothing at any time");
             (name, h)
         })
         .collect();

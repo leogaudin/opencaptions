@@ -6,24 +6,6 @@ import { msg } from "@/lib/i18n";
 import type { Animation, CaptionBackground, StyleConfig } from "@/types";
 
 export const BACKGROUNDS: readonly CaptionBackground[] = ["none", "solid", "pill"];
-export const ANIMATIONS: readonly Animation[] = [
-  "word_highlight",
-  "highlight_box",
-  "word_pop",
-  "word_fade",
-  "word_sweep",
-  "word_underline",
-  "typewriter",
-  "none",
-  "word_bounce",
-  "lyric_focus",
-  "highlight_slide",
-  "line_bar",
-  "stickers",
-  "word_press",
-  "letter_rise",
-  "word_slam",
-];
 
 export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
   none: msg("None"),
@@ -49,6 +31,9 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   letter_rise: msg("Rise"),
   word_slam: msg("Slam"),
 };
+
+/** Every animation, in the order the style panel shows them: the order of the names above. */
+export const ANIMATIONS = Object.keys(ANIMATION_NAMES) as Animation[];
 
 /** How many highlight colours a style holds, the API's limit. */
 export const MAX_HIGHLIGHT_COLORS = 4;
