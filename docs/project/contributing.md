@@ -73,16 +73,14 @@ a missing translation, so a new string needs all of them.
 
 ### These docs
 
-The pages are Markdown in the `docs/` folder, and every page has an **Edit this page** link. To work on them with a
-live preview:
+The pages are Markdown in the `docs/` folder, and every page has an **Edit this page** link. A page starts with
+its own `# Title`, and links another page with a relative `.md` link, so GitHub shows it too. To work on them
+with a live preview:
 
 ```bash
-cd apps/docs
-npm install
-npm start       # http://localhost:3000
+make docs         # http://localhost:3000, reloads as you save
+make docs-build   # the check: a broken link or anchor fails the build
 ```
-
-A broken link fails the build, so `npm run build` is the check.
 
 ## Before you open a pull request
 

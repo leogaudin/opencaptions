@@ -40,7 +40,7 @@ Undo and redo are in the toolbar.
 | **Parakeet v3** | 480 MB | Fast, for its 25 European languages. |
 | **Whisper Large v3 Turbo** | 627 MB | The default, and the best all-round accuracy. |
 | **Whisper Large v3** | 948 MB | The most accurate Whisper. |
-| **Apple Speech** | Built into iOS | Needs nothing to download. |
+| **Apple Speech** | Built into iOS 26 and later | Needs nothing to download. |
 
 Models are downloaded once and run on the phone. **Settings** lists them with their size on disk, and
 you can delete the ones you do not use. The language list follows the model, as it does on the web.
