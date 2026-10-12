@@ -21,7 +21,7 @@ The app is being prepared for the App Store. Until it is there, you can
 1. **Add a video** from your photos. You see it with its length and size, and can rename it, before it is imported.
 2. **Transcribe.** The sheet asks, as the web app does, for the speech model and then the language.
    The first use of a model downloads it, and a card shows the progress.
-3. **Edit.** The video takes the screen with a compact timeline under it. Tap to play or pause. The corner button takes the picture full screen, leaving only the timeline.
+3. **Edit.** The video takes the screen with a compact timeline under it. Tap to play or pause. The corner button takes the picture full screen, leaving a smaller timeline under it.
    While paused, **drag** the caption to move it (it snaps to the centre lines, with a small haptic tick),
    **pinch** to change the size, and **double-tap** a word to fix it. Drag the edges of a caption on the
    timeline to retime it, pinch the timeline to zoom, and scrub by dragging it.

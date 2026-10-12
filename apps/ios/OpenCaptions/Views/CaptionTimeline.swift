@@ -10,9 +10,12 @@ struct CaptionTimeline: View {
     let model: EditorModel
     let playback: Playback
 
-    private static let rulerHeight = 26.0
-    private static let videoHeight = 38.0
-    private static let captionHeight = 54.0
+    /// Full screen shrinks the timeline to a ruler and the captions, so the picture keeps the room.
+    var compact = false
+
+    private var rulerHeight: Double { compact ? 20 : 26 }
+    private var videoHeight: Double { compact ? 0 : 38 }
+    private var captionHeight: Double { compact ? 40 : 54 }
     private static let labelWidth = 44.0
 
     @State private var zoom = TimelineScale.defaultPointsPerSecond  // points per second
@@ -30,7 +33,7 @@ struct CaptionTimeline: View {
     private var fit: Double { viewport > 0 ? TimelineScale.fit(viewport: viewport, span: span) : 1 }
     private var px: Double { TimelineScale.clampZoom(zoom, fit: fit) }
     private var trackWidth: Double { span * px }
-    private var height: Double { Self.rulerHeight + Self.videoHeight + Self.captionHeight }
+    private var height: Double { rulerHeight + videoHeight + captionHeight }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,9 +49,9 @@ struct CaptionTimeline: View {
 
     private var labels: some View {
         VStack(spacing: 0) {
-            Color.clear.frame(height: Self.rulerHeight)
-            label("film", "Video", height: Self.videoHeight)
-            label("captions.bubble", "Captions", height: Self.captionHeight)
+            Color.clear.frame(height: rulerHeight)
+            if !compact { label("film", "Video", height: videoHeight) }
+            label("captions.bubble", "Captions", height: captionHeight)
         }
         .frame(width: Self.labelWidth)
     }
@@ -81,7 +84,7 @@ struct CaptionTimeline: View {
     private var tracksAndPlayhead: some View {
         ZStack(alignment: .topLeading) {
             TimelineRuler(playback: playback, px: px, span: span, viewport: viewport, frozen: frozenTime)
-                .frame(width: viewport, height: Self.rulerHeight)
+                .frame(width: viewport, height: rulerHeight)
                 .contentShape(.rect)
                 .gesture(
                     SpatialTapGesture().onEnded { tap in
@@ -94,8 +97,8 @@ struct CaptionTimeline: View {
                 )
                 .accessibilityLabel("Timeline ruler")
             VStack(spacing: 0) {
-                Color.clear.frame(height: Self.rulerHeight)
-                videoTrack
+                Color.clear.frame(height: rulerHeight)
+                if !compact { videoTrack }
                 captionTrack
             }
             .frame(width: trackWidth, alignment: .topLeading)
@@ -189,9 +192,9 @@ struct CaptionTimeline: View {
                     Text(model.project.title).font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Theme.textSecondary).lineLimit(1).padding(.horizontal, 10)
                 }
-                .frame(width: duration * px, height: Self.videoHeight - 8)
+                .frame(width: duration * px, height: videoHeight - 8)
         }
-        .frame(width: trackWidth, height: Self.videoHeight)
+        .frame(width: trackWidth, height: videoHeight)
         .contentShape(.rect)
         .gesture(tapToSeek)
     }
@@ -227,7 +230,7 @@ struct CaptionTimeline: View {
                     span: span)
             }
         }
-        .frame(width: trackWidth, height: Self.captionHeight, alignment: .topLeading)
+        .frame(width: trackWidth, height: captionHeight, alignment: .topLeading)
     }
 }
 

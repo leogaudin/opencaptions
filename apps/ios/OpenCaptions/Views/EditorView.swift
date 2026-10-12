@@ -213,7 +213,7 @@ struct EditorView: View {
     /// indicator. It has no rounded corners: they would show the video's black sides behind them.
     private var timelinePanel: some View {
         // As tall as its content: the preview takes whatever is left, and the panel leaves no gap under it.
-        CaptionTimeline(model: model, playback: playback)
+        CaptionTimeline(model: model, playback: playback, compact: fullScreen)
             .fixedSize(horizontal: false, vertical: true)
             .background {
                 Theme.surface
