@@ -57,8 +57,8 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `highlight_slide` | Slide | A single box that slides from word to word. |
 | `line_bar` | Progress | A bar that fills along the line. |
 | `stickers` | Stickers | A coloured label on each word. |
-| `word_press` | Press | Pushing it into its solid shadow, so the extrusion shortens under it. |
-| `word_slam` | Slam | Each word hidden until said, then dropping in from twice its size, the line jolting a little as it lands. |
+| `word_press` | Press | Raising it out of the page: its solid shadow grows into an extrusion as it is said, and the other words stay flat. |
+| `word_slam` | Slam | Each word hidden until said, then dropping in from 1.7 times its size, the line jolting a little as it lands. |
 | `letter_rise` | Rise | Each word hidden until said, its letters then climbing into place one after another. A word in a connected script (Arabic, Hebrew, the Indic scripts, Thai) rises as one piece. |
 | `none` | None | Nothing: plain captions. |
 

@@ -44,19 +44,20 @@ const STACK_LEADING: f32 = 1.0;
 /// Word slam: the size a word drops in from, how long the drop takes, the share of it in which the
 /// word fades in, and how far the line is jolted when it lands (a share of the font size) and for
 /// how long. The jolt goes along one of these directions, by the word's place in the transcript.
-const SLAM_FROM: f32 = 2.2;
+const SLAM_FROM: f32 = 1.7;
 const SLAM_S: f32 = 0.12;
 const SLAM_FADE: f32 = 0.4;
 const JOLT: f32 = 0.035;
 const JOLT_S: f32 = 0.15;
 const JOLT_DIRECTIONS: [[f32; 2]; 4] = [[1.0, 0.6], [-0.8, 0.8], [0.6, -1.0], [-1.0, -0.4]];
 /// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
-/// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly).
+/// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly, and so that
+/// the letters of a long word start within `RISE_SPREAD_S` of the first: the word is whole soon
+/// after it is said).
 const RISE_FROM: f32 = 0.45;
-const RISE_S: f32 = 0.16;
-const RISE_STAGGER_S: f32 = 0.035;
-/// How deep into its extrusion a pressed word's face sinks, as a share of the way to the back.
-const PRESS_DEPTH: f32 = 0.7;
+const RISE_S: f32 = 0.12;
+const RISE_STAGGER_S: f32 = 0.03;
+const RISE_SPREAD_S: f32 = 0.1;
 /// How much the first step of a shaded extrusion is lightened, times the shading.
 const RIM_LIGHT: f32 = 0.25;
 /// How far an italic leans: the shear of the upright face (about 11 degrees).
@@ -499,7 +500,7 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
 fn rise_timing(w: &Placed) -> (f32, f32) {
     let n = w.clusters.len().max(1) as f32;
     let said = (w.end - w.start).max(MIN_SAID_S);
-    let stagger = RISE_STAGGER_S.min(said * 0.5 / n);
+    let stagger = RISE_STAGGER_S.min(said * 0.5 / n).min(RISE_SPREAD_S / n);
     (stagger, (n - 1.0) * stagger + RISE_S)
 }
 
@@ -883,12 +884,14 @@ impl Scene {
                 // One outline per letter, only for the look that moves them apart.
                 let clusters: Vec<Vec<Path>> = texts
                     .iter()
-                    .map(|text| {
+                    .zip(&sizes)
+                    .map(|(text, size)| {
                         if style.animation != Animation::LetterRise {
                             return vec![];
                         }
                         let face = book.face(book.for_text(primary, &fallbacks, text));
-                        let letters = cluster_paths(face, text, fs);
+                        // At the word's own size, or a key word would rise small and then jump.
+                        let letters = cluster_paths(face, text, fs * size);
                         if style.italic {
                             letters
                                 .into_iter()
@@ -1189,24 +1192,18 @@ impl Scene {
                 .post_rotate(st.tilt)
                 .post_translate(cx + jolt[0], cy + jolt[1])
         };
-        // A solid shadow is an extrusion; `word_press` sinks the word's face into it, a share of the
-        // way to the back, and the extrusion that is left is the stretch from there on.
+        // A solid shadow is an extrusion; `word_press` raises the word being said out of the page:
+        // its extrusion grows to full length as it is pressed up, and the others stay flat.
         let extruded =
             s.shadow_blur <= 0.0 && (s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0);
-        let sunk = |st: &WordState| {
+        let reach = |st: &WordState| {
             if extruded && s.animation == Animation::WordPress {
-                (PRESS_DEPTH * st.press).clamp(0.0, 0.95)
+                st.press.clamp(0.0, 1.0)
             } else {
-                0.0
+                1.0
             }
         };
-        let face = |w: &Placed, st: &WordState| {
-            let k = sunk(st);
-            pivot(w, st).post_translate(
-                s.shadow_offset_x * w.size * k,
-                s.shadow_offset_y * w.size * k,
-            )
-        };
+        let face = |w: &Placed, st: &WordState| pivot(w, st);
         if let Some(path) = line.block.and_then(|b| rounded_rect(b, self.block_radius)) {
             let p = paint(colour(s.background_color, s.background_opacity));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
@@ -1326,14 +1323,14 @@ impl Scene {
                     let shaded = s.extrude_shade > 0.0 && extruded;
                     for (w, st) in line.words.iter().zip(states) {
                         let letters = parts(w, st, s.font_size * w.size, rising);
-                        // From where the (possibly sunk) face is to the back of the extrusion.
-                        let from = sunk(st);
+                        let reach = reach(st);
+                        if reach <= 0.0 {
+                            continue;
+                        }
                         let steps = if s.shadow_blur > 0.0 {
                             1
                         } else {
-                            ((s.shadow_offset_x.abs().max(s.shadow_offset_y.abs())
-                                * w.size
-                                * (1.0 - from))
+                            ((s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()) * w.size * reach)
                                 .ceil() as usize)
                                 .clamp(1, 96)
                         };
@@ -1346,7 +1343,7 @@ impl Scene {
                         };
                         for step in order {
                             let depth = step as f32 / steps as f32;
-                            let along = from + (1.0 - from) * depth;
+                            let along = reach * depth;
                             let mut hue = base;
                             if shaded {
                                 hue = mix(base, Rgba([0, 0, 0, 255]), s.extrude_shade * depth);
@@ -2496,7 +2493,7 @@ mod tests {
     }
 
     #[test]
-    fn a_pressed_word_sinks_its_face_into_the_extrusion_and_keeps_the_back_where_it_was() {
+    fn a_pressed_word_grows_its_extrusion_and_the_others_stay_flat() {
         let patch = serde_json::json!({
             "shadow_color": "#C2410C", "shadow_offset_y": 60, "stroke_width": 0
         });
@@ -2510,20 +2507,19 @@ mod tests {
             extent(&pressed, 1080).unwrap(),
             extent(&plain, 1080).unwrap(),
         );
-        let travel = 0.7 * 60.0 * 1920.0 / REF_HEIGHT;
         assert!(
-            (a.2 as f32 - b.2 as f32 - travel).abs() < 3.0,
-            "the face moved {} rows, not {travel}",
-            a.2 as f32 - b.2 as f32
+            a.2.abs_diff(b.2) <= 2 && a.3.abs_diff(b.3) <= 2,
+            "once pressed the word is the extruded one, face where it is: {a:?} {b:?}"
         );
-        assert!(
-            a.3.abs_diff(b.3) <= 2,
-            "the back of the extrusion stays put"
-        );
-        // And the frame before the word is said has it unpressed.
+        // Before it is said it is flat: there is no extrusion to its back.
         let mut early = lone("word_press", serde_json::json!({ "shadow_offset_y": 60 }));
         early.render(0.0);
-        assert!(extent(&early, 1080).is_some());
+        let flat = extent(&early, 1080).unwrap();
+        let reach = 60.0 * 1920.0 / REF_HEIGHT;
+        assert!(
+            b.3 as f32 - flat.3 as f32 > reach * 0.8,
+            "the extrusion is not there yet: {flat:?} then {b:?}"
+        );
     }
 
     fn rising(words: &[(&str, f32, f32)]) -> Renderer {
@@ -2540,7 +2536,7 @@ mod tests {
     fn the_letters_of_a_word_rise_one_after_another() {
         let mut r = rising(&[("HELLO", 0.0, 1.0)]);
         // Partway through the entrance, the first letters are up and the last are still low.
-        r.render(0.12);
+        r.render(0.06);
         let scene = r.scene();
         let word = &scene.lines[0].words[0];
         assert_eq!(word.clusters.len(), 5, "one outline a letter");
@@ -2689,8 +2685,8 @@ mod tests {
         assert_eq!(before.opacity, 0.0, "hidden until said");
         let start = &scene.key(0.5 - LEAD_S + 0.01).1[1];
         assert!(
-            start.scale > 2.0,
-            "it drops in from about twice its size: {}",
+            start.scale > 1.5,
+            "it drops in from well over its size: {}",
             start.scale
         );
         assert!(start.opacity > 0.0 && start.opacity < 1.0);
@@ -3673,8 +3669,8 @@ mod tests {
         ("line_bar", 0x6b1e7afb5365656d),
         ("stickers", 0x5c9bad18f058c1c7),
         ("word_press", 0xf26273125dfc6bf6),
-        ("letter_rise", 0xa5777bf2546741b8),
-        ("word_slam", 0xbb8901e9660c8178),
+        ("letter_rise", 0x9bf46ac595f09960),
+        ("word_slam", 0x8b017b454af2f0ab),
         ("word_highlight+stroke", 0xa886db0bfe0007d8),
         ("word_fade+stroke", 0x100c37255aee5408),
         ("word_pop+stroke", 0x8bbaecd606e3c7e3),
@@ -3697,13 +3693,13 @@ mod tests {
         ("word_bounce+motion_blur", 0xfe8ce16569a3e8c2),
         ("highlight_slide+motion_blur", 0x4a203c274cc98750),
         ("none+motion_blur", 0x73229f3640871f60),
-        ("letter_rise+motion_blur", 0xc6a43e297f4ba114),
-        ("word_press+chunky", 0xd89028e2bff00030),
+        ("letter_rise+motion_blur", 0x8930aa30d029025d),
+        ("word_press+chunky", 0xe944ffa929f5a345),
         ("word_pop+chunky", 0x064022aaf29214a8),
         ("word_pop+emphasis", 0x0e7b974001700c3c),
-        ("word_slam+emphasis", 0x44c54b4d5b5630fa),
+        ("word_slam+emphasis", 0x043fd6913511f0fc),
         ("word_pop+stack", 0xfd681dd2b6862af5),
-        ("letter_rise+stack", 0xbaeb9754c1ea4953),
+        ("letter_rise+stack", 0xcd8b7f73eae89dab),
         ("highlight_box+stack", 0x9a370ca616d3fee2),
         ("watermark", 0xe22c164ced6e9dd5),
     ];

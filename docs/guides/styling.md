@@ -28,7 +28,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Neon** | A glowing neon face. |
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |
-| **Chunky 3D** | Gold gradient letters on a shaded extrusion, pushed in as each word is said. |
+| **Chunky 3D** | White letters that, as each word is said, turn gold and rise out of the page on a shaded extrusion. |
 | **Poster** | Tall condensed capitals stacked into a block, every row as wide as the widest, key words in red. |
 | **Slam** | Heavy capitals dropping in, the line jolting, the key word set large on its own row. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |

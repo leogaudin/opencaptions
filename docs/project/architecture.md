@@ -136,7 +136,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     lean, left and right in turn (`word_bounce`), brought into focus out of a dim blur
     (`lyric_focus`; the words already said stay sharp), lit by one box that slides from word to
     word (`highlight_slide`), lit with a bar under the line that fills as the line is spoken
-    (`line_bar`), each set on its own tilted label (`stickers`), its letters rising into place one after another as it is said (`letter_rise`: one outline per grapheme cluster, grouped by the shaper's cluster index, in reading order; a word in a connected script, where the letters join or reorder, is one cluster and rises as a piece; the word is hidden until its start, and its shadow and glow follow the letters), dropped in from twice its size, over 0.12 s with no overshoot, the whole line jolted as it lands (`word_slam`: a knock of about 3.5% of the font size that dies away over 0.15 s along a fixed direction by the word's place, a polynomial envelope and no sine; the knock is part of the frame's identity), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
+    (`line_bar`), each set on its own tilted label (`stickers`), its letters rising into place one after another as it is said (`letter_rise`: one outline per grapheme cluster, grouped by the shaper's cluster index, in reading order; a word in a connected script, where the letters join or reorder, is one cluster and rises as a piece; the word is hidden until its start, and its shadow and glow follow the letters), dropped in from 1.7 times its size, over 0.12 s with no overshoot, the whole line jolted as it lands (`word_slam`: a knock of about 3.5% of the font size that dies away over 0.15 s along a fixed direction by the word's place, a polynomial envelope and no sine; the knock is part of the frame's identity), and raised out of the page as it is said (`word_press`: its solid shadow grows from nothing to the full extrusion, and the other words stay flat). The motion is eased with the
     engine's own arithmetic, never a platform sine, so the builds still agree to the byte. The
     line's bar and the sliding box are one shape per line (`Guide`), part of the frame's
     identity, so a frame is redrawn when they move.
@@ -188,7 +188,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     dark extrusion with a little shading), Boom (the word being said grows and is drawn over its neighbours), Lyric
     (soft until said, and the line never changes size), Stickers, Plain, Neon, Typewriter and
     Handwritten (a marker stroke laid under the words as they are said), and the four built on the
-    newer features: Chunky 3D (a gold gradient on a shaded extrusion the word is pushed into),
+    newer features: Chunky 3D (white letters, the word being said turning gold and rising on a shaded extrusion),
     Cascade (letters rising one after another), Slam (heavy capitals dropping in, a key word set
     large) and Poster (a stack of rows scaled to one width). Bold and Boom also set key words larger.
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by

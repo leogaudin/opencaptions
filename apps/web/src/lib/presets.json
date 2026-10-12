@@ -442,8 +442,8 @@
     "config": {
       "font": "Luckiest Guy",
       "font_size": 96,
-      "text_color": "#FFF36B",
-      "highlight_colors": ["#FFFFFF"],
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FFE14D"],
       "background": "none",
       "background_color": "#000000",
       "background_opacity": 0,
@@ -463,7 +463,7 @@
       "text_case": "upper",
       "italic": false,
       "motion_blur": 0.5,
-      "fill_colors": ["#FFF36B", "#FFB800"],
+      "fill_colors": [],
       "extrude_shade": 0.6,
       "emphasis_scale": 1,
       "layout": "line"
@@ -530,7 +530,7 @@
       "glow_color": "#FFFFFF",
       "text_case": "upper",
       "italic": false,
-      "motion_blur": 1,
+      "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0.5,
       "emphasis_scale": 1.5,
