@@ -20,12 +20,15 @@ COPY --from=engine src src
 COPY --from=engine fonts fonts
 RUN touch src/lib.rs
 # Same files in the same order as the server's load_fonts, so glyph fallback
-# picks the same face in the preview as in the export.
+# picks the same face in the preview as in the export. The script faces (NotoSans*, the files the
+# engine lists as such) are listed apart: the browser fetches them when a caption needs one.
 RUN cargo build --release --locked --lib --target wasm32-unknown-unknown \
  && mkdir /out \
  && cp target/wasm32-unknown-unknown/release/opencaptions_engine.wasm /out/ \
  && cp -r fonts /out/fonts \
- && (cd fonts && printf '[%s]' "$(LC_ALL=C ls | grep -iE '\.(ttf|otf)$' | sed 's/.*/"&"/' | paste -sd,)") > /out/fonts.json
+ && (cd fonts && ls_fonts() { LC_ALL=C ls | grep -iE '\.(ttf|otf)$'; } \
+    && list() { sed 's/.*/"&"/' | paste -sd, -; } \
+    && printf '{"fonts":[%s],"scripts":[%s]}' "$(ls_fonts | grep -v '^NotoSans' | list)" "$(ls_fonts | grep '^NotoSans' | list)") > /out/fonts.json
 
 # `make engine-wasm` exports this stage into public/engine for `npm run dev`.
 FROM scratch AS preview-assets

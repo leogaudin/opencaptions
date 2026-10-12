@@ -33,6 +33,9 @@ size_t oc_result_len(void);
 
 /* Fonts. oc_add_font leaves the family name in the result buffer; 0 if not a font. */
 uint32_t oc_add_font(uint8_t *ptr, size_t len);
+/* The same for a font that is rank-th (from 0) of the bundled files and may arrive after the others:
+ * it is tried in the order its rank gives, as if it had come in its place. */
+uint32_t oc_add_font_at(uint8_t *ptr, size_t len, uint32_t rank);
 uint32_t oc_has_font(uint8_t *name_ptr, size_t name_len);
 uint32_t oc_add_requested_font(uint8_t *name_ptr, size_t name_len, uint8_t *ptr, size_t len);
 
@@ -66,6 +69,12 @@ uint32_t oc_snap_position(float x, float y, float width, float height, float thr
  * Asian scripts), as a JSON array of Google Fonts names. The host fetches them, registers each with
  * oc_add_requested_font, and names them in the scene's fallback_fonts. 0 on failure. */
 uint32_t oc_fallback_fonts(uint8_t *json_ptr, size_t json_len);
+
+/* The bundled script faces (Arabic, Hebrew, Devanagari, Thai) a transcript (JSON) needs, as a JSON
+ * array of {file, family}: a host short of room may fetch such a file only when a caption has
+ * letters of the script, then register it with oc_add_font_at. Empty input lists them all. 0 on
+ * failure. */
+uint32_t oc_script_fonts(uint8_t *json_ptr, size_t json_len);
 
 /* Editing: pure functions of a transcript (JSON); 0 on failure with the reason. */
 /* Leaves a JSON array of {from, count, start, end, text}; times are as shown, with offset_ms

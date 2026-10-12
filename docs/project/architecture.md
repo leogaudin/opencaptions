@@ -368,6 +368,20 @@ font, naming them in the scene's `fallback_fonts`. The render server gets them f
 holds a Python copy of the rule held to the same cases (`testdata/script_fonts.json`). Adding a
 language means a file or a column of translations in each of those, and its code in the list.
 
+The browser does not fetch the four bundled script faces with the engine (about 1.8 MB of the 3 MB
+of fonts): `fonts.json` lists them apart (the files named `NotoSans*`, which `scripts.rs` holds to
+its own table), and `oc_script_fonts` says which a transcript needs. `loadFallbackFonts` fetches
+those, when the words have letters of the script, and registers each with `oc_add_font_at` at its
+rank among the font files, so the faces are tried in the order of their names whenever they came
+and a frame is the one the render server draws. An edit that brings a new script goes through the
+same call, and the scene is laid out again once the face is in. The phone and the server have all
+the files and register them in order.
+
+The browser's engine build is the release build. Measured, with the module at 1.39 MB (489 KB
+sent): `opt-level = "s"` sends 7% less and draws a heavy blurred frame 55% slower (60 to 92 ms in
+Node); `panic = "abort"` changes nothing (the target never unwinds); `wasm-opt` (binaryen 133)
+takes 7% to 14% off the file and 1% off what is sent. None is worth its cost.
+
 ## Data
 
 - **Postgres:** `users`, `projects` (transcript and style as JSON, video

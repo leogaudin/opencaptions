@@ -23,6 +23,8 @@ struct Entry<'a> {
     family: String,
     face: Face<'a>,
     bundled: bool,
+    /// Where a bundled face stands among the others: the order the files are listed in.
+    rank: usize,
 }
 
 #[derive(Clone, Default)]
@@ -60,11 +62,42 @@ impl<'a> FontBook<'a> {
     pub fn add(&mut self, data: &'a [u8]) -> Option<String> {
         let face = parse(data)?;
         let family = family_of(&face)?;
+        let rank = self
+            .faces
+            .iter()
+            .filter(|e| e.bundled)
+            .map(|e| e.rank + 1)
+            .max()
+            .unwrap_or(0);
         self.faces.push(Entry {
             family: family.clone(),
             face,
             bundled: true,
+            rank,
         });
+        Some(family)
+    }
+
+    /// Register a bundled font that is `rank`th of the files, whenever it arrives: it goes in front
+    /// of the bundled faces that rank after it (and of the requested ones), so a font fetched late
+    /// is tried in the order it would have been had it come with the others.
+    pub fn add_at(&mut self, data: &'a [u8], rank: usize) -> Option<String> {
+        let face = parse(data)?;
+        let family = family_of(&face)?;
+        let at = self
+            .faces
+            .iter()
+            .position(|e| !e.bundled || e.rank > rank)
+            .unwrap_or(self.faces.len());
+        self.faces.insert(
+            at,
+            Entry {
+                family: family.clone(),
+                face,
+                bundled: true,
+                rank,
+            },
+        );
         Some(family)
     }
 
@@ -76,6 +109,7 @@ impl<'a> FontBook<'a> {
                     family: family.into(),
                     face,
                     bundled: false,
+                    rank: 0,
                 })
             })
             .is_some()
@@ -139,5 +173,44 @@ impl<'a> FontBook<'a> {
 
     pub fn face(&self, i: usize) -> &Face<'a> {
         &self.faces[i].face
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INTER: &[u8] = include_bytes!("../fonts/Inter.ttf");
+    const THAI: &[u8] = include_bytes!("../fonts/NotoSansThai.ttf");
+    const POPPINS: &[u8] = include_bytes!("../fonts/Poppins-ExtraBold.ttf");
+
+    /// Poppins draws Devanagari and Thai too, so the face tried first decides the glyphs: a face
+    /// that arrives late must still stand where its file name puts it.
+    #[test]
+    fn a_face_added_late_is_tried_where_its_rank_puts_it() {
+        let text = "สวัสดี";
+        let mut together = FontBook::new();
+        for data in [INTER, THAI, POPPINS] {
+            together.add(data);
+        }
+        let mut late = FontBook::new();
+        late.add_at(INTER, 0);
+        late.add_at(POPPINS, 2);
+        late.add_requested("Requested", POPPINS);
+        late.add_at(THAI, 1);
+        let family = |book: &FontBook| {
+            let i = book.for_text(book.primary("Inter"), &[], text);
+            book.families()[..]
+                .iter()
+                .find(|f| book.find(f) == Some(i))
+                .map(|f| f.to_string())
+        };
+        assert_eq!(family(&together).as_deref(), Some("Noto Sans Thai"));
+        assert_eq!(family(&late), family(&together));
+        assert_eq!(
+            late.families(),
+            ["Inter", "Noto Sans Thai", "Poppins"],
+            "in the order of the ranks, whatever came first"
+        );
     }
 }

@@ -95,6 +95,25 @@ mod abi {
         }
     }
 
+    /// Register a bundled font that is `rank`th of the font files (counting from 0), whenever it
+    /// arrives, so it is tried in the order its file name gives it; the family name is left in the
+    /// result buffer. Returns 0 on failure.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with the font file.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_add_font_at(ptr: *mut u8, len: usize, rank: u32) -> u32 {
+        let data = keep(unsafe { take(ptr, len) });
+        let family = lock(&BOOK).add_at(data, rank as usize);
+        match family {
+            Some(family) => {
+                set_result(family.into_bytes());
+                1
+            }
+            None => 0,
+        }
+    }
+
     /// Whether a face is registered for the family named by the UTF-8 at `ptr`.
     ///
     /// # Safety
@@ -347,6 +366,28 @@ mod abi {
         }))
     }
 
+    /// The bundled script faces a transcript (JSON) needs, as a JSON array of `{file, family}`
+    /// (Arabic, Hebrew, Devanagari, Thai): the font files a host may fetch only when a caption has
+    /// letters of the script. An empty input lists them all. Returns 0 on failure with the reason.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON, or `len` must be 0.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_script_fonts(ptr: *mut u8, len: usize) -> u32 {
+        let faces = if len == 0 {
+            Ok(crate::scripts::SCRIPT_FACES.iter().collect())
+        } else {
+            unsafe { read_transcript(ptr, len) }
+                .map(|t| crate::scripts::script_faces(t.words().map(|w| w.text.as_str())))
+        };
+        respond(faces.map(|faces: Vec<&crate::scripts::ScriptFace>| {
+            faces
+                .iter()
+                .map(|f| serde_json::json!({ "file": f.file, "family": f.family }))
+                .collect::<Vec<_>>()
+        }))
+    }
+
     /// The captions of a transcript (JSON) as a JSON array of
     /// `{from, count, start, end, text}`, times shown with `offset_ms` (the caption
     /// offset). Returns 0 on failure with the reason.
@@ -484,7 +525,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 23);
+        assert_eq!(exported.len(), 25);
         assert_eq!(exported, declared);
     }
 }

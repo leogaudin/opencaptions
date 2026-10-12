@@ -11,7 +11,10 @@ if command -v cargo >/dev/null && rustup target list --installed 2>/dev/null | g
   (cd ../engine && cargo build --release --locked --lib --target wasm32-unknown-unknown)
   cp ../engine/target/wasm32-unknown-unknown/release/opencaptions_engine.wasm "$OUT/"
   rm -rf "$OUT/fonts" && cp -r ../engine/fonts "$OUT/fonts"
-  (cd ../engine/fonts && printf '[%s]' "$(LC_ALL=C ls | grep -iE '\.(ttf|otf)$' | sed 's/.*/"&"/' | paste -sd,)") > "$OUT/fonts.json"
+  # The script faces (NotoSans*) apart: the browser fetches them when a caption needs one.
+  (cd ../engine/fonts && ls_fonts() { LC_ALL=C ls | grep -iE '\.(ttf|otf)$'; } \
+    && list() { sed 's/.*/"&"/' | paste -sd, -; } \
+    && printf '{"fonts":[%s],"scripts":[%s]}' "$(ls_fonts | grep -v '^NotoSans' | list)" "$(ls_fonts | grep '^NotoSans' | list)") > "$OUT/fonts.json"
 else
   docker build -q --build-context engine=../engine --target preview-assets -o "$OUT" . >/dev/null
 fi

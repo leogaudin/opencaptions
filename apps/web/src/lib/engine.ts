@@ -7,6 +7,7 @@
  * since an instance holds one scene and the editor mounts more than one preview.
  */
 import { useEffect, useState } from "react";
+import { type FontManifest, parseFontManifest } from "@/lib/fontManifest";
 import { fontSource } from "@/lib/sources";
 import type { StyleConfig, Transcript } from "@/types";
 
@@ -17,7 +18,8 @@ interface Exports {
   oc_alloc(len: number): number;
   oc_result_ptr(): number;
   oc_result_len(): number;
-  oc_add_font(ptr: number, len: number): number;
+  oc_add_font_at(ptr: number, len: number, rank: number): number;
+  oc_script_fonts(ptr: number, len: number): number;
   oc_has_font(ptr: number, len: number): number;
   oc_add_requested_font(namePtr: number, nameLen: number, ptr: number, len: number): number;
   oc_set_scene(ptr: number, len: number): number;
@@ -145,7 +147,9 @@ export interface CaptionRenderer {
   /**
    * Load the fonts a transcript's scripts need that are not bundled (Chinese, Japanese,
    * Korean...), as the engine names them, and return their families for the scene's
-   * `fallback_fonts`. The server's render reads the same families from the same place.
+   * `fallback_fonts`. The server's render reads the same families from the same place. The
+   * bundled script faces (Arabic, Hebrew, Devanagari, Thai) are fetched here too, when the
+   * words have letters of their script: they are not fetched with the engine.
    */
   loadFallbackFonts(transcript: Transcript): Promise<string[]>;
   /** Lay out captions for a new transcript, style or size. */
@@ -164,7 +168,15 @@ export interface CaptionRenderer {
 
 interface Assets {
   module: WebAssembly.Module;
-  fonts: Uint8Array[];
+  manifest: FontManifest;
+  /** The font files fetched with the engine, with their places among all of them. */
+  fonts: { rank: number; bytes: Uint8Array }[];
+}
+
+/** A script face the engine ships: fetched when a caption has letters of its script. */
+interface ScriptFace {
+  file: string;
+  family: string;
 }
 
 let assets: Promise<Assets> | null = null;
@@ -176,25 +188,52 @@ async function fetchOk(url: string): Promise<Response> {
   return r;
 }
 
+/** The module, compiled while it downloads (when the server says it is WebAssembly). */
+async function compileModule(url: string): Promise<WebAssembly.Module> {
+  const response = await fetchOk(url);
+  try {
+    return await WebAssembly.compileStreaming(response.clone());
+  } catch {
+    // A server that does not send `application/wasm` fails streaming; the bytes still compile.
+    return WebAssembly.compile(await response.arrayBuffer());
+  }
+}
+
+/** A bundled font file, fetched once for every preview on the page. */
+const fontFiles = new Map<string, Promise<Uint8Array>>();
+
+function fontFile(file: string): Promise<Uint8Array> {
+  let bytes = fontFiles.get(file);
+  if (!bytes) {
+    bytes = fetchOk(`${BASE}/fonts/${encodeURIComponent(file)}`)
+      .then((r) => r.arrayBuffer())
+      .then((b) => new Uint8Array(b));
+    const fetched = bytes;
+    fontFiles.set(file, fetched);
+    // A failed fetch must not poison the file for every later caption.
+    fetched.catch(() => fontFiles.delete(file));
+  }
+  return bytes;
+}
+
 function loadAssets(): Promise<Assets> {
   assets ??= (async () => {
     // The module compiles while the fonts come in, instead of before them.
-    const compiled = fetchOk(`${BASE}/opencaptions_engine.wasm`)
-      .then((r) => r.arrayBuffer())
-      .then((bytes) => WebAssembly.compile(bytes));
+    const compiled = compileModule(`${BASE}/opencaptions_engine.wasm`);
     const fonts = fetchOk(`${BASE}/fonts.json`)
-      .then((r) => r.json() as Promise<string[]>)
-      .then((names) =>
-        Promise.all(
-          names.map((n) =>
-            fetchOk(`${BASE}/fonts/${encodeURIComponent(n)}`)
-              .then((r) => r.arrayBuffer())
-              .then((b) => new Uint8Array(b)),
-          ),
-        ),
-      );
-    const [module, files] = await Promise.all([compiled, fonts]);
-    return { module, fonts: files };
+      .then((r) => r.json() as Promise<Parameters<typeof parseFontManifest>[0]>)
+      .then(async (raw) => {
+        const manifest = parseFontManifest(raw);
+        const files = await Promise.all(
+          manifest.fonts.map(async (file) => ({
+            rank: manifest.rank(file),
+            bytes: await fontFile(file),
+          })),
+        );
+        return { manifest, files };
+      });
+    const [module, { manifest, files }] = await Promise.all([compiled, fonts]);
+    return { module, manifest, fonts: files };
   })();
   // A failed fetch must not poison every later preview.
   assets.catch(() => {
@@ -224,12 +263,25 @@ function resultFloats(x: Exports): number[] {
 
 let families: Promise<string[]> | undefined;
 
-async function instantiate(): Promise<{ x: Exports; families: string[] }> {
-  const { module, fonts } = await loadAssets();
-  const x = (await WebAssembly.instantiate(module)).exports as unknown as Exports;
-  const names = fonts.flatMap((f) => (x.oc_add_font(...copyIn(x, f)) ? [result(x)] : []));
-  families ??= Promise.resolve([...new Set(names)].sort());
-  return { x, families: names };
+/** The script faces a transcript needs, or all of them for none (the engine's rule). */
+function scriptFacesFor(x: Exports, transcript?: Transcript): ScriptFace[] {
+  const json = transcript ? encoder.encode(JSON.stringify(transcript)) : new Uint8Array();
+  if (!x.oc_script_fonts(...copyIn(x, json))) {
+    throw new Error(`caption engine rejected the transcript: ${result(x)}`);
+  }
+  return JSON.parse(result(x)) as ScriptFace[];
+}
+
+async function instantiate(): Promise<{ x: Exports; families: string[]; assets: Assets }> {
+  const loaded = await loadAssets();
+  const x = (await WebAssembly.instantiate(loaded.module)).exports as unknown as Exports;
+  const names = loaded.fonts.flatMap((f) =>
+    x.oc_add_font_at(...copyIn(x, f.bytes), f.rank) ? [result(x)] : [],
+  );
+  // The script faces are listed though not fetched: they are bundled, just not here yet.
+  const lazy = scriptFacesFor(x).map((face) => face.family);
+  families ??= Promise.resolve([...new Set([...names, ...lazy])].sort());
+  return { x, families: names, assets: loaded };
 }
 
 /** A font file fetched through this instance, shared by every preview on the page. */
@@ -249,7 +301,18 @@ function requestedFont(family: string): Promise<Uint8Array | null> {
 }
 
 export async function createCaptionRenderer(): Promise<CaptionRenderer> {
-  const { x } = await instantiate();
+  const { x, assets: loaded } = await instantiate();
+  const scriptFamilies = new Map(
+    scriptFacesFor(x).map((face) => [face.family.toLowerCase(), face] as const),
+  );
+  /** Registers a script face at its place among the bundled ones, unless it is there already. */
+  const addScriptFace = async (face: ScriptFace): Promise<void> => {
+    const has = (): boolean => x.oc_has_font(...copyIn(x, encoder.encode(face.family))) !== 0;
+    if (has()) return;
+    const bytes = await fontFile(face.file);
+    // Checked again: another call may have added it while this one waited.
+    if (!has()) x.oc_add_font_at(...copyIn(x, bytes), loaded.manifest.rank(face.file));
+  };
   // The families a transcript needs depend on its words alone, and a style change (a
   // drag, a slider) rebuilds the scene with the same transcript: ask the engine once.
   const fallbackFor = new WeakMap<Transcript, Promise<string[]>>();
@@ -257,6 +320,9 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
     async loadFont(family) {
       const name = encoder.encode(family);
       if (x.oc_has_font(...copyIn(x, name))) return;
+      // A bundled script face comes from the engine's own files, not from the font catalog.
+      const bundled = scriptFamilies.get(family.toLowerCase());
+      if (bundled) return addScriptFace(bundled);
       const font = await requestedFont(family);
       // Checked again: another call may have added it while this one waited.
       if (font && !x.oc_has_font(...copyIn(x, name))) {
@@ -271,7 +337,13 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
             throw new Error(`caption engine rejected the transcript: ${result(x)}`);
           }
           const needed = JSON.parse(result(x)) as string[];
-          await Promise.all(needed.map((family) => renderer.loadFont(family)));
+          // The bundled script faces the words need come with them (an Arabic caption's), apart
+          // from the families the scene names.
+          const scripts = scriptFacesFor(x, transcript);
+          await Promise.all([
+            ...scripts.map(addScriptFace),
+            ...needed.map((family) => renderer.loadFont(family)),
+          ]);
           return needed;
         })();
         families.catch(() => fallbackFor.delete(transcript));

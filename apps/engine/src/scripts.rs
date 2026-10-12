@@ -70,6 +70,57 @@ const SCRIPTS: &[Script] = &[
     },
 ];
 
+/// A script the engine ships a face for: the file in `fonts/`, the family it declares, and the
+/// letters it draws. A host with little to spare (the browser) may fetch such a face only when a
+/// caption has letters of its script, so it is listed here: `script_faces` says which a text
+/// needs. The files are the ones named `NotoSans*` (a test holds the table to the folder).
+pub struct ScriptFace {
+    pub file: &'static str,
+    pub family: &'static str,
+    ranges: &'static [(u32, u32)],
+}
+
+pub const SCRIPT_FACES: &[ScriptFace] = &[
+    ScriptFace {
+        file: "NotoSansArabic.ttf",
+        family: "Noto Sans Arabic",
+        ranges: &[
+            (0x0600, 0x06FF),
+            (0x0750, 0x077F),
+            (0x0870, 0x08FF),
+            (0xFB50, 0xFDFF),
+            (0xFE70, 0xFEFF),
+        ],
+    },
+    ScriptFace {
+        file: "NotoSansDevanagari.ttf",
+        family: "Noto Sans Devanagari",
+        ranges: &[(0x0900, 0x097F), (0xA8E0, 0xA8FF)],
+    },
+    ScriptFace {
+        file: "NotoSansHebrew.ttf",
+        family: "Noto Sans Hebrew",
+        ranges: &[(0x0590, 0x05FF), (0xFB1D, 0xFB4F)],
+    },
+    ScriptFace {
+        file: "NotoSansThai.ttf",
+        family: "Noto Sans Thai",
+        ranges: &[(0x0E00, 0x0E7F)],
+    },
+];
+
+/// The shipped script faces whose letters appear in `texts`, in the table's order.
+pub fn script_faces<'a>(texts: impl Iterator<Item = &'a str>) -> Vec<&'static ScriptFace> {
+    let chars: Vec<char> = texts
+        .flat_map(str::chars)
+        .filter(|c| !c.is_ascii())
+        .collect();
+    SCRIPT_FACES
+        .iter()
+        .filter(|face| chars.iter().any(|&c| within(c, face.ranges)))
+        .collect()
+}
+
 const KANA: &[(u32, u32)] = &[(0x3040, 0x30FF), (0x31F0, 0x31FF), (0xFF66, 0xFF9F)];
 const HANGUL: &[(u32, u32)] = &[(0x1100, 0x11FF), (0x3130, 0x318F), (0xAC00, 0xD7AF)];
 const HAN: &[(u32, u32)] = &[
@@ -130,6 +181,48 @@ pub fn fallback_families<'a>(texts: impl Iterator<Item = &'a str>, language: &st
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fonts::FontBook;
+
+    #[test]
+    fn the_script_faces_are_the_noto_files_and_declare_their_families() {
+        let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fonts");
+        let mut files: Vec<String> = std::fs::read_dir(&folder)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .filter(|n| n.starts_with("NotoSans") && n.ends_with(".ttf"))
+            .collect();
+        files.sort();
+        let listed: Vec<&str> = SCRIPT_FACES.iter().map(|f| f.file).collect();
+        assert_eq!(files, listed, "the table lists the NotoSans* files, sorted");
+        for face in SCRIPT_FACES {
+            let data = std::fs::read(folder.join(face.file)).unwrap();
+            let mut book = FontBook::new();
+            assert_eq!(
+                book.add(Box::leak(data.into_boxed_slice())).as_deref(),
+                Some(face.family),
+                "{}",
+                face.file
+            );
+        }
+    }
+
+    #[test]
+    fn a_text_needs_the_faces_of_its_scripts_only() {
+        let needs = |text: &str| -> Vec<&str> {
+            script_faces([text].into_iter())
+                .iter()
+                .map(|f| f.family)
+                .collect()
+        };
+        assert!(needs("Hello, déjà vu, Привет, γειά").is_empty());
+        assert_eq!(needs("مرحبا"), ["Noto Sans Arabic"]);
+        assert_eq!(
+            needs("שלום hello नमस्ते"),
+            ["Noto Sans Devanagari", "Noto Sans Hebrew"]
+        );
+        assert_eq!(needs("สวัสดี"), ["Noto Sans Thai"]);
+        assert!(needs("你好").is_empty(), "Han is fetched, not shipped");
+    }
 
     /// The cases the API's copy of the rule is held to as well.
     #[test]
