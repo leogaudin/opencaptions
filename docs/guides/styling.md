@@ -54,7 +54,8 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
 **Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, or **None**.
-Each tile shows the animation on your own caption.
+Each tile shows the animation on your own caption. **Motion blur** smears the words that move along
+their path, the same in the editor and in the download; at 0 every frame is sharp.
 
 ## Outline
 

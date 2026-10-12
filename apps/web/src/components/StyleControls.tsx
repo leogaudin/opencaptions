@@ -92,7 +92,9 @@ export function StyleControls() {
       {tab === "background" && (
         <BackgroundPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
       )}
-      {tab === "animation" && <AnimationPanel style={style} setStyle={setStyle} />}
+      {tab === "animation" && (
+        <AnimationPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
+      )}
       {tab === "outline" && <OutlinePanel style={style} throttled={setStyleThrottled} />}
       {tab === "timing" && <CaptionOffsetControl />}
     </div>
@@ -247,7 +249,15 @@ function BackgroundPanel({
   );
 }
 
-function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Setter }) {
+function AnimationPanel({
+  style,
+  setStyle,
+  throttled,
+}: {
+  style: StyleConfig;
+  setStyle: Setter;
+  throttled: Setter;
+}) {
   const t = useT();
   const tiles = useLookPreviews(
     ANIMATIONS.map((animation) => ({ id: animation, config: { ...style, animation } })),
@@ -268,6 +278,15 @@ function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Set
           const animation = ANIMATIONS.find((a) => a === id);
           if (animation) setStyle({ animation });
         }}
+      />
+      <SliderField
+        label={t("Motion blur")}
+        value={style.motion_blur}
+        min={0}
+        max={1}
+        step={0.05}
+        decimals={2}
+        onChange={(motion_blur) => throttled({ motion_blur })}
       />
     </Panel>
   );
@@ -297,16 +316,16 @@ function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Set
       <SliderField
         label={t("Shadow right")}
         value={style.shadow_offset_x}
-        min={-20}
-        max={20}
+        min={-40}
+        max={40}
         step={1}
         onChange={(shadow_offset_x) => throttled({ shadow_offset_x })}
       />
       <SliderField
         label={t("Shadow down")}
         value={style.shadow_offset_y}
-        min={-20}
-        max={20}
+        min={-40}
+        max={40}
         step={1}
         onChange={(shadow_offset_y) => throttled({ shadow_offset_y })}
       />

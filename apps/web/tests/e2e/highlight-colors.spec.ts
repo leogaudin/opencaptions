@@ -46,7 +46,9 @@ test.describe("Highlight colors", () => {
     await pickColor(page.getByTestId("highlight-color-0"), "#ff0000");
     await expect.poll(savedColors).toEqual(["#FF0000"]);
 
-    // The default look is a box on the word being said; at the start of the clip it is on "Hello".
+    // The default look is a box on the word being said; at the start of the clip it is on "Hello",
+    // still fading in, and the motion blur averages that first frame with the empty ones before it,
+    // so the box is faint there (any visible alpha will do: its colour is what is tested).
     const canvas = page.getByTestId("caption-preview").locator("canvas");
     await expect
       .poll(() =>
@@ -56,7 +58,7 @@ test.describe("Highlight colors", () => {
           };
           let red = 0;
           for (let i = 0; i < data.length; i += 4) {
-            if ((data[i] ?? 0) > 200 && (data[i + 1] ?? 255) < 60 && (data[i + 3] ?? 0) > 20) red++;
+            if ((data[i] ?? 0) > 200 && (data[i + 1] ?? 255) < 60 && (data[i + 3] ?? 0) > 4) red++;
           }
           return red;
         }),

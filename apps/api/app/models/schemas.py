@@ -181,14 +181,17 @@ class StyleConfig(BaseModel):
     )
     # Where the shadow falls, in the same units as its blur. With no blur it is solid and drawn as
     # an extrusion: the outline carried on out to the offset.
-    shadow_offset_x: float = Field(default=0.0, ge=-20.0, le=20.0)
-    shadow_offset_y: float = Field(default=0.0, ge=-20.0, le=20.0)
+    shadow_offset_x: float = Field(default=0.0, ge=-40.0, le=40.0)
+    shadow_offset_y: float = Field(default=0.0, ge=-40.0, le=40.0)
     # A halo of glow_color around the letters (0 for none): the neon look.
     glow_blur: float = Field(default=0.0, ge=0.0, le=40.0)
     glow_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
     text_case: Literal["none", "upper"] = "none"
     # Letters leaned to the right: the upright face, sheared.
     italic: bool = False
+    # The shutter as a share of 1/30 s, whatever the frame rate: moving words smear along their
+    # path, the same in the preview and the export. 0 is off.
+    motion_blur: float = Field(default=0.5, ge=0.0, le=1.0)
 
 
 # Project + Job

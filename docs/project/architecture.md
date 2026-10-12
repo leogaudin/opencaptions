@@ -146,7 +146,15 @@ build produces byte-identical frames. Nothing else may draw captions.
     laid down three times to read as light); upper case (drawn, never stored: the transcript is
     untouched); and italic (the upright face sheared by about 11 degrees, so any font leans and
     no italic file has to be fetched). Every field after `shadow_color` is optional with a
-    default of "off", so a style saved before it existed opens unchanged.
+    default of "off", so a style saved before it existed opens unchanged (the exception is
+    `motion_blur`, which defaults to 0.5).
+  - *Motion blur.* When `motion_blur` is above 0, a frame at `t` is the average of eight
+    sub-frames drawn at `t - motion_blur/30 · k/7` seconds (the shutter is a share of 1/30 s, so
+    the fps does not change the look). If every sub-frame has the same key (nothing moves within
+    the shutter), one draw is taken, so still frames cost nothing and are byte-identical to a sharp
+    one. Otherwise each is drawn in full, whichever line is up then, and they are summed as
+    integers on the premultiplied bytes over the union of their boxes, so a line arriving within
+    the shutter ghosts in. The frame's identity is the list of sub-frame keys.
   - *Highlight colours.* `highlight_colors` is a list of one to four hex colours, the first the
     primary (a row of pickers with a plus and a remove, on both editors). A look that marks each
     word (the lit word, a box, a label, an underline, the cursor) takes the colours in turn, word

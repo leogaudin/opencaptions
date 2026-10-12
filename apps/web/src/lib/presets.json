@@ -24,7 +24,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -52,7 +53,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "upper",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.6
     }
   },
   {
@@ -80,7 +82,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -108,7 +111,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "upper",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -136,7 +140,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -165,7 +170,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "upper",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.8
     }
   },
   {
@@ -194,7 +200,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0
     }
   },
   {
@@ -223,7 +230,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.6
     }
   },
   {
@@ -252,7 +260,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -281,7 +290,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     }
   },
   {
@@ -309,7 +319,8 @@
       "glow_blur": 26,
       "glow_color": "#FF2BD6",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     },
     "pro": true
   },
@@ -338,7 +349,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     },
     "pro": true
   },
@@ -367,7 +379,8 @@
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "none",
-      "italic": false
+      "italic": false,
+      "motion_blur": 0.5
     },
     "pro": true
   }

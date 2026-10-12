@@ -125,6 +125,7 @@ struct StylePanel: View {
                 ChoiceStrip(
                     options: CaptionAnimation.allCases, selection: style.animation, title: animationName,
                     images: animationTiles, pick: { choice in model.updateStyle { $0.animation = choice } })
+                LabeledSlider("Motion blur", value: model.binding(\.motionBlur), range: 0...1, step: 0.05)
             }
         case .outline:
             section {
@@ -133,8 +134,8 @@ struct StylePanel: View {
                     Row("Outline color") { ColorPicker("Outline color", selection: color(\.strokeColor), supportsOpacity: false).labelsHidden() }
                 }
                 LabeledSlider("Shadow", value: model.binding(\.shadowBlur), range: 0...20, step: 1)
-                LabeledSlider("Shadow right", value: model.binding(\.shadowOffsetX), range: -20...20, step: 1)
-                LabeledSlider("Shadow down", value: model.binding(\.shadowOffsetY), range: -20...20, step: 1)
+                LabeledSlider("Shadow right", value: model.binding(\.shadowOffsetX), range: -40...40, step: 1)
+                LabeledSlider("Shadow down", value: model.binding(\.shadowOffsetY), range: -40...40, step: 1)
                 if style.shadowBlur > 0 || style.shadowOffsetX != 0 || style.shadowOffsetY != 0 {
                     Row("Shadow color") { ColorPicker("Shadow color", selection: color(\.shadowColor, alpha: true), supportsOpacity: true).labelsHidden() }
                 }

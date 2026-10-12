@@ -142,6 +142,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var textCase: TextCase
     /// Letters leaned to the right (the engine shears the upright face).
     public var italic: Bool
+    /// The shutter as a share of 1/30 s: moving words smear along their path. 0 is off.
+    public var motionBlur: Double
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -149,7 +151,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         positionX: Double, positionY: Double, animation: CaptionAnimation, wordsPerLine: Int,
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
-        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false
+        glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
+        motionBlur: Double = 0.5
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -173,6 +176,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.glowColor = glowColor
         self.textCase = textCase
         self.italic = italic
+        self.motionBlur = motionBlur
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -198,7 +202,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowBlur: try c.decodeIfPresent(Double.self, forKey: .glowBlur) ?? 0,
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
-            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false)
+            italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
+            motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5)
     }
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
@@ -239,5 +244,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case glowColor = "glow_color"
         case textCase = "text_case"
         case italic
+        case motionBlur = "motion_blur"
     }
 }

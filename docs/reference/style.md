@@ -32,9 +32,10 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `stroke_color` | Colour | `#000000` | |
 | `shadow_blur` | 0 to 20 | `10` | |
 | `shadow_color` | Colour, with optional alpha | `#000000A0` | |
-| `shadow_offset_x`, `shadow_offset_y` | -20 to 20 | `0`, `0` | Where the shadow falls. With no blur it is solid and drawn as an extrusion. |
+| `shadow_offset_x`, `shadow_offset_y` | -40 to 40 | `0`, `0` | Where the shadow falls. With no blur it is solid and drawn as an extrusion. |
 | `glow_blur` | 0 to 40 | `0` | A halo around the letters. `0` is none. |
 | `glow_color` | Colour, with optional alpha | `#FFFFFF` | |
+| `motion_blur` | 0 to 1 | `0.5` | The shutter, as a share of 1/30 s whatever the frame rate. Moving words smear along their path; `0` is off. Still frames are unaffected. |
 
 ## Animations
 

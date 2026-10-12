@@ -62,6 +62,8 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     s = StyleConfig()
     assert (s.shadow_offset_x, s.shadow_offset_y, s.glow_blur) == (0, 0, 0)
     assert (s.text_case, s.italic) == ("none", False)
+    assert s.motion_blur == 0.5
+    assert StyleConfig(shadow_offset_x=40, shadow_offset_y=-40).shadow_offset_x == 40
     for animation in (
         "word_sweep",
         "word_underline",
@@ -74,7 +76,12 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         "stickers",
     ):
         assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
-    for bad in ({"shadow_offset_x": 21}, {"glow_blur": 41}, {"text_case": "lower"}):
+    for bad in (
+        {"shadow_offset_x": 41},
+        {"glow_blur": 41},
+        {"motion_blur": 1.1},
+        {"text_case": "lower"},
+    ):
         with pytest.raises(ValidationError):
             StyleConfig(**bad)  # type: ignore[arg-type]
 

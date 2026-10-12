@@ -1308,12 +1308,19 @@ impl Trimmed {
 /// A line, and each of its words' opacity, size and tilt: all the layers depend on.
 type LayerKey = (usize, Vec<[u32; 3]>);
 
+/// How many sub-frames the shutter averages when something moves within it.
+const BLUR_SAMPLES: usize = 8;
+
 pub struct Renderer {
     layers: LayerCache,
     scene: Scene,
     canvas: Pixmap,
     rgba: Vec<u8>,
-    last: Option<FrameKey>,
+    /// What the last frame was made from: the keys of its sub-frames (a single one when nothing
+    /// moved within the shutter), the first being the frame's own time.
+    last: Option<Vec<FrameKey>>,
+    /// The frame a sub-frame is drawn on before it is added to the average.
+    scratch: Option<Pixmap>,
     dirty: Option<IntRect>,
     /// The rows the last `render` changed, `top..bottom`: all of them the first time.
     changed: (u32, u32),
@@ -1333,6 +1340,7 @@ impl Renderer {
             rgba: vec![0; (w * h * 4) as usize],
             scene,
             last: None,
+            scratch: None,
             dirty: None,
             changed: (0, 0),
         };
@@ -1369,10 +1377,62 @@ impl Renderer {
         }
     }
 
+    /// The keys of the sub-frames the shutter opens over before `t`, `t`'s own first: just that
+    /// one when none of them differs, so a still frame costs a single draw.
+    fn sample_keys(&self, t: f32) -> Vec<FrameKey> {
+        let mut keys = vec![self.scene.key(t)];
+        let shutter = self.scene.style.motion_blur / 30.0;
+        if shutter > 0.0 {
+            for k in 1..BLUR_SAMPLES {
+                keys.push(
+                    self.scene
+                        .key(t - shutter * k as f32 / (BLUR_SAMPLES - 1) as f32),
+                );
+            }
+            if keys.iter().all(|key| *key == keys[0]) {
+                keys.truncate(1);
+            }
+        }
+        keys
+    }
+
+    /// Draws every sub-frame in `keys` over `area` and puts their average onto the canvas.
+    /// Integer sums of premultiplied bytes, so every build averages alike.
+    fn draw_blurred(&mut self, keys: &[FrameKey], area: IntRect) {
+        let width = self.scene.width;
+        let mut scratch = self.scratch.take().unwrap_or_else(|| {
+            Pixmap::new(width, self.scene.height).expect("frame dimensions are validated")
+        });
+        let row_len = area.width() as usize * 4;
+        let mut sum = vec![0u32; row_len * area.height() as usize];
+        for key in keys {
+            for span in rows(area, width) {
+                scratch.data_mut()[span].fill(0);
+            }
+            if let Some(i) = key.0 {
+                let line = &self.scene.lines[i];
+                self.scene
+                    .draw(&mut scratch, (i, line), &key.1, key.2, &mut self.layers);
+            }
+            for (row, span) in sum.chunks_mut(row_len).zip(rows(area, width)) {
+                for (acc, byte) in row.iter_mut().zip(&scratch.data()[span]) {
+                    *acc += u32::from(*byte);
+                }
+            }
+        }
+        let n = keys.len() as u32;
+        for (row, span) in sum.chunks(row_len).zip(rows(area, width)) {
+            for (byte, acc) in self.canvas.data_mut()[span].iter_mut().zip(row) {
+                *byte = ((acc + n / 2) / n) as u8;
+            }
+        }
+        self.scratch = Some(scratch);
+    }
+
     /// Bring the frame to time `t`; returns whether any pixel changed.
     pub fn render(&mut self, t: f32) -> bool {
-        let key = self.scene.key(t);
-        if self.last.as_ref() == Some(&key) {
+        let keys = self.sample_keys(t);
+        if self.last.as_ref() == Some(&keys) {
             return false;
         }
         let width = self.scene.width;
@@ -1387,6 +1447,21 @@ impl Renderer {
             let (top, bottom) = (r.y() as u32, r.bottom() as u32);
             changed = Some(changed.map_or((top, bottom), |(t, b)| (t.min(top), b.max(bottom))));
         };
+        // Where the frame draws: its line's box, or the union of the boxes of the lines the
+        // shutter saw (one arriving or leaving within it).
+        let area = keys
+            .iter()
+            .filter_map(|k| k.0)
+            .map(|i| self.scene.lines[i].bounds)
+            .reduce(|a, b| {
+                IntRect::from_ltrb(
+                    a.x().min(b.x()),
+                    a.y().min(b.y()),
+                    a.right().max(b.right()),
+                    a.bottom().max(b.bottom()),
+                )
+                .unwrap_or(a)
+            });
         // The watermark is drawn again, over whatever it overlaps, when a caption clears or draws
         // where it is; otherwise it is left as it is.
         let mark = self.scene.mark.as_ref().map(|m| m.rect);
@@ -1395,8 +1470,7 @@ impl Renderer {
             grow(r);
             redraw_mark |= mark.is_some_and(|m| overlaps(r, m));
         }
-        if let Some(i) = key.0 {
-            let bounds = self.scene.lines[i].bounds;
+        if let Some(bounds) = area {
             grow(bounds);
             redraw_mark |= mark.is_some_and(|m| overlaps(bounds, m));
         }
@@ -1413,17 +1487,22 @@ impl Renderer {
         if redraw_mark {
             self.clear_mark();
         }
-        if let Some(i) = key.0 {
-            let line = &self.scene.lines[i];
-            self.scene
-                .draw(&mut self.canvas, (i, line), &key.1, key.2, &mut self.layers);
-            unpremultiply(self.canvas.data(), &mut self.rgba, line.bounds, width);
-            self.dirty = Some(line.bounds);
+        if let Some(bounds) = area {
+            if keys.len() > 1 {
+                self.draw_blurred(&keys, bounds);
+            } else if let Some(i) = keys[0].0 {
+                let line = &self.scene.lines[i];
+                let key = &keys[0];
+                self.scene
+                    .draw(&mut self.canvas, (i, line), &key.1, key.2, &mut self.layers);
+            }
+            unpremultiply(self.canvas.data(), &mut self.rgba, bounds, width);
+            self.dirty = Some(bounds);
         }
         if redraw_mark {
             self.draw_mark();
         }
-        self.last = Some(key);
+        self.last = Some(keys);
         true
     }
 
@@ -1449,7 +1528,7 @@ impl Renderer {
 
     /// Index of the active line among all lines.
     pub fn active_index(&self) -> Option<usize> {
-        self.last.as_ref()?.0
+        self.last.as_ref()?.first()?.0
     }
 
     /// Flat index of the active line's first word, so the editor can map a word back to the
@@ -1599,7 +1678,9 @@ mod tests {
             "background_color": "#000000", "background_opacity": 0.0,
             "position_x": 0.5, "position_y": 0.5, "animation": animation,
             "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
-            "shadow_blur": 0, "shadow_color": "#00000000"
+            "shadow_blur": 0, "shadow_color": "#00000000",
+            // Off unless a case asks, so the cases that predate it still pin what they pinned.
+            "motion_blur": 0
         }))
         .unwrap();
         for (k, v) in patch.as_object().unwrap() {
@@ -1866,6 +1947,71 @@ mod tests {
             r.rgba().iter().all(|&b| b == 0),
             "a cleared frame is fully transparent"
         );
+    }
+
+    fn blurred(animation: &str, motion_blur: f32) -> Renderer {
+        let patch = serde_json::json!({ "motion_blur": motion_blur });
+        Renderer::new(Scene::new(&book(), styled(animation, WORDS, patch)))
+    }
+
+    /// How many pixels are neither clear nor solid: the soft edges and the smears.
+    fn partial(rgba: &[u8]) -> usize {
+        rgba.chunks(4).filter(|p| p[3] != 0 && p[3] != 255).count()
+    }
+
+    #[test]
+    fn a_moving_word_leaves_a_trail_along_its_path() {
+        // word_pop scales the word up as it starts: the shutter sees it smaller a moment ago.
+        let t = 0.52;
+        let (mut sharp, mut smeared) = (blurred("word_pop", 0.0), blurred("word_pop", 1.0));
+        sharp.render(t);
+        smeared.render(t);
+        assert_ne!(
+            sharp.rgba(),
+            smeared.rgba(),
+            "the shutter changed the frame"
+        );
+        assert!(
+            partial(smeared.rgba()) > partial(sharp.rgba()),
+            "the trail is made of partial alpha"
+        );
+    }
+
+    #[test]
+    fn a_still_frame_is_the_same_with_or_without_blur() {
+        // Mid-word, nothing moves within the shutter: one draw, byte for byte the sharp one.
+        for animation in ["none", "word_highlight", "highlight_box", "word_pop"] {
+            let (mut sharp, mut smeared) = (blurred(animation, 0.0), blurred(animation, 1.0));
+            sharp.render(0.3);
+            smeared.render(0.3);
+            assert_eq!(sharp.rgba(), smeared.rgba(), "{animation}");
+        }
+    }
+
+    #[test]
+    fn a_blurred_frame_reaches_the_next_and_back_without_leaving_traces() {
+        let mut r = blurred("word_bounce", 1.0);
+        let times = [0.52, 0.3, 0.505, 2.5];
+        for t in times {
+            r.render(t);
+            let mut fresh = blurred("word_bounce", 1.0);
+            fresh.render(t);
+            assert_eq!(r.rgba(), fresh.rgba(), "t = {t}");
+        }
+        assert!(r.rgba().iter().all(|&b| b == 0), "cleared after the line");
+    }
+
+    #[test]
+    fn a_blurred_second_of_full_frames_stays_cheap() {
+        let mut r = blurred("word_bounce", 1.0);
+        let start = std::time::Instant::now();
+        for i in 0..30 {
+            r.render(0.4 + i as f32 / 30.0);
+        }
+        let took = start.elapsed();
+        println!("30 blurred frames: {took:?}");
+        // A loose ceiling in an unoptimised build; the release build is several times faster.
+        assert!(took.as_secs_f32() < 15.0, "{took:?}");
     }
 
     #[test]
@@ -2466,6 +2612,12 @@ mod tests {
                 cases.push((format!("{anim}+{name}"), styled(anim, WORDS, patch.clone())));
             }
         }
+        for anim in ["word_pop", "word_bounce", "highlight_slide", "none"] {
+            cases.push((
+                format!("{anim}+motion_blur"),
+                styled(anim, WORDS, serde_json::json!({ "motion_blur": 1.0 })),
+            ));
+        }
         let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
         marked.watermark = Some("OpenCaptions".to_string());
         cases.push(("watermark".to_string(), marked));
@@ -2670,6 +2822,10 @@ mod tests {
         ("word_highlight+pill", 0x39e4fe882e5dfa3b),
         ("word_fade+pill", 0xbcf444e5865cfa9c),
         ("word_pop+pill", 0xc9c9ca585f268aa2),
+        ("word_pop+motion_blur", 0x7cafa1034b42134a),
+        ("word_bounce+motion_blur", 0xfe8ce16569a3e8c2),
+        ("highlight_slide+motion_blur", 0x4a203c274cc98750),
+        ("none+motion_blur", 0x73229f3640871f60),
         ("watermark", 0xe22c164ced6e9dd5),
     ];
 }
