@@ -48,7 +48,6 @@ done
 
 # The header, with a module map so Swift imports it as `OpenCaptionsEngine`.
 HEADERS="$(mktemp -d)"
-trap 'rm -rf "$HEADERS"' EXIT
 cp include/opencaptions_engine.h "$HEADERS/"
 cat >"$HEADERS/module.modulemap" <<'MODULEMAP'
 module OpenCaptionsEngine {
@@ -57,10 +56,29 @@ module OpenCaptionsEngine {
 }
 MODULEMAP
 
+# Only the engine's own `oc_*` functions leave the library. What else is inside it (Rust's std, its
+# runtime, `_rust_eh_personality`) is made private, because the app links FluidAudio's Rust library
+# as well, which holds the same symbols: two copies of one name stop the linker on some Xcode versions.
+PRIVATE="$(mktemp -d)"
+trap 'rm -rf "$HEADERS" "$PRIVATE"' EXIT
+printf '_oc_*\n' >"$PRIVATE/exports.txt"
+for t in "${TARGETS[@]}"; do
+  mkdir -p "$PRIVATE/$t"
+  case "$t" in
+    aarch64-apple-ios) platform="ios 10.0 18.0" ;;
+    aarch64-apple-ios-sim) platform="ios-simulator 14.0 18.0" ;;
+    *) platform="macos 11.0 15.0" ;;
+  esac
+  # shellcheck disable=SC2086
+  ld -r -arch arm64 -platform_version $platform -exported_symbols_list "$PRIVATE/exports.txt" -all_load "target/$t/release/$LIB" \
+    -o "$PRIVATE/$t/engine.o"
+  libtool -static -o "$PRIVATE/$t/$LIB" "$PRIVATE/$t/engine.o"
+done
+
 rm -rf "$XCFRAMEWORK"
 args=()
 for t in "${TARGETS[@]}"; do
-  args+=(-library "target/$t/release/$LIB" -headers "$HEADERS")
+  args+=(-library "$PRIVATE/$t/$LIB" -headers "$HEADERS")
 done
 xcodebuild -create-xcframework "${args[@]}" -output "$XCFRAMEWORK"
 printf '\033[1;32m✓ %s\033[0m\n' "$XCFRAMEWORK"
