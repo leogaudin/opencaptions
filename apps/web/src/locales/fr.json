@@ -347,5 +347,12 @@
   "Turn the sound on": "Activer le son",
   "Turn the sound off": "Couper le son",
   "The clip is cropped and trimmed.": "Extrait recadré et raccourci.",
-  "Motion blur": "Flou de mouvement"
+  "Motion blur": "Flou de mouvement",
+  "Press": "Enfoncer",
+  "Fill": "Remplissage",
+  "Gradient": "Dégradé",
+  "Gradient colors": "Couleurs du dégradé",
+  "Add a gradient color": "Ajouter une couleur de dégradé",
+  "Remove this gradient color": "Retirer cette couleur de dégradé",
+  "Extrusion shading": "Ombrage de l’extrusion"
 }

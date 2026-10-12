@@ -56,7 +56,7 @@ import Testing
     @Test func aStyleSavedBeforeItsLaterFieldsStillOpens() throws {
         var json = try #require(
             JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
-        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "motion_blur"] {
+        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "motion_blur", "fill_colors", "extrude_shade"] {
             json.removeValue(forKey: key)
         }
         let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))

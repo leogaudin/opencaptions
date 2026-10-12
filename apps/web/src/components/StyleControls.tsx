@@ -109,6 +109,14 @@ const SLANT_NAMES: Record<(typeof SLANTS)[number], string> = {
   italic: msg("Italic"),
 };
 
+const FILLS = ["solid", "gradient"] as const;
+const FILL_NAMES: Record<(typeof FILLS)[number], string> = {
+  solid: msg("Solid"),
+  gradient: msg("Gradient"),
+};
+/** The second colour of a gradient fill that was just switched on: a warm gold under the text colour. */
+const ADDED_GRADIENT = "#FFB800";
+
 function Panel({ children }: { children: ReactNode }) {
   return <div className="space-y-4 text-xs">{children}</div>;
 }
@@ -165,6 +173,30 @@ function TextPanel({
         value={style.text_color}
         onChange={(text_color) => throttled({ text_color })}
       />
+      <Field label={t("Fill")}>
+        <Segmented
+          options={FILLS}
+          value={style.fill_colors.length > 1 ? "gradient" : "solid"}
+          label={(f) => t(FILL_NAMES[f])}
+          onChange={(fill) =>
+            setStyle({ fill_colors: fill === "gradient" ? [style.text_color, ADDED_GRADIENT] : [] })
+          }
+        />
+      </Field>
+      {style.fill_colors.length > 1 && (
+        <ColorListField
+          label={t("Gradient colors")}
+          value={style.fill_colors}
+          max={MAX_HIGHLIGHT_COLORS}
+          addLabel={t("Add a gradient color")}
+          removeLabel={t("Remove this gradient color")}
+          testId="fill-color"
+          onChange={(fill_colors) => throttled({ fill_colors })}
+          onResize={(fill_colors) =>
+            setStyle({ fill_colors: fill_colors.length > 1 ? fill_colors : [] })
+          }
+        />
+      )}
       <ColorListField
         label={t("Highlight colors")}
         value={style.highlight_colors}
@@ -329,6 +361,17 @@ function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Set
         step={1}
         onChange={(shadow_offset_y) => throttled({ shadow_offset_y })}
       />
+      {style.shadow_blur <= 0 && (style.shadow_offset_x !== 0 || style.shadow_offset_y !== 0) && (
+        <SliderField
+          label={t("Extrusion shading")}
+          value={style.extrude_shade}
+          min={0}
+          max={1}
+          step={0.05}
+          decimals={2}
+          onChange={(extrude_shade) => throttled({ extrude_shade })}
+        />
+      )}
       <SliderField
         label={t("Glow")}
         value={style.glow_blur}

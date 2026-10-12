@@ -28,6 +28,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Neon** | A glowing neon face. |
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |
+| **Chunky 3D** | Gold gradient letters on a shaded extrusion, pushed in as each word is said. |
 
 A preset sets the whole style, so pick it first and adjust after. Selecting one keeps your caption
 position, font size and words per line, which belong to your video.
@@ -38,6 +39,7 @@ position, font size and words per line, which belong to your video.
   Inter, Poppins and Montserrat come with the app. Any other font is downloaded from Google Fonts by
   the server the first time it is used, then kept, so the preview and the export use the same file.
   (On a server with no internet, a font that was never fetched falls back to Inter.)
+- **Fill**: a plain colour, or a gradient of two to four colours from the top of the letters to the bottom.
 - **Font size**, **Letter case** (normal or uppercase) and **Slant** (upright or italic).
 - **Text color** and **Highlight colors**: a list of one to four colours. The first is the main one.
   A look that marks each word (the lit word, a box, a label, an underline) takes the colours in turn,
@@ -53,14 +55,15 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 ## Animation
 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
-**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, or **None**.
+**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, or **None**.
 Each tile shows the animation on your own caption. **Motion blur** smears the words that move along
 their path, the same in the editor and in the download; at 0 every frame is sharp.
 
 ## Outline
 
 **Stroke width** for the outline around the letters, a **Shadow** (blur, and how far down and to the
-right it falls) and a **Glow** with its own colour.
+right it falls) and a **Glow** with its own colour. With a shadow that falls but is not blurred (a solid, 3D look),
+**Extrusion shading** darkens it with depth.
 
 ## Timing
 

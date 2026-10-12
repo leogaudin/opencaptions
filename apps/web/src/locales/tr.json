@@ -347,5 +347,12 @@
   "Turn the sound on": "Sesi aç",
   "Turn the sound off": "Sesi kapat",
   "The clip is cropped and trimmed.": "Klip kırpıldı ve kısaltıldı.",
-  "Motion blur": "Hareket bulanıklığı"
+  "Motion blur": "Hareket bulanıklığı",
+  "Press": "Basma",
+  "Fill": "Dolgu",
+  "Gradient": "Degrade",
+  "Gradient colors": "Degrade renkleri",
+  "Add a gradient color": "Degrade rengi ekle",
+  "Remove this gradient color": "Bu degrade rengini kaldır",
+  "Extrusion shading": "Hacim gölgelemesi"
 }

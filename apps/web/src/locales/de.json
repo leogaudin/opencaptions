@@ -347,5 +347,12 @@
   "Turn the sound on": "Ton einschalten",
   "Turn the sound off": "Ton ausschalten",
   "The clip is cropped and trimmed.": "Der Clip ist zugeschnitten und gekürzt.",
-  "Motion blur": "Bewegungsunschärfe"
+  "Motion blur": "Bewegungsunschärfe",
+  "Press": "Eindrücken",
+  "Fill": "Füllung",
+  "Gradient": "Verlauf",
+  "Gradient colors": "Verlaufsfarben",
+  "Add a gradient color": "Verlaufsfarbe hinzufügen",
+  "Remove this gradient color": "Diese Verlaufsfarbe entfernen",
+  "Extrusion shading": "Extrusionsschattierung"
 }

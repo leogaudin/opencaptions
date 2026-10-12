@@ -347,5 +347,12 @@
   "Turn the sound on": "Włącz dźwięk",
   "Turn the sound off": "Wyłącz dźwięk",
   "The clip is cropped and trimmed.": "Fragment jest przycięty i skrócony.",
-  "Motion blur": "Rozmycie ruchu"
+  "Motion blur": "Rozmycie ruchu",
+  "Press": "Wciśnięcie",
+  "Fill": "Wypełnienie",
+  "Gradient": "Gradient",
+  "Gradient colors": "Kolory gradientu",
+  "Add a gradient color": "Dodaj kolor gradientu",
+  "Remove this gradient color": "Usuń ten kolor gradientu",
+  "Extrusion shading": "Cieniowanie wytłoczenia"
 }

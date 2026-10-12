@@ -1383,7 +1383,7 @@ export interface components {
              * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press";
             /**
              * Words Per Line
              * @default 3
@@ -1451,6 +1451,16 @@ export interface components {
              * @default 0.5
              */
             motion_blur: number;
+            /**
+             * Fill Colors
+             * @default []
+             */
+            fill_colors: string[];
+            /**
+             * Extrude Shade
+             * @default 0
+             */
+            extrude_shade: number;
         };
         /**
          * SubtitleExportLinks

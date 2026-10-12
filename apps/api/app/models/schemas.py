@@ -167,6 +167,7 @@ class StyleConfig(BaseModel):
         "highlight_slide",
         "line_bar",
         "stickers",
+        "word_press",
     ] = "highlight_slide"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.
@@ -192,6 +193,12 @@ class StyleConfig(BaseModel):
     # The shutter as a share of 1/30 s, whatever the frame rate: moving words smear along their
     # path, the same in the preview and the export. 0 is off.
     motion_blur: float = Field(default=0.5, ge=0.0, le=1.0)
+    # A vertical gradient over each word's letters, top to baseline; empty is the text colour.
+    fill_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
+        default=[], max_length=4
+    )
+    # How much a solid shadow (an extrusion) darkens from the front to the back.
+    extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 # Project + Job

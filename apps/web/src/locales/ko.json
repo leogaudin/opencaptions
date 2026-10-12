@@ -347,5 +347,12 @@
   "Turn the sound on": "소리 켜기",
   "Turn the sound off": "소리 끄기",
   "The clip is cropped and trimmed.": "클립은 잘라내고 줄였습니다.",
-  "Motion blur": "모션 블러"
+  "Motion blur": "모션 블러",
+  "Press": "프레스",
+  "Fill": "채우기",
+  "Gradient": "그라데이션",
+  "Gradient colors": "그라데이션 색상",
+  "Add a gradient color": "그라데이션 색상 추가",
+  "Remove this gradient color": "이 그라데이션 색상 제거",
+  "Extrusion shading": "입체 음영"
 }

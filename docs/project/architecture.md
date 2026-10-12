@@ -128,7 +128,7 @@ build produces byte-identical frames. Nothing else may draw captions.
   would invent timings. The web calls them through WebAssembly, and the phone
   calls the same code natively.
 - **Styles.** All of a style is the engine's, so the preview and the export agree.
-  - *Thirteen animations:* the word highlighted by colour (`word_highlight`), by a box
+  - *Fourteen animations:* the word highlighted by colour (`word_highlight`), by a box
     (`highlight_box`), popped (`word_pop`), faded in (`word_fade`), filled left to right as it is
     said (`word_sweep`, karaoke), underlined as it is said (`word_underline`), typed out letter by
     letter with a cursor (`typewriter`; the steps are whole letters, so a frame changes only when
@@ -136,7 +136,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     lean, left and right in turn (`word_bounce`), brought into focus out of a dim blur
     (`lyric_focus`; the words already said stay sharp), lit by one box that slides from word to
     word (`highlight_slide`), lit with a bar under the line that fills as the line is spoken
-    (`line_bar`), and each set on its own tilted label (`stickers`). The motion is eased with the
+    (`line_bar`), each set on its own tilted label (`stickers`), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
     engine's own arithmetic, never a platform sine, so the builds still agree to the byte. The
     line's bar and the sliding box are one shape per line (`Guide`), part of the frame's
     identity, so a frame is redrawn when they move.
@@ -147,7 +147,10 @@ build produces byte-identical frames. Nothing else may draw captions.
     untouched); and italic (the upright face sheared by about 11 degrees, so any font leans and
     no italic file has to be fetched). Every field after `shadow_color` is optional with a
     default of "off", so a style saved before it existed opens unchanged (the exception is
-    `motion_blur`, which defaults to 0.5).
+    `motion_blur`, which defaults to 0.5). `fill_colors` paints each word with a vertical gradient
+    from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
+    depth: its stamps are laid from the back forward, so each pixel takes the colour of the
+    nearest stamp that covers it, and the first step is lightened as a lit edge.
   - *Motion blur.* When `motion_blur` is above 0, a frame at `t` is the average of eight
     sub-frames drawn at `t - motion_blur/30 · k/7` seconds (the shutter is a share of 1/30 s, so
     the fps does not change the look). If every sub-frame has the same key (nothing moves within

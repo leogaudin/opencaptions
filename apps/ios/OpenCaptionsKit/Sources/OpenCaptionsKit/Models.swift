@@ -98,6 +98,7 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case highlightSlide = "highlight_slide"
     case lineBar = "line_bar"
     case stickers
+    case wordPress = "word_press"
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
@@ -144,6 +145,10 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var italic: Bool
     /// The shutter as a share of 1/30 s: moving words smear along their path. 0 is off.
     public var motionBlur: Double
+    /// A vertical gradient over each word's letters, top to baseline; empty is `textColor`.
+    public var fillColors: [String]
+    /// How much a solid shadow (an extrusion) darkens from the front to the back, 0...1.
+    public var extrudeShade: Double
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -152,7 +157,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
-        motionBlur: Double = 0.5
+        motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -177,6 +182,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.textCase = textCase
         self.italic = italic
         self.motionBlur = motionBlur
+        self.fillColors = fillColors
+        self.extrudeShade = extrudeShade
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -203,7 +210,9 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
             italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
-            motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5)
+            motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5,
+            fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
+            extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0)
     }
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
@@ -245,5 +254,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case textCase = "text_case"
         case italic
         case motionBlur = "motion_blur"
+        case fillColors = "fill_colors"
+        case extrudeShade = "extrude_shade"
     }
 }

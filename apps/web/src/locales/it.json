@@ -347,5 +347,12 @@
   "Turn the sound on": "Attiva l'audio",
   "Turn the sound off": "Disattiva l'audio",
   "The clip is cropped and trimmed.": "Il clip è ritagliato e accorciato.",
-  "Motion blur": "Sfocatura di movimento"
+  "Motion blur": "Sfocatura di movimento",
+  "Press": "Premere",
+  "Fill": "Riempimento",
+  "Gradient": "Sfumatura",
+  "Gradient colors": "Colori della sfumatura",
+  "Add a gradient color": "Aggiungi un colore della sfumatura",
+  "Remove this gradient color": "Rimuovi questo colore della sfumatura",
+  "Extrusion shading": "Ombreggiatura dell’estrusione"
 }

@@ -64,6 +64,8 @@ pub enum Animation {
     LineBar,
     /// Every word sits on its own label, tilted left and right in turn; the word being said lifts.
     Stickers,
+    /// The word being said is pushed into its extrusion, face sinking toward the back.
+    WordPress,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
@@ -136,6 +138,12 @@ pub struct Style {
     /// their path by averaging sub-frames, so the preview and the export blur alike. 0 is off.
     #[serde(default = "default_motion_blur")]
     pub motion_blur: f32,
+    /// A vertical gradient over each word's letters, top to baseline; empty is `text_color`.
+    #[serde(default)]
+    pub fill_colors: Vec<Rgba>,
+    /// How much a solid shadow (an extrusion) darkens from the front to the back, 0 to 1.
+    #[serde(default)]
+    pub extrude_shade: f32,
 }
 
 fn default_motion_blur() -> f32 {
@@ -293,6 +301,10 @@ impl SceneInput {
         within("shadow_offset_y", s.shadow_offset_y, -1000.0, 1000.0)?;
         within("glow_blur", s.glow_blur, 0.0, 500.0)?;
         within("motion_blur", s.motion_blur, 0.0, 1.0)?;
+        within("extrude_shade", s.extrude_shade, 0.0, 1.0)?;
+        if s.fill_colors.len() > 4 {
+            return Err("fill_colors holds at most 4 colours".into());
+        }
         within("background_opacity", s.background_opacity, 0.0, 1.0)?;
         within("position_x", s.position_x, -1.0, 2.0)?;
         within("position_y", s.position_y, -1.0, 2.0)?;

@@ -107,7 +107,8 @@ export type Animation =
   | "lyric_focus"
   | "highlight_slide"
   | "line_bar"
-  | "stickers";
+  | "stickers"
+  | "word_press";
 
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";

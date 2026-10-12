@@ -36,6 +36,8 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `glow_blur` | 0 to 40 | `0` | A halo around the letters. `0` is none. |
 | `glow_color` | Colour, with optional alpha | `#FFFFFF` | |
 | `motion_blur` | 0 to 1 | `0.5` | The shutter, as a share of 1/30 s whatever the frame rate. Moving words smear along their path; `0` is off. Still frames are unaffected. |
+| `fill_colors` | 0 to 4 colours | none | A vertical gradient over each word's letters, from the top of the line to the baseline. Empty is `text_color`. |
+| `extrude_shade` | 0 to 1 | `0` | How much a solid shadow (an extrusion) darkens from front to back, with a lit edge just behind the letters. Pick a shadow colour that is not black, or there is nothing to darken. |
 
 ## Animations
 
@@ -53,6 +55,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `highlight_slide` | Slide | A single box that slides from word to word. |
 | `line_bar` | Progress | A bar that fills along the line. |
 | `stickers` | Stickers | A coloured label on each word. |
+| `word_press` | Press | Pushing it into its solid shadow, so the extrusion shortens under it. |
 | `none` | None | Nothing: plain captions. |
 
 ## Timing offset

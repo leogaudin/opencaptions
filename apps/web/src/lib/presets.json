@@ -25,7 +25,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -47,14 +49,16 @@
       "stroke_width": 9,
       "stroke_color": "#000000",
       "shadow_blur": 0,
-      "shadow_color": "#000000FF",
+      "shadow_color": "#1F1F1FFF",
       "shadow_offset_x": 9,
       "shadow_offset_y": 9,
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "upper",
       "italic": false,
-      "motion_blur": 0.6
+      "motion_blur": 0.6,
+      "fill_colors": [],
+      "extrude_shade": 0.5
     }
   },
   {
@@ -83,7 +87,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -112,7 +118,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "upper",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -141,7 +149,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -164,14 +174,16 @@
       "stroke_width": 10,
       "stroke_color": "#000000",
       "shadow_blur": 0,
-      "shadow_color": "#000000FF",
+      "shadow_color": "#1F1F1FFF",
       "shadow_offset_x": 8,
       "shadow_offset_y": 10,
       "glow_blur": 0,
       "glow_color": "#FFFFFF",
       "text_case": "upper",
       "italic": false,
-      "motion_blur": 0.8
+      "motion_blur": 0.8,
+      "fill_colors": [],
+      "extrude_shade": 0.6
     }
   },
   {
@@ -201,7 +213,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0
+      "motion_blur": 0,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -231,7 +245,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.6
+      "motion_blur": 0.6,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -261,7 +277,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -291,7 +309,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     }
   },
   {
@@ -320,7 +340,9 @@
       "glow_color": "#FF2BD6",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     },
     "pro": true
   },
@@ -350,7 +372,9 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
     },
     "pro": true
   },
@@ -380,7 +404,41 @@
       "glow_color": "#FFFFFF",
       "text_case": "none",
       "italic": false,
-      "motion_blur": 0.5
+      "motion_blur": 0.5,
+      "fill_colors": [],
+      "extrude_shade": 0
+    },
+    "pro": true
+  },
+  {
+    "id": "builtin:chunky-3d",
+    "name": "Chunky 3D",
+    "config": {
+      "font": "Luckiest Guy",
+      "font_size": 96,
+      "text_color": "#FFF36B",
+      "highlight_colors": ["#FFFFFF"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.8,
+      "animation": "word_press",
+      "words_per_line": 2,
+      "word_spacing": 0.3,
+      "stroke_width": 6,
+      "stroke_color": "#3B1A00",
+      "shadow_blur": 0,
+      "shadow_color": "#C2410C",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 16,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "upper",
+      "italic": false,
+      "motion_blur": 0.5,
+      "fill_colors": ["#FFF36B", "#FFB800"],
+      "extrude_shade": 0.6
     },
     "pro": true
   }

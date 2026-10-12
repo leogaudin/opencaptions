@@ -33,6 +33,10 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// How deep into its extrusion a pressed word's face sinks, as a share of the way to the back.
+const PRESS_DEPTH: f32 = 0.7;
+/// How much the first step of a shaded extrusion is lightened, times the shading.
+const RIM_LIGHT: f32 = 0.25;
 /// How far an italic leans: the shear of the upright face (about 11 degrees).
 const ITALIC_SKEW: f32 = 0.2;
 /// A typed word takes this share of its time to appear (at least 0.08 s, at most 0.6 s of it).
@@ -75,6 +79,8 @@ struct Placed {
     ink_x: f32,
     ink_w: f32,
     baseline: f32,
+    /// The top of the em box, where a gradient fill starts.
+    em_top: f32,
     /// How many letters (for the typewriter's steps).
     chars: usize,
     /// Its place in the transcript, which decides which way it leans.
@@ -124,6 +130,8 @@ struct WordState {
     tilt: f32,
     /// How out of focus the word is, 0 to 1.
     soften: f32,
+    /// How far the word is pushed into its extrusion, 0 to 1 (a little past it on the spring).
+    press: f32,
 }
 
 impl WordState {
@@ -136,6 +144,7 @@ impl WordState {
         fill: 0.0,
         tilt: 0.0,
         soften: 0.0,
+        press: 0.0,
     };
 }
 
@@ -245,6 +254,22 @@ fn colour(c: Rgba, opacity: f32) -> Color {
 fn mix(a: Rgba, b: Rgba, k: f32) -> Rgba {
     let lerp = |x: u8, y: u8| (f32::from(x) + (f32::from(y) - f32::from(x)) * k).round() as u8;
     Rgba([0, 1, 2, 3].map(|i| lerp(a.0[i], b.0[i])))
+}
+
+/// The stops of a vertical gradient through `colours`, evenly spaced, each run through `tint`;
+/// None when there are fewer than two (then the one colour, or the text's, is used flat).
+fn gradient_stops(colours: &[Rgba], tint: &dyn Fn(Rgba) -> Rgba) -> Option<Vec<GradientStop>> {
+    if colours.len() < 2 {
+        return None;
+    }
+    let last = (colours.len() - 1) as f32;
+    Some(
+        colours
+            .iter()
+            .enumerate()
+            .map(|(i, c)| GradientStop::new(i as f32 / last, colour(tint(*c), 1.0)))
+            .collect(),
+    )
 }
 
 fn paint(c: Color) -> Paint<'static> {
@@ -360,6 +385,11 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
         Animation::Stickers => WordState {
             scale: 1.0 + STICKER_LIFT * pulse(t, w, MOTION_S, overshoot),
             tilt: lean(w) * STICKER_TILT,
+            ..steady
+        },
+        Animation::WordPress => WordState {
+            on,
+            press: pulse(t, w, MOTION_S, overshoot),
             ..steady
         },
     }
@@ -754,6 +784,7 @@ impl Scene {
                             ink_x: x + pad_wx,
                             ink_w: *adv,
                             baseline: top + baseline_in_row,
+                            em_top: top + baseline_in_row - ascent,
                             chars: texts[i].chars().count(),
                             index: first + i,
                         });
@@ -910,6 +941,21 @@ impl Scene {
                 .post_rotate(st.tilt)
                 .post_translate(cx, cy)
         };
+        // A solid shadow is an extrusion; `word_press` sinks the word's face into it, a share of the
+        // way to the back, and the extrusion that is left is the stretch from there on.
+        let extruded =
+            s.shadow_blur <= 0.0 && (s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0);
+        let sunk = |st: &WordState| {
+            if extruded && s.animation == Animation::WordPress {
+                (PRESS_DEPTH * st.press).clamp(0.0, 0.95)
+            } else {
+                0.0
+            }
+        };
+        let face = |w: &Placed, st: &WordState| {
+            let k = sunk(st);
+            pivot(w, st).post_translate(s.shadow_offset_x * k, s.shadow_offset_y * k)
+        };
         if let Some(path) = line.block.and_then(|b| rounded_rect(b, self.block_radius)) {
             let p = paint(colour(s.background_color, s.background_opacity));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
@@ -973,7 +1019,7 @@ impl Scene {
                 Point::from_xy(b.left(), b.bottom()),
                 Point::from_xy(b.right(), b.bottom()),
             ];
-            pivot(w, st).map_points(&mut corners);
+            face(w, st).map_points(&mut corners);
             let (mut x0, mut y0, mut x1, mut y1) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
             for c in corners {
                 (x0, y0, x1, y1) = (x0.min(c.x), y0.min(c.y), x1.max(c.x), y1.max(c.y));
@@ -1000,9 +1046,16 @@ impl Scene {
         // The shadow and the glow are the letters as they stand: they change when a word's
         // opacity, size or tilt does, and for most animations they do not change at all while
         // the line is up, so the finished layer (blur and all) is kept for the next frame.
-        let look: Vec<[u32; 3]> = states
+        let look: Vec<[u32; 4]> = states
             .iter()
-            .map(|st| [st.opacity.to_bits(), st.scale.to_bits(), st.tilt.to_bits()])
+            .map(|st| {
+                [
+                    st.opacity.to_bits(),
+                    st.scale.to_bits(),
+                    st.tilt.to_bits(),
+                    st.press.to_bits(),
+                ]
+            })
             .collect();
         let key = (index, look);
         if s.shadow_blur > 0.0 || has_offset {
@@ -1011,23 +1064,47 @@ impl Scene {
                     // A soft shadow is the letters once, moved and blurred. A hard one is the letters
                     // carried from where they are to the offset, a pixel at a time, so it reads as
                     // their outline extended (an extrusion) and not as a second copy behind them.
-                    let steps = if s.shadow_blur > 0.0 {
-                        1
-                    } else {
-                        (s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()).ceil() as usize)
-                            .clamp(1, 96)
-                    };
+                    let base = solid(s.shadow_color);
+                    let shaded = s.extrude_shade > 0.0 && extruded;
                     for (w, st) in line.words.iter().zip(states) {
-                        if let Some(path) = &w.glyphs {
-                            let c = colour(solid(s.shadow_color), st.opacity);
-                            for step in 1..=steps {
-                                let along = step as f32 / steps as f32;
-                                let at = pivot(w, st).post_translate(
-                                    s.shadow_offset_x * along,
-                                    s.shadow_offset_y * along,
-                                );
-                                ink(&mut shadow, path, c, c, local(at));
+                        let Some(path) = &w.glyphs else { continue };
+                        // From where the (possibly sunk) face is to the back of the extrusion.
+                        let from = sunk(st);
+                        let steps = if s.shadow_blur > 0.0 {
+                            1
+                        } else {
+                            ((s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()) * (1.0 - from))
+                                .ceil() as usize)
+                                .clamp(1, 96)
+                        };
+                        // Shaded, the back goes down first and the front over it, so each pixel shows
+                        // the nearest stamp that covers it and the colour deepens with the depth.
+                        let order: Vec<usize> = if shaded {
+                            (1..=steps).rev().collect()
+                        } else {
+                            (1..=steps).collect()
+                        };
+                        for step in order {
+                            let depth = step as f32 / steps as f32;
+                            let along = from + (1.0 - from) * depth;
+                            let mut hue = base;
+                            if shaded {
+                                hue = mix(base, Rgba([0, 0, 0, 255]), s.extrude_shade * depth);
+                                if step == 1 {
+                                    // The edge just behind the face catches the light.
+                                    hue = mix(
+                                        hue,
+                                        Rgba([255, 255, 255, 255]),
+                                        RIM_LIGHT * s.extrude_shade,
+                                    );
+                                }
                             }
+                            let c = colour(hue, st.opacity);
+                            let at = pivot(w, st).post_translate(
+                                s.shadow_offset_x * along,
+                                s.shadow_offset_y * along,
+                            );
+                            ink(&mut shadow, path, c, c, local(at));
                         }
                     }
                     if s.shadow_blur > 0.0 {
@@ -1057,7 +1134,7 @@ impl Scene {
                     for (w, st) in line.words.iter().zip(states) {
                         if let Some(path) = &w.glyphs {
                             let c = colour(solid(s.glow_color), st.opacity);
-                            ink(&mut halo, path, c, c, local(pivot(w, st)));
+                            ink(&mut halo, path, c, c, local(face(w, st)));
                         }
                     }
                     blur(&mut halo, s.glow_blur / 2.0);
@@ -1149,11 +1226,14 @@ impl Scene {
                     canvas.fill_path(&band, &p, FillRule::Winding, Transform::identity(), None);
                 }
             }
-            let fill = match s.animation {
+            // The word's own paint: its colour, or the gradient over its letters, either turned
+            // toward the highlight by `on` for the looks that light the word being said.
+            let lit = match s.animation {
                 Animation::WordHighlight
                 | Animation::WordPop
                 | Animation::WordBounce
-                | Animation::LyricFocus => mix(s.text_color, s.highlight(w.index), st.on),
+                | Animation::LyricFocus
+                | Animation::WordPress => st.on,
                 Animation::None
                 | Animation::HighlightBox
                 | Animation::HighlightSlide
@@ -1162,14 +1242,36 @@ impl Scene {
                 | Animation::WordFade
                 | Animation::WordSweep
                 | Animation::WordUnderline
-                | Animation::Typewriter => s.text_color,
+                | Animation::Typewriter => 0.0,
             };
-            let (fill, edge) = (colour(fill, 1.0), colour(s.stroke_color, 1.0));
+            let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
+            let fill = match gradient_stops(&s.fill_colors, &tint) {
+                Some(stops) => LinearGradient::new(
+                    Point::from_xy(w.ink_x, w.em_top),
+                    Point::from_xy(w.ink_x, w.baseline),
+                    stops,
+                    SpreadMode::Pad,
+                    Transform::identity(),
+                )
+                .map_or_else(
+                    || paint(colour(tint(s.fill_colors[0]), 1.0)),
+                    |shader| Paint {
+                        shader,
+                        anti_alias: true,
+                        ..Paint::default()
+                    },
+                ),
+                None => paint(colour(
+                    tint(s.fill_colors.first().copied().unwrap_or(s.text_color)),
+                    1.0,
+                )),
+            };
+            let edge = colour(s.stroke_color, 1.0);
             if s.animation == Animation::WordSweep && st.fill > 0.0 {
                 // Each letter is painted once: the highlight on the side the sweep has passed, the
                 // plain colour on the rest. Painting the highlight over a finished plain word would
                 // leave the plain word's soft edge showing round it, a pale fringe.
-                let (on, at) = (sweep(), pivot(w, st));
+                let (on, at) = (sweep(), face(w, st));
                 if st.fill >= 1.0 {
                     ink_with(canvas, path, &on, edge, at);
                 } else if let Some(within) = word_box(path, w, st, 0)
@@ -1182,7 +1284,7 @@ impl Scene {
                     let at = at.post_translate(-within.x() as f32, -within.y() as f32);
                     ink_with(&mut passed, path, &on, edge, at);
                     passed.apply_mask(&mask);
-                    ink(&mut ahead, path, fill, edge, at);
+                    ink_with(&mut ahead, path, &fill, edge, at);
                     let mut rest = mask;
                     rest.invert();
                     ahead.apply_mask(&rest);
@@ -1205,7 +1307,7 @@ impl Scene {
                 continue;
             }
             if st.opacity >= 1.0 && st.soften <= 0.0 && !(typed && st.fill < 1.0) {
-                ink(canvas, path, fill, edge, pivot(w, st));
+                ink_with(canvas, path, &fill, edge, face(w, st));
             } else {
                 let sigma = st.soften * s.font_size * FOCUS_BLUR;
                 let reach = if st.soften > 0.0 {
@@ -1218,8 +1320,8 @@ impl Scene {
                 {
                     // Composited as one group, like CSS opacity, so the stroke under
                     // the fill does not show through a translucent letter.
-                    let at = pivot(w, st).post_translate(-within.x() as f32, -within.y() as f32);
-                    ink(&mut group, path, fill, edge, at);
+                    let at = face(w, st).post_translate(-within.x() as f32, -within.y() as f32);
+                    ink_with(&mut group, path, &fill, edge, at);
                     if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill, within) {
                         group.apply_mask(&mask);
                     }
@@ -1305,8 +1407,8 @@ impl Trimmed {
     }
 }
 
-/// A line, and each of its words' opacity, size and tilt: all the layers depend on.
-type LayerKey = (usize, Vec<[u32; 3]>);
+/// A line, and each of its words' opacity, size, tilt and press: all the layers depend on.
+type LayerKey = (usize, Vec<[u32; 4]>);
 
 /// How many sub-frames the shutter averages when something moves within it.
 const BLUR_SAMPLES: usize = 8;
@@ -2014,6 +2116,108 @@ mod tests {
         assert!(took.as_secs_f32() < 15.0, "{took:?}");
     }
 
+    fn lone(animation: &str, patch: serde_json::Value) -> Renderer {
+        let mut patch = patch;
+        patch["motion_blur"] = 0.into();
+        Renderer::new(Scene::new(
+            &book(),
+            styled(animation, &[("HELLO", 0.0, 1.0)], patch),
+        ))
+    }
+
+    /// The mean colour of the solid pixels of rows `rows`.
+    fn mean_colour(r: &Renderer, rows: std::ops::Range<usize>) -> [f32; 3] {
+        let (mut sum, mut n) = ([0.0f32; 3], 0.0f32);
+        for y in rows {
+            for px in r.rgba()[y * 1080 * 4..(y + 1) * 1080 * 4].chunks(4) {
+                if px[3] == 255 {
+                    (0..3).for_each(|c| sum[c] += f32::from(px[c]));
+                    n += 1.0;
+                }
+            }
+        }
+        sum.map(|v| v / n.max(1.0))
+    }
+
+    #[test]
+    fn a_gradient_fill_runs_from_the_first_colour_at_the_top_to_the_last_at_the_baseline() {
+        let patch = serde_json::json!({ "fill_colors": ["#FF0000", "#0000FF"], "font_size": 200 });
+        let mut r = lone("none", patch);
+        r.render(0.5);
+        let (_, _, top, bottom) = extent(&r, 1080).unwrap();
+        let fifth = (bottom - top) / 5;
+        let up = mean_colour(&r, top..top + fifth);
+        let down = mean_colour(&r, bottom - fifth..bottom);
+        // The letters start below the em box's top, so the top of the ink is not quite the first colour.
+        assert!(up[0] > up[2] + 50.0, "red at the top: {up:?}");
+        assert!(down[2] > down[0] + 50.0, "blue at the bottom: {down:?}");
+        let mut flat = lone("none", serde_json::json!({ "font_size": 200 }));
+        flat.render(0.5);
+        assert_ne!(flat.rgba(), r.rgba());
+    }
+
+    #[test]
+    fn an_extrusion_darkens_with_depth_only_when_shaded() {
+        let still = |shade: f32| {
+            let patch = serde_json::json!({
+                "shadow_color": "#FFAA00", "shadow_offset_y": 60, "extrude_shade": shade,
+                "text_color": "#000000"
+            });
+            let mut r = lone("none", patch);
+            r.render(0.5);
+            r
+        };
+        let flat_face = {
+            let mut r = lone("none", serde_json::json!({ "text_color": "#000000" }));
+            r.render(0.5);
+            extent(&r, 1080).unwrap().3
+        };
+        for (shade, darkens) in [(0.0, false), (1.0, true)] {
+            let r = still(shade);
+            let back = extent(&r, 1080).unwrap().3;
+            let span = back - flat_face;
+            assert!(span > 20, "there is an extrusion to measure: {span}");
+            let near = mean_colour(&r, flat_face + 4..flat_face + 4 + span / 3);
+            let far = mean_colour(&r, back - span / 3..back);
+            assert_eq!(
+                near[0] > far[0] + 30.0,
+                darkens,
+                "shade {shade}: {near:?} then {far:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_pressed_word_sinks_its_face_into_the_extrusion_and_keeps_the_back_where_it_was() {
+        let patch = serde_json::json!({
+            "shadow_color": "#C2410C", "shadow_offset_y": 60, "stroke_width": 0
+        });
+        let (mut pressed, mut plain) = (
+            lone("word_press", patch.clone()),
+            lone("word_highlight", patch),
+        );
+        pressed.render(0.5);
+        plain.render(0.5);
+        let (a, b) = (
+            extent(&pressed, 1080).unwrap(),
+            extent(&plain, 1080).unwrap(),
+        );
+        let travel = 0.7 * 60.0 * 1920.0 / REF_HEIGHT;
+        assert!(
+            (a.2 as f32 - b.2 as f32 - travel).abs() < 3.0,
+            "the face moved {} rows, not {travel}",
+            a.2 as f32 - b.2 as f32
+        );
+        assert!(
+            a.3.abs_diff(b.3) <= 2,
+            "the back of the extrusion stays put"
+        );
+        // And the frame before the word is said has it unpressed.
+        let mut early = lone("word_press", serde_json::json!({ "shadow_offset_y": 60 }));
+        early.render(0.0);
+        assert!(extent(&early, 1080).is_some());
+    }
+
     #[test]
     fn the_active_caption_bounds_track_the_rendered_line() {
         let mut r = Renderer::new(Scene::new(&book(), input("word_highlight", WORDS, 3)));
@@ -2511,6 +2715,7 @@ mod tests {
             "highlight_slide",
             "line_bar",
             "stickers",
+            "word_press",
         ] {
             let mut r = Renderer::new(Scene::new(&book(), input(anim, WORDS, 3)));
             r.render(0.6);
@@ -2569,6 +2774,7 @@ mod tests {
             "highlight_slide",
             "line_bar",
             "stickers",
+            "word_press",
         ] {
             cases.push((anim.to_string(), styled(anim, WORDS, serde_json::json!({}))));
         }
@@ -2616,6 +2822,16 @@ mod tests {
             cases.push((
                 format!("{anim}+motion_blur"),
                 styled(anim, WORDS, serde_json::json!({ "motion_blur": 1.0 })),
+            ));
+        }
+        let chunky = serde_json::json!({
+            "fill_colors": ["#FFF36B", "#FFB800"], "stroke_width": 6, "stroke_color": "#3B1A00",
+            "shadow_blur": 0, "shadow_color": "#C2410C", "shadow_offset_y": 16, "extrude_shade": 0.6
+        });
+        for anim in ["word_press", "word_pop"] {
+            cases.push((
+                format!("{anim}+chunky"),
+                styled(anim, WORDS, chunky.clone()),
             ));
         }
         let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
@@ -2804,6 +3020,7 @@ mod tests {
         ("highlight_slide", 0x88314a33e4a554f9),
         ("line_bar", 0x6b1e7afb5365656d),
         ("stickers", 0x5c9bad18f058c1c7),
+        ("word_press", 0xf26273125dfc6bf6),
         ("word_highlight+stroke", 0xa886db0bfe0007d8),
         ("word_fade+stroke", 0x100c37255aee5408),
         ("word_pop+stroke", 0x8bbaecd606e3c7e3),
@@ -2826,6 +3043,8 @@ mod tests {
         ("word_bounce+motion_blur", 0xfe8ce16569a3e8c2),
         ("highlight_slide+motion_blur", 0x4a203c274cc98750),
         ("none+motion_blur", 0x73229f3640871f60),
+        ("word_press+chunky", 0xd89028e2bff00030),
+        ("word_pop+chunky", 0x064022aaf29214a8),
         ("watermark", 0xe22c164ced6e9dd5),
     ];
 }

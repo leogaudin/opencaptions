@@ -347,5 +347,12 @@
   "Turn the sound on": "Activar el sonido",
   "Turn the sound off": "Silenciar el sonido",
   "The clip is cropped and trimmed.": "El fragmento está recortado y acortado.",
-  "Motion blur": "Desenfoque de movimiento"
+  "Motion blur": "Desenfoque de movimiento",
+  "Press": "Presionar",
+  "Fill": "Relleno",
+  "Gradient": "Degradado",
+  "Gradient colors": "Colores del degradado",
+  "Add a gradient color": "Añadir un color de degradado",
+  "Remove this gradient color": "Quitar este color de degradado",
+  "Extrusion shading": "Sombreado de la extrusión"
 }

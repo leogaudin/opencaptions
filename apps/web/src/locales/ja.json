@@ -347,5 +347,12 @@
   "Turn the sound on": "音声をオンにする",
   "Turn the sound off": "音声をオフにする",
   "The clip is cropped and trimmed.": "クリップはトリミングと短縮をしています。",
-  "Motion blur": "モーションブラー"
+  "Motion blur": "モーションブラー",
+  "Press": "プレス",
+  "Fill": "塗り",
+  "Gradient": "グラデーション",
+  "Gradient colors": "グラデーションの色",
+  "Add a gradient color": "グラデーションの色を追加",
+  "Remove this gradient color": "このグラデーションの色を削除",
+  "Extrusion shading": "立体の陰影"
 }

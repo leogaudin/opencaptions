@@ -106,6 +106,16 @@ struct StylePanel: View {
                         .frame(maxWidth: 220)
                 }
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
+                Row("Fill") {
+                    SegmentedPills(
+                        options: [false, true], selection: gradientOn, label: { $0 ? "Gradient" : "Solid" })
+                        .frame(maxWidth: 220)
+                }
+                if !style.fillColors.isEmpty {
+                    Row("Gradient colors") {
+                        colorList(\.fillColors, label: "Gradient colors", add: "Add a gradient color", remove: "Remove this gradient color")
+                    }
+                }
                 Row("Highlight colors") { highlightColors }
                 LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
                 LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
@@ -138,6 +148,9 @@ struct StylePanel: View {
                 LabeledSlider("Shadow down", value: model.binding(\.shadowOffsetY), range: -40...40, step: 1)
                 if style.shadowBlur > 0 || style.shadowOffsetX != 0 || style.shadowOffsetY != 0 {
                     Row("Shadow color") { ColorPicker("Shadow color", selection: color(\.shadowColor, alpha: true), supportsOpacity: true).labelsHidden() }
+                }
+                if style.shadowBlur <= 0 && (style.shadowOffsetX != 0 || style.shadowOffsetY != 0) {
+                    LabeledSlider("Extrusion shading", value: model.binding(\.extrudeShade), range: 0...1, step: 0.05)
                 }
                 LabeledSlider("Glow", value: model.binding(\.glowBlur), range: 0...40, step: 1)
                 if style.glowBlur > 0 {
@@ -257,6 +270,7 @@ struct StylePanel: View {
         case .highlightSlide: "Slide"
         case .lineBar: "Progress"
         case .stickers: "Stickers"
+        case .wordPress: "Press"
         }
     }
 
@@ -274,40 +288,66 @@ struct StylePanel: View {
     /// The highlight colours, the first being the primary: a picker for each, a way to drop all but the
     /// first, and one to add another.
     private var highlightColors: some View {
-        HStack(spacing: 10) {
-            ForEach(Array(style.highlightColors.enumerated()), id: \.offset) { index, _ in
+        colorList(\.highlightColors, label: "Highlight colors", add: "Add a highlight color", remove: "Remove this highlight color")
+    }
+
+    /// A row of pickers over a list of colours, a plus to add one and a cross on all but the first to remove it.
+    private func colorList(
+        _ keyPath: WritableKeyPath<StyleConfig, [String]>, label: LocalizedStringKey, add: LocalizedStringKey,
+        remove: LocalizedStringKey
+    ) -> some View {
+        let colors = style[keyPath: keyPath]
+        return HStack(spacing: 10) {
+            ForEach(Array(colors.enumerated()), id: \.offset) { index, _ in
                 HStack(spacing: 2) {
-                    ColorPicker("Highlight colors", selection: highlightColor(at: index), supportsOpacity: false)
+                    ColorPicker(label, selection: listColor(keyPath, at: index), supportsOpacity: false)
                         .labelsHidden()
                     if index > 0 {
-                        Button { model.updateStyle { $0.highlightColors.remove(at: index) } } label: {
+                        Button {
+                            model.updateStyle {
+                                $0[keyPath: keyPath].remove(at: index)
+                                // A gradient needs two colours: fewer is a plain fill.
+                                if keyPath == \.fillColors, $0.fillColors.count < 2 { $0.fillColors = [] }
+                            }
+                        } label: {
                             Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textSecondary)
                         }
-                        .accessibilityLabel("Remove this highlight color")
+                        .accessibilityLabel(remove)
                     }
                 }
             }
-            if style.highlightColors.count < Self.maxHighlightColors {
+            if colors.count < Self.maxHighlightColors {
                 Button {
-                    model.updateStyle { $0.highlightColors.append(Self.addedColors[$0.highlightColors.count % Self.addedColors.count]) }
+                    model.updateStyle { $0[keyPath: keyPath].append(Self.addedColors[$0[keyPath: keyPath].count % Self.addedColors.count]) }
                 } label: {
                     Image(systemName: "plus.circle").foregroundStyle(Theme.textPrimary)
                 }
-                .accessibilityLabel("Add a highlight color")
+                .accessibilityLabel(add)
             }
         }
     }
 
-    private func highlightColor(at index: Int) -> Binding<Color> {
+    private func listColor(_ keyPath: WritableKeyPath<StyleConfig, [String]>, at index: Int) -> Binding<Color> {
         Binding(
             get: {
-                let colors = model.project.styleConfig.highlightColors
+                let colors = model.project.styleConfig[keyPath: keyPath]
                 return ColorHex.color(colors.indices.contains(index) ? colors[index] : "#FFFFFF")
             },
             set: { value in
                 model.updateStyle {
-                    if $0.highlightColors.indices.contains(index) { $0.highlightColors[index] = ColorHex.hex(value, withAlpha: false) }
+                    if $0[keyPath: keyPath].indices.contains(index) {
+                        $0[keyPath: keyPath][index] = ColorHex.hex(value, withAlpha: false)
+                    }
                 }
+            })
+    }
+
+    /// Plain colour or a gradient over each word's letters: turning it on starts from the text colour.
+    private var gradientOn: Binding<Bool> {
+        Binding(
+            get: { !model.project.styleConfig.fillColors.isEmpty },
+            set: { on in
+                model.updateStyle { $0.fillColors = on ? [$0.textColor, Self.addedColors[0]] : [] }
             })
     }
 
