@@ -6,7 +6,7 @@
 #
 # Images are the latest main (`edge`) until the first release. Pin one with
 # OPENCAPTIONS_VERSION=0.1.0. Settings, scaling, GPU and security notes:
-# https://github.com/leogaudin/opencaptions/tree/main/docs/self-hosting
+# https://docs.opencaptions.app/self-hosting/installation/
 
 name: opencaptions
 

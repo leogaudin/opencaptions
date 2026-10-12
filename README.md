@@ -53,8 +53,8 @@ To build from source instead, clone the repository and run `docker compose up -d
 
 ## More
 
-- [Documentation](docs/index.md): the guides, self-hosting, the HTTP API and the reference. It is
-  plain Markdown here, and the same files are built into a [Starlight](apps/docs) site
+- [Documentation](https://docs.opencaptions.app): the guides, self-hosting, the HTTP API and the
+  reference. It is plain Markdown in [docs/](docs/index.md), built into that site with [Starlight](apps/docs)
 - [Self-hosting](docs/self-hosting/installation.md): installation, configuration, security, GPU
   acceleration, backups
 - [Architecture](docs/project/architecture.md): how it works, including the engine and the iOS app

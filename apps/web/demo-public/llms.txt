@@ -13,6 +13,7 @@ Key facts:
 
 ## Docs
 
+- [Documentation site](https://docs.opencaptions.app/): the guides, self-hosting, the HTTP API and the reference (its own llms.txt: https://docs.opencaptions.app/llms.txt)
 - [README](https://raw.githubusercontent.com/leogaudin/opencaptions/main/README.md): features and quick start
 - [Quick start](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/getting-started/quick-start.md): run it with one Docker Compose file
 - [Self-hosting](https://raw.githubusercontent.com/leogaudin/opencaptions/main/docs/self-hosting/installation.md): requirements, services, data, scaling and updates

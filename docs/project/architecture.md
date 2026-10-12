@@ -562,7 +562,7 @@ project list, where the project's row shows its progress.
 ## The documentation site
 
 The documentation is plain Markdown in `docs/`, so GitHub shows it as it is, and `apps/docs` builds the same
-files into a static site with [Starlight](https://starlight.astro.build) (the intended home is `docs.opencaptions.app`).
+files into a static site with [Starlight](https://starlight.astro.build) (it lives at `docs.opencaptions.app`).
 The site owns no content. Its sidebar is generated from the folders (`apps/docs/astro.config.ts` names a folder's
 group, a page's `sidebar.order` frontmatter orders it), so a new page needs no entry anywhere; a new folder needs
 one group.

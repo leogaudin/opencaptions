@@ -248,9 +248,11 @@ describe("demo pages: what a crawler that runs no script reads", () => {
     }
   });
 
-  test("the docs link points at pages that exist (the repository's), not at a site not yet built", () => {
-    assert.ok(DOCS_URL.startsWith(GITHUB_URL));
-    assert.ok(!(pages.en as DemoHtml).body.includes("docs.opencaptions.app"));
+  test("every page links the documentation site", () => {
+    assert.equal(DOCS_URL, "https://docs.opencaptions.app/");
+    for (const [code, page] of Object.entries(pages)) {
+      assert.ok((page as DemoHtml).body.includes(`href="${DOCS_URL}"`), `${code} has no docs link`);
+    }
   });
 
   test("the page shows no command to copy (it does not read well there)", () => {
