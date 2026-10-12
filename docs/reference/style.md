@@ -70,7 +70,7 @@ change the transcript.
 
 ## Presets
 
-The thirteen built-in looks are plain data in
+The seventeen built-in looks are plain data in
 [`apps/web/src/lib/presets.json`](https://github.com/leogaudin/opencaptions/blob/main/apps/web/src/lib/presets.json),
 each a name and a complete style in this shape. They are shared by the web app, the API's tests and the iPhone
 app.

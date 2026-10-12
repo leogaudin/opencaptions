@@ -185,9 +185,12 @@ build produces byte-identical frames. Nothing else may draw captions.
     plain word shows round it.
   - *Presets* are data (see Data). They include Purple Punch (a box that slides between words),
     Karaoke, Bold (Montserrat Black, in capitals with a thick black outline carried out into a hard
-    black extrusion), Boom (the word being said grows and is drawn over its neighbours), Lyric
+    dark extrusion with a little shading), Boom (the word being said grows and is drawn over its neighbours), Lyric
     (soft until said, and the line never changes size), Stickers, Plain, Neon, Typewriter and
-    Handwritten (a marker stroke laid under the words as they are said).
+    Handwritten (a marker stroke laid under the words as they are said), and the four built on the
+    newer features: Chunky 3D (a gold gradient on a shaded extrusion the word is pushed into),
+    Cascade (letters rising one after another), Slam (heavy capitals dropping in, a key word set
+    large) and Poster (a stack of rows scaled to one width). Bold and Boom also set key words larger.
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by
     the engine (`CaptionEngine.samples`: the same drawing as the preview and the export, in a
     phone-shaped frame, cropped to the band around the caption), so each shows its real font,

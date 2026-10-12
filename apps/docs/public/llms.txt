@@ -12,7 +12,7 @@
 
 - [Transcription](https://docs.opencaptions.app/guides/transcription/): where audio is processed, the speech models, the languages
 - [Editing captions](https://docs.opencaptions.app/guides/editing/): fix words, retime on the timeline, undo
-- [Styling captions](https://docs.opencaptions.app/guides/styling/): the thirteen looks and every style setting
+- [Styling captions](https://docs.opencaptions.app/guides/styling/): the seventeen looks and every style setting
 - [Exporting](https://docs.opencaptions.app/guides/exporting/): MP4, WebM, ProRes, SRT, VTT, JSON and a green screen
 - [The iPhone and iPad app](https://docs.opencaptions.app/guides/iphone-app/): on-device transcription, no account
 

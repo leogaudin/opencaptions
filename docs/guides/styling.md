@@ -1,6 +1,6 @@
 ---
 title: "Styling captions"
-description: "The thirteen caption looks in OpenCaptions and every setting of the style panel, from fonts and colours to animation, outline and timing."
+description: "The seventeen caption looks in OpenCaptions and every setting of the style panel, from fonts and colours to animation, outline and timing."
 sidebar:
   order: 3
 ---
