@@ -288,7 +288,9 @@ folder, a page's `sidebar_position` orders it), so a new page needs no entry any
   (`--build-context docs=docs`, read through `DOCS_PATH`), and its `docs-site` stage holds only the static files.
   The `docs` CI job and `make ci` run that build, `make docs-build` writes it to `apps/docs/dist`, and `make docs`
   serves it with live reload.
-- It is deployed as static files, like the demo. Nothing publishes it from CI yet.
+- It is deployed as static files, like the demo: `publish-docs` deploys the `docs-site` artifact with
+  `wrangler deploy` (`apps/docs/wrangler.jsonc`, a Worker named `opencaptions-docs`, a 404 page) on `main`, only when
+  `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set. The domain is attached to the Worker in the Cloudflare dashboard.
 
 ## The public demo
 

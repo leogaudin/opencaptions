@@ -1,0 +1,10 @@
+{
+  // The documentation site as a Cloudflare Worker serving static files (see publish-docs in
+  // .github/workflows/ci.yml). `make docs-build` writes ./dist; the domain is attached in the dashboard.
+  "name": "opencaptions-docs",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}
