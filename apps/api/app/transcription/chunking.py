@@ -134,6 +134,27 @@ def _same_word(text: str) -> str:
     return re.sub(r"[\W_]+", "", text.casefold())
 
 
+def agreed_in_gap(
+    first: Words, second: Words, start: float, end: float, tolerance_s: float = 1.5
+) -> Words:
+    """The words of `first` that begin in the gap `start`..`end` (a little early is allowed) and
+    that `second` has too: the same word, at about the same time. Times are from the same origin
+    in both. Held to `Fixtures/second-look.json` in the iOS tests, which `TranscriptGaps.kept`
+    passes as well.
+    """
+    kept: Words = []
+    for word in first:
+        if not (start - 0.05 <= word[1] < end):
+            continue
+        text = _same_word(word[0])
+        if text and any(
+            _same_word(other[0]) == text and abs(other[1] - word[1]) <= tolerance_s
+            for other in second
+        ):
+            kept.append(word)
+    return kept
+
+
 def second_look(
     decode: Callable[[np.ndarray], Words],
     samples: np.ndarray,
@@ -180,13 +201,5 @@ def second_look(
         second = decode_window(
             decode, samples[int(lo2 * SAMPLE_RATE) : int(hi2 * SAMPLE_RATE)], lo2, retry=False
         )
-        for word in first:
-            if not (start - 0.05 <= word[1] < end):
-                continue
-            text = _same_word(word[0])
-            if text and any(
-                _same_word(other[0]) == text and abs(other[1] - word[1]) <= tolerance_s
-                for other in second
-            ):
-                kept.append(word)
+        kept.extend(agreed_in_gap(first, second, start, end, tolerance_s))
     return sorted(kept, key=lambda w: w[1])

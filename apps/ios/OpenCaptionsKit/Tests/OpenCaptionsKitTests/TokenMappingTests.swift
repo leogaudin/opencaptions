@@ -14,8 +14,27 @@ import Testing
         ])
         #expect(words.map(\.text) == ["Cute", "little."])
         #expect(words[0].start == 0.16 && words[0].end == 0.40)
-        #expect(abs(words[0].confidence - 0.8) < 1e-9, "the pieces' mean")
+        #expect(abs(words[0].confidence - (0.9 * 0.7).squareRoot()) < 1e-9, "the pieces' geometric mean")
         #expect(words[1].start == 0.40 && words[1].end == 0.80)
+    }
+
+    /// The server's mapping (`sherpa.words_from_tokens`) is held to the same cases.
+    @Test func theSharedCasesOfTokensAndWordsHold() throws {
+        struct Piece: Decodable { var text: String; var start: Double; var end: Double; var confidence: Double }
+        struct Case: Decodable { var name: String; var tokens: [Piece]; var words: [Piece] }
+        struct File: Decodable { var cases: [Case] }
+        let url = Bundle.module.url(forResource: "token-words", withExtension: "json", subdirectory: "Fixtures")!
+        let file = try JSONDecoder().decode(File.self, from: Data(contentsOf: url))
+        #expect(file.cases.count >= 10)
+        for item in file.cases {
+            let words = TokenMapping.words(
+                from: item.tokens.map { SpeechToken(text: $0.text, start: $0.start, end: $0.end, confidence: $0.confidence) })
+            #expect(words.map(\.text) == item.words.map(\.text), "\(item.name)")
+            for (got, want) in zip(words, item.words) {
+                #expect(abs(got.start - want.start) < 1e-4 && abs(got.end - want.end) < 1e-4, "\(item.name): times")
+                #expect(abs(got.confidence - want.confidence) < 1e-4, "\(item.name): confidence")
+            }
+        }
     }
 
     @Test func specialPiecesAndEmptyOnesMakeNoWords() {

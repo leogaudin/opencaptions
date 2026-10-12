@@ -33,9 +33,19 @@ public enum TranscriptGaps {
         return total / Double(count) < quietLevel
     }
 
+    /// The words of `first` that begin in `gap` (a little early is allowed) and that `second` has
+    /// too: the same word, at about the same time. Times are from the same origin in both. Held to
+    /// `Fixtures/second-look.json`, which the server's version (`chunking.agreed_in_gap`) passes
+    /// as well.
+    public static func kept(
+        _ first: [Word], _ second: [Word], in gap: ClosedRange<Double>, tolerance: Double = 1.5
+    ) -> [Word] {
+        agreed(first, second, tolerance: tolerance).filter { $0.start >= gap.lowerBound - 0.05 && $0.start < gap.upperBound }
+    }
+
     /// The words of `first` that `second` also has: the same word, starting within `tolerance` seconds.
     /// Times are from the same origin in both.
-    public static func agreed(_ first: [Word], _ second: [Word], tolerance: Double = 1.5) -> [Word] {
+    static func agreed(_ first: [Word], _ second: [Word], tolerance: Double = 1.5) -> [Word] {
         func key(_ text: String) -> String { text.lowercased().filter { $0.isLetter || $0.isNumber } }
         return first.filter { word in
             let wanted = key(word.text)

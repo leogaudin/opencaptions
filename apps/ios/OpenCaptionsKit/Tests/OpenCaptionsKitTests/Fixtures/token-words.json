@@ -1,0 +1,357 @@
+{
+  "comment": "Tokens (a transducer model's SentencePiece pieces) and the words they make, with the overlap between neighbours removed. The Python (sherpa.words_from_tokens) and Swift (TokenMapping.words) mappings both pass these; times and confidences agree to 1e-4.",
+  "cases": [
+    {
+      "name": "pieces join at a leading space",
+      "tokens": [
+        {
+          "text": " C",
+          "start": 0.16,
+          "end": 0.24,
+          "confidence": 0.9
+        },
+        {
+          "text": "ute",
+          "start": 0.24,
+          "end": 0.4,
+          "confidence": 0.7
+        },
+        {
+          "text": " little",
+          "start": 0.4,
+          "end": 0.72,
+          "confidence": 1.0
+        },
+        {
+          "text": ".",
+          "start": 0.72,
+          "end": 0.8,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "Cute",
+          "start": 0.16,
+          "end": 0.4,
+          "confidence": 0.793725
+        },
+        {
+          "text": "little.",
+          "start": 0.4,
+          "end": 0.8,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "the SentencePiece mark starts a word as a space does",
+      "tokens": [
+        {
+          "text": "▁Hello",
+          "start": 0,
+          "end": 0.4,
+          "confidence": 1.0
+        },
+        {
+          "text": "▁wor",
+          "start": 0.4,
+          "end": 0.6,
+          "confidence": 1.0
+        },
+        {
+          "text": "ld",
+          "start": 0.6,
+          "end": 0.9,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "Hello",
+          "start": 0,
+          "end": 0.4,
+          "confidence": 1.0
+        },
+        {
+          "text": "world",
+          "start": 0.4,
+          "end": 0.9,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "the first piece starts a word without a space",
+      "tokens": [
+        {
+          "text": "Hi",
+          "start": 0,
+          "end": 0.2,
+          "confidence": 1.0
+        },
+        {
+          "text": " there",
+          "start": 0.2,
+          "end": 0.5,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "Hi",
+          "start": 0,
+          "end": 0.2,
+          "confidence": 1.0
+        },
+        {
+          "text": "there",
+          "start": 0.2,
+          "end": 0.5,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "punctuation pieces join the word before them",
+      "tokens": [
+        {
+          "text": " Hello",
+          "start": 0,
+          "end": 0.4,
+          "confidence": 1.0
+        },
+        {
+          "text": ",",
+          "start": 0.4,
+          "end": 0.5,
+          "confidence": 1.0
+        },
+        {
+          "text": " world",
+          "start": 0.6,
+          "end": 1.0,
+          "confidence": 1.0
+        },
+        {
+          "text": "!",
+          "start": 1.0,
+          "end": 1.1,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "Hello,",
+          "start": 0,
+          "end": 0.5,
+          "confidence": 1.0
+        },
+        {
+          "text": "world!",
+          "start": 0.6,
+          "end": 1.1,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "a piece of only a space ends the word, and the next piece begins the next one",
+      "tokens": [
+        {
+          "text": " hello",
+          "start": 0,
+          "end": 0.5,
+          "confidence": 1.0
+        },
+        {
+          "text": " ",
+          "start": 0.5,
+          "end": 0.6,
+          "confidence": 1.0
+        },
+        {
+          "text": "world",
+          "start": 0.6,
+          "end": 1.0,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "hello",
+          "start": 0,
+          "end": 0.5,
+          "confidence": 1.0
+        },
+        {
+          "text": "world",
+          "start": 0.6,
+          "end": 1.0,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "an empty piece is ignored, in or between words",
+      "tokens": [
+        {
+          "text": " ab",
+          "start": 0,
+          "end": 0.1,
+          "confidence": 0.5
+        },
+        {
+          "text": "",
+          "start": 0.1,
+          "end": 0.1,
+          "confidence": 0.01
+        },
+        {
+          "text": "cd",
+          "start": 0.1,
+          "end": 0.2,
+          "confidence": 0.5
+        }
+      ],
+      "words": [
+        {
+          "text": "abcd",
+          "start": 0,
+          "end": 0.2,
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "name": "special pieces make no words and do not count",
+      "tokens": [
+        {
+          "text": "<blank>",
+          "start": 0,
+          "end": 0.5,
+          "confidence": 1.0
+        },
+        {
+          "text": " yes",
+          "start": 0.5,
+          "end": 0.9,
+          "confidence": 1.0
+        },
+        {
+          "text": "<unk>",
+          "start": 0.9,
+          "end": 1.0,
+          "confidence": 0.01
+        }
+      ],
+      "words": [
+        {
+          "text": "yes",
+          "start": 0.5,
+          "end": 0.9,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "a word ends before the next one starts",
+      "tokens": [
+        {
+          "text": " one",
+          "start": 0,
+          "end": 1.2,
+          "confidence": 1.0
+        },
+        {
+          "text": " two",
+          "start": 1.0,
+          "end": 2.0,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "one",
+          "start": 0,
+          "end": 1.0,
+          "confidence": 1.0
+        },
+        {
+          "text": "two",
+          "start": 1.0,
+          "end": 2.0,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "a time before the start of the audio is the start",
+      "tokens": [
+        {
+          "text": " a",
+          "start": -0.2,
+          "end": 0.3,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "a",
+          "start": 0,
+          "end": 0.3,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "a word with no length has none, not a negative one",
+      "tokens": [
+        {
+          "text": " a",
+          "start": 1.0,
+          "end": 1.0,
+          "confidence": 1.0
+        }
+      ],
+      "words": [
+        {
+          "text": "a",
+          "start": 1.0,
+          "end": 1.0,
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "name": "the confidence is the geometric mean of the pieces",
+      "tokens": [
+        {
+          "text": " go",
+          "start": 0,
+          "end": 0.2,
+          "confidence": 0.9
+        },
+        {
+          "text": "ne",
+          "start": 0.2,
+          "end": 0.4,
+          "confidence": 0.1
+        }
+      ],
+      "words": [
+        {
+          "text": "gone",
+          "start": 0,
+          "end": 0.4,
+          "confidence": 0.3
+        }
+      ]
+    },
+    {
+      "name": "nothing in, nothing out",
+      "tokens": [],
+      "words": []
+    }
+  ]
+}

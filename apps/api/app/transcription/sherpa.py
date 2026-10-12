@@ -50,22 +50,35 @@ def threads() -> int:
 def words_from_tokens(
     tokens: list[str], starts: list[float], durations: list[float], log_probs: list[float]
 ) -> Words:
-    """SentencePiece tokens (a leading space starts a word) grouped into timed words."""
+    """SentencePiece tokens grouped into timed words.
+
+    A leading space (or the SentencePiece mark ▁) starts a word, and so does a piece of nothing but
+    that mark: the piece after it begins the word. An empty piece and a special one (`<blank>`)
+    are ignored. A word's confidence is the geometric mean of its pieces' probabilities. Held to
+    `Fixtures/token-words.json` in the iOS tests, which the app's own mapping
+    (`TokenMapping.swift`) passes as well.
+    """
     words: list[list[Any]] = []  # [text, start, end, [log prob, ...]]
+    boundary = True  # the next piece begins a word
     for index, token in enumerate(tokens):
+        piece = token.replace("\u2581", " ")
+        text = piece.strip()
+        if not text or (text.startswith("<") and text.endswith(">")):
+            boundary = boundary or piece.startswith(" ")
+            continue
         start = float(starts[index])
         end = start + (float(durations[index]) if index < len(durations) else 0.0)
         log_prob = float(log_probs[index]) if index < len(log_probs) else 0.0
-        if token.startswith(" ") or not words:
-            words.append([token.strip(), start, end, [log_prob]])
+        if boundary or piece.startswith(" ") or not words:
+            words.append([text, start, end, [log_prob]])
+            boundary = False
         else:
-            words[-1][0] += token
+            words[-1][0] += text
             words[-1][2] = end
             words[-1][3].append(log_prob)
     out: Words = []
     for text, start, end, probs in words:
-        if not text:
-            continue
+        start = max(0.0, start)
         confidence = math.exp(sum(probs) / len(probs)) if probs else 1.0
         out.append((text, start, max(end, start), min(1.0, max(0.0, confidence))))
     return out

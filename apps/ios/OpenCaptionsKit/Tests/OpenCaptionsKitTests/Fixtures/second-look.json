@@ -1,0 +1,252 @@
+{
+  "comment": "Two readings of a gap (words with their start, from the same origin) and the words of the first that the second agrees with, inside the gap. The Python (chunking.agreed_in_gap) and Swift (TranscriptGaps.kept) versions both pass these.",
+  "cases": [
+    {
+      "name": "a word both readings give is kept, whatever its case and punctuation",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "Guys?",
+          "start": 5.0
+        }
+      ],
+      "second": [
+        {
+          "text": "guys!",
+          "start": 5.4
+        }
+      ],
+      "kept": [
+        "Guys?"
+      ]
+    },
+    {
+      "name": "a word in one reading only is not kept",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "Guys?",
+          "start": 5.0
+        },
+        {
+          "text": "Boom",
+          "start": 8.0
+        }
+      ],
+      "second": [
+        {
+          "text": "guys",
+          "start": 5.0
+        }
+      ],
+      "kept": [
+        "Guys?"
+      ]
+    },
+    {
+      "name": "the same word at another time is not the same word",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "run",
+          "start": 10.0
+        }
+      ],
+      "second": [
+        {
+          "text": "run",
+          "start": 20.0
+        }
+      ],
+      "kept": []
+    },
+    {
+      "name": "a second reading that is within the tolerance counts",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "run",
+          "start": 10.0
+        }
+      ],
+      "second": [
+        {
+          "text": "run",
+          "start": 11.4
+        }
+      ],
+      "kept": [
+        "run"
+      ]
+    },
+    {
+      "name": "a word that begins before the gap is not the gap's",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "early",
+          "start": 4.9
+        },
+        {
+          "text": "close",
+          "start": 4.96
+        }
+      ],
+      "second": [
+        {
+          "text": "early",
+          "start": 4.9
+        },
+        {
+          "text": "close",
+          "start": 4.96
+        }
+      ],
+      "kept": [
+        "close"
+      ]
+    },
+    {
+      "name": "a word that begins where the gap ends is not the gap's",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "late",
+          "start": 15.0
+        },
+        {
+          "text": "last",
+          "start": 14.9
+        }
+      ],
+      "second": [
+        {
+          "text": "late",
+          "start": 15.0
+        },
+        {
+          "text": "last",
+          "start": 14.9
+        }
+      ],
+      "kept": [
+        "last"
+      ]
+    },
+    {
+      "name": "a word of nothing but punctuation never agrees",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "...",
+          "start": 6.0
+        }
+      ],
+      "second": [
+        {
+          "text": "!!!",
+          "start": 6.0
+        }
+      ],
+      "kept": []
+    },
+    {
+      "name": "nothing in the second reading keeps nothing",
+      "gap": [
+        5,
+        15
+      ],
+      "first": [
+        {
+          "text": "hello",
+          "start": 6.0
+        }
+      ],
+      "second": [],
+      "kept": []
+    },
+    {
+      "name": "digits count as letters",
+      "gap": [
+        0,
+        10
+      ],
+      "first": [
+        {
+          "text": "2024,",
+          "start": 1.0
+        }
+      ],
+      "second": [
+        {
+          "text": "2024",
+          "start": 1.2
+        }
+      ],
+      "kept": [
+        "2024,"
+      ]
+    },
+    {
+      "name": "the words kept are in the order of the first reading",
+      "gap": [
+        0,
+        30
+      ],
+      "first": [
+        {
+          "text": "b",
+          "start": 1.0
+        },
+        {
+          "text": "a",
+          "start": 2.0
+        },
+        {
+          "text": "c",
+          "start": 3.0
+        }
+      ],
+      "second": [
+        {
+          "text": "c",
+          "start": 3.0
+        },
+        {
+          "text": "a",
+          "start": 2.0
+        },
+        {
+          "text": "b",
+          "start": 1.0
+        }
+      ],
+      "kept": [
+        "b",
+        "a",
+        "c"
+      ]
+    }
+  ]
+}

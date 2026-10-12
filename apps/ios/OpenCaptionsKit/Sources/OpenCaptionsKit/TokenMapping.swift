@@ -35,29 +35,41 @@ public enum TokenMapping {
     }
 
     /// Pieces joined into words, each ending no later than the next one starts.
+    ///
+    /// A leading space (or the SentencePiece mark ▁) starts a word, and so does a piece of nothing
+    /// but that mark: the piece after it begins the word. An empty piece and a special one
+    /// (`<blank>`) are ignored. A word's confidence is the geometric mean of its pieces'. Held to
+    /// `Fixtures/token-words.json`, which the server's mapping (`sherpa.words_from_tokens`) passes
+    /// as well.
     static func words(from tokens: [SpeechToken]) -> [Word] {
         struct Open {
             var text: String
             var start: Double
             var end: Double
-            var confidences: [Double]
+            var logConfidences: [Double]
         }
         var building: [Open] = []
+        var boundary = true  // the next piece begins a word
         for token in tokens {
-            let startsWord = token.text.hasPrefix(" ") || token.text.hasPrefix("▁") || building.isEmpty
-            let piece = token.text.replacingOccurrences(of: "▁", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !piece.isEmpty, !(piece.hasPrefix("<") && piece.hasSuffix(">")) else { continue }
-            if startsWord {
-                building.append(Open(text: piece, start: token.start, end: token.end, confidences: [token.confidence]))
+            let piece = token.text.replacingOccurrences(of: "▁", with: " ")
+            let text = piece.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty, !(text.hasPrefix("<") && text.hasSuffix(">")) else {
+                boundary = boundary || piece.hasPrefix(" ")
+                continue
+            }
+            let logConfidence = log(max(token.confidence, 1e-9))
+            if boundary || piece.hasPrefix(" ") || building.isEmpty {
+                building.append(Open(text: text, start: token.start, end: token.end, logConfidences: [logConfidence]))
+                boundary = false
             } else {
-                building[building.count - 1].text += piece
+                building[building.count - 1].text += text
                 building[building.count - 1].end = token.end
-                building[building.count - 1].confidences.append(token.confidence)
+                building[building.count - 1].logConfidences.append(logConfidence)
             }
         }
         var words = building.map { word in
             let start = max(0, word.start)
-            let confidence = word.confidences.reduce(0, +) / Double(word.confidences.count)
+            let confidence = exp(word.logConfidences.reduce(0, +) / Double(word.logConfidences.count))
             return Word(text: word.text, start: start, end: max(start, word.end), confidence: min(1, max(0, confidence)))
         }
         for index in words.indices.dropLast() where words[index].end > words[index + 1].start {

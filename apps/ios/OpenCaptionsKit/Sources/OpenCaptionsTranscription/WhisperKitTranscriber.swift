@@ -210,8 +210,7 @@ public final class WhisperKitTranscriber: Transcriber {
             let first = await read(from: gap.lowerBound - 0.3, to: gap.upperBound + 0.3)
             guard !first.isEmpty else { continue }
             let second = await read(from: min(gap.lowerBound + 0.9, gap.upperBound - 2), to: gap.upperBound + 1.3)
-            let words = TranscriptGaps.agreed(first, second)
-                .filter { $0.start >= gap.lowerBound - 0.05 && $0.start < gap.upperBound }
+            let words = TranscriptGaps.kept(first, second, in: gap)
                 .map { Word(text: $0.text, start: max(0, $0.start - gap.lowerBound), end: max(0, $0.end - gap.lowerBound), confidence: $0.confidence) }
             guard let begin = words.first, let end = words.last else { continue }
             let segment = TranscriptSegment(

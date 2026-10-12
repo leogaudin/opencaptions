@@ -43,6 +43,29 @@ import Testing
         #expect(TranscriptGaps.agreed(first, []).isEmpty)
     }
 
+    /// The server's version (`chunking.agreed_in_gap`) is held to the same cases.
+    @Test func theSharedCasesOfTwoReadingsOfAGapHold() throws {
+        struct Case: Decodable {
+            struct Reading: Decodable { var text: String; var start: Double }
+            var name: String
+            var gap: [Double]
+            var first: [Reading]
+            var second: [Reading]
+            var kept: [String]
+        }
+        struct File: Decodable { var cases: [Case] }
+        let url = Bundle.module.url(forResource: "second-look", withExtension: "json", subdirectory: "Fixtures")!
+        let file = try JSONDecoder().decode(File.self, from: Data(contentsOf: url))
+        #expect(file.cases.count >= 8)
+        for item in file.cases {
+            func words(_ readings: [Case.Reading]) -> [Word] {
+                readings.map { Word(text: $0.text, start: $0.start, end: $0.start + 0.5) }
+            }
+            let kept = TranscriptGaps.kept(words(item.first), words(item.second), in: item.gap[0]...item.gap[1])
+            #expect(kept.map(\.text) == item.kept, "\(item.name)")
+        }
+    }
+
     @Test func quietAudioIsQuietAndLoudAudioIsNot() {
         let silence = [Float](repeating: 0, count: 160_000)
         let loud = (0..<160_000).map { Float(0.1 * sin(Double($0) * 0.1)) }
