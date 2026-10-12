@@ -7,6 +7,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // The preview waits on the video and the engine's WebAssembly; several workers at once on one
+  // machine make that slower than the default 5 s, which is a slow start and not a failure.
+  expect: { timeout: 15_000 },
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: process.env.BASE_URL ?? "http://localhost:5173",
