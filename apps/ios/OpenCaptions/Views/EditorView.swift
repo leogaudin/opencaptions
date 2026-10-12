@@ -12,6 +12,7 @@ struct EditorView: View {
     @State private var showTranscribe = false
     @State private var showSaveOptions = false
     @State private var showStyle = false
+    @State private var fullScreen = false
     @State private var edit: WordEdit?
     @State private var exporter: ExportController?
     @State private var showExport = false
@@ -35,11 +36,12 @@ struct EditorView: View {
             // the style controls come up over it as a sheet.
             let wide = geo.size.width > 700 || geo.size.width > geo.size.height
             VStack(spacing: 0) {
-                topBar(showsStyleButton: !wide)
+                // Full screen leaves the picture and its timeline: no bar above, no style beside.
+                if !fullScreen { topBar(showsStyleButton: !wide) }
                 if wide {
                     HStack(spacing: 0) {
                         preview.frame(maxWidth: .infinity, maxHeight: .infinity)
-                        style.frame(width: 340).background(Theme.background)
+                        if !fullScreen { style.frame(width: 340).background(Theme.background) }
                     }
                     timelinePanel
                 } else {
@@ -52,6 +54,7 @@ struct EditorView: View {
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .statusBarHidden(fullScreen)
         .overlay(alignment: .top) { progress }
         .overlay { wordEditor }
         .sheet(isPresented: $showTranscribe) {
@@ -183,6 +186,17 @@ struct EditorView: View {
                     edit = WordEdit(index: index, text: text, key: model.isKeyWord(index: index))
                 }
             )
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { fullScreen.toggle() }
+            } label: {
+                Image(systemName: fullScreen
+                    ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+            }
+            .buttonStyle(CircleButtonStyle())
+            .padding(10)
+            .accessibilityLabel(fullScreen ? Text("Exit full screen") : Text("Full screen"))
         }
         #if DEBUG
             // What the UI tests read: the caption's size and place, as an invisible label.

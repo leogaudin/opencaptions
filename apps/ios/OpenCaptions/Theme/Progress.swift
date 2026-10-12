@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A bar for work with a known fraction. The highlight yellow alone vanishes on the light
-/// background, so the fill is outlined in black on a visible track, like the captions themselves.
+/// background, so it sits on a visible track.
 struct ProgressBar: View {
     let value: Double
     var height: CGFloat = 10
@@ -13,7 +13,6 @@ struct ProgressBar: View {
                 Capsule().fill(Theme.raised)
                 Capsule().strokeBorder(Theme.textPrimary.opacity(0.28), lineWidth: 1)
                 Capsule().fill(Theme.accent)
-                    .overlay(Capsule().strokeBorder(Color.black.opacity(0.85), lineWidth: 1.5))
                     .frame(width: value > 0 ? filled : 0)
                     .animation(.easeOut(duration: 0.25), value: value)
             }
