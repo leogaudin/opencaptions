@@ -8,7 +8,7 @@ RUN npm ci --no-audit --no-fund
 
 FROM deps AS build
 # Nothing leaves the build: no telemetry.
-ENV ASTRO_TELEMETRY_DISABLED=1
+ENV ASTRO_TELEMETRY_DISABLED=1 ASTRO_DISABLE_UPDATE_CHECK=true
 COPY . .
 COPY --from=docs . src/content/docs
 RUN npm run build

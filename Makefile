@@ -101,7 +101,7 @@ demo:                ## Build the public demo site into apps/web/dist-demo (stat
 
 docs:                ## Serve the documentation with live reload on http://localhost:3000
 	@docker run --rm -it -p 3000:3000 -v "$$PWD/apps/docs":/site -v "$$PWD/docs":/site/src/content/docs:ro -v opencaptions-docs-modules:/site/node_modules \
-	 -w /site -e ASTRO_TELEMETRY_DISABLED=1 node:24-bookworm-slim sh -c 'npm ci --no-audit --no-fund && npm start'
+	 -w /site -e ASTRO_TELEMETRY_DISABLED=1 -e ASTRO_DISABLE_UPDATE_CHECK=true node:24-bookworm-slim sh -c 'npm ci --no-audit --no-fund && npm start'
 
 docs-build:          ## Build the documentation into apps/docs/dist (static files for docs.opencaptions.app)
 	@docker build -q --build-context docs=docs --target docs-site -o apps/docs/dist apps/docs >/dev/null \
