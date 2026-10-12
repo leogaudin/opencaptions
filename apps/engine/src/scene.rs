@@ -720,9 +720,14 @@ impl Scene {
                     rows.len() as f32 * row_h + 2.0 * pad_by,
                 );
                 // The block is centred on (position_x, position_y) and clamped so it
-                // never leaves the frame, whatever a drag asks for.
+                // never leaves the frame, whatever a drag asks for. One wider than the
+                // frame (a word at a huge size) is centred, spilling over both sides.
                 let place = |norm: f32, extent: f32, limit: f32| {
-                    (norm * limit - extent / 2.0).clamp(0.0, (limit - extent).max(0.0))
+                    if extent >= limit {
+                        (limit - extent) / 2.0
+                    } else {
+                        (norm * limit - extent / 2.0).clamp(0.0, limit - extent)
+                    }
                 };
                 let x0 = place(style.position_x, block_w, width as f32);
                 let y0 = place(style.position_y, block_h, height as f32);
@@ -1938,6 +1943,23 @@ mod tests {
             (cx + cw / 2.0 - 540.0).abs() < 1.0 && (cy + ch / 2.0 - 960.0).abs() < 1.0,
             "centred"
         );
+    }
+
+    #[test]
+    fn a_block_wider_than_the_frame_spills_over_both_sides_not_one() {
+        for x in [0.0, 0.5, 1.0] {
+            let mut i = input("word_highlight", WORDS, 1);
+            i.style.font_size = 900.0;
+            i.style.position_x = x;
+            let mut r = Renderer::new(Scene::new(&book(), i));
+            r.render(0.3);
+            let (bx, _, bw, _) = r.active_bounds().unwrap();
+            assert!(bw > 1080.0, "the word is wider than the frame ({bw})");
+            assert!(
+                (bx + bw / 2.0 - 540.0).abs() < 1.0,
+                "centred on the frame whatever position_x is ({x}): starts at {bx}"
+            );
+        }
     }
 
     #[test]
