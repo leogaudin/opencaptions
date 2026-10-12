@@ -12,10 +12,13 @@ use tiny_skia::{
     PathBuilder, Pixmap, PixmapPaint, Point, Rect, SpreadMode, Stroke, Transform,
 };
 
+mod ease;
+
 use crate::fonts::FontBook;
 use crate::model::{
     Animation, Background, Layout, Rgba, SceneInput, Style, TextCase, cut, shifted,
 };
+use ease::{ease_out_quad, lerp, linear, overshoot, ramp};
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
 const REF_HEIGHT: f32 = 1920.0;
@@ -333,8 +336,7 @@ fn colour(c: Rgba, opacity: f32) -> Color {
 }
 
 fn mix(a: Rgba, b: Rgba, k: f32) -> Rgba {
-    let lerp = |x: u8, y: u8| (f32::from(x) + (f32::from(y) - f32::from(x)) * k).round() as u8;
-    Rgba([0, 1, 2, 3].map(|i| lerp(a.0[i], b.0[i])))
+    Rgba([0, 1, 2, 3].map(|i| lerp(f32::from(a.0[i]), f32::from(b.0[i]), k).round() as u8))
 }
 
 /// The stops of a vertical gradient through `colours`, evenly spaced, each run through `tint`;
@@ -360,31 +362,9 @@ fn paint(c: Color) -> Paint<'static> {
     p
 }
 
-/// CSS `cubic-bezier(0.4, 1.6, 0.6, 1)`: a fast rise that overshoots, then settles.
-fn overshoot(p: f32) -> f32 {
-    let bez = |a: f32, b: f32, s: f32| {
-        let u = 1.0 - s;
-        3.0 * u * u * s * a + 3.0 * u * s * s * b + s * s * s
-    };
-    let (mut lo, mut hi) = (0.0f32, 1.0f32);
-    for _ in 0..24 {
-        let mid = 0.5 * (lo + hi);
-        if bez(0.4, 0.6, mid) < p {
-            lo = mid;
-        } else {
-            hi = mid;
-        }
-    }
-    bez(1.6, 1.0, 0.5 * (lo + hi))
-}
-
-fn linear(p: f32) -> f32 {
-    p
-}
-
 /// 0 before the word, eased up to 1 while it is spoken, eased back after.
 fn pulse(t: f32, w: &Placed, secs: f32, ease: fn(f32) -> f32) -> f32 {
-    let at = |edge: f32| ease(((t - edge) / secs).clamp(0.0, 1.0));
+    let at = |edge: f32| ease(ramp(t, edge, secs));
     at(w.start - LEAD_S) - at(w.end + TRAIL_S)
 }
 
@@ -395,7 +375,7 @@ fn lean(w: &Placed) -> f32 {
 
 /// How much of the way to a word's start the clock is: 0 before it, 1 from it on, kept after.
 fn reached(t: f32, w: &Placed, secs: f32) -> f32 {
-    ((t - (w.start - LEAD_S)) / secs).clamp(0.0, 1.0)
+    ramp(t, w.start - LEAD_S, secs)
 }
 
 fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
@@ -406,10 +386,10 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
         Animation::WordHighlight => WordState { on, ..steady },
         Animation::HighlightBox => {
             // Grows in with the spring as the word starts, and fades out in place.
-            let grow = overshoot(((t - (w.start - LEAD_S)) / BOX_S).clamp(0.0, 1.0));
+            let grow = overshoot(ramp(t, w.start - LEAD_S, BOX_S));
             WordState {
                 on,
-                box_scale: BOX_FROM + (1.0 - BOX_FROM) * grow,
+                box_scale: lerp(BOX_FROM, 1.0, grow),
                 ..steady
             }
         }
@@ -419,18 +399,18 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             ..steady
         },
         Animation::WordFade => {
-            let at = |edge: f32| ((t - edge) / MOTION_S).clamp(0.0, 1.0);
+            let at = |edge: f32| ramp(t, edge, MOTION_S);
             let opacity = 0.4 + 0.6 * at(w.start - LEAD_S) - 0.3 * at(w.end + TRAIL_S);
             WordState { opacity, ..steady }
         }
         Animation::WordSweep | Animation::WordUnderline => WordState {
-            fill: ((t - w.start) / (w.end - w.start).max(MIN_SAID_S)).clamp(0.0, 1.0),
+            fill: ramp(t, w.start, (w.end - w.start).max(MIN_SAID_S)),
             ..steady
         },
         Animation::Typewriter => {
             // Letter by letter: the steps are whole letters, so a frame only changes when one appears.
             let typing = (w.end - w.start).clamp(MIN_SAID_S, MAX_TYPING_S) * TYPE_SHARE;
-            let typed = ((t - w.start) / typing).clamp(0.0, 1.0);
+            let typed = ramp(t, w.start, typing);
             let letters = w.chars.max(1) as f32;
             WordState {
                 on,
@@ -454,7 +434,7 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             let said = reached(t, w, MOTION_S);
             WordState {
                 on: lit,
-                opacity: FOCUS_DIM + (1.0 - FOCUS_DIM) * (0.6 * said + 0.4 * lit),
+                opacity: lerp(FOCUS_DIM, 1.0, 0.6 * said + 0.4 * lit),
                 soften: 1.0 - said,
                 ..steady
             }
@@ -472,17 +452,16 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             // Dropped in from twice its size and landed in 0.12 s, no overshoot, visible from
             // the first 40% of the drop; nothing before it is said.
             let p = reached(t, w, SLAM_S);
-            let eased = 1.0 - (1.0 - p) * (1.0 - p);
             WordState {
                 on,
-                scale: SLAM_FROM + (1.0 - SLAM_FROM) * eased,
+                scale: lerp(SLAM_FROM, 1.0, ease_out_quad(p)),
                 opacity: (p / SLAM_FADE).min(1.0),
                 ..steady
             }
         }
         Animation::LetterRise => WordState {
             on,
-            enter: ((t - (w.start - LEAD_S)) / rise_timing(w).1).clamp(0.0, 1.0),
+            enter: ramp(t, w.start - LEAD_S, rise_timing(w).1),
             ..steady
         },
         Animation::WordPress => WordState {
@@ -515,7 +494,7 @@ fn parts<'a>(w: &'a Placed, st: &WordState, fs: f32, rising: bool) -> Vec<(&'a P
             .into_iter()
             .enumerate()
             .filter_map(|(i, path)| {
-                let p = ((st.enter * total - i as f32 * stagger) / RISE_S).clamp(0.0, 1.0);
+                let p = ramp(st.enter * total, i as f32 * stagger, RISE_S);
                 (p > 0.0).then(|| (path, RISE_FROM * fs * (1.0 - overshoot(p)), p))
             })
             .collect();
@@ -727,7 +706,7 @@ fn is_right_to_left<'a>(words: impl Iterator<Item = &'a str>) -> bool {
 }
 
 fn overlaps(a: IntRect, b: IntRect) -> bool {
-    a.x() < b.right() && b.x() < a.right() && a.y() < b.bottom() && b.y() < a.bottom()
+    a.intersect(&b).is_some()
 }
 
 /// Copies `r` of a premultiplied frame into straight-alpha RGBA.
@@ -1113,24 +1092,22 @@ impl Scene {
                 let words = &line.words;
                 let at = words.iter().rposition(|w| t >= w.start - LEAD_S)?;
                 let (from, to) = (&words[at.saturating_sub(1)], &words[at]);
-                let travel = overshoot(((t - (to.start - LEAD_S)) / SLIDE_S).clamp(0.0, 1.0));
-                let lerp = |a: f32, b: f32| a + (b - a) * travel;
+                let travel = overshoot(ramp(t, to.start - LEAD_S, SLIDE_S));
                 let (a, b) = (from.slot, to.slot);
                 Some(Guide {
                     rect: [
-                        lerp(a.x(), b.x()),
-                        lerp(a.y(), b.y()),
-                        lerp(a.width(), b.width()),
-                        lerp(a.height(), b.height()),
+                        lerp(a.x(), b.x(), travel),
+                        lerp(a.y(), b.y(), travel),
+                        lerp(a.width(), b.width(), travel),
+                        lerp(a.height(), b.height(), travel),
                     ],
                     // It fades in under the first word and is simply there after.
                     alpha: reached(t, &words[0], COLOUR_S),
-                    radius: self.word_radius * lerp(from.size, to.size),
+                    radius: self.word_radius * lerp(from.size, to.size, travel),
                 })
             }
             Animation::LineBar => {
-                let done =
-                    ((t - line.start) / (line.end - line.start).max(MIN_SAID_S)).clamp(0.0, 1.0);
+                let done = ramp(t, line.start, (line.end - line.start).max(MIN_SAID_S));
                 let a = line.anchor;
                 let fs = self.style.font_size;
                 Some(Guide {
@@ -1259,24 +1236,14 @@ impl Scene {
                 Point::from_xy(b.right(), b.bottom()),
             ];
             face(w, st).map_points(&mut corners);
-            let (mut x0, mut y0, mut x1, mut y1) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
-            for c in corners {
-                (x0, y0, x1, y1) = (x0.min(c.x), y0.min(c.y), x1.max(c.x), y1.max(c.y));
-            }
-            let moved = Rect::from_ltrb(x0, y0, x1, y1)?;
+            let moved = Rect::from_points(&corners)?;
             let r = pixel_bounds(
                 moved,
                 s.stroke_width + reach as f32 + 2.0,
                 self.width,
                 self.height,
             );
-            let l = line.bounds;
-            IntRect::from_ltrb(
-                r.x().max(l.x()),
-                r.y().max(l.y()),
-                r.right().min(l.right()),
-                r.bottom().min(l.bottom()),
-            )
+            r.intersect(&line.bounds)
         };
 
         let solid = |c: Rgba| Rgba([c.0[0], c.0[1], c.0[2], 255]);
@@ -2240,18 +2207,6 @@ mod tests {
             (leaning.2, leaning.3),
             (upright.2, upright.3),
             "the same height"
-        );
-    }
-
-    #[test]
-    fn overshoot_starts_at_zero_ends_at_one_and_overshoots() {
-        assert!(overshoot(0.0).abs() < 1e-4);
-        assert!((overshoot(1.0) - 1.0).abs() < 1e-4);
-        assert!(
-            (0..=100)
-                .map(|i| overshoot(i as f32 / 100.0))
-                .fold(0.0, f32::max)
-                > 1.05
         );
     }
 
