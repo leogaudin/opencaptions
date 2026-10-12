@@ -97,6 +97,11 @@ three builds:
 its arithmetic is deterministic (an integer blur, no platform maths), so every
 build produces byte-identical frames. Nothing else may draw captions.
 
+The drawing is `src/scene/`: `layout.rs` places the words, `anim.rs` says what each is doing at a time `t`
+(with the tuning constants and shared types in `mod.rs`, and the easing in `ease.rs`), `draw.rs` paints a line
+in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and the pixel helpers,
+`text.rs` the shaping, and `renderer.rs` the frame loop and its caches.
+
 - **Scene.** `set_scene` lays out the transcript once for a style and a frame
   size. `render(t)` then draws one frame, redrawing only the area that changed,
   and reports the band of rows it changed (`oc_changed_top`/`_bottom`; the whole
