@@ -204,6 +204,8 @@ class StyleConfig(BaseModel):
     )
     # How much a solid shadow (an extrusion) darkens from the front to the back.
     extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
+    # The colour the back of an extrusion fades to from the shadow colour; transparent for none.
+    extrude_back: str = Field(default="#00000000", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
     # How much larger a key word is set: above 1 it has a row to itself and its highlight colour.
     emphasis_scale: float = Field(default=1.0, ge=1.0, le=2.5)
     # How the words are set in rows: filling lines, or a stack of short rows each scaled to one width.

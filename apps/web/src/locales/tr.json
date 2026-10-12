@@ -361,5 +361,7 @@
   "Key word": "Anahtar kelime",
   "Layout": "Yerleşim",
   "Line": "Satır",
-  "Stack": "Yığın"
+  "Stack": "Yığın",
+  "Extrusion": "Ekstrüzyon",
+  "Extrusion back color": "Ekstrüzyon arka rengi"
 }

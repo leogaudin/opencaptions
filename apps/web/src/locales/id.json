@@ -361,5 +361,7 @@
   "Key word": "Kata kunci",
   "Layout": "Tata letak",
   "Line": "Baris",
-  "Stack": "Tumpuk"
+  "Stack": "Tumpuk",
+  "Extrusion": "Ekstrusi",
+  "Extrusion back color": "Warna belakang ekstrusi"
 }

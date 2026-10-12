@@ -95,7 +95,9 @@ export function StyleControls() {
       {tab === "animation" && (
         <AnimationPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
       )}
-      {tab === "outline" && <OutlinePanel style={style} throttled={setStyleThrottled} />}
+      {tab === "outline" && (
+        <OutlinePanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
+      )}
       {tab === "timing" && <CaptionOffsetControl />}
     </div>
   );
@@ -346,7 +348,18 @@ function AnimationPanel({
   );
 }
 
-function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Setter }) {
+/** An extrusion with this back colour has none to fade to: it is one colour (and its shading). */
+const NO_EXTRUSION_BACK = "#00000000";
+
+function OutlinePanel({
+  style,
+  setStyle,
+  throttled,
+}: {
+  style: StyleConfig;
+  setStyle: Setter;
+  throttled: Setter;
+}) {
   const t = useT();
   return (
     <Panel>
@@ -393,6 +406,27 @@ function OutlinePanel({ style, throttled }: { style: StyleConfig; throttled: Set
           decimals={2}
           onChange={(extrude_shade) => throttled({ extrude_shade })}
         />
+      )}
+      {style.shadow_blur <= 0 && (style.shadow_offset_x !== 0 || style.shadow_offset_y !== 0) && (
+        <>
+          <Field label={t("Extrusion")}>
+            <Segmented
+              options={FILLS}
+              value={style.extrude_back === NO_EXTRUSION_BACK ? "solid" : "gradient"}
+              label={(f) => t(FILL_NAMES[f])}
+              onChange={(f) =>
+                setStyle({ extrude_back: f === "gradient" ? ADDED_GRADIENT : NO_EXTRUSION_BACK })
+              }
+            />
+          </Field>
+          {style.extrude_back !== NO_EXTRUSION_BACK && (
+            <ColorField
+              label={t("Extrusion back color")}
+              value={style.extrude_back}
+              onChange={(extrude_back) => throttled({ extrude_back })}
+            />
+          )}
+        </>
       )}
       <SliderField
         label={t("Glow")}

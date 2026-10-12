@@ -1462,6 +1462,11 @@ export interface components {
              */
             extrude_shade: number;
             /**
+             * Extrude Back
+             * @default #00000000
+             */
+            extrude_back: string;
+            /**
              * Emphasis Scale
              * @default 1
              */

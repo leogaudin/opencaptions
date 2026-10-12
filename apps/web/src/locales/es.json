@@ -361,5 +361,7 @@
   "Key word": "Palabra clave",
   "Layout": "Disposición",
   "Line": "Línea",
-  "Stack": "Pila"
+  "Stack": "Pila",
+  "Extrusion": "Extrusión",
+  "Extrusion back color": "Color del fondo de la extrusión"
 }

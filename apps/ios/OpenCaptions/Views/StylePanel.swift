@@ -158,6 +158,15 @@ struct StylePanel: View {
                 }
                 if style.shadowBlur <= 0 && (style.shadowOffsetX != 0 || style.shadowOffsetY != 0) {
                     LabeledSlider("Extrusion shading", value: model.binding(\.extrudeShade), range: 0...1, step: 0.05)
+                    Row("Extrusion") {
+                        SegmentedPills(
+                            options: [false, true], selection: extrusionGraded,
+                            label: { $0 ? "Gradient" : "Solid" })
+                            .frame(maxWidth: 220)
+                    }
+                    if extrusionGraded.wrappedValue {
+                        Row("Extrusion back color") { ColorPicker("Extrusion back color", selection: color(\.extrudeBack), supportsOpacity: false).labelsHidden() }
+                    }
                 }
                 LabeledSlider("Glow", value: model.binding(\.glowBlur), range: 0...40, step: 1)
                 if style.glowBlur > 0 {
@@ -352,6 +361,13 @@ struct StylePanel: View {
     }
 
     /// Plain colour or a gradient over each word's letters: turning it on starts from the text colour.
+    /// An extrusion fades to a back colour when it has one; "none" is a fully transparent colour.
+    private var extrusionGraded: Binding<Bool> {
+        Binding(
+            get: { model.project.styleConfig.extrudeBack != "#00000000" },
+            set: { on in model.updateStyle { $0.extrudeBack = on ? Self.addedColors[0] : "#00000000" } })
+    }
+
     private var gradientOn: Binding<Bool> {
         Binding(
             get: { !model.project.styleConfig.fillColors.isEmpty },

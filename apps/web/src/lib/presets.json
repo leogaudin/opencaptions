@@ -28,6 +28,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -61,6 +62,7 @@
       "motion_blur": 0.6,
       "fill_colors": [],
       "extrude_shade": 0.5,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1.25,
       "layout": "line"
     }
@@ -94,6 +96,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -127,6 +130,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -160,6 +164,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -194,6 +199,7 @@
       "motion_blur": 0.8,
       "fill_colors": [],
       "extrude_shade": 0.6,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1.3,
       "layout": "line"
     }
@@ -228,6 +234,7 @@
       "motion_blur": 0,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -262,6 +269,7 @@
       "motion_blur": 0.6,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -296,6 +304,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -330,6 +339,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     }
@@ -363,6 +373,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     },
@@ -397,6 +408,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     },
@@ -431,6 +443,7 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     },
@@ -443,7 +456,7 @@
       "font": "Luckiest Guy",
       "font_size": 96,
       "text_color": "#FFFFFF",
-      "highlight_colors": ["#FFE14D"],
+      "highlight_colors": ["#FFFFFF"],
       "background": "none",
       "background_color": "#000000",
       "background_opacity": 0,
@@ -455,7 +468,7 @@
       "stroke_width": 6,
       "stroke_color": "#3B1A00",
       "shadow_blur": 0,
-      "shadow_color": "#C2410C",
+      "shadow_color": "#FFA305",
       "shadow_offset_x": 0,
       "shadow_offset_y": 16,
       "glow_blur": 0,
@@ -464,7 +477,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0.6,
+      "extrude_shade": 0,
+      "extrude_back": "#FFBB00",
       "emphasis_scale": 1,
       "layout": "line"
     },
@@ -499,6 +513,7 @@
       "motion_blur": 0.7,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1,
       "layout": "line"
     },
@@ -530,9 +545,10 @@
       "glow_color": "#FFFFFF",
       "text_case": "upper",
       "italic": false,
-      "motion_blur": 0.5,
+      "motion_blur": 0,
       "fill_colors": [],
       "extrude_shade": 0.5,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1.5,
       "layout": "line"
     },
@@ -567,6 +583,7 @@
       "motion_blur": 0.6,
       "fill_colors": [],
       "extrude_shade": 0,
+      "extrude_back": "#00000000",
       "emphasis_scale": 1.4,
       "layout": "stack"
     },

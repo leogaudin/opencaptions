@@ -361,5 +361,7 @@
   "Key word": "Parola chiave",
   "Layout": "Layout",
   "Line": "Riga",
-  "Stack": "Pila"
+  "Stack": "Pila",
+  "Extrusion": "Estrusione",
+  "Extrusion back color": "Colore del fondo dell'estrusione"
 }

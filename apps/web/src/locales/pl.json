@@ -361,5 +361,7 @@
   "Key word": "Słowo kluczowe",
   "Layout": "Układ",
   "Line": "Wiersz",
-  "Stack": "Stos"
+  "Stack": "Stos",
+  "Extrusion": "Ekstruzja",
+  "Extrusion back color": "Kolor tyłu ekstruzji"
 }

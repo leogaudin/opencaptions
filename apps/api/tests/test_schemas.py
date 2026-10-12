@@ -64,6 +64,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     assert (s.text_case, s.italic) == ("none", False)
     assert s.motion_blur == 0.5
     assert (s.fill_colors, s.extrude_shade, s.emphasis_scale) == ([], 0, 1)
+    assert s.extrude_back == "#00000000"
     assert s.layout == "line"
     assert StyleConfig(shadow_offset_x=40, shadow_offset_y=-40).shadow_offset_x == 40
     for animation in (

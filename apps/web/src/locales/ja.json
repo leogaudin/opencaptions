@@ -361,5 +361,7 @@
   "Key word": "キーワード",
   "Layout": "レイアウト",
   "Line": "行",
-  "Stack": "スタック"
+  "Stack": "スタック",
+  "Extrusion": "押し出し",
+  "Extrusion back color": "押し出しの奥の色"
 }

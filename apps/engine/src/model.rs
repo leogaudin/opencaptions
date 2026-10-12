@@ -91,6 +91,10 @@ pub enum TextCase {
     Upper,
 }
 
+fn clear() -> Rgba {
+    Rgba([0, 0, 0, 0])
+}
+
 fn white() -> Rgba {
     Rgba([255, 255, 255, 255])
 }
@@ -159,6 +163,10 @@ pub struct Style {
     /// How much a solid shadow (an extrusion) darkens from the front to the back, 0 to 1.
     #[serde(default)]
     pub extrude_shade: f32,
+    /// The colour the back of an extrusion fades to from `shadow_color` at the front; fully
+    /// transparent for none (the shading alone).
+    #[serde(default = "clear")]
+    pub extrude_back: Rgba,
     /// How much larger a key word is set, 1 to 2.5: above 1 it sits alone on its own row and is
     /// always in its highlight colour. 1 is off.
     #[serde(default = "default_emphasis_scale")]

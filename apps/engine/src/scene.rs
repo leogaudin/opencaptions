@@ -1192,18 +1192,28 @@ impl Scene {
                 .post_rotate(st.tilt)
                 .post_translate(cx + jolt[0], cy + jolt[1])
         };
-        // A solid shadow is an extrusion; `word_press` raises the word being said out of the page:
-        // its extrusion grows to full length as it is pressed up, and the others stay flat.
+        // A solid shadow is an extrusion; `word_press` raises the word being said out of the page: its
+        // face lifts away from where it was (the back of the extrusion stays put) and the extrusion
+        // fills the gap, while the other words stay flat.
         let extruded =
             s.shadow_blur <= 0.0 && (s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0);
+        let pressing = extruded && s.animation == Animation::WordPress;
         let reach = |st: &WordState| {
-            if extruded && s.animation == Animation::WordPress {
+            if pressing {
                 st.press.clamp(0.0, 1.0)
             } else {
                 1.0
             }
         };
-        let face = |w: &Placed, st: &WordState| pivot(w, st);
+        // How far the face has moved from the back, as a share of the offset (opposite to it).
+        let lifted = |st: &WordState| if pressing { reach(st) } else { 0.0 };
+        let face = |w: &Placed, st: &WordState| {
+            let k = lifted(st);
+            pivot(w, st).post_translate(
+                -s.shadow_offset_x * w.size * k,
+                -s.shadow_offset_y * w.size * k,
+            )
+        };
         if let Some(path) = line.block.and_then(|b| rounded_rect(b, self.block_radius)) {
             let p = paint(colour(s.background_color, s.background_opacity));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
@@ -1320,7 +1330,9 @@ impl Scene {
                     // carried from where they are to the offset, a pixel at a time, so it reads as
                     // their outline extended (an extrusion) and not as a second copy behind them.
                     let base = solid(s.shadow_color);
-                    let shaded = s.extrude_shade > 0.0 && extruded;
+                    let back = s.extrude_back.0;
+                    let graded = back[3] > 0 && extruded;
+                    let shaded = (s.extrude_shade > 0.0 || graded) && extruded;
                     for (w, st) in line.words.iter().zip(states) {
                         let letters = parts(w, st, s.font_size * w.size, rising);
                         let reach = reach(st);
@@ -1343,10 +1355,14 @@ impl Scene {
                         };
                         for step in order {
                             let depth = step as f32 / steps as f32;
-                            let along = reach * depth;
+                            let along = reach * depth - lifted(st);
                             let mut hue = base;
                             if shaded {
-                                hue = mix(base, Rgba([0, 0, 0, 255]), s.extrude_shade * depth);
+                                if graded {
+                                    let end = Rgba([back[0], back[1], back[2], base.0[3]]);
+                                    hue = mix(base, end, depth);
+                                }
+                                hue = mix(hue, Rgba([0, 0, 0, 255]), s.extrude_shade * depth);
                                 if step == 1 {
                                     // The edge just behind the face catches the light.
                                     hue = mix(
@@ -2462,6 +2478,31 @@ mod tests {
     }
 
     #[test]
+    fn an_extrusion_fades_from_its_colour_to_the_back_colour() {
+        let patch = serde_json::json!({
+            "shadow_color": "#FF0000", "extrude_back": "#0000FF", "shadow_offset_y": 60,
+            "stroke_width": 0, "text_color": "#000000"
+        });
+        let mut r = lone("none", patch);
+        r.render(0.5);
+        let mut face = lone("none", serde_json::json!({ "text_color": "#000000" }));
+        face.render(0.5);
+        let flat = extent(&face, 1080).unwrap().3;
+        let back = extent(&r, 1080).unwrap().3;
+        let span = back - flat;
+        let near = mean_colour(&r, flat + 4..flat + 4 + span / 3);
+        let far = mean_colour(&r, back - span / 3..back);
+        assert!(
+            near[0] > far[0] + 60.0,
+            "red near the face: {near:?} {far:?}"
+        );
+        assert!(
+            far[2] > near[2] + 60.0,
+            "blue at the back: {near:?} {far:?}"
+        );
+    }
+
+    #[test]
     fn an_extrusion_darkens_with_depth_only_when_shaded() {
         let still = |shade: f32| {
             let patch = serde_json::json!({
@@ -2493,32 +2534,31 @@ mod tests {
     }
 
     #[test]
-    fn a_pressed_word_grows_its_extrusion_and_the_others_stay_flat() {
+    fn a_pressed_word_lifts_its_face_off_a_back_that_stays_put() {
         let patch = serde_json::json!({
             "shadow_color": "#C2410C", "shadow_offset_y": 60, "stroke_width": 0
         });
-        let (mut pressed, mut plain) = (
-            lone("word_press", patch.clone()),
-            lone("word_highlight", patch),
+        let mut pressed = lone("word_press", patch.clone());
+        // The same word with no extrusion: the face where the back is.
+        let mut flat = lone(
+            "word_highlight",
+            serde_json::json!({ "shadow_offset_y": 0, "stroke_width": 0 }),
         );
         pressed.render(0.5);
-        plain.render(0.5);
+        flat.render(0.5);
         let (a, b) = (
             extent(&pressed, 1080).unwrap(),
-            extent(&plain, 1080).unwrap(),
+            extent(&flat, 1080).unwrap(),
+        );
+        let travel = 60.0 * 1920.0 / REF_HEIGHT;
+        assert!(
+            a.3.abs_diff(b.3) <= 3,
+            "the back stays where the flat word was: {a:?} {b:?}"
         );
         assert!(
-            a.2.abs_diff(b.2) <= 2 && a.3.abs_diff(b.3) <= 2,
-            "once pressed the word is the extruded one, face where it is: {a:?} {b:?}"
-        );
-        // Before it is said it is flat: there is no extrusion to its back.
-        let mut early = lone("word_press", serde_json::json!({ "shadow_offset_y": 60 }));
-        early.render(0.0);
-        let flat = extent(&early, 1080).unwrap();
-        let reach = 60.0 * 1920.0 / REF_HEIGHT;
-        assert!(
-            b.3 as f32 - flat.3 as f32 > reach * 0.8,
-            "the extrusion is not there yet: {flat:?} then {b:?}"
+            ((b.2 as f32 - a.2 as f32) - travel).abs() < 4.0,
+            "the face lifted by the offset: {} rows, not {travel}",
+            b.2 as f32 - a.2 as f32
         );
     }
 
@@ -3694,7 +3734,7 @@ mod tests {
         ("highlight_slide+motion_blur", 0x4a203c274cc98750),
         ("none+motion_blur", 0x73229f3640871f60),
         ("letter_rise+motion_blur", 0x8930aa30d029025d),
-        ("word_press+chunky", 0xe944ffa929f5a345),
+        ("word_press+chunky", 0xe55ee93138faa2d6),
         ("word_pop+chunky", 0x064022aaf29214a8),
         ("word_pop+emphasis", 0x0e7b974001700c3c),
         ("word_slam+emphasis", 0x043fd6913511f0fc),

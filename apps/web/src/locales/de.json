@@ -361,5 +361,7 @@
   "Key word": "Schlüsselwort",
   "Layout": "Layout",
   "Line": "Zeile",
-  "Stack": "Stapel"
+  "Stack": "Stapel",
+  "Extrusion": "Extrusion",
+  "Extrusion back color": "Farbe der Extrusionsrückseite"
 }

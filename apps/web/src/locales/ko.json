@@ -361,5 +361,7 @@
   "Key word": "핵심 단어",
   "Layout": "레이아웃",
   "Line": "줄",
-  "Stack": "스택"
+  "Stack": "스택",
+  "Extrusion": "입체 두께",
+  "Extrusion back color": "입체 두께 뒷면 색상"
 }
