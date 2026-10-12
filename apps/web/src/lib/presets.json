@@ -441,5 +441,37 @@
       "extrude_shade": 0.6
     },
     "pro": true
+  },
+  {
+    "id": "builtin:cascade",
+    "name": "Cascade",
+    "config": {
+      "font": "Poppins",
+      "font_size": 70,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FFFFFF"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.84,
+      "animation": "letter_rise",
+      "words_per_line": 3,
+      "word_spacing": 0,
+      "stroke_width": 6,
+      "stroke_color": "#000000",
+      "shadow_blur": 0,
+      "shadow_color": "#00000000",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 0,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "none",
+      "italic": false,
+      "motion_blur": 0.7,
+      "fill_colors": [],
+      "extrude_shade": 0
+    },
+    "pro": true
   }
 ]

@@ -108,7 +108,8 @@ export type Animation =
   | "highlight_slide"
   | "line_bar"
   | "stickers"
-  | "word_press";
+  | "word_press"
+  | "letter_rise";
 
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";

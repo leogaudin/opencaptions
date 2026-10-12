@@ -76,6 +76,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         "line_bar",
         "stickers",
         "word_press",
+        "letter_rise",
     ):
         assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
     for bad in (

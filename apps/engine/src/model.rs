@@ -66,6 +66,8 @@ pub enum Animation {
     Stickers,
     /// The word being said is pushed into its extrusion, face sinking toward the back.
     WordPress,
+    /// Each word's letters rise into place one after another as it is said.
+    LetterRise,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]

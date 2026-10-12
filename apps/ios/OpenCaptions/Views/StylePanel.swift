@@ -271,6 +271,7 @@ struct StylePanel: View {
         case .lineBar: "Progress"
         case .stickers: "Stickers"
         case .wordPress: "Press"
+        case .letterRise: "Rise"
         }
     }
 

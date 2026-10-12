@@ -33,6 +33,11 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
+/// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly).
+const RISE_FROM: f32 = 0.45;
+const RISE_S: f32 = 0.16;
+const RISE_STAGGER_S: f32 = 0.035;
 /// How deep into its extrusion a pressed word's face sinks, as a share of the way to the back.
 const PRESS_DEPTH: f32 = 0.7;
 /// How much the first step of a shaded extrusion is lightened, times the shading.
@@ -79,6 +84,9 @@ struct Placed {
     ink_x: f32,
     ink_w: f32,
     baseline: f32,
+    /// The word's letters, one outline each (a connected script's whole word is one): only for the
+    /// animation that moves them separately.
+    clusters: Vec<Path>,
     /// The top of the em box, where a gradient fill starts.
     em_top: f32,
     /// How many letters (for the typewriter's steps).
@@ -132,6 +140,8 @@ struct WordState {
     soften: f32,
     /// How far the word is pushed into its extrusion, 0 to 1 (a little past it on the spring).
     press: f32,
+    /// How far through its staggered entrance the word is, 0 to 1 (letter by letter).
+    enter: f32,
 }
 
 impl WordState {
@@ -145,6 +155,7 @@ impl WordState {
         tilt: 0.0,
         soften: 0.0,
         press: 0.0,
+        enter: 1.0,
     };
 }
 
@@ -217,6 +228,53 @@ fn shape(face: &Face, text: &str, size: f32) -> (Option<Path>, f32) {
         pen += pos.x_advance;
     }
     (sink.pb.finish(), pen as f32 * scale)
+}
+
+/// Whether `c` is in a script whose letters join or reorder, so that a word of it cannot be taken
+/// apart without breaking it: Arabic and Syriac, Hebrew, the Indic scripts, Thai, Lao, Myanmar, Khmer.
+fn is_connected(c: char) -> bool {
+    matches!(c as u32,
+        0x0590..=0x08FF | 0x0900..=0x0DFF | 0x0E00..=0x0EFF | 0x1000..=0x109F | 0x1780..=0x17FF
+        | 0xFB1D..=0xFDFF | 0xFE70..=0xFEFF)
+}
+
+/// One outline for each grapheme cluster of `text`, in reading order, with the pen at the origin
+/// on the baseline like `shape`. A word of a connected script is a single cluster: it moves as a
+/// piece and is never broken apart.
+fn cluster_paths(face: &Face, text: &str, size: f32) -> Vec<Path> {
+    if text.chars().any(is_connected) {
+        return shape(face, text, size).0.into_iter().collect();
+    }
+    let mut buf = UnicodeBuffer::new();
+    buf.push_str(text);
+    buf.guess_segment_properties();
+    let glyphs = rustybuzz::shape(face, &[], buf);
+    let scale = size / face.units_per_em() as f32;
+    let mut groups: Vec<(u32, PathBuilder)> = vec![];
+    let mut pen = 0i32;
+    for (info, pos) in glyphs.glyph_infos().iter().zip(glyphs.glyph_positions()) {
+        let at = match groups.iter().position(|(c, _)| *c == info.cluster) {
+            Some(at) => at,
+            None => {
+                groups.push((info.cluster, PathBuilder::new()));
+                groups.len() - 1
+            }
+        };
+        let mut sink = Sink {
+            pb: std::mem::replace(&mut groups[at].1, PathBuilder::new()),
+            scale,
+            dx: (pen + pos.x_offset) as f32 * scale,
+            dy: -(pos.y_offset as f32) * scale,
+        };
+        face.outline_glyph(GlyphId(info.glyph_id as u16), &mut sink);
+        groups[at].1 = sink.pb;
+        pen += pos.x_advance;
+    }
+    groups.sort_by_key(|(cluster, _)| *cluster);
+    groups
+        .into_iter()
+        .filter_map(|(_, pb)| pb.finish())
+        .collect()
 }
 
 fn rounded_rect(r: Rect, radius: f32) -> Option<Path> {
@@ -387,12 +445,47 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             tilt: lean(w) * STICKER_TILT,
             ..steady
         },
+        Animation::LetterRise => WordState {
+            on,
+            enter: ((t - (w.start - LEAD_S)) / rise_timing(w).1).clamp(0.0, 1.0),
+            ..steady
+        },
         Animation::WordPress => WordState {
             on,
             press: pulse(t, w, MOTION_S, overshoot),
             ..steady
         },
     }
+}
+
+/// The gap between one letter's start and the next's, and the whole entrance, for a word.
+fn rise_timing(w: &Placed) -> (f32, f32) {
+    let n = w.clusters.len().max(1) as f32;
+    let said = (w.end - w.start).max(MIN_SAID_S);
+    let stagger = RISE_STAGGER_S.min(said * 0.5 / n);
+    (stagger, (n - 1.0) * stagger + RISE_S)
+}
+
+/// The parts of a word that are drawn on their own: each an outline, how far down it sits (in
+/// pixels) and how visible it is. The whole word as one part, except while its letters rise.
+fn parts<'a>(w: &'a Placed, st: &WordState, fs: f32, rising: bool) -> Vec<(&'a Path, f32, f32)> {
+    if rising && st.enter < 1.0 {
+        let (stagger, total) = rise_timing(w);
+        let letters: Vec<&Path> = if w.clusters.is_empty() {
+            w.glyphs.iter().collect()
+        } else {
+            w.clusters.iter().collect()
+        };
+        return letters
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, path)| {
+                let p = ((st.enter * total - i as f32 * stagger) / RISE_S).clamp(0.0, 1.0);
+                (p > 0.0).then(|| (path, RISE_FROM * fs * (1.0 - overshoot(p)), p))
+            })
+            .collect();
+    }
+    w.glyphs.iter().map(|g| (g, 0.0, 1.0)).collect()
 }
 
 /// How far a word grows past its slot at most, as a share of the line: room the line's bounds keep.
@@ -698,6 +791,7 @@ impl Scene {
                 Animation::LyricFocus => fs * FOCUS_BLUR * 3.0,
                 Animation::WordBounce | Animation::Stickers => fs * 0.15,
                 Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
+                Animation::LetterRise => fs * RISE_FROM,
                 _ => 0.0,
             }
             + 2.0;
@@ -731,6 +825,25 @@ impl Scene {
                             glyphs
                         };
                         (glyphs, advance)
+                    })
+                    .collect();
+                // One outline per letter, only for the look that moves them apart.
+                let clusters: Vec<Vec<Path>> = texts
+                    .iter()
+                    .map(|text| {
+                        if style.animation != Animation::LetterRise {
+                            return vec![];
+                        }
+                        let face = book.face(book.for_text(primary, &fallbacks, text));
+                        let letters = cluster_paths(face, text, fs);
+                        if style.italic {
+                            letters
+                                .into_iter()
+                                .filter_map(|p| p.transform(lean))
+                                .collect()
+                        } else {
+                            letters
+                        }
                     })
                     .collect();
                 let mut rows: Vec<(Vec<usize>, f32)> = vec![];
@@ -785,6 +898,10 @@ impl Scene {
                             ink_w: *adv,
                             baseline: top + baseline_in_row,
                             em_top: top + baseline_in_row - ascent,
+                            clusters: clusters[i]
+                                .iter()
+                                .filter_map(|c| c.clone().transform(at))
+                                .collect(),
                             chars: texts[i].chars().count(),
                             index: first + i,
                         });
@@ -1042,11 +1159,12 @@ impl Scene {
 
         let solid = |c: Rgba| Rgba([c.0[0], c.0[1], c.0[2], 255]);
         let opacity = |c: Rgba| f32::from(c.0[3]) / 255.0;
+        let rising = s.animation == Animation::LetterRise;
         let has_offset = s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0;
         // The shadow and the glow are the letters as they stand: they change when a word's
         // opacity, size or tilt does, and for most animations they do not change at all while
         // the line is up, so the finished layer (blur and all) is kept for the next frame.
-        let look: Vec<[u32; 4]> = states
+        let look: Vec<[u32; 5]> = states
             .iter()
             .map(|st| {
                 [
@@ -1054,6 +1172,7 @@ impl Scene {
                     st.scale.to_bits(),
                     st.tilt.to_bits(),
                     st.press.to_bits(),
+                    st.enter.to_bits(),
                 ]
             })
             .collect();
@@ -1067,7 +1186,7 @@ impl Scene {
                     let base = solid(s.shadow_color);
                     let shaded = s.extrude_shade > 0.0 && extruded;
                     for (w, st) in line.words.iter().zip(states) {
-                        let Some(path) = &w.glyphs else { continue };
+                        let letters = parts(w, st, s.font_size, rising);
                         // From where the (possibly sunk) face is to the back of the extrusion.
                         let from = sunk(st);
                         let steps = if s.shadow_blur > 0.0 {
@@ -1099,12 +1218,16 @@ impl Scene {
                                     );
                                 }
                             }
-                            let c = colour(hue, st.opacity);
-                            let at = pivot(w, st).post_translate(
-                                s.shadow_offset_x * along,
-                                s.shadow_offset_y * along,
-                            );
-                            ink(&mut shadow, path, c, c, local(at));
+                            for (path, down, shown) in &letters {
+                                let c = colour(hue, st.opacity * shown);
+                                let at = Transform::from_translate(0.0, *down)
+                                    .post_concat(pivot(w, st))
+                                    .post_translate(
+                                        s.shadow_offset_x * along,
+                                        s.shadow_offset_y * along,
+                                    );
+                                ink(&mut shadow, path, c, c, local(at));
+                            }
                         }
                     }
                     if s.shadow_blur > 0.0 {
@@ -1132,9 +1255,10 @@ impl Scene {
             if cache.halo.as_ref().is_none_or(|(k, _)| *k != key) {
                 cache.halo = layer().map(|mut halo| {
                     for (w, st) in line.words.iter().zip(states) {
-                        if let Some(path) = &w.glyphs {
-                            let c = colour(solid(s.glow_color), st.opacity);
-                            ink(&mut halo, path, c, c, local(face(w, st)));
+                        for (path, down, shown) in parts(w, st, s.font_size, rising) {
+                            let c = colour(solid(s.glow_color), st.opacity * shown);
+                            let at = Transform::from_translate(0.0, down).post_concat(face(w, st));
+                            ink(&mut halo, path, c, c, local(at));
                         }
                     }
                     blur(&mut halo, s.glow_blur / 2.0);
@@ -1233,6 +1357,7 @@ impl Scene {
                 | Animation::WordPop
                 | Animation::WordBounce
                 | Animation::LyricFocus
+                | Animation::LetterRise
                 | Animation::WordPress => st.on,
                 Animation::None
                 | Animation::HighlightBox
@@ -1294,6 +1419,33 @@ impl Scene {
                             within.x(),
                             within.y(),
                             half.as_ref(),
+                            &p,
+                            Transform::identity(),
+                            None,
+                        );
+                    }
+                }
+                continue;
+            }
+            if rising && st.enter < 1.0 {
+                // The letters that have started, each climbing and fading in on its own.
+                for (part, down, shown) in parts(w, st, s.font_size, true) {
+                    let reach = (s.font_size * RISE_FROM).ceil() as usize + 2;
+                    if let Some(within) = word_box(part, w, st, reach)
+                        && let Some(mut group) = Pixmap::new(within.width(), within.height())
+                    {
+                        let at = Transform::from_translate(0.0, down)
+                            .post_concat(face(w, st))
+                            .post_translate(-within.x() as f32, -within.y() as f32);
+                        ink_with(&mut group, part, &fill, edge, at);
+                        let p = PixmapPaint {
+                            opacity: st.opacity * shown,
+                            ..PixmapPaint::default()
+                        };
+                        canvas.draw_pixmap(
+                            within.x(),
+                            within.y(),
+                            group.as_ref(),
                             &p,
                             Transform::identity(),
                             None,
@@ -1408,7 +1560,7 @@ impl Trimmed {
 }
 
 /// A line, and each of its words' opacity, size, tilt and press: all the layers depend on.
-type LayerKey = (usize, Vec<[u32; 4]>);
+type LayerKey = (usize, Vec<[u32; 5]>);
 
 /// How many sub-frames the shutter averages when something moves within it.
 const BLUR_SAMPLES: usize = 8;
@@ -2218,6 +2370,88 @@ mod tests {
         assert!(extent(&early, 1080).is_some());
     }
 
+    fn rising(words: &[(&str, f32, f32)]) -> Renderer {
+        let patch = serde_json::json!({ "font_size": 120, "motion_blur": 0 });
+        Renderer::new(Scene::new(&book(), styled("letter_rise", words, patch)))
+    }
+
+    /// The first row with ink in the columns `from..to` of the current frame.
+    fn top_of(r: &Renderer, from: usize, to: usize) -> Option<usize> {
+        (0..1920).find(|&y| (from..to).any(|x| r.rgba()[(y * 1080 + x) * 4 + 3] > 0))
+    }
+
+    #[test]
+    fn the_letters_of_a_word_rise_one_after_another() {
+        let mut r = rising(&[("HELLO", 0.0, 1.0)]);
+        // Partway through the entrance, the first letters are up and the last are still low.
+        r.render(0.12);
+        let scene = r.scene();
+        let word = &scene.lines[0].words[0];
+        assert_eq!(word.clusters.len(), 5, "one outline a letter");
+        let cols: Vec<(usize, usize)> = word
+            .clusters
+            .iter()
+            .map(|c| (c.bounds().left() as usize, c.bounds().right() as usize))
+            .collect();
+        let tops: Vec<Option<usize>> = cols.iter().map(|&(a, b)| top_of(&r, a, b)).collect();
+        let first = tops[0].expect("the first letter has started");
+        assert!(
+            tops[4].is_none_or(|last| last > first),
+            "the last letter is lower than the first, or not there yet: {tops:?}"
+        );
+        assert!(
+            tops.iter()
+                .flatten()
+                .collect::<std::collections::HashSet<_>>()
+                .len()
+                > 1
+                || tops.iter().any(Option::is_none),
+            "the letters are at different heights: {tops:?}"
+        );
+        // And in the end they are all in place, as the plain word.
+        r.render(0.9);
+        let rest = r.rgba().to_vec();
+        let mut plain = rising(&[("HELLO", 0.0, 1.0)]);
+        plain.render(0.9);
+        assert_eq!(rest, plain.rgba());
+        assert!(rest.iter().any(|&b| b != 0));
+    }
+
+    #[test]
+    fn nothing_of_a_word_is_drawn_before_it_starts() {
+        let mut r = rising(&[("one", 0.0, 0.5), ("two", 0.5, 1.0)]);
+        r.render(0.3);
+        let rects = r.active_word_rects();
+        let (x, y, w, h) = rects[1];
+        let any = (y as usize..(y + h) as usize).any(|row| {
+            (x as usize..(x + w) as usize).any(|col| r.rgba()[(row * 1080 + col) * 4 + 3] > 0)
+        });
+        assert!(!any, "the second word is not there yet");
+        r.render(0.9);
+        let any = (y as usize..(y + h) as usize).any(|row| {
+            (x as usize..(x + w) as usize).any(|col| r.rgba()[(row * 1080 + col) * 4 + 3] > 0)
+        });
+        assert!(any, "and then it is");
+    }
+
+    #[test]
+    fn a_word_of_a_connected_script_is_one_piece() {
+        let mut b = book();
+        for font in [
+            &include_bytes!("../fonts/NotoSansArabic.ttf")[..],
+            include_bytes!("../fonts/NotoSansDevanagari.ttf"),
+            include_bytes!("../fonts/NotoSansThai.ttf"),
+        ] {
+            b.add(font).unwrap();
+        }
+        let pieces =
+            |family: &str, text: &str| cluster_paths(b.face(b.primary(family)), text, 64.0).len();
+        assert_eq!(pieces("Inter", "HELLO"), 5);
+        assert_eq!(pieces("Noto Sans Arabic", "مرحبا"), 1);
+        assert_eq!(pieces("Noto Sans Devanagari", "नमस्ते"), 1);
+        assert_eq!(pieces("Noto Sans Thai", "สวัสดี"), 1);
+    }
+
     #[test]
     fn the_active_caption_bounds_track_the_rendered_line() {
         let mut r = Renderer::new(Scene::new(&book(), input("word_highlight", WORDS, 3)));
@@ -2716,6 +2950,7 @@ mod tests {
             "line_bar",
             "stickers",
             "word_press",
+            "letter_rise",
         ] {
             let mut r = Renderer::new(Scene::new(&book(), input(anim, WORDS, 3)));
             r.render(0.6);
@@ -2775,6 +3010,7 @@ mod tests {
             "line_bar",
             "stickers",
             "word_press",
+            "letter_rise",
         ] {
             cases.push((anim.to_string(), styled(anim, WORDS, serde_json::json!({}))));
         }
@@ -2818,7 +3054,13 @@ mod tests {
                 cases.push((format!("{anim}+{name}"), styled(anim, WORDS, patch.clone())));
             }
         }
-        for anim in ["word_pop", "word_bounce", "highlight_slide", "none"] {
+        for anim in [
+            "word_pop",
+            "word_bounce",
+            "highlight_slide",
+            "none",
+            "letter_rise",
+        ] {
             cases.push((
                 format!("{anim}+motion_blur"),
                 styled(anim, WORDS, serde_json::json!({ "motion_blur": 1.0 })),
@@ -3021,6 +3263,7 @@ mod tests {
         ("line_bar", 0x6b1e7afb5365656d),
         ("stickers", 0x5c9bad18f058c1c7),
         ("word_press", 0xf26273125dfc6bf6),
+        ("letter_rise", 0xa5777bf2546741b8),
         ("word_highlight+stroke", 0xa886db0bfe0007d8),
         ("word_fade+stroke", 0x100c37255aee5408),
         ("word_pop+stroke", 0x8bbaecd606e3c7e3),
@@ -3043,6 +3286,7 @@ mod tests {
         ("word_bounce+motion_blur", 0xfe8ce16569a3e8c2),
         ("highlight_slide+motion_blur", 0x4a203c274cc98750),
         ("none+motion_blur", 0x73229f3640871f60),
+        ("letter_rise+motion_blur", 0xc6a43e297f4ba114),
         ("word_press+chunky", 0xd89028e2bff00030),
         ("word_pop+chunky", 0x064022aaf29214a8),
         ("watermark", 0xe22c164ced6e9dd5),

@@ -128,7 +128,7 @@ build produces byte-identical frames. Nothing else may draw captions.
   would invent timings. The web calls them through WebAssembly, and the phone
   calls the same code natively.
 - **Styles.** All of a style is the engine's, so the preview and the export agree.
-  - *Fourteen animations:* the word highlighted by colour (`word_highlight`), by a box
+  - *Fifteen animations:* the word highlighted by colour (`word_highlight`), by a box
     (`highlight_box`), popped (`word_pop`), faded in (`word_fade`), filled left to right as it is
     said (`word_sweep`, karaoke), underlined as it is said (`word_underline`), typed out letter by
     letter with a cursor (`typewriter`; the steps are whole letters, so a frame changes only when
@@ -136,7 +136,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     lean, left and right in turn (`word_bounce`), brought into focus out of a dim blur
     (`lyric_focus`; the words already said stay sharp), lit by one box that slides from word to
     word (`highlight_slide`), lit with a bar under the line that fills as the line is spoken
-    (`line_bar`), each set on its own tilted label (`stickers`), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
+    (`line_bar`), each set on its own tilted label (`stickers`), its letters rising into place one after another as it is said (`letter_rise`: one outline per grapheme cluster, grouped by the shaper's cluster index, in reading order; a word in a connected script, where the letters join or reorder, is one cluster and rises as a piece; the word is hidden until its start, and its shadow and glow follow the letters), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
     engine's own arithmetic, never a platform sine, so the builds still agree to the byte. The
     line's bar and the sliding box are one shape per line (`Guide`), part of the frame's
     identity, so a frame is redrawn when they move.

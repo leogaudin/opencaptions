@@ -56,6 +56,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `line_bar` | Progress | A bar that fills along the line. |
 | `stickers` | Stickers | A coloured label on each word. |
 | `word_press` | Press | Pushing it into its solid shadow, so the extrusion shortens under it. |
+| `letter_rise` | Rise | Each word hidden until said, its letters then climbing into place one after another. A word in a connected script (Arabic, Hebrew, the Indic scripts, Thai) rises as one piece. |
 | `none` | None | Nothing: plain captions. |
 
 ## Timing offset

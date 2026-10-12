@@ -29,6 +29,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |
 | **Chunky 3D** | Gold gradient letters on a shaded extrusion, pushed in as each word is said. |
+| **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
 
 A preset sets the whole style, so pick it first and adjust after. Selecting one keeps your caption
 position, font size and words per line, which belong to your video.
@@ -55,7 +56,7 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 ## Animation
 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
-**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, or **None**.
+**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, **Rise**, or **None**.
 Each tile shows the animation on your own caption. **Motion blur** smears the words that move along
 their path, the same in the editor and in the download; at 0 every frame is sharp.
 

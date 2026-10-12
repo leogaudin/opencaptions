@@ -99,6 +99,7 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case lineBar = "line_bar"
     case stickers
     case wordPress = "word_press"
+    case letterRise = "letter_rise"
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
