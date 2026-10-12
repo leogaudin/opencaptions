@@ -1,6 +1,6 @@
 /**
- * Re-transcription: one button that opens a dialog for the language and the
- * model. Both start at what the transcript already uses, and only a changed
+ * Re-transcription: one button that opens a dialog for the model and, below it, the
+ * language, which follows the model. Both start at what the transcript already uses, and only a changed
  * choice is sent, so confirming as-is reruns with the same settings.
  */
 import * as Dialog from "@radix-ui/react-dialog";
@@ -78,6 +78,17 @@ export function RetranscribeDialog({ current }: { current: string }) {
             {t("The transcript is regenerated from scratch, discarding your word edits.")}
           </Dialog.Description>
 
+          <LocalModelSelect
+            id="retranscribe-model"
+            testId="retranscribe-model-select"
+            value={model ?? defaultModel}
+            onChange={setModel}
+            models={models}
+            defaultModel={defaultModel}
+            label={t("Model")}
+            compact
+          />
+
           <div>
             <label className="mb-1 block text-xs font-medium" htmlFor="retranscribe-language">
               {t("Language")}
@@ -101,17 +112,6 @@ export function RetranscribeDialog({ current }: { current: string }) {
               )}
             </select>
           </div>
-
-          <LocalModelSelect
-            id="retranscribe-model"
-            testId="retranscribe-model-select"
-            value={model ?? defaultModel}
-            onChange={setModel}
-            models={models}
-            defaultModel={defaultModel}
-            label={t("Model")}
-            compact
-          />
 
           <div className="flex justify-end gap-2">
             <Dialog.Close className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent">

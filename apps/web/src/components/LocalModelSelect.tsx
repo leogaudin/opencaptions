@@ -2,24 +2,8 @@ import { translate } from "@/lib/i18n";
 import type { WhisperModelOption } from "@/types";
 
 /**
- * The product picker is intentionally smaller than faster-whisper's complete
- * registry. Aliases, superseded v1/v2 models, English-only `.en` variants, and
- * distil-large-v3 are useful for experiments but add noise here. The latter also
- * mis-detected French as English in testing.
- */
-const PRODUCT_MODEL_IDS = [
-  "tiny",
-  "base",
-  "small",
-  "medium",
-  "large-v3",
-  "large-v3-turbo",
-  "parakeet-tdt-0.6b-v3",
-] as const;
-
-/**
- * Return the product ladder in product-owned order, injecting a custom server
- * default when an operator configured one outside the standard choices.
+ * The list is the server's, which offers what the iPhone app does. A custom server default
+ * (`WHISPER_MODEL`) outside it is added in front, so the choice shown is the one in force.
  */
 export function productWhisperModelsWithDefault(
   models: WhisperModelOption[],
@@ -28,19 +12,14 @@ export function productWhisperModelsWithDefault(
   // An empty list is the server saying "no choice here" (hosted mode); a
   // synthetic default entry would turn that into a one-item picker.
   if (models.length === 0) return [];
-  const byId = new Map(models.map((model) => [model.id, model]));
-  const curated = PRODUCT_MODEL_IDS.flatMap((id) => {
-    const model = byId.get(id);
-    return model ? [model] : [];
-  });
-  if (!defaultModel || curated.some((model) => model.id === defaultModel)) return curated;
+  if (!defaultModel || models.some((model) => model.id === defaultModel)) return models;
   return [
     {
       id: defaultModel,
       label: translate("{model} (configured)", { model: defaultModel }),
       note: translate("Custom server default; weights download on first use."),
     },
-    ...curated,
+    ...models,
   ];
 }
 

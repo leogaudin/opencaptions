@@ -1,6 +1,6 @@
 """Every speech model the local provider can run, whichever engine runs it.
 
-Whisper sizes come from `whisper_models` (and so from faster-whisper). Other models run on
+Whisper sizes are described in `whisper_models` (the offered ones are named below). Other models run on
 sherpa-onnx (ONNX Runtime, CPU), each fetched from the Hugging Face repository named here on
 first use. A model is added by describing it here; the provider seam above it does not change.
 """
@@ -53,15 +53,21 @@ _SHERPA_MODELS: tuple[AsrModelInfo, ...] = (
     ),
 )
 
+# What is offered: the iPhone app's list, so a person has the same choice on either. Other
+# faster-whisper sizes still run (an API client may name one, and so may `WHISPER_MODEL`); they
+# are only not listed, because a longer ladder is noise to choose from.
+_OFFERED_WHISPER = ("small", "large-v3-turbo", "large-v3")
+
 # Where the models other than Whisper sit in the list, which is in ascending size:
 # after the Whisper size they are closest to.
 _AFTER = {"parakeet-tdt-0.6b-v3": "small"}
 
 
 def _build() -> list[AsrModelInfo]:
+    by_id = {m.id: m for m in WHISPER_MODELS}
     models = [
         AsrModelInfo(id=m.id, label=m.label, note=m.note, engine="faster-whisper")
-        for m in WHISPER_MODELS
+        for m in (by_id[i] for i in _OFFERED_WHISPER if i in by_id)
     ]
     for extra in _SHERPA_MODELS:
         anchor = next((i for i, m in enumerate(models) if m.id == _AFTER.get(extra.id)), None)

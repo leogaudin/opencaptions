@@ -127,7 +127,7 @@ test.describe("Local Whisper model selection", () => {
     // Pick a curated model that is NOT the live default, so this is a genuine
     // change: selecting the already-selected option fires no change event.
     const settings = await (await page.request.get("/api/v1/settings")).json();
-    const changedModel = settings.transcription.model === "small" ? "base" : "small";
+    const changedModel = settings.transcription.model === "small" ? "large-v3" : "small";
     await page.getByTestId("retranscribe").click();
     await page.getByTestId("retranscribe-model-select").selectOption(changedModel);
     await page.getByTestId("retranscribe-confirm").click();

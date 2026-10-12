@@ -32,12 +32,11 @@ See [The iPhone app](./iphone-app.md).
 |---|---|---|
 | **Whisper Large v3 Turbo** (default) | About 100 | The best all-round accuracy. About 1.6 GB on a server, 627 MB on the iPhone. |
 | **Whisper Large v3** | About 100 | The most accurate Whisper, and slow on a CPU. About 3 GB. |
-| **Whisper Medium, Small, Base** | About 100 | Smaller and faster, less accurate. Small is about 480 MB and a fine first try. |
+| **Whisper Small** | About 100 | Smaller and faster, less accurate. About 480 MB, and a fine first try. |
 | **Parakeet v3** | 25 European languages | Fast: about 2.5 times quicker than Large v3 Turbo on a CPU, a little less accurate. About 0.65 GB. |
 | **Apple Speech** | Those iOS offers | The iPhone only, built into iOS 26, with nothing to download. |
 
-The server also lists the English-only and distilled Whisper variants. On a server, the list is whatever
-the instance offers, and the first use of a model downloads it.
+The web app and the iPhone app offer the same models. On a server, the first use of a model downloads it.
 
 Parakeet v3 covers Bulgarian, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French,
 German, Greek, Hungarian, Italian, Latvian, Lithuanian, Maltese, Polish, Portuguese, Romanian,

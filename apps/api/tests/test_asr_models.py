@@ -16,9 +16,15 @@ from app.transcription.sherpa import segments_from_words, words_from_tokens
 
 
 class TestRegistry:
-    def test_every_whisper_size_is_listed_for_faster_whisper(self) -> None:
+    def test_the_list_is_the_iphones(self) -> None:
+        """Small, Parakeet, Large v3 Turbo and Large v3, in ascending size, as on the phone."""
+        assert [m.id for m in asr_models.all_models()] == [
+            "small",
+            "parakeet-tdt-0.6b-v3",
+            "large-v3-turbo",
+            "large-v3",
+        ]
         whisper = [m for m in asr_models.all_models() if m.engine == "faster-whisper"]
-        assert {"tiny", "small", "large-v3-turbo"} <= {m.id for m in whisper}
         assert all(m.languages is None for m in whisper)
 
     def test_parakeet_is_listed_with_its_languages(self) -> None:
@@ -31,9 +37,10 @@ class TestRegistry:
         # What it was not trained on.
         assert not {"ja", "ko", "zh", "tr", "id"} & parakeet.languages
 
-    def test_models_stay_in_ascending_size_order(self) -> None:
-        ids = [m.id for m in asr_models.all_models()]
-        assert ids.index("small") < ids.index("parakeet-tdt-0.6b-v3") < ids.index("medium")
+    def test_the_default_model_is_offered(self) -> None:
+        from app.core.config import settings
+
+        assert asr_models.find(settings.whisper_model) is not None
 
     def test_ids_are_unique(self) -> None:
         ids = [m.id for m in asr_models.all_models()]
