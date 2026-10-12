@@ -271,7 +271,7 @@ struct SettingsView: View {
         }
     }
 
-    private func storageRow(_ title: String, _ value: String) -> some View {
+    private func storageRow(_ title: LocalizedStringKey, _ value: String) -> some View {
         HStack {
             Text(title).font(.system(size: 16, weight: .medium))
             Spacer()

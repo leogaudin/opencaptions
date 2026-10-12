@@ -252,8 +252,10 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 
 - `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`
   names. Models download on first use into `models/`.
-  - **faster-whisper** (CPU or CUDA) runs every Whisper size. Everything is decoded: the
-    voice-detection filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
+  - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small, Large v3 Turbo and
+    Large v3, the phone's; another size runs when named by an API client or by `WHISPER_MODEL`.
+    Everything is decoded: the voice-detection
+    filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The
     no-speech check and a hallucination guard (`WHISPER_*`) stay on. faster-whisper still
     moves on from a window when the model says "no speech after here", leaving some loud
@@ -391,7 +393,7 @@ It is a SwiftUI app over three things it does not reimplement.
 
 | Piece | iOS |
 |---|---|
-| Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. One Swift actor, `CaptionEngine`, makes every call: the engine keeps one scene per process and allows its calls from any thread if they are serialized, which an actor guarantees. |
+| Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. Only the `oc_*` functions leave the library (`build-apple.sh` makes the rest private), since FluidAudio's own Rust library is linked beside it and a name in both stops the linker. One Swift actor, `CaptionEngine`, makes every call: the engine keeps one scene per process and allows its calls from any thread if they are serialized, which an actor guarantees. |
 | Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) and [FluidAudio](https://github.com/FluidInference/FluidAudio) (Parakeet) (Core ML, Neural Engine), pinned, in their own SwiftPM target so the core tests do not build them; iOS 26's `SpeechTranscriber` beside them. Its result is mapped to the same `Transcript` shape the way the server's local provider does, so transcripts are interchangeable. A `Transcriber` protocol sits in front, so a hosted endpoint can be a second conformance later. |
 | Decode, composite, encode | AVAssetReader decodes, the engine draws each overlay, Core Image composites, AVAssetWriter encodes (H.264, or 10-bit HEVC for HDR) with the audio re-encoded as AAC. The picture is baked upright at the size it is shown. |
 
@@ -426,10 +428,9 @@ It mirrors the web one.
   through the engine. The playhead stays in the middle and the timeline moves under it (the track
   is offset by the playing time, so only a small modifier and the ruler read it, never the tracks).
   A finger dragging anywhere on it scrubs, pausing a playing video, and coasts a little on
-  release; a pinch zooms; a tap seeks. It opens at 80 pt per second, and Fit zooms out until the
-  whole video spans half the view. Dragging a caption's edge holds the track still, or it would
+  release; a pinch zooms; a tap seeks. It opens at 80 pt per second. Dragging a caption's edge holds the track still, or it would
   move under the finger.
-- **Transport and undo.** Play, the time (current over total), mute, Fit, undo and redo.
+- **Transport and undo.** Play, the time (current over total), mute, undo and redo.
   `EditorModel` records a snapshot (transcript, style, offset) before each change, and a run of one
   kind of change (a slider, an edge) is one step.
 - **Layout.** The video takes the screen, with only the compact timeline under it. On a wide

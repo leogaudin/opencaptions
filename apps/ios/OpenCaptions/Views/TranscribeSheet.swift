@@ -141,10 +141,19 @@ struct TranscribeSheet: View {
                     }
                     .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
                     .containerRelativeFrame(.horizontal)
+                    .id("top")
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .scrollIndicators(.hidden)
                 .task { proxy.scrollTo(language, anchor: .center) }
+                // The list opens on the chosen language, far down it: the download, and a failure,
+                // are at the top, and what everything waits for must be what is in view.
+                .onChange(of: downloading != nil) { _, started in
+                    if started { withAnimation { proxy.scrollTo("top", anchor: .top) } }
+                }
+                .onChange(of: failure) { _, shown in
+                    if shown != nil { withAnimation { proxy.scrollTo("top", anchor: .top) } }
+                }
             }
             footer(Button(downloaded ? (onServer ? "Transcribe on \(app.serverConnection?.displayName ?? "the server")" : "Transcribe") : "Download and transcribe") {
                 Task { await begin(allowMetered: false) }

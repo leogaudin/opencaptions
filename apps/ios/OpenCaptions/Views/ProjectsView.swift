@@ -15,7 +15,11 @@ struct PickedMovie: Transferable {
             let copy = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString)
                 .appendingPathExtension(received.file.pathExtension.isEmpty ? "mov" : received.file.pathExtension)
-            try FileManager.default.copyItem(at: received.file, to: copy)
+            // The system's file is already a copy of the original, and goes when this closure ends:
+            // moved, a video of several GB is not copied a second time.
+            do { try FileManager.default.moveItem(at: received.file, to: copy) } catch {
+                try FileManager.default.copyItem(at: received.file, to: copy)
+            }
             return PickedMovie(url: copy)
         }
     }
@@ -25,6 +29,8 @@ struct ProjectsView: View {
     @Environment(AppModel.self) private var app
     @State private var picked: PhotosPickerItem?
     @State private var importing: String?  // what the spinner says, while there is one
+    /// How much of the picked video the system has handed over (it may have to fetch it from iCloud).
+    @State private var importFraction: Double?
     @State private var pending: PendingImport?
     @State private var path: [UUID] = []
     @State private var deleting: Project?
@@ -171,7 +177,11 @@ struct ProjectsView: View {
 
     private var importingCard: some View {
         VStack(spacing: 12) {
-            Spinner()
+            if let fraction = importFraction, fraction > 0 {
+                ProgressBar(value: fraction).frame(width: 180)
+            } else {
+                Spinner()
+            }
             Text(importing ?? "").font(.system(size: 15, weight: .semibold))
         }
         .padding(.horizontal, 28).padding(.vertical, 22)
@@ -183,14 +193,18 @@ struct ProjectsView: View {
     /// decides: nothing is imported until they say so.
     private func load(_ item: PhotosPickerItem) async {
         importing = String(localized: "Preparing your video…")
+        importFraction = nil
         defer {
             importing = nil
+            importFraction = nil
             picked = nil
         }
-        guard let movie = try? await item.loadTransferable(type: PickedMovie.self) else {
+        let began = Date()
+        guard let movie = await receive(item) else {
             app.errorMessage = String(localized: "That video could not be read.")
             return
         }
+        let received = Date()
         guard let info = try? await VideoProbe.probe(movie.url) else {
             try? FileManager.default.removeItem(at: movie.url)
             app.errorMessage = String(localized: "That file does not look like a video.")
@@ -199,6 +213,28 @@ struct ProjectsView: View {
         pending = PendingImport(
             url: movie.url, title: String(localized: "Video \(Date().formatted(date: .abbreviated, time: .shortened))"),
             info: info, poster: await PendingImport.poster(of: movie.url))
+        // Where the wait went, for the diagnostics log: the system handing the video over is the long part.
+        Diagnostics.log(
+            "import: \(Int(received.timeIntervalSince(began) * 1000)) ms to receive it from Photos, "
+                + "\(Int(Date().timeIntervalSince(received) * 1000)) ms to read it")
+    }
+
+    /// The picked video as a file of ours. The system makes the file (from iCloud if it has to), and says
+    /// how far it is, which the card shows.
+    private func receive(_ item: PhotosPickerItem) async -> PickedMovie? {
+        var watcher: Task<Void, Never>?
+        defer { watcher?.cancel() }
+        return await withCheckedContinuation { (continuation: CheckedContinuation<PickedMovie?, Never>) in
+            let progress = item.loadTransferable(type: PickedMovie.self) { result in
+                continuation.resume(returning: try? result.get())
+            }
+            watcher = Task { @MainActor in
+                while !Task.isCancelled {
+                    importFraction = progress.fractionCompleted
+                    try? await Task.sleep(for: .milliseconds(120))
+                }
+            }
+        }
     }
 
     private func confirm(_ item: PendingImport) async {

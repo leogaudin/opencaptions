@@ -135,7 +135,7 @@ struct ConnectServerSheet: View {
         .tint(Theme.accent)
     }
 
-    private func field(_ placeholder: String, text: Binding<String>, focus target: Field) -> some View {
+    private func field(_ placeholder: LocalizedStringKey, text: Binding<String>, focus target: Field) -> some View {
         TextField(placeholder, text: text)
             .focused($focus, equals: target)
             .keyboardType(.URL)

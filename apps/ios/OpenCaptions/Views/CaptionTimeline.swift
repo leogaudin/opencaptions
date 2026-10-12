@@ -29,15 +29,14 @@ struct CaptionTimeline: View {
     private var span: Double { duration + max(0, Double(model.project.captionOffsetMs) / 1000) }
     private var fit: Double { viewport > 0 ? TimelineScale.fit(viewport: viewport, span: span) : 1 }
     private var px: Double { TimelineScale.clampZoom(zoom, fit: fit) }
-    private var atFit: Bool { px <= fit * 1.001 }
     private var trackWidth: Double { span * px }
     private var height: Double { Self.rulerHeight + Self.videoHeight + Self.captionHeight }
 
     var body: some View {
         VStack(spacing: 0) {
             TransportBar(
-                playback: playback, duration: duration, canFit: !atFit, canUndo: model.canUndo, canRedo: model.canRedo,
-                fit: { zoom = fit }, undo: { model.undo() }, redo: { model.redo() })
+                playback: playback, duration: duration, canUndo: model.canUndo, canRedo: model.canRedo,
+                undo: { model.undo() }, redo: { model.redo() })
             HStack(alignment: .top, spacing: 0) {
                 labels
                 timeline
@@ -50,12 +49,11 @@ struct CaptionTimeline: View {
             Color.clear.frame(height: Self.rulerHeight)
             label("film", "Video", height: Self.videoHeight)
             label("captions.bubble", "Captions", height: Self.captionHeight)
-            Spacer(minLength: 0)
         }
         .frame(width: Self.labelWidth)
     }
 
-    private func label(_ symbol: String, _ name: String, height: Double) -> some View {
+    private func label(_ symbol: String, _ name: LocalizedStringKey, height: Double) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(Theme.textSecondary)

@@ -1,14 +1,12 @@
 import OpenCaptionsKit
 import SwiftUI
 
-/// Play/pause, the timecode and mute, with the timeline's zoom controls at the right.
+/// Play/pause, the timecode, mute, and undo and redo.
 struct TransportBar: View {
     let playback: Playback
     let duration: Double
-    let canFit: Bool
     let canUndo: Bool
     let canRedo: Bool
-    let fit: () -> Void
     let undo: () -> Void
     let redo: () -> Void
 
@@ -29,7 +27,6 @@ struct TransportBar: View {
                     .foregroundStyle(playback.isMuted ? Theme.textSecondary : Theme.textPrimary)
             }
             .accessibilityLabel(playback.isMuted ? "Unmute" : "Mute")
-            tool("arrow.left.and.right", "Fit the whole video", enabled: canFit, fit)
             tool("arrow.uturn.backward", "Undo", enabled: canUndo, undo)
             tool("arrow.uturn.forward", "Redo", enabled: canRedo, redo)
         }

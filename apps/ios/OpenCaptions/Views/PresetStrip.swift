@@ -2,7 +2,7 @@ import OpenCaptionsKit
 import SwiftUI
 
 /// Tiles fill the width and wrap: as many to a row as fit.
-private let tileColumns = [GridItem(.adaptive(minimum: 140), spacing: 10)]
+private let tileColumns = [GridItem(.adaptive(minimum: 120), spacing: 10)]
 
 /// The presets, as a grid.
 struct PresetStrip: View {

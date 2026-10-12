@@ -39,12 +39,13 @@ struct EditorView: View {
                         preview.frame(maxWidth: .infinity, maxHeight: .infinity)
                         style.frame(width: 340).background(Theme.background)
                     }
-                    timelinePanel.frame(height: min(280, geo.size.height * 0.4))
+                    timelinePanel
                 } else {
                     preview.frame(maxHeight: .infinity)
-                    timelinePanel.frame(height: 190)
+                    timelinePanel
                 }
             }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
         .background(Theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
@@ -195,7 +196,9 @@ struct EditorView: View {
     /// The timeline sits on a flat dark panel, set off by a hairline, that runs down under the home
     /// indicator. It has no rounded corners: they would show the video's black sides behind them.
     private var timelinePanel: some View {
+        // As tall as its content: the preview takes whatever is left, and the panel leaves no gap under it.
         CaptionTimeline(model: model, playback: playback)
+            .fixedSize(horizontal: false, vertical: true)
             .background {
                 Theme.surface
                     .overlay(alignment: .top) { Theme.stroke.frame(height: 1) }
