@@ -29,6 +29,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |
 | **Chunky 3D** | Gold gradient letters on a shaded extrusion, pushed in as each word is said. |
+| **Poster** | Tall condensed capitals stacked into a block, every row as wide as the widest, key words in red. |
 | **Slam** | Heavy capitals dropping in, the line jolting, the key word set large on its own row. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
 
@@ -41,6 +42,7 @@ position, font size and words per line, which belong to your video.
   Inter, Poppins and Montserrat come with the app. Any other font is downloaded from Google Fonts by
   the server the first time it is used, then kept, so the preview and the export use the same file.
   (On a server with no internet, a font that was never fetched falls back to Inter.)
+- **Layout**: **Line** (words fill rows) or **Stack** (a poster: short rows, each scaled to the same width).
 - **Emphasis size**: how much larger a key word is set (1 is off). Each caption's key word is chosen by a
   rule, and you can change it per word, see [Editing](./editing.md).
 - **Fill**: a plain colour, or a gradient of two to four colours from the top of the letters to the bottom.

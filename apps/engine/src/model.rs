@@ -39,6 +39,17 @@ pub enum Background {
     Pill,
 }
 
+/// How a caption's words are set in rows.
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Layout {
+    /// Words fill rows left to right up to the frame's width, all at one size.
+    #[default]
+    Line,
+    /// A poster: short rows, each scaled up to the widest one's width and stacked tight.
+    Stack,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Animation {
@@ -152,6 +163,8 @@ pub struct Style {
     /// always in its highlight colour. 1 is off.
     #[serde(default = "default_emphasis_scale")]
     pub emphasis_scale: f32,
+    #[serde(default)]
+    pub layout: Layout,
 }
 
 fn default_emphasis_scale() -> f32 {

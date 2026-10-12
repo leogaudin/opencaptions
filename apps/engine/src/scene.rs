@@ -14,7 +14,7 @@ use tiny_skia::{
 
 use crate::fonts::FontBook;
 use crate::model::{
-    Animation, Background, Rgba, SceneInput, Style, TextCase, cut, emphasis, shifted,
+    Animation, Background, Layout, Rgba, SceneInput, Style, TextCase, cut, emphasis, shifted,
 };
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
@@ -35,6 +35,12 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// A stack's rows are cut at this share of the widest row a line may have, each is then scaled up to
+/// the widest one's width by at most `STACK_MAX_SCALE`, and the rows sit this tight (a share of
+/// their own size).
+const STACK_ROW_SHARE: f32 = 0.55;
+const STACK_MAX_SCALE: f32 = 3.0;
+const STACK_LEADING: f32 = 1.0;
 /// Word slam: the size a word drops in from, how long the drop takes, the share of it in which the
 /// word fades in, and how far the line is jolted when it lands (a share of the font size) and for
 /// how long. The jolt goes along one of these directions, by the word's place in the transcript.
@@ -104,8 +110,11 @@ struct Placed {
     chars: usize,
     /// Its place in the transcript, which decides which way it leans.
     index: usize,
-    /// How much larger than the style's size it is set: a key word's emphasis, else 1.
+    /// How much larger than the style's size it is set: a key word's emphasis and its row's scale
+    /// in a stack, else 1.
     size: f32,
+    /// Whether it is a key word that is set apart (emphasis on): always in its highlight colour.
+    key: bool,
 }
 
 struct Line {
@@ -178,6 +187,8 @@ impl WordState {
 struct Guide {
     rect: [f32; 4],
     alpha: f32,
+    /// The corner radius of the sliding box, which follows the size of the words it moves between.
+    radius: f32,
 }
 
 #[derive(PartialEq)]
@@ -805,23 +816,29 @@ impl Scene {
         let reach = |dx: f32, dy: f32| dx.abs().max(dy.abs());
         // What a caption's drawing reaches past its block: the soft edges of a shadow and a glow, the
         // shadow's offset, an outline, and an italic's lean over the top corner.
-        let margin = (style.shadow_blur * 3.0
-            + reach(style.shadow_offset_x, style.shadow_offset_y)
-            + style.glow_blur * 3.0
-            + style.stroke_width)
-            // A key word's effects are as much larger as the word.
-            * style.emphasis_scale.max(1.0)
-            + if style.italic { fs * ITALIC_SKEW } else { 0.0 }
-            + match style.animation {
-                // The soft words' blur, a turned word's corners, the bar under the line.
-                Animation::LyricFocus => fs * FOCUS_BLUR * 3.0,
-                Animation::WordBounce | Animation::Stickers => fs * 0.15,
-                Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
-                Animation::LetterRise => fs * RISE_FROM,
-                Animation::WordSlam => fs * JOLT * 1.5,
-                _ => 0.0,
-            }
-            + 2.0;
+        // `k` is the size of the largest word: a key word's, or a stack row's, effects grow with it.
+        let margin = |k: f32| {
+            (style.shadow_blur * 3.0
+                + reach(style.shadow_offset_x, style.shadow_offset_y)
+                + style.glow_blur * 3.0
+                + style.stroke_width)
+                * k
+                + if style.italic {
+                    fs * ITALIC_SKEW * k
+                } else {
+                    0.0
+                }
+                + match style.animation {
+                    // The soft words' blur, a turned word's corners, the bar under the line.
+                    Animation::LyricFocus => fs * FOCUS_BLUR * 3.0 * k,
+                    Animation::WordBounce | Animation::Stickers => fs * 0.15 * k,
+                    Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
+                    Animation::LetterRise => fs * RISE_FROM * k,
+                    Animation::WordSlam => fs * JOLT * 1.5 * k,
+                    _ => 0.0,
+                }
+                + 2.0
+        };
 
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
@@ -882,25 +899,52 @@ impl Scene {
                         }
                     })
                     .collect();
-                // Rows: words fill a row until the next does not fit; a key word has a row to
-                // itself, and the row is as tall as its word.
+                // Rows: words fill a row until the next does not fit (a stack's rows are short); a
+                // key word has a row to itself, and the row is as tall as its word.
+                let stack = style.layout == Layout::Stack;
+                let limit = if stack {
+                    STACK_ROW_SHARE * max_row
+                } else {
+                    max_row
+                };
                 let mut rows: Vec<(Vec<usize>, f32, f32)> = vec![];
                 for (i, (_, adv)) in shaped.iter().enumerate() {
                     let slot = adv + 2.0 * pad_wx;
                     let alone = sizes[i] > 1.0;
                     match rows.last_mut() {
-                        Some((row, w, k)) if !alone && *k <= 1.0 && *w + sep + slot <= max_row => {
+                        Some((row, w, k)) if !alone && *k <= 1.0 && *w + sep + slot <= limit => {
                             row.push(i);
                             *w += sep + slot;
                         }
                         _ => rows.push((vec![i], slot, sizes[i])),
                     }
                 }
-                let height_of = |k: f32| LINE_HEIGHT * fs * k + 2.0 * pad_wy;
-                let inner_w = rows.iter().map(|r| r.1).fold(0.0, f32::max);
+                // A stack scales each row up to the widest one's width, at most three times over.
+                let widest = rows.iter().map(|r| r.1).fold(0.0, f32::max);
+                let scales: Vec<f32> = rows
+                    .iter()
+                    .map(|r| {
+                        if stack {
+                            (widest / r.1.max(1.0)).clamp(1.0, STACK_MAX_SCALE)
+                        } else {
+                            1.0
+                        }
+                    })
+                    .collect();
+                let lead = if stack { STACK_LEADING } else { LINE_HEIGHT };
+                let height_of = |k: f32, scale: f32| lead * fs * k + 2.0 * pad_wy * scale;
+                let inner_w = rows
+                    .iter()
+                    .zip(&scales)
+                    .map(|(r, s)| r.1 * s)
+                    .fold(0.0, f32::max);
                 let (block_w, block_h) = (
                     inner_w + 2.0 * pad_bx,
-                    rows.iter().map(|r| height_of(r.2)).sum::<f32>() + 2.0 * pad_by,
+                    rows.iter()
+                        .zip(&scales)
+                        .map(|(r, s)| height_of(r.2 * s, *s))
+                        .sum::<f32>()
+                        + 2.0 * pad_by,
                 );
                 // The block is centred on (position_x, position_y) and clamped so it
                 // never leaves the frame, whatever a drag asks for. One wider than the
@@ -917,12 +961,16 @@ impl Scene {
                 let mut placed: Vec<Option<Placed>> = (0..chunk.len()).map(|_| None).collect();
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
                 let mut top = y0 + pad_by;
-                for (row, row_w, k) in &rows {
-                    let row_h = height_of(*k);
+                let mut biggest = 1.0f32;
+                for ((row, row_w, e), scale) in rows.iter().zip(&scales) {
+                    let k = e * scale;
+                    biggest = biggest.max(k);
+                    let row_h = height_of(k, *scale);
                     // Half-leading, as CSS does, for this row's size.
-                    let baseline_in_row =
-                        pad_wy + (LINE_HEIGHT * fs * k - (ascent + descent) * k) / 2.0 + ascent * k;
-                    let mut x = x0 + pad_bx + (inner_w - row_w) / 2.0;
+                    let baseline_in_row = pad_wy * scale
+                        + (lead * fs * k - (ascent + descent) * k) / 2.0
+                        + ascent * k;
+                    let mut x = x0 + pad_bx + (inner_w - row_w * scale) / 2.0;
                     // In a right-to-left line the first word is the rightmost.
                     let order: Vec<usize> = if right_to_left {
                         row.iter().rev().copied().collect()
@@ -931,15 +979,17 @@ impl Scene {
                     };
                     for i in order {
                         let (glyphs, adv) = &shaped[i];
-                        let slot_w = adv + 2.0 * pad_wx;
-                        let at = Transform::from_translate(x + pad_wx, top + baseline_in_row);
+                        let slot_w = (adv + 2.0 * pad_wx) * scale;
+                        let at =
+                            Transform::from_translate(x + pad_wx * scale, top + baseline_in_row)
+                                .pre_scale(*scale, *scale);
                         placed[i] = Some(Placed {
                             start: shifted(chunk[i].start, offset),
                             end: shifted(chunk[i].end, offset),
                             glyphs: glyphs.clone().and_then(|p| p.transform(at)),
                             slot: Rect::from_xywh(x, top, slot_w.max(1.0), row_h).unwrap(),
-                            ink_x: x + pad_wx,
-                            ink_w: *adv,
+                            ink_x: x + pad_wx * scale,
+                            ink_w: adv * scale,
                             baseline: top + baseline_in_row,
                             em_top: top + baseline_in_row - ascent * k,
                             clusters: clusters[i]
@@ -948,15 +998,20 @@ impl Scene {
                                 .collect(),
                             chars: texts[i].chars().count(),
                             index: first + i,
-                            size: sizes[i],
+                            size: sizes[i] * scale,
+                            key: sizes[i] > 1.0,
                         });
-                        x += slot_w + sep;
+                        x += slot_w + sep * scale;
                     }
                     top += row_h;
                 }
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
-                let tallest = rows.iter().map(|r| height_of(r.2)).fold(0.0, f32::max);
+                let tallest = rows
+                    .iter()
+                    .zip(&scales)
+                    .map(|(r, s)| height_of(r.2 * s, *s))
+                    .fold(0.0, f32::max);
                 let grow = inner_w.max(tallest) * lift(style.animation);
                 Line {
                     first,
@@ -965,7 +1020,7 @@ impl Scene {
                     words: placed.into_iter().flatten().collect(),
                     block: (style.background != Background::None).then_some(block),
                     anchor: block,
-                    bounds: pixel_bounds(block, margin + grow, width, height),
+                    bounds: pixel_bounds(block, margin(biggest) + grow, width, height),
                 }
             })
             .collect();
@@ -1091,6 +1146,7 @@ impl Scene {
                     ],
                     // It fades in under the first word and is simply there after.
                     alpha: reached(t, &words[0], COLOUR_S),
+                    radius: self.word_radius * lerp(from.size, to.size),
                 })
             }
             Animation::LineBar => {
@@ -1106,6 +1162,7 @@ impl Scene {
                         (fs * BAR_THICK).max(2.0),
                     ],
                     alpha: 1.0,
+                    radius: 0.0,
                 })
             }
             _ => None,
@@ -1157,14 +1214,14 @@ impl Scene {
         if s.animation == Animation::HighlightSlide
             && let Some(g) = guide
             && let Some(path) = Rect::from_xywh(g.rect[0], g.rect[1], g.rect[2], g.rect[3])
-                .and_then(|r| rounded_rect(r, self.word_radius))
+                .and_then(|r| rounded_rect(r, g.radius))
         {
             let p = paint(colour(s.primary(), g.alpha));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
         if s.animation == Animation::Stickers {
             for (w, st) in line.words.iter().zip(states) {
-                if let Some(path) = rounded_rect(w.slot, self.word_radius * 1.6) {
+                if let Some(path) = rounded_rect(w.slot, self.word_radius * w.size * 1.6) {
                     let p = paint(colour(s.highlight(w.index), 1.0));
                     canvas.fill_path(&path, &p, FillRule::Winding, pivot(w, st), None);
                 }
@@ -1172,7 +1229,7 @@ impl Scene {
         }
         if s.animation == Animation::HighlightBox {
             for (w, st) in line.words.iter().zip(states).filter(|(_, st)| st.on > 0.0) {
-                if let Some(path) = rounded_rect(w.slot, self.word_radius) {
+                if let Some(path) = rounded_rect(w.slot, self.word_radius * w.size) {
                     let p = paint(colour(s.highlight(w.index), st.on * st.opacity));
                     let grow = WordState {
                         scale: st.box_scale,
@@ -1268,7 +1325,7 @@ impl Scene {
                     let base = solid(s.shadow_color);
                     let shaded = s.extrude_shade > 0.0 && extruded;
                     for (w, st) in line.words.iter().zip(states) {
-                        let letters = parts(w, st, s.font_size, rising);
+                        let letters = parts(w, st, s.font_size * w.size, rising);
                         // From where the (possibly sunk) face is to the back of the extrusion.
                         let from = sunk(st);
                         let steps = if s.shadow_blur > 0.0 {
@@ -1339,7 +1396,7 @@ impl Scene {
             if cache.halo.as_ref().is_none_or(|(k, _)| *k != key) {
                 cache.halo = layer().map(|mut halo| {
                     for (w, st) in line.words.iter().zip(states) {
-                        for (path, down, shown) in parts(w, st, s.font_size, rising) {
+                        for (path, down, shown) in parts(w, st, s.font_size * w.size, rising) {
                             let c = colour(solid(s.glow_color), st.opacity * shown);
                             let at = Transform::from_translate(0.0, down).post_concat(face(w, st));
                             ink(&mut halo, path, c, c, local(at), w.size);
@@ -1421,11 +1478,11 @@ impl Scene {
             let Some(path) = &w.glyphs else { continue };
             // The underline is a marker stroke laid under the letters, left to right as the word is said.
             if s.animation == Animation::WordUnderline && st.fill > 0.0 {
-                let thick = s.font_size * MARKER_THICK;
-                let over = s.font_size * MARKER_OVERHANG;
+                let thick = s.font_size * w.size * MARKER_THICK;
+                let over = s.font_size * w.size * MARKER_OVERHANG;
                 let stroke = Rect::from_xywh(
                     w.ink_x - over,
-                    w.baseline - s.font_size * MARKER_RISE,
+                    w.baseline - s.font_size * w.size * MARKER_RISE,
                     (w.ink_w * st.fill + 2.0 * over).max(1.0),
                     thick,
                 );
@@ -1455,7 +1512,7 @@ impl Scene {
                 | Animation::Typewriter => 0.0,
             };
             // A key word is always in its highlight colour.
-            let lit = if w.size > 1.0 { 1.0 } else { lit };
+            let lit = if w.key { 1.0 } else { lit };
             let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
             let fill = match gradient_stops(&s.fill_colors, &tint) {
                 Some(stops) => LinearGradient::new(
@@ -1516,8 +1573,8 @@ impl Scene {
             }
             if rising && st.enter < 1.0 {
                 // The letters that have started, each climbing and fading in on its own.
-                for (part, down, shown) in parts(w, st, s.font_size, true) {
-                    let reach = (s.font_size * RISE_FROM).ceil() as usize + 2;
+                for (part, down, shown) in parts(w, st, s.font_size * w.size, true) {
+                    let reach = (s.font_size * w.size * RISE_FROM).ceil() as usize + 2;
                     if let Some(within) = word_box(part, w, st, reach)
                         && let Some(mut group) = Pixmap::new(within.width(), within.height())
                     {
@@ -1548,7 +1605,7 @@ impl Scene {
             if st.opacity >= 1.0 && st.soften <= 0.0 && !(typed && st.fill < 1.0) {
                 ink_with(canvas, path, &fill, edge, face(w, st), w.size);
             } else {
-                let sigma = st.soften * s.font_size * FOCUS_BLUR;
+                let sigma = st.soften * s.font_size * w.size * FOCUS_BLUR;
                 let reach = if st.soften > 0.0 {
                     blur_reach(sigma)
                 } else {
@@ -1584,12 +1641,12 @@ impl Scene {
             match s.animation {
                 Animation::Typewriter if st.on > 0.0 => {
                     // The cursor sits where the next letter goes, for as long as the word is being said.
-                    let width = (s.font_size * 0.07).max(2.0);
+                    let width = (s.font_size * w.size * 0.07).max(2.0);
                     let cursor = Rect::from_xywh(
                         w.ink_x + w.ink_w * st.fill,
-                        w.baseline - s.font_size * 0.78,
+                        w.baseline - s.font_size * w.size * 0.78,
                         width,
-                        s.font_size * 0.92,
+                        s.font_size * w.size * 0.92,
                     );
                     if let Some(path) = cursor.and_then(|r| rounded_rect(r, width / 4.0)) {
                         let p = paint(colour(s.highlight(w.index), st.on));
@@ -2670,6 +2727,122 @@ mod tests {
         assert!(scene.key(landing + 0.01) != scene.key(landing + 0.02));
     }
 
+    const POSTER: &[(&str, f32, f32)] = &[
+        ("MAKE", 0.0, 0.4),
+        ("IT", 0.4, 0.8),
+        ("BIG", 0.8, 1.2),
+        ("AND", 1.2, 1.6),
+        ("BOLD", 1.6, 2.0),
+    ];
+
+    fn stacked(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value) -> Scene {
+        let mut patch = patch;
+        patch["layout"] = "stack".into();
+        patch["words_per_line"] = 5.into();
+        patch["motion_blur"] = 0.into();
+        Scene::new(&book(), styled(animation, words, patch))
+    }
+
+    /// The rows of a line as lists of the words on them, top to bottom.
+    fn rows_of(scene: &Scene) -> Vec<Vec<&Placed>> {
+        let mut rows: Vec<Vec<&Placed>> = vec![];
+        for w in &scene.lines[0].words {
+            match rows.last_mut() {
+                Some(row) if row[0].slot.y() == w.slot.y() => row.push(w),
+                _ => rows.push(vec![w]),
+            }
+        }
+        rows
+    }
+
+    #[test]
+    fn in_a_stack_every_row_is_as_wide_as_the_widest() {
+        let scene = stacked("none", POSTER, serde_json::json!({}));
+        let rows = rows_of(&scene);
+        assert!(rows.len() >= 2, "the words are cut into several rows");
+        let width = |row: &Vec<&Placed>| {
+            let (first, last) = (row[0], row[row.len() - 1]);
+            last.ink_x + last.ink_w - first.ink_x
+        };
+        let widest = rows.iter().map(width).fold(0.0, f32::max);
+        // The row that was widest is as it was; the others are scaled up to it.
+        for row in &rows {
+            assert!(
+                (width(row) - widest).abs() < 2.0 || row[0].size >= 3.0,
+                "{} against {widest}",
+                width(row)
+            );
+        }
+        assert!(
+            rows.iter().any(|r| r[0].size > 1.1),
+            "a narrower row is scaled up: {:?}",
+            rows.iter()
+                .map(|r| (r.len(), r[0].size))
+                .collect::<Vec<_>>()
+        );
+        // Stacked tight: a row begins about where the one above ends.
+        let ys: Vec<f32> = rows.iter().map(|r| r[0].slot.y()).collect();
+        assert!(ys.windows(2).all(|p| p[1] > p[0]));
+    }
+
+    #[test]
+    fn a_stack_scales_a_short_row_by_three_at_most() {
+        let words = [("I", 0.0, 0.4), ("EXTRAORDINARILY", 0.4, 1.0)];
+        let scene = stacked("none", &words, serde_json::json!({}));
+        let rows = rows_of(&scene);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0][0].size, 3.0, "the cap holds");
+        assert_eq!(rows[1][0].size, 1.0, "the widest row is as it is");
+        assert!(scene.lines[0].words.iter().all(|w| w.size <= 3.0));
+    }
+
+    #[test]
+    fn every_animation_draws_inside_the_lines_bounds_in_a_stack() {
+        for anim in [
+            "word_highlight",
+            "highlight_box",
+            "word_pop",
+            "word_fade",
+            "word_sweep",
+            "word_underline",
+            "typewriter",
+            "none",
+            "word_bounce",
+            "lyric_focus",
+            "highlight_slide",
+            "line_bar",
+            "stickers",
+            "word_press",
+            "letter_rise",
+            "word_slam",
+        ] {
+            let patch = serde_json::json!({
+                "emphasis_scale": 1.4, "stroke_width": 4, "stroke_color": "#000000",
+                "shadow_blur": 6, "shadow_color": "#000000B0"
+            });
+            let scene = stacked(anim, POSTER, patch);
+            let bounds = scene.lines[0].bounds;
+            let mut r = Renderer::new(scene);
+            for t in [0.1, 0.45, 0.9, 1.3, 1.9] {
+                r.render(t);
+                let Some((l, rt, tp, bt)) = extent(&r, 1080) else {
+                    continue;
+                };
+                assert!(
+                    l as i32 >= bounds.x()
+                        && rt as i32 <= bounds.right()
+                        && tp as i32 >= bounds.y()
+                        && bt as i32 <= bounds.bottom(),
+                    "{anim} at {t}: ink {:?} outside {:?}",
+                    (l, rt, tp, bt),
+                    bounds
+                );
+            }
+            r.render(0.9);
+            assert!(extent(&r, 1080).is_some(), "{anim} drew nothing");
+        }
+    }
+
     #[test]
     fn the_active_caption_bounds_track_the_rendered_line() {
         let mut r = Renderer::new(Scene::new(&book(), input("word_highlight", WORDS, 3)));
@@ -3303,6 +3476,16 @@ mod tests {
                 styled(anim, FIGURES, keyed.clone()),
             ));
         }
+        let poster = serde_json::json!({
+            "layout": "stack", "emphasis_scale": 1.4, "words_per_line": 4,
+            "stroke_width": 4, "stroke_color": "#000000"
+        });
+        for anim in ["word_pop", "letter_rise", "highlight_box"] {
+            cases.push((
+                format!("{anim}+stack"),
+                styled(anim, FIGURES, poster.clone()),
+            ));
+        }
         let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
         marked.watermark = Some("OpenCaptions".to_string());
         cases.push(("watermark".to_string(), marked));
@@ -3519,6 +3702,9 @@ mod tests {
         ("word_pop+chunky", 0x064022aaf29214a8),
         ("word_pop+emphasis", 0x0e7b974001700c3c),
         ("word_slam+emphasis", 0x44c54b4d5b5630fa),
+        ("word_pop+stack", 0xfd681dd2b6862af5),
+        ("letter_rise+stack", 0xbaeb9754c1ea4953),
+        ("highlight_box+stack", 0x9a370ca616d3fee2),
         ("watermark", 0xe22c164ced6e9dd5),
     ];
 }

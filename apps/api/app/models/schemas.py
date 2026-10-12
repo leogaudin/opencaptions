@@ -206,6 +206,8 @@ class StyleConfig(BaseModel):
     extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
     # How much larger a key word is set: above 1 it has a row to itself and its highlight colour.
     emphasis_scale: float = Field(default=1.0, ge=1.0, le=2.5)
+    # How the words are set in rows: filling lines, or a stack of short rows each scaled to one width.
+    layout: Literal["line", "stack"] = "line"
 
 
 # Project + Job

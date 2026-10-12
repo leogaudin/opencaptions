@@ -105,6 +105,12 @@ struct StylePanel: View {
                         label: { $0 ? "Italic" : "Upright" })
                         .frame(maxWidth: 220)
                 }
+                Row("Layout") {
+                    SegmentedPills(
+                        options: CaptionLayout.allCases, selection: model.binding(\.layout),
+                        label: { $0 == .stack ? "Stack" : "Line" })
+                        .frame(maxWidth: 220)
+                }
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
                 Row("Fill") {
                     SegmentedPills(

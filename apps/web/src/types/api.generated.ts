@@ -1466,6 +1466,12 @@ export interface components {
              * @default 1
              */
             emphasis_scale: number;
+            /**
+             * Layout
+             * @default line
+             * @enum {string}
+             */
+            layout: "line" | "stack";
         };
         /**
          * SubtitleExportLinks

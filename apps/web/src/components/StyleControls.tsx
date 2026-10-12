@@ -109,6 +109,11 @@ const SLANT_NAMES: Record<(typeof SLANTS)[number], string> = {
   italic: msg("Italic"),
 };
 
+const LAYOUTS = ["line", "stack"] as const;
+const LAYOUT_NAMES: Record<(typeof LAYOUTS)[number], string> = {
+  line: msg("Line"),
+  stack: msg("Stack"),
+};
 const FILLS = ["solid", "gradient"] as const;
 const FILL_NAMES: Record<(typeof FILLS)[number], string> = {
   solid: msg("Solid"),
@@ -166,6 +171,14 @@ function TextPanel({
           value={style.italic ? "italic" : "upright"}
           label={(s) => t(SLANT_NAMES[s])}
           onChange={(slant) => setStyle({ italic: slant === "italic" })}
+        />
+      </Field>
+      <Field label={t("Layout")}>
+        <Segmented
+          options={LAYOUTS}
+          value={style.layout}
+          label={(l) => t(LAYOUT_NAMES[l])}
+          onChange={(layout) => setStyle({ layout })}
         />
       </Field>
       <ColorField

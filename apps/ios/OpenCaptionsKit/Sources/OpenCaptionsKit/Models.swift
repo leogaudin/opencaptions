@@ -107,6 +107,13 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case wordSlam = "word_slam"
 }
 
+public enum CaptionLayout: String, Codable, CaseIterable, Sendable {
+    /// Words fill rows left to right, all at one size.
+    case line
+    /// A poster: short rows, each scaled up to the widest one's width and stacked tight.
+    case stack
+}
+
 public enum TextCase: String, Codable, CaseIterable, Sendable {
     case none
     case upper
@@ -157,6 +164,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var extrudeShade: Double
     /// How much larger a key word is set, 1...2.5: above 1 it has a row to itself and its highlight colour.
     public var emphasisScale: Double
+    /// How the words are set in rows: filling lines, or a stack of short rows scaled to one width.
+    public var layout: CaptionLayout
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -166,7 +175,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
         motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0,
-        emphasisScale: Double = 1
+        emphasisScale: Double = 1, layout: CaptionLayout = .line
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -194,6 +203,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.fillColors = fillColors
         self.extrudeShade = extrudeShade
         self.emphasisScale = emphasisScale
+        self.layout = layout
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -223,7 +233,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5,
             fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
             extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0,
-            emphasisScale: try c.decodeIfPresent(Double.self, forKey: .emphasisScale) ?? 1)
+            emphasisScale: try c.decodeIfPresent(Double.self, forKey: .emphasisScale) ?? 1,
+            layout: try c.decodeIfPresent(CaptionLayout.self, forKey: .layout) ?? .line)
     }
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
@@ -268,5 +279,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case fillColors = "fill_colors"
         case extrudeShade = "extrude_shade"
         case emphasisScale = "emphasis_scale"
+        case layout
     }
 }

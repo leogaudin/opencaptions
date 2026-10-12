@@ -38,6 +38,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `motion_blur` | 0 to 1 | `0.5` | The shutter, as a share of 1/30 s whatever the frame rate. Moving words smear along their path; `0` is off. Still frames are unaffected. |
 | `fill_colors` | 0 to 4 colours | none | A vertical gradient over each word's letters, from the top of the line to the baseline. Empty is `text_color`. |
 | `extrude_shade` | 0 to 1 | `0` | How much a solid shadow (an extrusion) darkens from front to back, with a lit edge just behind the letters. Pick a shadow colour that is not black, or there is nothing to darken. |
+| `layout` | `line`, `stack` | `line` | `line` fills rows left to right at one size. `stack` is a poster: short rows (cut at about half the width), each scaled up (at most three times) to the width of the widest, stacked tight. |
 | `emphasis_scale` | 1 to 2.5 | `1` | How much larger a key word is set. Above `1`, a key word has a row to itself, is always in its highlight colour, and its outline and shadow grow with it. `1` is off. |
 
 ## Animations

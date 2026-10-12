@@ -151,6 +151,13 @@ build produces byte-identical frames. Nothing else may draw captions.
     from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
     depth: its stamps are laid from the back forward, so each pixel takes the colour of the
     nearest stamp that covers it, and the first step is lightened as a lit edge.
+  - *Stack layout.* `layout: "stack"` cuts rows at 0.55 of the usual width (a key word alone on its
+    own), then scales each row up to the widest row's natural width, at most three times, and
+    stacks them with leading of 1.0 of each row's own size. A word's `size` (its emphasis times
+    its row's scale) is what every animation uses wherever it used the font size: the underline's
+    thickness, the cursor, the sliding box's corner, a label's radius, the blur of a soft word,
+    how far a letter rises, and the outline, shadow and extrusion, so every animation works in a
+    stack.
   - *Key words.* `model::emphasis` is the one rule the scene and both editors share, held to
     `testdata/emphasis.json`: an explicit `Word.emphasis` wins; otherwise each caption has at most
     one key word, the first with a digit, `%` or a currency sign, or else the longest word if it

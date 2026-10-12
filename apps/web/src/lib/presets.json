@@ -28,7 +28,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -60,7 +61,8 @@
       "motion_blur": 0.6,
       "fill_colors": [],
       "extrude_shade": 0.5,
-      "emphasis_scale": 1.25
+      "emphasis_scale": 1.25,
+      "layout": "line"
     }
   },
   {
@@ -92,7 +94,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -124,7 +127,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -156,7 +160,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -189,7 +194,8 @@
       "motion_blur": 0.8,
       "fill_colors": [],
       "extrude_shade": 0.6,
-      "emphasis_scale": 1.3
+      "emphasis_scale": 1.3,
+      "layout": "line"
     }
   },
   {
@@ -222,7 +228,8 @@
       "motion_blur": 0,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -255,7 +262,8 @@
       "motion_blur": 0.6,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -288,7 +296,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -321,7 +330,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     }
   },
   {
@@ -353,7 +363,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     },
     "pro": true
   },
@@ -386,7 +397,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     },
     "pro": true
   },
@@ -419,7 +431,8 @@
       "motion_blur": 0.5,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     },
     "pro": true
   },
@@ -452,7 +465,8 @@
       "motion_blur": 0.5,
       "fill_colors": ["#FFF36B", "#FFB800"],
       "extrude_shade": 0.6,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     },
     "pro": true
   },
@@ -485,7 +499,8 @@
       "motion_blur": 0.7,
       "fill_colors": [],
       "extrude_shade": 0,
-      "emphasis_scale": 1
+      "emphasis_scale": 1,
+      "layout": "line"
     },
     "pro": true
   },
@@ -518,7 +533,42 @@
       "motion_blur": 1,
       "fill_colors": [],
       "extrude_shade": 0.5,
-      "emphasis_scale": 1.5
+      "emphasis_scale": 1.5,
+      "layout": "line"
+    },
+    "pro": true
+  },
+  {
+    "id": "builtin:poster",
+    "name": "Poster",
+    "config": {
+      "font": "Anton",
+      "font_size": 110,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FF3B30"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.5,
+      "animation": "letter_rise",
+      "words_per_line": 5,
+      "word_spacing": 0.1,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 18,
+      "shadow_color": "#000000B0",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 0,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "upper",
+      "italic": false,
+      "motion_blur": 0.6,
+      "fill_colors": [],
+      "extrude_shade": 0,
+      "emphasis_scale": 1.4,
+      "layout": "stack"
     },
     "pro": true
   }
