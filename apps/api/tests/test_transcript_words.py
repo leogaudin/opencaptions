@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from app.models.schemas import Transcript, TranscriptSegment, Word
-from app.transcription.words import clean_transcript, pauses
+from app.transcription.words import clean_transcript, pauses, segment_of
 
 
 def _words(*texts: str) -> list[Word]:
@@ -17,6 +17,20 @@ def _words(*texts: str) -> list[Word]:
 
 def _texts(words: list[Word]) -> list[str]:
     return [w.text for w in words]
+
+
+def test_a_segment_spans_its_words_and_joins_their_text() -> None:
+    words = _words(" hello", "world ")
+    segment = segment_of(words)
+    assert (segment.start, segment.end) == (0.0, 0.9)
+    assert segment.text == "hello world"
+    assert segment.words == words
+    assert segment_of(words).id != segment.id, "each has an id of its own"
+
+
+def test_a_segment_keeps_the_text_and_the_id_it_is_given() -> None:
+    segment = segment_of(_words("a", "b"), text="A, B", segment_id="fixed")
+    assert (segment.id, segment.text) == ("fixed", "A, B")
 
 
 def test_a_segment_that_spans_a_long_silence_is_split_there() -> None:

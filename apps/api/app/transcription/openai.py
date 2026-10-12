@@ -26,6 +26,7 @@ from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services.audio import EXTRACT_TIMEOUT_S
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
+from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
 
@@ -216,11 +217,8 @@ class OpenAIWhisperProvider(TranscriptionProvider):
                 language_detection="auto" if requested_language in {"auto", ""} else "manual",
                 duration=duration,
                 segments=[
-                    TranscriptSegment(
-                        id=str(uuid4()),
-                        words=[Word(text=full_text, start=0.0, end=duration, confidence=1.0)],
-                        start=0.0,
-                        end=duration,
+                    segment_of(
+                        [Word(text=full_text, start=0.0, end=duration, confidence=1.0)],
                         text=full_text,
                     )
                 ]
@@ -243,11 +241,8 @@ class OpenAIWhisperProvider(TranscriptionProvider):
                 if not seg_words:
                     continue
                 segments.append(
-                    TranscriptSegment(
-                        id=str(uuid4()),
-                        words=seg_words,
-                        start=seg_words[0].start,
-                        end=seg_words[-1].end,
+                    segment_of(
+                        seg_words,
                         text=(seg.get("text") or " ".join(w.text for w in seg_words)).strip(),
                     )
                 )
@@ -256,15 +251,7 @@ class OpenAIWhisperProvider(TranscriptionProvider):
             chunk = 6
             for i in range(0, len(all_words), chunk):
                 grp = all_words[i : i + chunk]
-                segments.append(
-                    TranscriptSegment(
-                        id=str(uuid4()),
-                        words=grp,
-                        start=grp[0].start,
-                        end=grp[-1].end,
-                        text=" ".join(w.text for w in grp),
-                    )
-                )
+                segments.append(segment_of(grp))
 
         return Transcript(
             schema_version=1,

@@ -13,7 +13,6 @@ import math
 import os
 from threading import Lock
 from typing import Any
-from uuid import uuid4
 
 import numpy as np
 
@@ -22,6 +21,7 @@ from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services import asr_models
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.chunking import SAMPLE_RATE, Words, decode_window, read_wav, windows
+from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
 
@@ -78,21 +78,11 @@ def segments_from_words(words: list[Word]) -> list[TranscriptSegment]:
     for word in words:
         current.append(word)
         if word.text.endswith(_SENTENCE_END):
-            segments.append(_segment(current))
+            segments.append(segment_of(current))
             current = []
     if current:
-        segments.append(_segment(current))
+        segments.append(segment_of(current))
     return segments
-
-
-def _segment(words: list[Word]) -> TranscriptSegment:
-    return TranscriptSegment(
-        id=str(uuid4()),
-        words=words,
-        start=words[0].start,
-        end=words[-1].end,
-        text=" ".join(w.text for w in words).strip(),
-    )
 
 
 def _snapshot(model: asr_models.AsrModelInfo, *, local_only: bool) -> str:

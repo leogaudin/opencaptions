@@ -12,13 +12,13 @@ import logging
 import wave
 from threading import Lock
 from typing import Any
-from uuid import uuid4
 
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.transcription import chunking
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.device import resolve_compute_type, resolve_device
+from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
 
@@ -144,13 +144,7 @@ class LocalWhisperProvider(TranscriptionProvider):
                     dropped_alignments += 1
             if not words:
                 continue
-            seg_obj = TranscriptSegment(
-                id=str(uuid4()),
-                words=words,
-                start=words[0].start,
-                end=words[-1].end,
-                text=" ".join(w.text for w in words).strip(),
-            )
+            seg_obj = segment_of(words)
             segments.append(seg_obj)
             if on_progress and duration > 0:
                 fraction = min(1.0, max(0.0, seg_obj.end / duration)) * first_pass_share
@@ -289,15 +283,7 @@ class LocalWhisperProvider(TranscriptionProvider):
                 if gap_start - 0.05 <= start < gap_end
             ]
             if words:
-                added.append(
-                    TranscriptSegment(
-                        id=str(uuid4()),
-                        words=words,
-                        start=words[0].start,
-                        end=words[-1].end,
-                        text=" ".join(w.text for w in words),
-                    )
-                )
+                added.append(segment_of(words))
         return sorted(segments + added, key=lambda seg: seg.start)
 
 

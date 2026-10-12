@@ -39,16 +39,34 @@ def _split_at(words: list[Word], first: int, breaks: set[int]) -> list[list[Word
     return pieces
 
 
+def segment_of(
+    words: list[Word], text: str | None = None, segment_id: str | None = None
+) -> TranscriptSegment:
+    """A segment holding `words` (at least one), spanning from the first's start to the last's end.
+
+    Its text is `text`, else the words joined by a space; its id is `segment_id`, else a new one.
+    """
+    return TranscriptSegment(
+        id=segment_id or str(uuid4()),
+        words=words,
+        start=words[0].start,
+        end=words[-1].end,
+        text=" ".join(w.text for w in words).strip() if text is None else text,
+    )
+
+
 def _segment_of(
     segment: TranscriptSegment, words: list[Word], segment_id: str
 ) -> TranscriptSegment:
+    """`segment` with other words: everything it carries but the words, their span and the text."""
+    rebuilt = segment_of(words, segment_id=segment_id)
     return segment.model_copy(
         update={
-            "id": segment_id,
-            "words": words,
-            "start": words[0].start,
-            "end": words[-1].end,
-            "text": " ".join(w.text for w in words).strip(),
+            "id": rebuilt.id,
+            "words": rebuilt.words,
+            "start": rebuilt.start,
+            "end": rebuilt.end,
+            "text": rebuilt.text,
         }
     )
 
