@@ -288,6 +288,7 @@ struct StylePanel: View {
         case .wordPress: "Press"
         case .letterRise: "Rise"
         case .wordSlam: "Slam"
+        case .drift: "Drift"
         }
     }
 

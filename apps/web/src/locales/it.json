@@ -361,5 +361,6 @@
   "Line": "Riga",
   "Stack": "Pila",
   "Extrusion": "Estrusione",
-  "Extrusion back color": "Colore del fondo dell'estrusione"
+  "Extrusion back color": "Colore del fondo dell'estrusione",
+  "Drift": "Deriva"
 }

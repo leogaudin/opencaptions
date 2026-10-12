@@ -361,5 +361,6 @@
   "Line": "单行",
   "Stack": "堆叠",
   "Extrusion": "立体厚度",
-  "Extrusion back color": "立体厚度背面颜色"
+  "Extrusion back color": "立体厚度背面颜色",
+  "Drift": "漂浮"
 }

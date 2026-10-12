@@ -8,8 +8,8 @@
 use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder};
 use rustybuzz::{Face, UnicodeBuffer};
 use tiny_skia::{
-    Color, FillRule, GradientStop, IntRect, LineCap, LineJoin, LinearGradient, Mask, Paint, Path,
-    PathBuilder, Pixmap, PixmapPaint, Point, Rect, SpreadMode, Stroke, Transform,
+    Color, FillRule, FilterQuality, GradientStop, IntRect, LineCap, LineJoin, LinearGradient, Mask,
+    Paint, Path, PathBuilder, Pixmap, PixmapPaint, Point, Rect, SpreadMode, Stroke, Transform,
 };
 
 mod anim;
@@ -28,7 +28,7 @@ use crate::model::{
 };
 use anim::*;
 use draw::*;
-use ease::{ease_out_quad, lerp, linear, overshoot, ramp};
+use ease::{ease_out_quad, lerp, linear, overshoot, ramp, wave};
 use layout::*;
 use pixels::*;
 pub use renderer::Renderer;
@@ -67,6 +67,17 @@ const SLAM_S: f32 = 0.12;
 const SLAM_FADE: f32 = 0.4;
 const JOLT: f32 = 0.035;
 const JOLT_S: f32 = 0.15;
+/// Drift: how long a word takes to come into focus, how blurred it starts (a share of the font
+/// size), how far the line pushes in over its life and bobs (shares of the font size and of the
+/// line), the bob's period, and how much of its glow a word keeps until it is said.
+const DRIFT_IN_S: f32 = 0.35;
+const DRIFT_SOFT: f32 = 0.12;
+const DRIFT_PUSH: f32 = 0.06;
+const DRIFT_BOB: f32 = 0.02;
+const DRIFT_PERIOD_S: f32 = 3.0;
+const DRIFT_GLOW_REST: f32 = 0.55;
+/// A line that does not drift.
+const NO_DRIFT: [f32; 3] = [0.0, 0.0, 1.0];
 const JOLT_DIRECTIONS: [[f32; 2]; 4] = [[1.0, 0.6], [-0.8, 0.8], [0.6, -1.0], [-1.0, -0.4]];
 /// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
 /// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly, and so that
@@ -206,6 +217,22 @@ struct Guide {
     radius: f32,
 }
 
+/// How a whole line moves: knocked about by a landing word (across, down, in pixels), and floating
+/// (across, down, scale).
+#[derive(Clone, Copy, PartialEq)]
+struct LineMotion {
+    jolt: [f32; 2],
+    drift: [f32; 3],
+}
+
+impl LineMotion {
+    /// A line that stays where it is laid out.
+    const STILL: Self = Self {
+        jolt: [0.0; 2],
+        drift: NO_DRIFT,
+    };
+}
+
+/// The frame's line, its words' states, its guide shape, and how the line moves.
 #[derive(PartialEq)]
-/// The frame's line, its words' states, its guide shape, and how far the line is jolted.
-struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>, [f32; 2]);
+struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>, LineMotion);

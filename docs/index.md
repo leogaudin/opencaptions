@@ -30,7 +30,7 @@ the server and on the phone. What the preview shows is what the export draws.
 ## What you get
 
 - **Word-level transcription** in about 100 languages, with the speech model of your choice.
-- **Animated looks**: seventeen presets, and a style panel for fonts, colours, outline, background,
+- **Animated looks**: eighteen presets, and a style panel for fonts, colours, outline, background,
   animation and position.
 - **A real editor**: fix a misheard word right on the video, retime captions on a timeline, undo
   and redo.

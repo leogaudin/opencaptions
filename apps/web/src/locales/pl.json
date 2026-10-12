@@ -361,5 +361,6 @@
   "Line": "Wiersz",
   "Stack": "Stos",
   "Extrusion": "Ekstruzja",
-  "Extrusion back color": "Kolor tyłu ekstruzji"
+  "Extrusion back color": "Kolor tyłu ekstruzji",
+  "Drift": "Dryf"
 }

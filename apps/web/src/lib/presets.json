@@ -571,5 +571,39 @@
       "layout": "stack"
     },
     "pro": true
+  },
+  {
+    "id": "builtin:glow-intro",
+    "name": "Glow Intro",
+    "config": {
+      "font": "Montserrat",
+      "font_size": 76,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#CFE6FF"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.5,
+      "animation": "drift",
+      "words_per_line": 3,
+      "word_spacing": 0.2,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 0,
+      "shadow_color": "#00000000",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 0,
+      "glow_blur": 28,
+      "glow_color": "#8EC5FF",
+      "text_case": "upper",
+      "italic": false,
+      "motion_blur": 0,
+      "fill_colors": [],
+      "extrude_shade": 0,
+      "extrude_back": "#00000000",
+      "layout": "line"
+    },
+    "pro": true
   }
 ]

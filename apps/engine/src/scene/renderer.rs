@@ -7,8 +7,9 @@ pub(super) struct LayerCache {
     pub(super) halo: Option<(LayerKey, Option<Trimmed>)>,
 }
 
-/// A line, and each of its words' opacity, size, tilt and press: all the layers depend on.
-pub(super) type LayerKey = (usize, Vec<[u32; 5]>);
+/// A line; each of its words' opacity, size, tilt, press, entrance and (for Drift) brightness; and
+/// how the line is jolted and drifts: all the layers depend on.
+pub(super) type LayerKey = (usize, Vec<[u32; 6]>, [u32; 5]);
 
 /// How many sub-frames the shutter averages when something moves within it.
 pub(super) const BLUR_SAMPLES: usize = 8;

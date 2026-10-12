@@ -170,6 +170,7 @@ class StyleConfig(BaseModel):
         "word_press",
         "letter_rise",
         "word_slam",
+        "drift",
     ] = "highlight_slide"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.

@@ -39,6 +39,14 @@ pub(super) fn linear(p: f32) -> f32 {
     p
 }
 
+/// A slow wave from -1 to 1 that repeats every 1.0 of `x`, starting at -1 (a smoothed triangle: a
+/// polynomial, not a sine, so every build agrees to the bit).
+pub(super) fn wave(x: f32) -> f32 {
+    let s = x - x.floor();
+    let tri = 1.0 - (2.0 * s - 1.0).abs();
+    tri * tri * (3.0 - 2.0 * tri) * 2.0 - 1.0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -53,6 +61,18 @@ mod tests {
                 .fold(0.0, f32::max)
                 > 1.05
         );
+    }
+
+    #[test]
+    fn the_wave_swings_between_minus_one_and_one_and_repeats() {
+        assert_eq!(wave(0.0), -1.0);
+        assert_eq!(wave(0.5), 1.0);
+        assert!((wave(0.25)).abs() < 1e-6, "it crosses zero a quarter in");
+        for i in 0..=100 {
+            let x = i as f32 / 100.0;
+            assert!((-1.0..=1.0).contains(&wave(x)));
+            assert!((wave(x) - wave(x + 3.0)).abs() < 1e-5, "periodic");
+        }
     }
 
     #[test]

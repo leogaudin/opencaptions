@@ -448,6 +448,149 @@ fn a_blurred_second_of_full_frames_stays_cheap() {
     assert!(took.as_secs_f32() < 15.0, "{took:?}");
 }
 
+fn drifting(words: &[(&str, f32, f32)], patch: serde_json::Value) -> Renderer {
+    let mut patch = patch;
+    patch["motion_blur"] = 0.into();
+    if patch.get("font_size").is_none() {
+        patch["font_size"] = 200.into();
+    }
+    Renderer::new(Scene::new(&book(), styled("drift", words, patch)))
+}
+
+#[test]
+fn a_drifting_word_is_soft_and_unseen_before_it_is_said_then_sharp_and_whole() {
+    let scene = Scene::new(&book(), styled("drift", WORDS, serde_json::json!({})));
+    // The second word starts at 0.5.
+    let before = &scene.key(0.2).1[1];
+    assert_eq!(
+        (before.opacity, before.soften > 0.0),
+        (0.0, true),
+        "not there yet"
+    );
+    let coming = &scene.key(0.5 - LEAD_S + DRIFT_IN_S / 2.0).1[1];
+    assert!(
+        coming.opacity > 0.3 && coming.opacity < 0.7,
+        "{}",
+        coming.opacity
+    );
+    assert!(coming.soften > 0.0, "and still out of focus");
+    let said = &scene.key(0.5 - LEAD_S + DRIFT_IN_S + 0.01).1[1];
+    assert_eq!((said.opacity, said.soften), (1.0, 0.0), "sharp and whole");
+    // How blurred it starts is the setting: a share of the font size.
+    let sigma = before.soften * scene.style.font_size * FOCUS_BLUR;
+    assert!((sigma - DRIFT_SOFT * scene.style.font_size).abs() < 1e-3);
+}
+
+#[test]
+fn a_drifting_line_pushes_in_over_its_life() {
+    let r = drifting(&[("HELLO", 0.0, 4.0)], serde_json::json!({}));
+    let mut r = r;
+    let width = |r: &mut Renderer, t: f32| {
+        r.render(t);
+        let (l, rt, _, _) = extent(r, 1080).unwrap();
+        (rt - l) as f32
+    };
+    let (early, late) = (width(&mut r, 0.5), width(&mut r, 3.9));
+    assert!(late > early * 1.03, "{early} then {late}");
+}
+
+#[test]
+fn a_drifting_line_floats_and_comes_back() {
+    let scene = Scene::new(
+        &book(),
+        styled("drift", &[("HELLO", 0.0, 4.0)], serde_json::json!({})),
+    );
+    let line = &scene.lines[0];
+    let down = |t: f32| scene.drift(line, t)[1];
+    let amplitude = DRIFT_BOB * scene.style.font_size;
+    assert!(down(0.0).abs() < 1e-4, "it starts at rest");
+    assert!(
+        (down(0.75) - amplitude).abs() < 1e-3,
+        "down at a quarter of its period"
+    );
+    assert!(
+        (down(2.25) + amplitude).abs() < 1e-3,
+        "up at three quarters"
+    );
+    assert!(
+        (down(0.4) - down(0.4 + DRIFT_PERIOD_S)).abs() < 1e-3,
+        "and back after a period"
+    );
+    // And it is seen: the ink is lower a quarter of the way round than three quarters.
+    let mut r = drifting(&[("HELLO", 0.0, 4.0)], serde_json::json!({}));
+    let top = |r: &mut Renderer, t: f32| {
+        r.render(t);
+        extent(r, 1080).unwrap().2
+    };
+    let (low, high) = (top(&mut r, 0.75), top(&mut r, 2.25));
+    assert!(low > high + 3, "{low} then {high}");
+    // Other animations do not drift at all.
+    let still = Scene::new(&book(), styled("word_pop", WORDS, serde_json::json!({})));
+    assert_eq!(still.drift(&still.lines[0], 0.7), NO_DRIFT);
+}
+
+#[test]
+fn a_drifting_word_glows_more_while_it_is_said_than_after() {
+    let words = [
+        ("HELLO", 0.0, 1.0),
+        ("WORLD", 1.0, 2.0),
+        ("AGAIN", 2.0, 3.0),
+    ];
+    let patch = serde_json::json!({
+        "glow_blur": 28, "glow_color": "#99CCFF", "stroke_width": 0, "font_size": 200
+    });
+    let scene = Scene::new(&book(), styled("drift", &words, patch));
+    // Every word in view; the first one drawn lit, then not, on otherwise equal frames.
+    let key = scene.key(2.9);
+    let halo = |on: f32| -> u64 {
+        let mut states = key.1.clone();
+        states[0].on = on;
+        let mut canvas = Pixmap::new(1080, 1920).unwrap();
+        scene.draw(
+            &mut canvas,
+            (0, &scene.lines[0]),
+            &states,
+            None,
+            key.3,
+            &mut LayerCache::default(),
+        );
+        let slot = scene.lines[0].words[0].slot;
+        let (x0, x1) = (
+            (slot.x() - 80.0).max(0.0) as usize,
+            (slot.right() + 80.0) as usize,
+        );
+        let (y0, y1) = (
+            (slot.y() - 80.0).max(0.0) as usize,
+            (slot.bottom() + 80.0) as usize,
+        );
+        (y0..y1)
+            .flat_map(|y| (x0..x1).map(move |x| (y * 1080 + x) * 4 + 3))
+            .map(|i| u64::from(canvas.data()[i]))
+            .sum()
+    };
+    let (said, after) = (halo(1.0), halo(0.0));
+    assert!(said as f64 > after as f64 * 1.05, "{said} then {after}");
+}
+
+#[test]
+fn a_drifting_glow_stays_cheap() {
+    let words = [
+        ("HELLO", 0.0, 1.0),
+        ("WORLD", 1.0, 2.0),
+        ("AGAIN", 2.0, 3.0),
+    ];
+    let patch = serde_json::json!({ "glow_blur": 20, "glow_color": "#99CCFF", "stroke_width": 0, "font_size": 90 });
+    let mut r = drifting(&words, patch);
+    let start = std::time::Instant::now();
+    for i in 0..6 {
+        r.render(1.0 + i as f32 / 30.0);
+    }
+    let took = start.elapsed();
+    println!("6 drifting frames with a glow: {took:?}");
+    // A loose ceiling in an unoptimised build; the release build is several times faster.
+    assert!(took.as_secs_f32() < 40.0, "{took:?}");
+}
+
 fn lone(animation: &str, patch: serde_json::Value) -> Renderer {
     let mut patch = patch;
     patch["motion_blur"] = 0.into();
@@ -661,6 +804,29 @@ const FIGURES: &[(&str, f32, f32)] = &[
     ("40", 0.8, 1.2),
     ("percent", 1.2, 1.6),
 ];
+
+#[test]
+fn a_slammed_lines_shadow_follows_its_jolt() {
+    // The extrusion and the glow are kept between frames; the line's knock moves them, so a frame
+    // drawn after others must be the one drawn fresh, all through the knock.
+    let patch = serde_json::json!({
+        "font_size": 100, "motion_blur": 0, "shadow_color": "#C2410C", "shadow_offset_y": 12,
+        "glow_blur": 10
+    });
+    let input = styled("word_slam", WORDS, patch);
+    let landing = 0.5 - LEAD_S + SLAM_S;
+    let mut kept = Renderer::new(Scene::new(&book(), input.clone()));
+    for i in 0..8 {
+        let t = landing + i as f32 * JOLT_S / 8.0;
+        kept.render(t);
+        let mut fresh = Renderer::new(Scene::new(&book(), input.clone()));
+        fresh.render(t);
+        assert!(
+            kept.rgba() == fresh.rgba(),
+            "the frame at {t} s differs from a fresh one"
+        );
+    }
+}
 
 fn slamming() -> Scene {
     let patch = serde_json::json!({ "font_size": 100, "motion_blur": 0 });
@@ -1597,6 +1763,7 @@ const GOLDEN: &[(&str, u64)] = &[
     ("word_press", 0xf26273125dfc6bf6),
     ("letter_rise", 0x9bf46ac595f09960),
     ("word_slam", 0x8b017b454af2f0ab),
+    ("drift", 0x4db2b22b1c3c5323),
     ("word_highlight+stroke", 0xa886db0bfe0007d8),
     ("word_fade+stroke", 0x100c37255aee5408),
     ("word_pop+stroke", 0x8bbaecd606e3c7e3),

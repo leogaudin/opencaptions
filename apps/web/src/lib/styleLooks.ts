@@ -30,6 +30,7 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   word_press: msg("Press"),
   letter_rise: msg("Rise"),
   word_slam: msg("Slam"),
+  drift: msg("Drift"),
 };
 
 /** Every animation, in the order the style panel shows them: the order of the names above. */

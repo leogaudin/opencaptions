@@ -361,5 +361,6 @@
   "Line": "Zeile",
   "Stack": "Stapel",
   "Extrusion": "Extrusion",
-  "Extrusion back color": "Farbe der Extrusionsrückseite"
+  "Extrusion back color": "Farbe der Extrusionsrückseite",
+  "Drift": "Schweben"
 }

@@ -132,6 +132,7 @@ impl Scene {
                     Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
                     Animation::LetterRise => fs * RISE_FROM * k,
                     Animation::WordSlam => fs * JOLT * 1.5 * k,
+                    Animation::Drift => fs * (DRIFT_BOB + DRIFT_SOFT * 3.0) * k,
                     _ => 0.0,
                 }
                 + 2.0

@@ -1383,7 +1383,7 @@ export interface components {
              * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift";
             /**
              * Words Per Line
              * @default 3

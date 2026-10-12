@@ -101,6 +101,7 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case wordPress = "word_press"
     case letterRise = "letter_rise"
     case wordSlam = "word_slam"
+    case drift = "drift"
 }
 
 public enum CaptionLayout: String, Codable, CaseIterable, Sendable {

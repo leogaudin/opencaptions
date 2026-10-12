@@ -97,6 +97,16 @@ pub(super) fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
                 ..steady
             }
         }
+        Animation::Drift => {
+            // Fades in out of a blur as it starts; the glow brightens while it is said.
+            let p = reached(t, w, DRIFT_IN_S);
+            WordState {
+                on,
+                opacity: p,
+                soften: (1.0 - p) * DRIFT_SOFT / FOCUS_BLUR,
+                ..steady
+            }
+        }
         Animation::LetterRise => WordState {
             on,
             enter: ramp(t, w.start - LEAD_S, rise_timing(w).1),
@@ -150,6 +160,7 @@ pub(super) fn lift(anim: Animation) -> f32 {
     match anim {
         Animation::WordBounce => BOUNCE,
         Animation::WordSlam => SLAM_FROM - 1.0,
+        Animation::Drift => DRIFT_PUSH,
         Animation::Stickers => STICKER_LIFT,
         _ => POP,
     }
@@ -173,8 +184,26 @@ impl Scene {
                 .collect()
         });
         let guide = line.and_then(|i| self.guide(&self.lines[i], t));
-        let jolt = line.map_or([0.0; 2], |i| self.jolt(&self.lines[i], t));
-        FrameKey(line, states, guide, jolt)
+        let motion = line.map_or(LineMotion::STILL, |i| LineMotion {
+            jolt: self.jolt(&self.lines[i], t),
+            drift: self.drift(&self.lines[i], t),
+        });
+        FrameKey(line, states, guide, motion)
+    }
+
+    /// How the line floats at `t`: (across, down, scale) about the middle of the line. It pushes in
+    /// over the line's life, and bobs slowly (a polynomial wave, not a sine).
+    pub(super) fn drift(&self, line: &Line, t: f32) -> [f32; 3] {
+        if self.style.animation != Animation::Drift {
+            return NO_DRIFT;
+        }
+        let grow = ramp(t, line.start, line.end - line.start + LINE_HOLD_S);
+        let phase = (t - line.start) / DRIFT_PERIOD_S + 0.25;
+        [
+            0.0,
+            DRIFT_BOB * self.style.font_size * wave(phase),
+            lerp(1.0, 1.0 + DRIFT_PUSH, grow),
+        ]
     }
 
     /// How far the line is knocked at `t`, in pixels: each word landing jolts it, along a fixed

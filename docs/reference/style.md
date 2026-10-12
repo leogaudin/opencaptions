@@ -60,6 +60,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `word_press` | Press | Raising it out of the page: its solid shadow grows into an extrusion as it is said, and the other words stay flat. |
 | `word_slam` | Slam | Each word hidden until said, then dropping in from 1.7 times its size, the line jolting a little as it lands. |
 | `letter_rise` | Rise | Each word hidden until said, its letters then climbing into place one after another. A word in a connected script (Arabic, Hebrew, the Indic scripts, Thai) rises as one piece. |
+| `drift` | Drift | Each word hidden until said, then coming into focus out of a blur; the whole line pushes in a little over its life and floats, and the glow of the word being said is brighter than the rest (it needs a `glow_blur`). |
 | `none` | None | Nothing: plain captions. |
 
 ## Timing offset
@@ -70,7 +71,7 @@ change the transcript.
 
 ## Presets
 
-The seventeen built-in looks are plain data in
+The eighteen built-in looks are plain data in
 [`apps/web/src/lib/presets.json`](https://github.com/leogaudin/opencaptions/blob/main/apps/web/src/lib/presets.json),
 each a name and a complete style in this shape. They are shared by the web app, the API's tests and the iPhone
 app.

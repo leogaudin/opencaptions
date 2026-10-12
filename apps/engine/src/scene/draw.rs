@@ -90,8 +90,14 @@ fn cut(x: f32, within: IntRect) -> Option<Mask> {
     Some(mask)
 }
 
-/// A line, and each of its words' opacity, size, tilt and press: all the layers depend on.
-fn layer_key(index: usize, states: &[WordState]) -> LayerKey {
+/// A line; each of its words' opacity, size, tilt, press, entrance and (for Drift, whose glow
+/// brightens with it) brightness; and how the line is jolted and drifts: all the layers depend on.
+fn layer_key(
+    index: usize,
+    states: &[WordState],
+    animation: Animation,
+    motion: LineMotion,
+) -> LayerKey {
     // The shadow and the glow are the letters as they stand: they change when a word's
     // opacity, size or tilt does, and for most animations they do not change at all while
     // the line is up, so the finished layer (blur and all) is kept for the next frame.
@@ -104,10 +110,22 @@ fn layer_key(index: usize, states: &[WordState]) -> LayerKey {
                 st.tilt.to_bits(),
                 st.press.to_bits(),
                 st.enter.to_bits(),
+                if animation == Animation::Drift {
+                    st.on.to_bits()
+                } else {
+                    0
+                },
             ]
         })
         .collect();
-    (index, look)
+    let motion = [
+        motion.jolt[0].to_bits(),
+        motion.jolt[1].to_bits(),
+        motion.drift[0].to_bits(),
+        motion.drift[1].to_bits(),
+        motion.drift[2].to_bits(),
+    ];
+    (index, look, motion)
 }
 
 impl Scene {
@@ -119,26 +137,36 @@ impl Scene {
         (index, line): (usize, &Line),
         states: &[WordState],
         guide: Option<Guide>,
-        jolt: [f32; 2],
+        motion: LineMotion,
         cache: &mut LayerCache,
     ) {
-        let painter = LinePainter::new(self, line, states, jolt);
-        let key = layer_key(index, states);
+        let painter = LinePainter::new(self, line, states, motion);
+        let key = layer_key(index, states, self.style.animation, motion);
+        // The glow is laid out once and carried with the line, so the line's drift does not
+        // build it again each frame.
+        let still = LineMotion {
+            drift: NO_DRIFT,
+            ..motion
+        };
+        let halo_key = layer_key(index, states, self.style.animation, still);
         painter.backdrops(canvas, guide);
         painter.shadow(canvas, &mut cache.shadow, &key);
-        painter.glow(canvas, &mut cache.halo, &key);
+        painter.glow(canvas, &mut cache.halo, &halo_key);
         painter.words(canvas);
         painter.bar(canvas, guide);
     }
 }
 
 /// One line being drawn: the style and the state of its words, and what the passes share.
+#[derive(Clone, Copy)]
 struct LinePainter<'a> {
     style: &'a Style,
     line: &'a Line,
     states: &'a [WordState],
     /// How far the line is knocked, in pixels.
     jolt: [f32; 2],
+    /// How the line floats (across, down, scale), for Drift.
+    drift: [f32; 3],
     /// A solid shadow is an extrusion.
     extruded: bool,
     /// `word_press` raises the word being said out of the page: its face lifts away from where it
@@ -153,7 +181,7 @@ struct LinePainter<'a> {
 }
 
 impl<'a> LinePainter<'a> {
-    fn new(scene: &'a Scene, line: &'a Line, states: &'a [WordState], jolt: [f32; 2]) -> Self {
+    fn new(scene: &'a Scene, line: &'a Line, states: &'a [WordState], motion: LineMotion) -> Self {
         let s = &scene.style;
         let extruded =
             s.shadow_blur <= 0.0 && (s.shadow_offset_x != 0.0 || s.shadow_offset_y != 0.0);
@@ -161,7 +189,8 @@ impl<'a> LinePainter<'a> {
             style: s,
             line,
             states,
-            jolt,
+            jolt: motion.jolt,
+            drift: motion.drift,
             extruded,
             pressing: extruded && s.animation == Animation::WordPress,
             rising: s.animation == Animation::LetterRise,
@@ -178,10 +207,26 @@ impl<'a> LinePainter<'a> {
             w.slot.x() + w.slot.width() / 2.0,
             w.slot.y() + w.slot.height() / 2.0,
         );
-        Transform::from_translate(-cx, -cy)
+        let word = Transform::from_translate(-cx, -cy)
             .post_scale(st.scale, st.scale)
             .post_rotate(st.tilt)
-            .post_translate(cx + self.jolt[0], cy + self.jolt[1])
+            .post_translate(cx + self.jolt[0], cy + self.jolt[1]);
+        if self.style.animation != Animation::Drift {
+            return word;
+        }
+        word.post_concat(self.line_motion())
+    }
+
+    /// The whole line pushes in about its middle and floats: its drift as a transform of the frame.
+    fn line_motion(&self) -> Transform {
+        let [dx, dy, scale] = self.drift;
+        let (ax, ay) = (
+            self.line.anchor.x() + self.line.anchor.width() / 2.0,
+            self.line.anchor.y() + self.line.anchor.height() / 2.0,
+        );
+        Transform::from_translate(-ax, -ay)
+            .post_scale(scale, scale)
+            .post_translate(ax + dx, ay + dy)
     }
 
     /// How much of its extrusion a word has: all of it, but for a word being pressed up.
@@ -425,20 +470,54 @@ impl<'a> LinePainter<'a> {
         if s.glow_blur <= 0.0 {
             return;
         }
+        let drifting = s.animation == Animation::Drift;
+        // Laid out where the line would be without its drift, which is applied when it is laid down.
+        let flat = Self {
+            drift: NO_DRIFT,
+            ..*self
+        };
         if slot.as_ref().is_none_or(|(k, _)| k != key) {
-            *slot = self.layer().map(|mut halo| {
+            *slot = self.layer().and_then(|mut halo| {
                 for (w, st) in self.line.words.iter().zip(self.states) {
                     for (path, down, shown) in parts(w, st, s.font_size * w.size, self.rising) {
-                        let c = colour(solid(s.glow_color), st.opacity * shown);
-                        let at = Transform::from_translate(0.0, down).post_concat(self.face(w, st));
+                        // The word being said glows brighter than the others.
+                        let gain = if drifting {
+                            lerp(DRIFT_GLOW_REST, 1.0, st.on)
+                        } else {
+                            1.0
+                        };
+                        let c = colour(solid(s.glow_color), st.opacity * shown * gain);
+                        let at = Transform::from_translate(0.0, down).post_concat(flat.face(w, st));
                         self.ink(&mut halo, path, c, c, self.local(at), w.size);
                     }
                 }
                 blur(&mut halo, s.glow_blur / 2.0);
-                (key.clone(), Trimmed::of(&halo, self.origin()))
+                if drifting {
+                    // Laid down once here, not three times each frame: it is carried by the
+                    // line's motion every frame, and carrying it is what costs.
+                    let mut laid = self.layer()?;
+                    let p = PixmapPaint {
+                        opacity: opacity(s.glow_color),
+                        ..PixmapPaint::default()
+                    };
+                    for _ in 0..GLOW_PASSES {
+                        laid.draw_pixmap(0, 0, halo.as_ref(), &p, Transform::identity(), None);
+                    }
+                    halo = laid;
+                }
+                Some((key.clone(), Trimmed::of(&halo, self.origin())))
             });
         }
         if let Some((_, Some(halo))) = slot {
+            if drifting {
+                let p = PixmapPaint {
+                    quality: FilterQuality::Bilinear,
+                    ..PixmapPaint::default()
+                };
+                let motion = self.line_motion();
+                canvas.draw_pixmap(halo.x, halo.y, halo.pixmap.as_ref(), &p, motion, None);
+                return;
+            }
             let p = PixmapPaint {
                 opacity: opacity(s.glow_color),
                 ..PixmapPaint::default()
@@ -526,6 +605,7 @@ impl<'a> LinePainter<'a> {
             | Animation::LyricFocus
             | Animation::LetterRise
             | Animation::WordSlam
+            | Animation::Drift
             | Animation::WordPress => st.on,
             Animation::None
             | Animation::HighlightBox
@@ -680,6 +760,10 @@ impl<'a> LinePainter<'a> {
         fill: &Paint,
         edge: Color,
     ) {
+        // A word not yet in view draws nothing, whatever its blur.
+        if st.opacity <= 0.0 {
+            return;
+        }
         let s = self.style;
         let typed = s.animation == Animation::Typewriter;
         let sigma = st.soften * s.font_size * w.size * FOCUS_BLUR;

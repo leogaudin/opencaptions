@@ -361,5 +361,6 @@
   "Line": "Baris",
   "Stack": "Tumpuk",
   "Extrusion": "Ekstrusi",
-  "Extrusion back color": "Warna belakang ekstrusi"
+  "Extrusion back color": "Warna belakang ekstrusi",
+  "Drift": "Melayang"
 }

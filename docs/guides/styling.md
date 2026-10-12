@@ -1,6 +1,6 @@
 ---
 title: "Styling captions"
-description: "The seventeen caption looks in OpenCaptions and every setting of the style panel, from fonts and colours to animation, outline and timing."
+description: "The eighteen caption looks in OpenCaptions and every setting of the style panel, from fonts and colours to animation, outline and timing."
 sidebar:
   order: 3
 ---
@@ -32,6 +32,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Poster** | Tall condensed capitals stacked into a block, every row as wide as the widest, the word being said in red. |
 | **Slam** | Heavy capitals dropping in, the line jolting. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
+| **Glow Intro** | Soft, glowing capitals: each word comes into focus out of a blur, the whole line pushes slowly toward you and floats, and the word being said glows brighter. |
 
 A preset sets the whole style, so pick it first and adjust after. Selecting one keeps your caption
 position, font size and words per line, which belong to your video.
@@ -59,7 +60,7 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 ## Animation
 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
-**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, **Rise**, **Slam**, or **None**.
+**Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, **Rise**, **Slam**, **Drift**, or **None**.
 Each tile shows the animation on your own caption. **Motion blur** smears the words that move along
 their path, the same in the editor and in the download; at 0 every frame is sharp.
 

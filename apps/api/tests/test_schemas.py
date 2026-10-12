@@ -80,6 +80,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         "word_press",
         "letter_rise",
         "word_slam",
+        "drift",
     ):
         assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
     for bad in (

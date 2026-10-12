@@ -361,5 +361,6 @@
   "Line": "줄",
   "Stack": "스택",
   "Extrusion": "입체 두께",
-  "Extrusion back color": "입체 두께 뒷면 색상"
+  "Extrusion back color": "입체 두께 뒷면 색상",
+  "Drift": "드리프트"
 }

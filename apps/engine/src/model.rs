@@ -81,11 +81,14 @@ pub enum Animation {
     LetterRise,
     /// Each word slams in, dropping from 1.7 times its size, and the line jolts as it lands.
     WordSlam,
+    /// Each word fades in from a blur; the line pushes slowly toward the viewer and floats, and the
+    /// word being said glows brighter.
+    Drift,
 }
 
 impl Animation {
     /// Every animation, in the order the API and the editors list them.
-    pub const ALL: [Animation; 16] = [
+    pub const ALL: [Animation; 17] = [
         Animation::WordHighlight,
         Animation::HighlightBox,
         Animation::WordPop,
@@ -102,6 +105,7 @@ impl Animation {
         Animation::WordPress,
         Animation::LetterRise,
         Animation::WordSlam,
+        Animation::Drift,
     ];
 }
 
@@ -387,6 +391,7 @@ mod tests {
             Animation::WordPress => 13,
             Animation::LetterRise => 14,
             Animation::WordSlam => 15,
+            Animation::Drift => 16,
         };
         for (i, a) in Animation::ALL.into_iter().enumerate() {
             assert_eq!(place(a), i, "{a:?} is out of place");

@@ -361,5 +361,6 @@
   "Line": "行",
   "Stack": "スタック",
   "Extrusion": "押し出し",
-  "Extrusion back color": "押し出しの奥の色"
+  "Extrusion back color": "押し出しの奥の色",
+  "Drift": "ドリフト"
 }
