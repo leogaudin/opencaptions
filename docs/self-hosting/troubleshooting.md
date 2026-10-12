@@ -1,7 +1,8 @@
 ---
-sidebar_position: 8
 title: "Troubleshooting"
 description: "Fixes for the problems most often met when running OpenCaptions with Docker, from a stack that will not start to a transcription that never finishes."
+sidebar:
+  order: 8
 ---
 
 # Troubleshooting

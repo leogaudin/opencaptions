@@ -1,7 +1,8 @@
 ---
-sidebar_position: 2
 title: "Architecture"
 description: "How OpenCaptions is built. The services, how a job flows from upload to download, the Rust caption engine behind the preview and the export, the data, security, and the iPhone app."
+sidebar:
+  order: 2
 ---
 
 # Architecture
@@ -275,19 +276,21 @@ selected caption is yellow and the playhead is the page's ink colour.
 ## The documentation site
 
 The documentation is plain Markdown in `docs/`, so GitHub shows it as it is, and `apps/docs` builds the same
-files into a static site with [Docusaurus](https://docusaurus.io) (the intended home is `docs.opencaptions.app`).
-The site owns no content. Its sidebar is generated from the folders (`_category_.json` names and orders a
-folder, a page's `sidebar_position` orders it), so a new page needs no entry anywhere.
+files into a static site with [Starlight](https://starlight.astro.build) (the intended home is `docs.opencaptions.app`).
+The site owns no content. Its sidebar is generated from the folders (`apps/docs/astro.config.ts` names a folder's
+group, a page's `sidebar.order` frontmatter orders it), so a new page needs no entry anywhere; a new folder needs
+one group.
 
-- `.md` files are read as CommonMark (`markdown.format: "detect"`), so a page has no JSX and reads the same on GitHub.
-  Links between pages are relative `.md` links; links to the code are absolute GitHub URLs. A broken link or anchor
-  fails the build (`onBrokenLinks`, `onBrokenAnchors`, `onBrokenMarkdownLinks`).
-- Search is `@easyops-cn/docusaurus-search-local`: an index built with the site and searched in the browser,
-  so no service and no query leaves the page.
+- A page is plain Markdown that GitHub shows as it is: it starts with its own `# Title`, and links another page with a
+  relative `.md` link. `apps/docs/plugins/remark-docs.ts` turns those into what the site needs (the page's URL; the
+  title drawn by the theme). Links to the code are absolute GitHub URLs. A broken link or anchor fails the build
+  (`starlight-links-validator`, and the plugin for a link to a missing file).
+- Search is Pagefind: an index built with the site and searched in the browser, so no service and no query
+  leaves the page. The site sends no telemetry (`ASTRO_TELEMETRY_DISABLED` in the Dockerfile).
 - `apps/docs/Dockerfile` builds it in a container, with the pages as a named context
-  (`--build-context docs=docs`, read through `DOCS_PATH`), and its `docs-site` stage holds only the static files.
-  The `docs` CI job and `make ci` run that build, `make docs-build` writes it to `apps/docs/dist`, and `make docs`
-  serves it with live reload.
+  (`--build-context docs=docs`, copied to `src/content/docs`, where Starlight reads them), and its `docs-site` stage
+  holds only the static files. The `docs` CI job and `make ci` run that build, `make docs-build` writes it to
+  `apps/docs/dist`, and `make docs` serves it with live reload.
 - It is deployed as static files, like the demo: `publish-docs` deploys the `docs-site` artifact with
   `wrangler deploy` (`apps/docs/wrangler.jsonc`, a Worker named `opencaptions-docs`, a 404 page) on `main`, only when
   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set. The domain is attached to the Worker in the Cloudflare dashboard.

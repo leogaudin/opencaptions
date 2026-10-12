@@ -1,7 +1,8 @@
 ---
-sidebar_position: 5
 title: "Security"
 description: "What to change before exposing OpenCaptions beyond your own machine: closing sign-up, the default credentials, the published port, HTTPS behind a reverse proxy, and what the server fetches."
+sidebar:
+  order: 5
 ---
 
 # Security
@@ -11,7 +12,7 @@ is **friendly, not hardened**, so read this page before you put it anywhere othe
 The project's [security policy](https://github.com/leogaudin/opencaptions/blob/main/SECURITY.md) says how to
 report a vulnerability.
 
-:::warning The web app listens on every interface, and sign-up is open
+:::caution[The web app listens on every interface, and sign-up is open]
 Anyone who can reach port 5173 on the machine can create an account and spend its processor on
 transcription and video making. On a shared network or a public host, do at least one of these:
 
@@ -41,7 +42,7 @@ that matters, **in every place the compose file names them**: each one is writte
 it, and a check in the repository fails if the copies disagree with each other or with the application's
 defaults. Search the file for the value.
 
-:::caution Changing a password after the first start
+:::caution[Changing a password after the first start]
 A database or storage password changed after the first start does not change the volume that already holds the
 old one. Change it before first use, or change it inside the database too.
 :::

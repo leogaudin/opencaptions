@@ -1,7 +1,8 @@
 ---
-sidebar_position: 2
 title: "Editing captions"
 description: "Fix words, retime captions on the timeline, move the caption on the picture, shift all the timing at once, and undo anything in the OpenCaptions editor."
+sidebar:
+  order: 2
 ---
 
 # Editing captions

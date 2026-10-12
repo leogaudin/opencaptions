@@ -1,7 +1,8 @@
 ---
-sidebar_position: 6
 title: "Accounts and API keys"
 description: "How accounts work in a self-hosted OpenCaptions, closing registration, password reset by email or from the command line, and API keys."
+sidebar:
+  order: 6
 ---
 
 # Accounts and API keys

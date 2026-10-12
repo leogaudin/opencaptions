@@ -1,7 +1,8 @@
 ---
-sidebar_position: 3
 title: "Speech models and providers"
 description: "Set up local speech models (Whisper, Parakeet), the OpenAI provider, or another OpenCaptions server as the place your server transcribes, and tune Whisper."
+sidebar:
+  order: 3
 ---
 
 # Speech models and providers

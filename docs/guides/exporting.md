@@ -1,7 +1,8 @@
 ---
-sidebar_position: 4
 title: "Exporting"
 description: "Save a captioned MP4, WebM or ProRes video, SRT, VTT or JSON subtitles, or only the captions on a green screen, in the size and frame rate you choose."
+sidebar:
+  order: 4
 ---
 
 # Exporting

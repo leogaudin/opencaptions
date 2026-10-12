@@ -1,0 +1,40 @@
+/*
+ * The site's look follows the product's: black and white with the caption yellow as the one accent.
+ * Yellow is a fill, not a text colour (on white it is unreadable), so in the light theme links are
+ * black and underlined, and the yellow marks what is active.
+ */
+:root {
+  --oc-yellow: #ffdd00;
+  --sl-color-accent-low: #3a3200;
+  --sl-color-accent: #ffdd00;
+  --sl-color-accent-high: #ffe74d;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #fff1a0;
+  --sl-color-accent: #0a0a0b;
+  --sl-color-accent-high: #000000;
+}
+
+/* Links in the text: underlined, since in the light theme they share the text's colour. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* The page title, with the yellow marker stroke of the captions under it. */
+h1#_top {
+  display: inline-block;
+  font-weight: 800;
+  background: linear-gradient(
+    transparent 62%,
+    var(--oc-yellow) 62%,
+    var(--oc-yellow) 92%,
+    transparent 92%
+  );
+}

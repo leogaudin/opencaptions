@@ -1,7 +1,8 @@
 ---
-sidebar_position: 2
 title: "Your first captions"
 description: "A walk through the OpenCaptions web editor, from adding a video to saving a captioned one."
+sidebar:
+  order: 2
 ---
 
 # Your first captions

@@ -1,7 +1,8 @@
 ---
-sidebar_position: 3
 title: "Style reference"
 description: "Every field of an OpenCaptions caption style, with its type, range and default, as the API and the project files use it."
+sidebar:
+  order: 3
 ---
 
 # Style reference

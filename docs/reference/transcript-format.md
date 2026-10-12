@@ -1,7 +1,8 @@
 ---
-sidebar_position: 2
 title: "Transcript format"
 description: "The JSON format OpenCaptions uses for a transcript, with a start and end time for every word. It is what the API returns, what you can edit as text, and what the JSON export contains."
+sidebar:
+  order: 2
 ---
 
 # Transcript format

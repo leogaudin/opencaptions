@@ -1,7 +1,8 @@
 ---
-sidebar_position: 5
 title: "The iPhone and iPad app"
 description: "Caption a video on your iPhone or iPad with OpenCaptions, with on-device speech models, no account and no upload, or send the audio to your own server."
+sidebar:
+  order: 5
 ---
 
 # The iPhone and iPad app
@@ -10,7 +11,7 @@ The app does everything the web editor does, on the phone: transcribe, style, fi
 save a captioned video. There is no account and no server, and nothing is uploaded. It needs
 **iOS 18** or later and works on iPhone and iPad.
 
-:::info Availability
+:::note[Availability]
 The app is being prepared for the App Store. Until it is there, you can
 [build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) with Xcode.
 :::

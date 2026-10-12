@@ -1,7 +1,8 @@
 ---
-sidebar_position: 6
 title: "FAQ"
 description: "Short answers about OpenCaptions, including its cost, its privacy, the languages and speech models it supports, how to host it, and how it is licensed."
+sidebar:
+  order: 6
 ---
 
 # FAQ

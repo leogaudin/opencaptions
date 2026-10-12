@@ -1,7 +1,8 @@
 ---
-sidebar_position: 1
 title: "Installation"
 description: "Requirements, what the OpenCaptions Docker Compose stack runs, where your data lives, and how to scale and update it."
+sidebar:
+  order: 1
 ---
 
 # Installation
@@ -35,7 +36,7 @@ Open <http://localhost:5173>. That is the whole install: the compose file is sel
 other file to copy and no environment file to write. Every application setting has a default that is
 right for this layout; see [Configuration](./configuration.md) for the few you may want to change.
 
-:::note Before the first release
+:::note[Before the first release]
 Until v0.1.0 is tagged, the images are the `edge` build of the main branch, which the compose file
 uses by default. After the release they are `latest`, and you can pin a version with
 `OPENCAPTIONS_VERSION=0.1.0 docker compose up -d`.

@@ -1,7 +1,8 @@
 ---
-sidebar_position: 1
 title: "Quick start"
 description: "Run OpenCaptions on your own computer with one Docker Compose file and one command, then open the editor in your browser."
+sidebar:
+  order: 1
 ---
 
 # Quick start
@@ -31,14 +32,14 @@ an S3-compatible object store (Garage). It takes a minute or two on a good conne
 Go to <http://localhost:5173>, create an account, and drop a video in. The account is local to
 your instance: nothing is sent anywhere, and the first account is an ordinary user like any other.
 
-:::info The first transcription is slower
+:::note[The first transcription is slower]
 A speech model is downloaded the first time you use it, into a `models` folder next to the compose
 file, and reused after that. Whisper Large v3 Turbo, the default, is about 1.6 GB. A smaller model
 such as Whisper Small (about 480 MB) is a good way to try things out. See
 [Transcription](../guides/transcription.md) for the choices.
 :::
 
-:::warning Before you share it
+:::caution[Before you share it]
 The web app listens on every network interface and sign-up is open, so anyone who can reach port
 5173 on that machine can make an account and use its processor. On a shared network or a public
 host, read [Security](../self-hosting/security.md) first.

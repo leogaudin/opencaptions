@@ -1,7 +1,8 @@
 ---
-sidebar_position: 1
 title: "Transcription"
 description: "Where and how OpenCaptions turns speech into words with timing, which speech models it offers (Whisper, Parakeet, Apple Speech), and how to choose the language."
+sidebar:
+  order: 1
 ---
 
 # Transcription

@@ -1,4 +1,4 @@
 node_modules
-build
-.docusaurus
 dist
+.astro
+src/content/docs

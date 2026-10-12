@@ -1,9 +1,9 @@
 ---
-slug: /
 title: "OpenCaptions documentation"
-sidebar_label: "Introduction"
-sidebar_position: 1
 description: "OpenCaptions adds word-by-word animated captions to any video. It is open source, runs on your own server with Docker, and has an iPhone app that works on the phone itself."
+sidebar:
+  order: 1
+  label: "Introduction"
 ---
 
 # Introduction

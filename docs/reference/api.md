@@ -1,7 +1,8 @@
 ---
-sidebar_position: 1
 title: "HTTP API"
 description: "Use OpenCaptions from a script. Authenticate with an API key, create a project, transcribe it, and download the captioned video or the subtitles."
+sidebar:
+  order: 1
 ---
 
 # HTTP API

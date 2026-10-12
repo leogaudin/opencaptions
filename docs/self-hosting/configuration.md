@@ -1,7 +1,8 @@
 ---
-sidebar_position: 2
 title: "Configuration"
 description: "How to change OpenCaptions settings, and the settings that exist, with their defaults."
+sidebar:
+  order: 2
 ---
 
 # Configuration

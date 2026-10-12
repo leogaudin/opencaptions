@@ -1,7 +1,8 @@
 ---
-sidebar_position: 7
 title: "Backups and upgrades"
 description: "Back up and restore the OpenCaptions database and storage, and update a running installation safely."
+sidebar:
+  order: 7
 ---
 
 # Backups and upgrades
@@ -47,7 +48,7 @@ docker run --rm --volumes-from "$(docker compose ps -aq garage)" -v "$PWD/backup
 docker compose start garage
 ```
 
-:::warning Restoring overwrites
+:::caution[Restoring overwrites]
 A restore replaces the current database and object storage. Take a backup of the present state first if there is
 anything in it you want.
 :::

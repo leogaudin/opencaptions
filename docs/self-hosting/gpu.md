@@ -1,7 +1,8 @@
 ---
-sidebar_position: 4
 title: "GPU acceleration"
 description: "Run OpenCaptions transcription on an NVIDIA GPU with the gpu Compose profile."
+sidebar:
+  order: 4
 ---
 
 # GPU acceleration
@@ -32,7 +33,7 @@ COMPOSE_PROFILES=gpu OC_CPU_TRANSCRIBERS=0 docker compose up -d
 Export them in your shell to make this the default for the machine. To go back to the CPU, run
 `docker compose up -d` without them.
 
-:::note Why a profile
+:::note[Why a profile]
 A GPU reservation makes Compose fail on a host that has no NVIDIA runtime, even at a count of zero, so
 the GPU worker is behind a profile instead of being in the default set.
 :::

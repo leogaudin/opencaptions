@@ -54,7 +54,7 @@ To build from source instead, clone the repository and run `docker compose up -d
 ## More
 
 - [Documentation](docs/index.md): the guides, self-hosting, the HTTP API and the reference. It is
-  plain Markdown here, and the same files are built into a [Docusaurus](apps/docs) site
+  plain Markdown here, and the same files are built into a [Starlight](apps/docs) site
 - [Self-hosting](docs/self-hosting/installation.md): installation, configuration, security, GPU
   acceleration, backups
 - [Architecture](docs/project/architecture.md): how it works, including the engine and the iOS app

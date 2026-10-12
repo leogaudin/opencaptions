@@ -1,7 +1,8 @@
 ---
-sidebar_position: 1
 title: "Contributing"
 description: "How to set up OpenCaptions for development, the acceptance gate every change passes, and how to add a look, a speech model, a language or a page of these docs."
+sidebar:
+  order: 1
 ---
 
 # Contributing
@@ -44,7 +45,7 @@ other targets (`lint`, `test-backend`, `typecheck`, and more).
 | `apps/web/` | The Vite and React web app, and the public demo site. |
 | `apps/engine/` | The Rust caption engine, for the browser (WebAssembly), the render server and iOS. |
 | `apps/ios/` | The SwiftUI app, and the Swift package behind it. |
-| `apps/docs/` | This documentation site (Docusaurus). The pages are the Markdown files in `docs/`. |
+| `apps/docs/` | This documentation site (Starlight). The pages are the Markdown files in `docs/`. |
 | `docs/` | The documentation pages. |
 
 The [architecture](./architecture.md) page explains how they fit together.
