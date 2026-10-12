@@ -62,28 +62,6 @@ test.describe("Editing a word on the preview", () => {
     expect([first?.start, first?.end]).toEqual([0, 1]);
   });
 
-  test("Key word marks the word being edited, and a second press writes the opposite", async ({
-    page,
-  }) => {
-    const keyWord = (): boolean | null | undefined =>
-      (saved().transcript as Transcript).segments[0]?.words[0]?.emphasis;
-    await editFirstWord();
-    const toggle = page.getByTestId("caption-key-word");
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    // The field keeps its focus and the edit goes on: the word is still renamed on Enter.
-    await input.fill("gamma");
-    await input.press("Enter");
-    await expect.poll(keyWord).toBe(true);
-    await expect.poll(savedWords).toEqual(["gamma", "beta"]);
-    await editFirstWord("gamma");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await input.press("Escape");
-    await expect.poll(keyWord).toBe(false);
-  });
-
   test("Escape cancels", async ({ page }) => {
     await editFirstWord();
     await input.fill("JUNK");

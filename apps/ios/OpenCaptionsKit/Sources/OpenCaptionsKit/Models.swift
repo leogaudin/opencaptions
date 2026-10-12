@@ -10,15 +10,12 @@ public struct Word: Codable, Equatable, Sendable {
     public var start: Double
     public var end: Double
     public var confidence: Double
-    /// Whether the word is a key word, as the user set it; nil leaves it to the engine's rule.
-    public var emphasis: Bool?
 
-    public init(text: String, start: Double, end: Double, confidence: Double = 1, emphasis: Bool? = nil) {
+    public init(text: String, start: Double, end: Double, confidence: Double = 1) {
         self.text = text
         self.start = start
         self.end = end
         self.confidence = confidence
-        self.emphasis = emphasis
     }
 
     public init(from decoder: Decoder) throws {
@@ -27,7 +24,6 @@ public struct Word: Codable, Equatable, Sendable {
         start = try c.decode(Double.self, forKey: .start)
         end = try c.decode(Double.self, forKey: .end)
         confidence = try c.decodeIfPresent(Double.self, forKey: .confidence) ?? 1
-        emphasis = try c.decodeIfPresent(Bool.self, forKey: .emphasis)
     }
 }
 
@@ -164,8 +160,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var extrudeShade: Double
     /// The colour the back of an extrusion fades to from `shadowColor`; clear for none.
     public var extrudeBack: String
-    /// How much larger a key word is set, 1...2.5: above 1 it has a row to itself and its highlight colour.
-    public var emphasisScale: Double
     /// How the words are set in rows: filling lines, or a stack of short rows scaled to one width.
     public var layout: CaptionLayout
 
@@ -177,7 +171,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
         motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0, extrudeBack: String = "#00000000",
-        emphasisScale: Double = 1, layout: CaptionLayout = .line
+        layout: CaptionLayout = .line
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -205,7 +199,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.fillColors = fillColors
         self.extrudeShade = extrudeShade
         self.extrudeBack = extrudeBack
-        self.emphasisScale = emphasisScale
         self.layout = layout
     }
 
@@ -237,7 +230,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
             extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0,
             extrudeBack: try c.decodeIfPresent(String.self, forKey: .extrudeBack) ?? "#00000000",
-            emphasisScale: try c.decodeIfPresent(Double.self, forKey: .emphasisScale) ?? 1,
             layout: try c.decodeIfPresent(CaptionLayout.self, forKey: .layout) ?? .line)
     }
 
@@ -283,7 +275,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case fillColors = "fill_colors"
         case extrudeShade = "extrude_shade"
         case extrudeBack = "extrude_back"
-        case emphasisScale = "emphasis_scale"
         case layout
     }
 }

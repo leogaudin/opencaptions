@@ -151,22 +151,11 @@ build produces byte-identical frames. Nothing else may draw captions.
     from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
     depth: its stamps are laid from the back forward, so each pixel takes the colour of the
     nearest stamp that covers it, and the first step is lightened as a lit edge.
-  - *Stack layout.* `layout: "stack"` cuts rows at 0.55 of the usual width (a key word alone on its
-    own), then scales each row up to the widest row's natural width, at most three times, and
-    stacks them with leading of 1.0 of each row's own size. A word's `size` (its emphasis times
-    its row's scale) is what every animation uses wherever it used the font size: the underline's
+  - *Stack layout.* `layout: "stack"` cuts rows at 0.55 of the usual width, then scales each row up to the widest row's natural width, at most three times, and
+    stacks them with leading of 1.0 of each row's own size. A word's `size` (its row's scale) is what every animation uses wherever it used the font size: the underline's
     thickness, the cursor, the sliding box's corner, a label's radius, the blur of a soft word,
     how far a letter rises, and the outline, shadow and extrusion, so every animation works in a
     stack.
-  - *Key words.* `model::emphasis` is the one rule the scene and both editors share, held to
-    `testdata/emphasis.json`: an explicit `Word.emphasis` wins; otherwise each caption has at most
-    one key word, the first with a digit, `%` or a currency sign, or else the longest word if it
-    has seven letters or more and is at least one and a half times the caption's median. No word
-    lists, so it holds in any language. With `emphasis_scale` above 1 a key word is shaped larger
-    and has a row of its own (the rows are of different heights; its outline, shadow and
-    extrusion grow with it) and is always in its highlight colour. Emphasis splits rows, never
-    captions, so the timeline is unchanged. `edit::set_emphasis` (C ABI `oc_set_emphasis`) sets or
-    clears a word's choice, and the lines the editors list carry each word's effective flag.
   - *Motion blur.* When `motion_blur` is above 0, a frame at `t` is the average of eight
     sub-frames drawn at `t - motion_blur/30 · k/7` seconds (the shutter is a share of 1/30 s, so
     the fps does not change the look). If every sub-frame has the same key (nothing moves within
@@ -189,8 +178,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     (soft until said, and the line never changes size), Stickers, Plain, Neon, Typewriter and
     Handwritten (a marker stroke laid under the words as they are said), and the four built on the
     newer features: Chunky 3D (white letters, the word being said turning gold and rising on a shaded extrusion),
-    Cascade (letters rising one after another), Slam (heavy capitals dropping in, a key word set
-    large) and Poster (a stack of rows scaled to one width). Bold and Boom also set key words larger.
+    Cascade (letters rising one after another), Slam (heavy capitals dropping in) and Poster (a stack of rows scaled to one width).
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by
     the engine (`CaptionEngine.samples`: the same drawing as the preview and the export, in a
     phone-shaped frame, cropped to the band around the caption), so each shows its real font,

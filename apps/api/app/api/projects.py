@@ -191,7 +191,7 @@ async def update_project(
     if body.title is not None:
         proj.title = body.title
     if body.transcript is not None:
-        proj.transcript = body.transcript.model_dump(exclude_none=True)
+        proj.transcript = body.transcript.model_dump()
     if body.style_config is not None:
         proj.style_config = body.style_config.model_dump()
     if body.caption_offset_ms is not None:

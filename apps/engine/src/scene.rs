@@ -14,7 +14,7 @@ use tiny_skia::{
 
 use crate::fonts::FontBook;
 use crate::model::{
-    Animation, Background, Layout, Rgba, SceneInput, Style, TextCase, cut, emphasis, shifted,
+    Animation, Background, Layout, Rgba, SceneInput, Style, TextCase, cut, shifted,
 };
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
@@ -111,11 +111,8 @@ struct Placed {
     chars: usize,
     /// Its place in the transcript, which decides which way it leans.
     index: usize,
-    /// How much larger than the style's size it is set: a key word's emphasis and its row's scale
-    /// in a stack, else 1.
+    /// How much larger than the style's size it is set: its row's scale in a stack, else 1.
     size: f32,
-    /// Whether it is a key word that is set apart (emphasis on): always in its highlight colour.
-    key: bool,
 }
 
 struct Line {
@@ -844,17 +841,10 @@ impl Scene {
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
         let ranges = cut(&words, style.words_per_line.max(1) as usize);
-        // The key words, sized up and alone on a row when the style asks for it.
-        let key = emphasis(&words, &ranges);
-        let big = style.emphasis_scale > 1.0;
         let lines = ranges
             .into_iter()
             .map(|range| {
                 let first = range.start;
-                let sizes: Vec<f32> = key[range.clone()]
-                    .iter()
-                    .map(|&k| if k && big { style.emphasis_scale } else { 1.0 })
-                    .collect();
                 let chunk = &words[range];
                 let texts: Vec<String> = chunk
                     .iter()
@@ -866,12 +856,11 @@ impl Scene {
                 let lean = Transform::from_row(1.0, 0.0, -ITALIC_SKEW, 1.0, 0.0, 0.0);
                 let shaped: Vec<_> = texts
                     .iter()
-                    .zip(&sizes)
-                    .map(|(text, size)| {
+                    .map(|text| {
                         let (glyphs, advance) = shape(
                             book.face(book.for_text(primary, &fallbacks, text)),
                             text,
-                            fs * size,
+                            fs,
                         );
                         let glyphs = if style.italic {
                             glyphs.and_then(|p| p.transform(lean))
@@ -884,14 +873,12 @@ impl Scene {
                 // One outline per letter, only for the look that moves them apart.
                 let clusters: Vec<Vec<Path>> = texts
                     .iter()
-                    .zip(&sizes)
-                    .map(|(text, size)| {
+                    .map(|text| {
                         if style.animation != Animation::LetterRise {
                             return vec![];
                         }
                         let face = book.face(book.for_text(primary, &fallbacks, text));
-                        // At the word's own size, or a key word would rise small and then jump.
-                        let letters = cluster_paths(face, text, fs * size);
+                        let letters = cluster_paths(face, text, fs);
                         if style.italic {
                             letters
                                 .into_iter()
@@ -902,24 +889,22 @@ impl Scene {
                         }
                     })
                     .collect();
-                // Rows: words fill a row until the next does not fit (a stack's rows are short); a
-                // key word has a row to itself, and the row is as tall as its word.
+                // Rows: words fill a row until the next does not fit (a stack's rows are short).
                 let stack = style.layout == Layout::Stack;
                 let limit = if stack {
                     STACK_ROW_SHARE * max_row
                 } else {
                     max_row
                 };
-                let mut rows: Vec<(Vec<usize>, f32, f32)> = vec![];
+                let mut rows: Vec<(Vec<usize>, f32)> = vec![];
                 for (i, (_, adv)) in shaped.iter().enumerate() {
                     let slot = adv + 2.0 * pad_wx;
-                    let alone = sizes[i] > 1.0;
                     match rows.last_mut() {
-                        Some((row, w, k)) if !alone && *k <= 1.0 && *w + sep + slot <= limit => {
+                        Some((row, w)) if *w + sep + slot <= limit => {
                             row.push(i);
                             *w += sep + slot;
                         }
-                        _ => rows.push((vec![i], slot, sizes[i])),
+                        _ => rows.push((vec![i], slot)),
                     }
                 }
                 // A stack scales each row up to the widest one's width, at most three times over.
@@ -935,7 +920,7 @@ impl Scene {
                     })
                     .collect();
                 let lead = if stack { STACK_LEADING } else { LINE_HEIGHT };
-                let height_of = |k: f32, scale: f32| lead * fs * k + 2.0 * pad_wy * scale;
+                let height_of = |scale: f32| (lead * fs + 2.0 * pad_wy) * scale;
                 let inner_w = rows
                     .iter()
                     .zip(&scales)
@@ -943,11 +928,7 @@ impl Scene {
                     .fold(0.0, f32::max);
                 let (block_w, block_h) = (
                     inner_w + 2.0 * pad_bx,
-                    rows.iter()
-                        .zip(&scales)
-                        .map(|(r, s)| height_of(r.2 * s, *s))
-                        .sum::<f32>()
-                        + 2.0 * pad_by,
+                    scales.iter().map(|s| height_of(*s)).sum::<f32>() + 2.0 * pad_by,
                 );
                 // The block is centred on (position_x, position_y) and clamped so it
                 // never leaves the frame, whatever a drag asks for. One wider than the
@@ -965,10 +946,10 @@ impl Scene {
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
                 let mut top = y0 + pad_by;
                 let mut biggest = 1.0f32;
-                for ((row, row_w, e), scale) in rows.iter().zip(&scales) {
-                    let k = e * scale;
+                for ((row, row_w), scale) in rows.iter().zip(&scales) {
+                    let k = *scale;
                     biggest = biggest.max(k);
-                    let row_h = height_of(k, *scale);
+                    let row_h = height_of(k);
                     // Half-leading, as CSS does, for this row's size.
                     let baseline_in_row = pad_wy * scale
                         + (lead * fs * k - (ascent + descent) * k) / 2.0
@@ -1001,8 +982,7 @@ impl Scene {
                                 .collect(),
                             chars: texts[i].chars().count(),
                             index: first + i,
-                            size: sizes[i] * scale,
-                            key: sizes[i] > 1.0,
+                            size: *scale,
                         });
                         x += slot_w + sep * scale;
                     }
@@ -1010,11 +990,7 @@ impl Scene {
                 }
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
-                let tallest = rows
-                    .iter()
-                    .zip(&scales)
-                    .map(|(r, s)| height_of(r.2 * s, *s))
-                    .fold(0.0, f32::max);
+                let tallest = scales.iter().map(|s| height_of(*s)).fold(0.0, f32::max);
                 let grow = inner_w.max(tallest) * lift(style.animation);
                 Line {
                     first,
@@ -1524,8 +1500,6 @@ impl Scene {
                 | Animation::WordUnderline
                 | Animation::Typewriter => 0.0,
             };
-            // A key word is always in its highlight colour.
-            let lit = if w.key { 1.0 } else { lit };
             let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
             let fill = match gradient_stops(&s.fill_colors, &tint) {
                 Some(stops) => LinearGradient::new(
@@ -2651,67 +2625,6 @@ mod tests {
         ("percent", 1.2, 1.6),
     ];
 
-    fn emphasised(scale: f32) -> Scene {
-        let patch = serde_json::json!({
-            "emphasis_scale": scale, "words_per_line": 4, "motion_blur": 0
-        });
-        Scene::new(&book(), styled("none", FIGURES, patch))
-    }
-
-    #[test]
-    fn a_key_word_is_larger_and_alone_on_its_row() {
-        let scene = emphasised(1.5);
-        let words = &scene.lines[0].words;
-        let row = |i: usize| words[i].slot.y();
-        // "we grew" share a row, "40" has its own, and so does "percent" under it.
-        assert_eq!(row(0), row(1));
-        assert!(row(2) > row(0) && row(3) > row(2), "three rows, in order");
-        assert_eq!(words[2].size, 1.5);
-        assert_eq!(words[0].size, 1.0);
-        let height = |i: usize| words[i].glyphs.as_ref().unwrap().bounds().height();
-        assert!(height(2) > 1.3 * height(0), "the key word is set larger");
-        assert!(
-            words[2].slot.height() > 1.3 * words[0].slot.height(),
-            "and its row is taller"
-        );
-        // Off, the same words are one row at one size.
-        let flat = emphasised(1.0);
-        assert!(
-            flat.lines[0]
-                .words
-                .iter()
-                .all(|w| w.size == 1.0 && w.slot.y() == flat.lines[0].words[0].slot.y())
-        );
-        // The captions are the same ones: emphasis splits rows, never captions.
-        assert_eq!(scene.lines.len(), flat.lines.len());
-        assert_eq!(scene.lines[0].start, flat.lines[0].start);
-    }
-
-    #[test]
-    fn a_word_the_user_marks_is_the_key_word_whatever_the_rule_says() {
-        let mut input = styled(
-            "none",
-            FIGURES,
-            serde_json::json!({ "emphasis_scale": 2.0, "words_per_line": 4 }),
-        );
-        for w in input
-            .transcript
-            .segments
-            .iter_mut()
-            .flat_map(|s| &mut s.words)
-        {
-            // Clear the figure the rule would pick and mark the first word instead.
-            w.emphasis = match w.text.as_str() {
-                "we" => Some(true),
-                "40" => Some(false),
-                _ => None,
-            };
-        }
-        let scene = Scene::new(&book(), input);
-        let sizes: Vec<f32> = scene.lines[0].words.iter().map(|w| w.size).collect();
-        assert_eq!(sizes, [2.0, 1.0, 1.0, 1.0]);
-    }
-
     fn slamming() -> Scene {
         let patch = serde_json::json!({ "font_size": 100, "motion_blur": 0 });
         Scene::new(&book(), styled("word_slam", WORDS, patch))
@@ -2853,7 +2766,7 @@ mod tests {
             "word_slam",
         ] {
             let patch = serde_json::json!({
-                "emphasis_scale": 1.4, "stroke_width": 4, "stroke_color": "#000000",
+                "stroke_width": 4, "stroke_color": "#000000",
                 "shadow_blur": 6, "shadow_color": "#000000B0"
             });
             let scene = stacked(anim, POSTER, patch);
@@ -3505,15 +3418,8 @@ mod tests {
                 styled(anim, WORDS, chunky.clone()),
             ));
         }
-        let keyed = serde_json::json!({ "emphasis_scale": 1.5, "words_per_line": 4 });
-        for anim in ["word_pop", "word_slam"] {
-            cases.push((
-                format!("{anim}+emphasis"),
-                styled(anim, FIGURES, keyed.clone()),
-            ));
-        }
         let poster = serde_json::json!({
-            "layout": "stack", "emphasis_scale": 1.4, "words_per_line": 4,
+            "layout": "stack", "words_per_line": 4,
             "stroke_width": 4, "stroke_color": "#000000"
         });
         for anim in ["word_pop", "letter_rise", "highlight_box"] {
@@ -3736,11 +3642,9 @@ mod tests {
         ("letter_rise+motion_blur", 0x8930aa30d029025d),
         ("word_press+chunky", 0xe55ee93138faa2d6),
         ("word_pop+chunky", 0x064022aaf29214a8),
-        ("word_pop+emphasis", 0x0e7b974001700c3c),
-        ("word_slam+emphasis", 0x043fd6913511f0fc),
-        ("word_pop+stack", 0xfd681dd2b6862af5),
-        ("letter_rise+stack", 0xcd8b7f73eae89dab),
-        ("highlight_box+stack", 0x9a370ca616d3fee2),
+        ("word_pop+stack", 0x7a2ceb6d7115026e),
+        ("letter_rise+stack", 0xe4534b8dcb4a39e8),
+        ("highlight_box+stack", 0x7215adeb165d3e2e),
         ("watermark", 0xe22c164ced6e9dd5),
     ];
 }

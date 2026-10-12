@@ -24,8 +24,6 @@ struct EditorView: View {
     private struct WordEdit: Identifiable {
         let index: Int
         var text: String
-        /// Whether the word is a key word now, as the toggle shows it.
-        var key = false
         var id: Int { index }
     }
 
@@ -183,7 +181,7 @@ struct EditorView: View {
                 onEditWord: { index in
                     playback.pause()
                     let text = model.transcript?.words[safe: index]?.text ?? ""
-                    edit = WordEdit(index: index, text: text, key: model.isKeyWord(index: index))
+                    edit = WordEdit(index: index, text: text)
                 }
             )
         }
@@ -267,12 +265,6 @@ struct EditorView: View {
         if let target = edit {
             WordEditCard(
                 text: Binding(get: { edit?.text ?? target.text }, set: { edit?.text = $0 }),
-                key: Binding(
-                    get: { edit?.key ?? target.key },
-                    set: {
-                        edit?.key = $0
-                        model.setEmphasis(index: target.index, to: $0)
-                    }),
                 save: {
                     model.setWord(index: target.index, text: edit?.text ?? target.text)
                     edit = nil
@@ -319,7 +311,6 @@ struct EditorView: View {
 
 private struct WordEditCard: View {
     @Binding var text: String
-    @Binding var key: Bool
     let save: () -> Void
     let cancel: () -> Void
     @FocusState private var focused: Bool
@@ -341,8 +332,6 @@ private struct WordEditCard: View {
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
                 Text("Clear it to delete the word.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
-                Toggle("Key word", isOn: $key)
-                    .font(.system(size: 15, weight: .medium))
                 HStack(spacing: 10) {
                     Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
                     Button(text.isEmpty ? "Delete" : "Save", action: save).buttonStyle(PrimaryButtonStyle())

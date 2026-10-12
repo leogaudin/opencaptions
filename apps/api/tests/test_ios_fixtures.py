@@ -24,7 +24,7 @@ pytestmark = pytest.mark.skipif(not _IOS.is_dir(), reason="needs the iOS app's s
 
 def test_the_ios_transcript_fixture_is_a_valid_api_transcript() -> None:
     raw = json.loads(_FIXTURE.read_text())
-    assert Transcript.model_validate(raw).model_dump(exclude_none=True) == raw
+    assert Transcript.model_validate(raw).model_dump() == raw
 
 
 def test_the_transcription_api_fixtures_are_what_the_server_sends() -> None:

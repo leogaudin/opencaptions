@@ -1467,11 +1467,6 @@ export interface components {
              */
             extrude_back: string;
             /**
-             * Emphasis Scale
-             * @default 1
-             */
-            emphasis_scale: number;
-            /**
              * Layout
              * @default line
              * @enum {string}
@@ -1797,8 +1792,6 @@ export interface components {
              * @default 1
              */
             confidence: number;
-            /** Emphasis */
-            emphasis?: boolean | null;
         };
     };
     responses: never;

@@ -16,9 +16,6 @@ class Word(BaseModel):
     start: float = Field(ge=0.0, description="seconds from start of audio")
     end: float = Field(ge=0.0, description="seconds from start of audio")
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
-    # Whether the word is a key word, set by the user in the editor: None leaves it to the engine's
-    # rule. Transcription never produces it.
-    emphasis: bool | None = None
 
 
 class TranscriptSegment(BaseModel):
@@ -206,8 +203,6 @@ class StyleConfig(BaseModel):
     extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
     # The colour the back of an extrusion fades to from the shadow colour; transparent for none.
     extrude_back: str = Field(default="#00000000", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
-    # How much larger a key word is set: above 1 it has a row to itself and its highlight colour.
-    emphasis_scale: float = Field(default=1.0, ge=1.0, le=2.5)
     # How the words are set in rows: filling lines, or a stack of short rows each scaled to one width.
     layout: Literal["line", "stack"] = "line"
 

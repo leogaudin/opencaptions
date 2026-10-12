@@ -7,8 +7,6 @@ export interface MockWord {
   start: number;
   end: number;
   confidence: number;
-  /** The user's choice of whether it is a key word; absent leaves it to the engine's rule. */
-  emphasis?: boolean | null;
 }
 /** The transcript shape the API serves, as far as the tests read it. */
 export interface Transcript {

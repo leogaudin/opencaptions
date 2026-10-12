@@ -388,25 +388,6 @@ mod abi {
         )
     }
 
-    /// Marks word `index` a key word (`state` above 0), not one (0), or leaves it to the rule
-    /// (below 0); the edited transcript is left as JSON. Returns 0 on failure with the reason.
-    ///
-    /// # Safety
-    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
-    #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn oc_set_emphasis(
-        ptr: *mut u8,
-        len: usize,
-        index: u32,
-        state: i32,
-    ) -> u32 {
-        let state = (state >= 0).then_some(state > 0);
-        respond(
-            unsafe { read_transcript(ptr, len) }
-                .and_then(|t| edit::set_emphasis(&t, index as usize, state)),
-        )
-    }
-
     /// Sets the text of word `index` to the UTF-8 at `text_ptr` (empty removes
     /// the word, several words are refused); the edited transcript is left as
     /// JSON. Returns 0 on failure with the reason.
@@ -491,35 +472,6 @@ mod tests {
         .unwrap();
     }
 
-    #[test]
-    fn a_key_word_is_marked_through_the_c_abi_and_the_result_reads_back() {
-        let transcript = br#"{"duration": 2.0, "segments": [{"words": [
-            {"text": "grew", "start": 0.0, "end": 0.5}, {"text": "40", "start": 0.5, "end": 1.0}]}]}"#;
-        let call = |state: i32| {
-            let (p, n) = put(transcript);
-            let ok = unsafe { super::abi::oc_set_emphasis(p, n, 0, state) };
-            let (ptr, len) = (super::abi::oc_result_ptr(), super::abi::oc_result_len());
-            let out = unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec();
-            (ok, String::from_utf8(out).unwrap())
-        };
-        let (ok, yes) = call(1);
-        assert_eq!(ok, 1);
-        assert!(yes.contains("\"emphasis\":true"), "{yes}");
-        let (_, no) = call(0);
-        assert!(no.contains("\"emphasis\":false"), "{no}");
-        let (_, rule) = call(-1);
-        assert!(
-            !rule.contains("emphasis"),
-            "left to the rule, nothing is stored: {rule}"
-        );
-        let (p, n) = put(transcript);
-        assert_eq!(
-            unsafe { super::abi::oc_set_emphasis(p, n, 5, 1) },
-            0,
-            "no such word"
-        );
-    }
-
     /// The markers are escaped, so this test's own source never matches them; the
     /// count is a tripwire to update by hand when an export is added.
     #[test]
@@ -532,7 +484,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 24);
+        assert_eq!(exported.len(), 23);
         assert_eq!(exported, declared);
     }
 }

@@ -63,7 +63,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     assert (s.shadow_offset_x, s.shadow_offset_y, s.glow_blur) == (0, 0, 0)
     assert (s.text_case, s.italic) == ("none", False)
     assert s.motion_blur == 0.5
-    assert (s.fill_colors, s.extrude_shade, s.emphasis_scale) == ([], 0, 1)
+    assert (s.fill_colors, s.extrude_shade) == ([], 0)
     assert s.extrude_back == "#00000000"
     assert s.layout == "line"
     assert StyleConfig(shadow_offset_x=40, shadow_offset_y=-40).shadow_offset_x == 40
@@ -87,8 +87,6 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         {"glow_blur": 41},
         {"motion_blur": 1.1},
         {"extrude_shade": 1.1},
-        {"emphasis_scale": 0.9},
-        {"emphasis_scale": 2.6},
         {"layout": "grid"},
         {"fill_colors": ["#111111"] * 5},
         {"fill_colors": ["red"]},

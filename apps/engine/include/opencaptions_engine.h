@@ -68,9 +68,8 @@ uint32_t oc_snap_position(float x, float y, float width, float height, float thr
 uint32_t oc_fallback_fonts(uint8_t *json_ptr, size_t json_len);
 
 /* Editing: pure functions of a transcript (JSON); 0 on failure with the reason. */
-/* Leaves a JSON array of {from, count, start, end, text, emphasis}; times are as shown,
- * with offset_ms (the caption offset) applied, and emphasis holds, for each word, whether it
- * is a key word as things stand (the user's choice, else the rule's). */
+/* Leaves a JSON array of {from, count, start, end, text}; times are as shown, with offset_ms
+ * (the caption offset) applied. */
 uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per_line,
                           int32_t offset_ms);
 /* edge 0 = start, 1 = end. time is as shown (with offset_ms); the edited transcript
@@ -82,9 +81,6 @@ uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint
  * transcript. */
 uint32_t oc_set_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint8_t *text_ptr,
                      size_t text_len);
-/* Marks one word a key word (state > 0), not one (0), or leaves it to the rule (< 0). Leaves
- * the edited transcript. */
-uint32_t oc_set_emphasis(uint8_t *json_ptr, size_t json_len, uint32_t index, int32_t state);
 
 #ifdef __cplusplus
 }

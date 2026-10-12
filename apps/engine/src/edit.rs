@@ -7,7 +7,7 @@
 use serde::Serialize;
 use serde_json::json;
 
-use crate::model::{Segment, Transcript, Word, cut, emphasis, shifted};
+use crate::model::{Segment, Transcript, Word, cut, shifted};
 
 /// The shortest a word may be made by retiming, in seconds.
 pub const MIN_WORD_S: f32 = 0.05;
@@ -21,8 +21,6 @@ pub struct Line {
     pub start: f32,
     pub end: f32,
     pub text: String,
-    /// Whether each word is a key word as things stand: the user's choice, else the rule's.
-    pub emphasis: Vec<bool>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -60,13 +58,11 @@ pub fn snap_to_centre(x: f32, y: f32, width: f32, height: f32, threshold: f32) -
 pub fn lines(t: &Transcript, words_per_line: u32, offset_ms: i32) -> Vec<Line> {
     let words: Vec<_> = t.words().collect();
     let ranges = cut(&words, words_per_line as usize);
-    let key = emphasis(&words, &ranges);
     ranges
         .into_iter()
         .map(|range| {
             let chunk = &words[range.clone()];
             Line {
-                emphasis: key[range.clone()].to_vec(),
                 from: range.start,
                 count: chunk.len(),
                 start: shifted(chunk[0].start, offset_ms),
@@ -135,21 +131,6 @@ pub fn set_word(t: &Transcript, index: usize, text: &str) -> Result<Transcript, 
     } else {
         entries[index].1.text = text;
     }
-    Ok(rebuild(t, entries))
-}
-
-/// Marks word `index` a key word (`Some(true)`), not one (`Some(false)`), or leaves it to the
-/// rule (`None`), keeping every other field. The rule is `model::emphasis`.
-pub fn set_emphasis(
-    t: &Transcript,
-    index: usize,
-    state: Option<bool>,
-) -> Result<Transcript, String> {
-    let mut entries = flatten(t);
-    let Some(entry) = entries.get_mut(index) else {
-        return Err(format!("no word at index {index}"));
-    };
-    entry.1.emphasis = state;
     Ok(rebuild(t, entries))
 }
 
@@ -250,7 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn a_word_is_marked_a_key_word_or_not_and_keeps_everything_else() {
+    fn a_word_edit_keeps_everything_else() {
         let t: Transcript = serde_json::from_value(json!({
             "schema_version": 1, "language": "en", "duration": 4.0, "mystery": 7,
             "segments": [{ "id": "a", "start": 0.0, "end": 1.5, "text": "we grew 40", "words": [
@@ -259,27 +240,13 @@ mod tests {
                 { "text": "40", "start": 1.0, "end": 1.5, "extra": [1] }] }]
         }))
         .unwrap();
-        // The rule finds the figure.
-        assert_eq!(lines(&t, 3, 0)[0].emphasis, [false, false, true]);
-        // The user marks another word, and clears the rule's choice.
-        let marked = set_emphasis(&t, 0, Some(true)).unwrap();
-        let marked = set_emphasis(&marked, 2, Some(false)).unwrap();
-        assert_eq!(lines(&marked, 3, 0)[0].emphasis, [true, false, false]);
-        // Back to the rule.
-        let reset = set_emphasis(&marked, 2, None).unwrap();
-        assert_eq!(lines(&reset, 3, 0)[0].emphasis, [true, false, true]);
-        // Nothing else changed, in the words or round them, and a missing word is refused.
-        let before = serde_json::to_value(&t).unwrap();
-        let after = serde_json::to_value(set_emphasis(&t, 1, None).unwrap()).unwrap();
-        assert_eq!(
-            before, after,
-            "an unmarked word stays as it was, field for field"
-        );
-        let kept = serde_json::to_value(&marked).unwrap();
+        let edited = set_word(&t, 1, "grow").unwrap();
+        let kept = serde_json::to_value(&edited).unwrap();
         assert_eq!(kept["mystery"], 7);
+        assert_eq!(kept["segments"][0]["words"][0]["confidence"], json!(0.9));
+        assert_eq!(kept["segments"][0]["words"][1]["text"], "grow");
         assert_eq!(kept["segments"][0]["words"][2]["extra"], json!([1]));
-        assert_eq!(kept["segments"][0]["words"][0]["emphasis"], json!(true));
-        assert!(set_emphasis(&t, 9, Some(true)).is_err());
+        assert!(set_word(&t, 9, "x").is_err());
     }
 
     #[test]
@@ -324,7 +291,6 @@ mod tests {
                     start: 0.5,
                     end: 1.7,
                     text: "one two three".into(),
-                    emphasis: vec![false; 3]
                 },
                 Line {
                     from: 3,
@@ -332,7 +298,6 @@ mod tests {
                     start: 2.6,
                     end: 3.0,
                     text: "four".into(),
-                    emphasis: vec![false]
                 },
             ]
         );

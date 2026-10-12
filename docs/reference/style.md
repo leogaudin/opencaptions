@@ -40,7 +40,6 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `extrude_shade` | 0 to 1 | `0` | How much a solid shadow (an extrusion) darkens from front to back, with a lit edge just behind the letters. Pick a shadow colour that is not black, or there is nothing to darken. |
 | `extrude_back` | colour | `#00000000` | The colour an extrusion fades to at its back, from `shadow_color` at the front. Fully transparent for none. |
 | `layout` | `line`, `stack` | `line` | `line` fills rows left to right at one size. `stack` is a poster: short rows (cut at about half the width), each scaled up (at most three times) to the width of the widest, stacked tight. |
-| `emphasis_scale` | 1 to 2.5 | `1` | How much larger a key word is set. Above `1`, a key word has a row to itself, is always in its highlight colour, and its outline and shadow grow with it. `1` is off. |
 
 ## Animations
 

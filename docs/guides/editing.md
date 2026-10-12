@@ -28,10 +28,6 @@ Pause the video and **double-click** a word in the preview. Type the correction 
 - A word is edited one at a time and keeps its timing.
 - Spaces inside it stay, and it is still one word.
 - Clearing the word and pressing Enter **deletes** it.
-- **Key word** marks the word as the one to stress (or, when the rule picked it, takes that back). With a look
-  that sets key words larger (see **Emphasis size** in [Styling](./styling.md)), it gets a row of its own in
-  the highlight colour. Without a choice, each caption's key word is picked by a rule: the first word with a
-  digit, a percent sign or a currency sign, or else a word much longer than the others.
 
 ## Move the caption
 

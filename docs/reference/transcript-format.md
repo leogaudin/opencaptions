@@ -60,7 +60,6 @@ stored in the iPhone app's project files. A project can move between the phone a
 | `text` | The word as written, with its punctuation. |
 | `start`, `end` | Seconds from the start of the audio, at least `0`. |
 | `confidence` | `0` to `1`, how sure the model was. Defaults to `1`. |
-| `emphasis` | Optional. `true` or `false` is the user's choice of whether the word is a key word (see `emphasis_scale` in the [style reference](./style.md)); absent or `null` leaves it to the rule. Transcription never writes it. |
 
 ## Rules
 

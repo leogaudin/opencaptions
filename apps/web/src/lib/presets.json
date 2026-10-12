@@ -29,7 +29,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -63,7 +62,6 @@
       "fill_colors": [],
       "extrude_shade": 0.5,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1.25,
       "layout": "line"
     }
   },
@@ -97,7 +95,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -131,7 +128,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -165,7 +161,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -200,7 +195,6 @@
       "fill_colors": [],
       "extrude_shade": 0.6,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1.3,
       "layout": "line"
     }
   },
@@ -235,7 +229,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -270,7 +263,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -305,7 +297,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -340,7 +331,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     }
   },
@@ -374,7 +364,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     },
     "pro": true
@@ -409,7 +398,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     },
     "pro": true
@@ -444,7 +432,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     },
     "pro": true
@@ -479,7 +466,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#FFBB00",
-      "emphasis_scale": 1,
       "layout": "line"
     },
     "pro": true
@@ -514,7 +500,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1,
       "layout": "line"
     },
     "pro": true
@@ -549,7 +534,6 @@
       "fill_colors": [],
       "extrude_shade": 0.5,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1.5,
       "layout": "line"
     },
     "pro": true
@@ -584,7 +568,6 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "emphasis_scale": 1.4,
       "layout": "stack"
     },
     "pro": true
