@@ -35,16 +35,29 @@ test.describe("CaptionPreview resize", () => {
 
     await page.setViewportSize(LARGE_VP);
     await page.goto(`/projects/${projectId}`);
-    await page.waitForLoadState("networkidle");
-    // Wait for the preview to render.
-    await page.waitForTimeout(1000);
-
     const preview = page.getByTestId("caption-preview");
+    // Wait for the preview to render.
+    await expect(preview).toBeVisible();
+    await expect(preview.locator("canvas")).toBeVisible();
 
-    // Helper: measure the visible preview's bounding box after layout settles.
+    // Helper: measure the visible preview's bounding box once its layout has stopped moving: the
+    // same box on two reads a couple of frames apart.
+    const frames = () =>
+      page.evaluate(
+        () =>
+          new Promise<void>((done) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => done()));
+          }),
+      );
     async function measurePreview() {
-      await page.waitForTimeout(300); // layout settle
-      return preview.boundingBox();
+      let box = await preview.boundingBox();
+      for (let tries = 0; tries < 50; tries++) {
+        await frames();
+        const next = await preview.boundingBox();
+        if (JSON.stringify(next) === JSON.stringify(box)) return next;
+        box = next;
+      }
+      throw new Error("the preview's layout never settled");
     }
 
     for (let cycle = 1; cycle <= 2; cycle++) {

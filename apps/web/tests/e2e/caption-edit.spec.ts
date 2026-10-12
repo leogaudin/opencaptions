@@ -63,12 +63,23 @@ test.describe("Editing a word on the preview", () => {
   });
 
   test("Escape cancels", async ({ page }) => {
+    // Every save the editor sends: a cancelled edit must never be in one.
+    const sent: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "PATCH") sent.push(request.postData() ?? "");
+    });
     await editFirstWord();
     await input.fill("JUNK");
     await input.press("Escape");
     await expect(input).toHaveCount(0);
-    await page.waitForTimeout(1200); // past the autosave debounce
-    expect(savedWords()).toEqual(["alpha", "beta"]);
+    // A real edit afterwards is saved after anything the cancelled one could have sent (saves go
+    // out in order), so once it has landed there is nothing more to wait for.
+    await editFirstWord();
+    await input.fill("omega");
+    await input.press("Enter");
+    await expect.poll(savedWords).toEqual(["omega", "beta"]);
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.filter((body) => body.includes("JUNK"))).toEqual([]);
   });
 
   test("clearing the word deletes it", async () => {

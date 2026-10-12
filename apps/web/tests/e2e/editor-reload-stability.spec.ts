@@ -50,14 +50,24 @@ test.describe("Editor stays mounted across background reloads", () => {
 
     // Push broadcasts that trigger reloadProject() in the editor.
     expect(wsRoutes.length, "project WebSocket should be intercepted").toBeGreaterThan(0);
+    const reloaded = (r: import("@playwright/test").Response): boolean =>
+      r.request().method() === "GET" &&
+      new URL(r.url()).pathname.endsWith(`/projects/${projectId}`);
     for (let i = 0; i < 3; i++) {
+      // The broadcast makes the editor fetch the project again: wait for that to come back.
+      const response = page.waitForResponse(reloaded);
       for (const ws of wsRoutes) {
         ws.send(JSON.stringify({ type: "transcript_updated", payload: {} }));
       }
-      await page.waitForTimeout(400);
+      await response;
     }
-    // Let the async reload(s) settle.
-    await page.waitForTimeout(600);
+    // Let what the last reload changed be drawn.
+    await page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => done()));
+        }),
+    );
 
     // The editor must never have been swapped for the loading screen.
     await expect(page.getByText("Loading project")).toHaveCount(0);
