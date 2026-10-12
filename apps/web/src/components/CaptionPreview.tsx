@@ -56,6 +56,8 @@ interface Editing {
   /** The word's flat index across segments, as the engine counts lines. */
   index: number;
   text: string;
+  /** Whether the word is a key word now, as the toggle shows it. */
+  key: boolean;
   left: number;
   top: number;
   width: number;
@@ -238,9 +240,14 @@ function CaptionCanvas({
     const text = transcript.segments.flatMap((s) => s.words)[index]?.text;
     if (text === undefined) return;
     resolved.current = false;
+    // The line the word is in says whether it is a key word, the user's choice or the rule's.
+    const line = editor
+      ?.lines(transcript, scene.style.words_per_line, scene.caption_offset_ms ?? 0)
+      .find((l) => index >= l.from && index < l.from + l.count);
     setEditing({
       index,
       text,
+      key: line?.emphasis[index - line.from] ?? false,
       left: word.x * k,
       top: word.y * k,
       width: word.w * k,
@@ -296,6 +303,24 @@ function CaptionCanvas({
           style={bounds}
           className="absolute cursor-move touch-none rounded-sm ring-1 ring-white/0 hover:ring-white/60"
         />
+      )}
+      {editing && editor && (
+        <button
+          type="button"
+          data-testid="caption-key-word"
+          aria-pressed={editing.key}
+          // Keeps the focus in the field: a blur would end the edit.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            const { index, key } = editing;
+            editTranscript((tr) => editor.setEmphasis(tr, index, !key));
+            setEditing({ ...editing, key: !key });
+          }}
+          style={{ left: editing.left, top: Math.max(0, editing.top - 30) }}
+          className="absolute rounded-sm bg-background px-2 py-1 text-xs text-foreground ring-1 ring-border aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+        >
+          {t("Key word")}
+        </button>
       )}
       {editing && (
         <input

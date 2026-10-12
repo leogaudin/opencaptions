@@ -128,7 +128,7 @@ build produces byte-identical frames. Nothing else may draw captions.
   would invent timings. The web calls them through WebAssembly, and the phone
   calls the same code natively.
 - **Styles.** All of a style is the engine's, so the preview and the export agree.
-  - *Fifteen animations:* the word highlighted by colour (`word_highlight`), by a box
+  - *Sixteen animations:* the word highlighted by colour (`word_highlight`), by a box
     (`highlight_box`), popped (`word_pop`), faded in (`word_fade`), filled left to right as it is
     said (`word_sweep`, karaoke), underlined as it is said (`word_underline`), typed out letter by
     letter with a cursor (`typewriter`; the steps are whole letters, so a frame changes only when
@@ -136,7 +136,7 @@ build produces byte-identical frames. Nothing else may draw captions.
     lean, left and right in turn (`word_bounce`), brought into focus out of a dim blur
     (`lyric_focus`; the words already said stay sharp), lit by one box that slides from word to
     word (`highlight_slide`), lit with a bar under the line that fills as the line is spoken
-    (`line_bar`), each set on its own tilted label (`stickers`), its letters rising into place one after another as it is said (`letter_rise`: one outline per grapheme cluster, grouped by the shaper's cluster index, in reading order; a word in a connected script, where the letters join or reorder, is one cluster and rises as a piece; the word is hidden until its start, and its shadow and glow follow the letters), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
+    (`line_bar`), each set on its own tilted label (`stickers`), its letters rising into place one after another as it is said (`letter_rise`: one outline per grapheme cluster, grouped by the shaper's cluster index, in reading order; a word in a connected script, where the letters join or reorder, is one cluster and rises as a piece; the word is hidden until its start, and its shadow and glow follow the letters), dropped in from twice its size, over 0.12 s with no overshoot, the whole line jolted as it lands (`word_slam`: a knock of about 3.5% of the font size that dies away over 0.15 s along a fixed direction by the word's place, a polynomial envelope and no sine; the knock is part of the frame's identity), and pushed into its solid shadow as it is said (`word_press`: the face sinks along the offset, 70% of the way at most, and the extrusion that is left runs from there to the same back as before). The motion is eased with the
     engine's own arithmetic, never a platform sine, so the builds still agree to the byte. The
     line's bar and the sliding box are one shape per line (`Guide`), part of the frame's
     identity, so a frame is redrawn when they move.
@@ -151,6 +151,15 @@ build produces byte-identical frames. Nothing else may draw captions.
     from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
     depth: its stamps are laid from the back forward, so each pixel takes the colour of the
     nearest stamp that covers it, and the first step is lightened as a lit edge.
+  - *Key words.* `model::emphasis` is the one rule the scene and both editors share, held to
+    `testdata/emphasis.json`: an explicit `Word.emphasis` wins; otherwise each caption has at most
+    one key word, the first with a digit, `%` or a currency sign, or else the longest word if it
+    has seven letters or more and is at least one and a half times the caption's median. No word
+    lists, so it holds in any language. With `emphasis_scale` above 1 a key word is shaped larger
+    and has a row of its own (the rows are of different heights; its outline, shadow and
+    extrusion grow with it) and is always in its highlight colour. Emphasis splits rows, never
+    captions, so the timeline is unchanged. `edit::set_emphasis` (C ABI `oc_set_emphasis`) sets or
+    clears a word's choice, and the lines the editors list carry each word's effective flag.
   - *Motion blur.* When `motion_blur` is above 0, a frame at `t` is the average of eight
     sub-frames drawn at `t - motion_blur/30 · k/7` seconds (the shutter is a share of 1/30 s, so
     the fps does not change the look). If every sub-frame has the same key (nothing moves within

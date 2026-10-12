@@ -236,6 +236,20 @@ final class Counter { var value = 0 }
         #expect(model.saveState == .saved)
     }
 
+    @Test func aKeyWordToggleIsTheEnginesAndIsSaved() async throws {
+        let (model, store) = try make()
+        await model.settled()
+        #expect(!model.isKeyWord(index: 1))
+        model.setEmphasis(index: 1, to: true)
+        await model.settled()
+        #expect(model.isKeyWord(index: 1), "the lines say so as soon as the edit is applied")
+        await model.flush()
+        #expect(try store.load(model.project.id).transcript?.words[1].emphasis == true)
+        model.setEmphasis(index: 1, to: nil)
+        await model.settled()
+        #expect(!model.isKeyWord(index: 1) && model.transcript?.words[1].emphasis == nil)
+    }
+
     @Test func savingDoesNotMoveTheStampThePreviewReadsAsAnEdit() async throws {
         let (model, store) = try make()
         model.setPosition(x: 0.3, y: 0.2)

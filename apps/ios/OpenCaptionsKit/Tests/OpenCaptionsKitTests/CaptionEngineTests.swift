@@ -182,6 +182,23 @@ extension EngineSuites {
             }
         }
 
+        @Test func aWordIsMarkedAKeyWordOrLeftToTheRuleAndTheLinesSayWhich() async throws {
+            var t = try Repo.transcript()
+            t.segments[0].words[1].text = "40"  // a figure: the rule's key word of the first caption
+            let rule = try await engine.lines(t, wordsPerLine: 3, offsetMs: 0)
+            #expect(rule[0].emphasis == [false, true, false])
+            let marked = try await engine.setEmphasis(t, index: 0, to: true)
+            #expect(marked.words[0].emphasis == true && marked.words[0].text == t.words[0].text)
+            let cleared = try await engine.setEmphasis(marked, index: 1, to: false)
+            #expect(try await engine.lines(cleared, wordsPerLine: 3, offsetMs: 0)[0].emphasis == [true, false, false])
+            let back = try await engine.setEmphasis(cleared, index: 1, to: nil)
+            #expect(back.words[1].emphasis == nil, "left to the rule: nothing is stored")
+            #expect(try await engine.lines(back, wordsPerLine: 3, offsetMs: 0)[0].emphasis == [true, true, false])
+            await #expect(throws: EngineError.self) {
+                try await engine.setEmphasis(t, index: 9, to: true)
+            }
+        }
+
         @Test func aFrameBecomesAPremultipliedCoreImageImage() throws {
             // One straight-alpha pixel: (200, 100, 50) at alpha 128.
             let frame = CaptionFrame(width: 1, height: 1, rgba: Data([200, 100, 50, 128]))

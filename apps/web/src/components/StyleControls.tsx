@@ -217,6 +217,15 @@ function TextPanel({
         onChange={(words_per_line) => setStyle({ words_per_line })}
       />
       <SliderField
+        label={t("Emphasis size")}
+        value={style.emphasis_scale}
+        min={1}
+        max={2.5}
+        step={0.05}
+        decimals={2}
+        onChange={(emphasis_scale) => throttled({ emphasis_scale })}
+      />
+      <SliderField
         label={t("Word spacing")}
         value={style.word_spacing}
         min={0}

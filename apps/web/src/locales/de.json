@@ -355,5 +355,8 @@
   "Add a gradient color": "Verlaufsfarbe hinzufügen",
   "Remove this gradient color": "Diese Verlaufsfarbe entfernen",
   "Extrusion shading": "Extrusionsschattierung",
-  "Rise": "Aufsteigen"
+  "Rise": "Aufsteigen",
+  "Slam": "Einschlag",
+  "Emphasis size": "Größe der Hervorhebung",
+  "Key word": "Schlüsselwort"
 }

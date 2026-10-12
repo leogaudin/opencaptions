@@ -109,7 +109,8 @@ export type Animation =
   | "line_bar"
   | "stickers"
   | "word_press"
-  | "letter_rise";
+  | "letter_rise"
+  | "word_slam";
 
 /** Caption background style. */
 export type CaptionBackground = "none" | "solid" | "pill";

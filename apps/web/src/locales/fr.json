@@ -355,5 +355,8 @@
   "Add a gradient color": "Ajouter une couleur de dégradé",
   "Remove this gradient color": "Retirer cette couleur de dégradé",
   "Extrusion shading": "Ombrage de l’extrusion",
-  "Rise": "Montée"
+  "Rise": "Montée",
+  "Slam": "Impact",
+  "Emphasis size": "Taille de l’accent",
+  "Key word": "Mot clé"
 }

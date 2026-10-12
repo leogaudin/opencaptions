@@ -22,6 +22,7 @@ export const ANIMATIONS: readonly Animation[] = [
   "stickers",
   "word_press",
   "letter_rise",
+  "word_slam",
 ];
 
 export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
@@ -46,6 +47,7 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   stickers: msg("Stickers"),
   word_press: msg("Press"),
   letter_rise: msg("Rise"),
+  word_slam: msg("Slam"),
 };
 
 /** How many highlight colours a style holds, the API's limit. */

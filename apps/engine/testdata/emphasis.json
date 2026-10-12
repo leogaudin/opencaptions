@@ -1,0 +1,224 @@
+[
+ {
+  "name": "a digit marks the first figure",
+  "per_line": 3,
+  "words": [
+   "we",
+   "grew",
+   "40",
+   "percent"
+  ],
+  "key": [
+   false,
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "a currency sign is a figure",
+  "per_line": 4,
+  "words": [
+   "pay",
+   "$5",
+   "now",
+   "please"
+  ],
+  "key": [
+   false,
+   true,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "a percent sign is a figure",
+  "per_line": 3,
+  "words": [
+   "only",
+   "100%",
+   "sure"
+  ],
+  "key": [
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "the first figure wins over a longer word",
+  "per_line": 4,
+  "words": [
+   "an",
+   "extraordinary",
+   "3",
+   "times"
+  ],
+  "key": [
+   false,
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "a much longer word is the key word",
+  "per_line": 4,
+  "words": [
+   "this",
+   "is",
+   "extraordinary",
+   "news"
+  ],
+  "key": [
+   false,
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "a long word among long words is not",
+  "per_line": 4,
+  "words": [
+   "unbelievable",
+   "incredible",
+   "wonderful",
+   "remarkable"
+  ],
+  "key": [
+   false,
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "short words have no key word",
+  "per_line": 4,
+  "words": [
+   "go",
+   "to",
+   "the",
+   "sea"
+  ],
+  "key": [
+   false,
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "a word under seven letters is not long enough",
+  "per_line": 3,
+  "words": [
+   "a",
+   "bit",
+   "pretty"
+  ],
+  "key": [
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "the user's yes adds a key word",
+  "per_line": 3,
+  "words": [
+   {
+    "text": "we",
+    "emphasis": true
+   },
+   "grew",
+   "40"
+  ],
+  "key": [
+   true,
+   false,
+   true
+  ]
+ },
+ {
+  "name": "the user's no clears the rule's choice and nothing replaces it",
+  "per_line": 3,
+  "words": [
+   "grew",
+   {
+    "text": "40",
+    "emphasis": false
+   },
+   "extraordinarily"
+  ],
+  "key": [
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "each caption has its own key word",
+  "per_line": 2,
+  "words": [
+   "a",
+   "5",
+   "b",
+   "c"
+  ],
+  "key": [
+   false,
+   true,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "the rule needs no word list: Cyrillic",
+  "per_line": 3,
+  "words": [
+   "это",
+   "невероятно",
+   "да"
+  ],
+  "key": [
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "punctuation is not length",
+  "per_line": 3,
+  "words": [
+   "so",
+   "wow!!!!!!!!",
+   "ok"
+  ],
+  "key": [
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "name": "digits of any script count",
+  "per_line": 3,
+  "words": [
+   "أنا",
+   "٤٠",
+   "سنة"
+  ],
+  "key": [
+   false,
+   true,
+   false
+  ]
+ },
+ {
+  "name": "an empty list has none",
+  "per_line": 3,
+  "words": [],
+  "key": []
+ }
+]

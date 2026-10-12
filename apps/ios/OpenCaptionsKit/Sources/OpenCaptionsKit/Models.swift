@@ -10,12 +10,15 @@ public struct Word: Codable, Equatable, Sendable {
     public var start: Double
     public var end: Double
     public var confidence: Double
+    /// Whether the word is a key word, as the user set it; nil leaves it to the engine's rule.
+    public var emphasis: Bool?
 
-    public init(text: String, start: Double, end: Double, confidence: Double = 1) {
+    public init(text: String, start: Double, end: Double, confidence: Double = 1, emphasis: Bool? = nil) {
         self.text = text
         self.start = start
         self.end = end
         self.confidence = confidence
+        self.emphasis = emphasis
     }
 
     public init(from decoder: Decoder) throws {
@@ -24,6 +27,7 @@ public struct Word: Codable, Equatable, Sendable {
         start = try c.decode(Double.self, forKey: .start)
         end = try c.decode(Double.self, forKey: .end)
         confidence = try c.decodeIfPresent(Double.self, forKey: .confidence) ?? 1
+        emphasis = try c.decodeIfPresent(Bool.self, forKey: .emphasis)
     }
 }
 
@@ -100,6 +104,7 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case stickers
     case wordPress = "word_press"
     case letterRise = "letter_rise"
+    case wordSlam = "word_slam"
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
@@ -150,6 +155,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var fillColors: [String]
     /// How much a solid shadow (an extrusion) darkens from the front to the back, 0...1.
     public var extrudeShade: Double
+    /// How much larger a key word is set, 1...2.5: above 1 it has a row to itself and its highlight colour.
+    public var emphasisScale: Double
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -158,7 +165,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
-        motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0
+        motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0,
+        emphasisScale: Double = 1
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -185,6 +193,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.motionBlur = motionBlur
         self.fillColors = fillColors
         self.extrudeShade = extrudeShade
+        self.emphasisScale = emphasisScale
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -213,7 +222,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
             motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5,
             fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
-            extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0)
+            extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0,
+            emphasisScale: try c.decodeIfPresent(Double.self, forKey: .emphasisScale) ?? 1)
     }
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
@@ -257,5 +267,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case motionBlur = "motion_blur"
         case fillColors = "fill_colors"
         case extrudeShade = "extrude_shade"
+        case emphasisScale = "emphasis_scale"
     }
 }

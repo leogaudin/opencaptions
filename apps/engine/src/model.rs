@@ -68,6 +68,8 @@ pub enum Animation {
     WordPress,
     /// Each word's letters rise into place one after another as it is said.
     LetterRise,
+    /// Each word slams in, dropping from twice its size, and the line jolts as it lands.
+    WordSlam,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
@@ -146,6 +148,14 @@ pub struct Style {
     /// How much a solid shadow (an extrusion) darkens from the front to the back, 0 to 1.
     #[serde(default)]
     pub extrude_shade: f32,
+    /// How much larger a key word is set, 1 to 2.5: above 1 it sits alone on its own row and is
+    /// always in its highlight colour. 1 is off.
+    #[serde(default = "default_emphasis_scale")]
+    pub emphasis_scale: f32,
+}
+
+fn default_emphasis_scale() -> f32 {
+    1.0
 }
 
 fn default_motion_blur() -> f32 {
@@ -157,6 +167,9 @@ pub struct Word {
     pub text: String,
     pub start: f32,
     pub end: f32,
+    /// Whether the word is a key word, set by the user: None leaves it to the rule (`emphasis`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub emphasis: Option<bool>,
     #[serde(flatten)]
     pub rest: Map<String, Value>,
 }
@@ -224,6 +237,70 @@ pub fn cut(words: &[&Word], per_line: usize) -> Vec<Range<usize>> {
         }
     }
     lines
+}
+
+/// The characters a key word is looked for by: a digit, a percent sign or a currency sign.
+fn is_figure(c: char) -> bool {
+    c.is_numeric()
+        || matches!(
+            c,
+            '%' | '‰'
+                | '$'
+                | '€'
+                | '£'
+                | '¥'
+                | '₹'
+                | '₩'
+                | '₽'
+                | '₺'
+                | '¢'
+                | '฿'
+                | '₫'
+                | '₪'
+                | '₦'
+        )
+}
+
+/// How many letters and digits a word has: its length, leaving the punctuation round it out.
+fn letters(w: &Word) -> usize {
+    w.text.chars().filter(|c| c.is_alphanumeric()).count()
+}
+
+/// The key words, one flag per word: the one rule for the scene and the editors, held to
+/// `testdata/emphasis.json`. An explicit `Word.emphasis` wins. Otherwise a caption (one of
+/// `ranges`) has at most one key word: the first with a figure in it (a digit, `%` or a
+/// currency sign); failing that the longest, if it has seven letters or more and is at least
+/// one and a half times the caption's median word. No word lists, so it holds in any language.
+pub fn emphasis(words: &[&Word], ranges: &[Range<usize>]) -> Vec<bool> {
+    let mut key: Vec<bool> = words.iter().map(|w| w.emphasis == Some(true)).collect();
+    for range in ranges {
+        let line = &words[range.clone()];
+        let chosen = line
+            .iter()
+            .position(|w| w.text.chars().any(is_figure))
+            .or_else(|| {
+                let mut lengths: Vec<usize> = line.iter().map(|w| letters(w)).collect();
+                lengths.sort_unstable();
+                // The median of an even count is the mean of the middle two.
+                let median = match lengths.len() {
+                    0 => return None,
+                    n if n % 2 == 1 => lengths[n / 2] as f32,
+                    n => (lengths[n / 2 - 1] + lengths[n / 2]) as f32 / 2.0,
+                };
+                let (at, longest) = line
+                    .iter()
+                    .enumerate()
+                    .map(|(i, w)| (i, letters(w)))
+                    .max_by_key(|&(i, n)| (n, std::cmp::Reverse(i)))?;
+                (longest >= 7 && longest as f32 >= 1.5 * median).then_some(at)
+            });
+        if let Some(at) = chosen {
+            let i = range.start + at;
+            // A word the user cleared is not replaced by another.
+            key[i] = words[i].emphasis != Some(false);
+        }
+    }
+    key
 }
 
 /// A transcript time as it is shown: moved by the caption offset (positive means
@@ -304,6 +381,7 @@ impl SceneInput {
         within("glow_blur", s.glow_blur, 0.0, 500.0)?;
         within("motion_blur", s.motion_blur, 0.0, 1.0)?;
         within("extrude_shade", s.extrude_shade, 0.0, 1.0)?;
+        within("emphasis_scale", s.emphasis_scale, 1.0, 2.5)?;
         if s.fill_colors.len() > 4 {
             return Err("fill_colors holds at most 4 colours".into());
         }
@@ -326,6 +404,7 @@ mod tests {
             text: "w".into(),
             start,
             end,
+            emphasis: None,
             rest: Map::new(),
         }
     }
@@ -405,6 +484,37 @@ mod tests {
                 .map(|i| i.as_u64().unwrap() as usize)
                 .collect();
             assert_eq!(pauses(&refs), expected, "{}", case["name"]);
+        }
+    }
+
+    #[test]
+    fn the_shared_emphasis_cases_hold() {
+        let cases: Vec<Value> =
+            serde_json::from_str(include_str!("../testdata/emphasis.json")).unwrap();
+        assert!(cases.len() >= 12);
+        for case in cases {
+            let words: Vec<Word> = case["words"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .enumerate()
+                .map(|(i, w)| Word {
+                    text: w.as_str().or(w["text"].as_str()).unwrap().into(),
+                    start: i as f32 * 0.5,
+                    end: i as f32 * 0.5 + 0.5,
+                    emphasis: w["emphasis"].as_bool(),
+                    rest: Map::new(),
+                })
+                .collect();
+            let refs: Vec<&Word> = words.iter().collect();
+            let lines = cut(&refs, case["per_line"].as_u64().unwrap() as usize);
+            let expected: Vec<bool> = case["key"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|k| k.as_bool().unwrap())
+                .collect();
+            assert_eq!(emphasis(&refs, &lines), expected, "{}", case["name"]);
         }
     }
 

@@ -193,6 +193,19 @@ public final class EditorModel {
         enqueue { try await engine.setWord($0, index: index, text: text) }
     }
 
+    /// Whether the word is a key word as things stand: the user's choice, else the engine's rule.
+    public func isKeyWord(index: Int) -> Bool {
+        guard let line = lines.first(where: { index >= $0.from && index < $0.from + $0.count }) else { return false }
+        let at = index - line.from
+        return line.emphasis.indices.contains(at) ? line.emphasis[at] : false
+    }
+
+    /// Marks a word a key word (true), not one (false), or leaves it to the rule (nil).
+    public func setEmphasis(index: Int, to state: Bool?) {
+        let engine = engine
+        enqueue { try await engine.setEmphasis($0, index: index, to: state) }
+    }
+
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours.
     public func retime(index: Int, edge: CaptionEdge, time: Double) {
         let (engine, offset) = (engine, project.captionOffsetMs)

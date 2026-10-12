@@ -48,7 +48,7 @@ def to_vtt(transcript: Transcript) -> str:
 
 def to_json(transcript: Transcript) -> str:
     """Return the transcript as pretty JSON. Identical to the API JSON shape."""
-    return json.dumps(transcript.model_dump(), indent=2, ensure_ascii=False) + "\n"
+    return json.dumps(transcript.model_dump(exclude_none=True), indent=2, ensure_ascii=False) + "\n"
 
 
 def _timestamp(seconds: float, millis_separator: str) -> str:

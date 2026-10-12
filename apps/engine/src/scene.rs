@@ -13,7 +13,9 @@ use tiny_skia::{
 };
 
 use crate::fonts::FontBook;
-use crate::model::{Animation, Background, Rgba, SceneInput, Style, TextCase, cut, shifted};
+use crate::model::{
+    Animation, Background, Rgba, SceneInput, Style, TextCase, cut, emphasis, shifted,
+};
 
 /// Style values are tuned against a 1920-tall frame and scaled to the real one.
 const REF_HEIGHT: f32 = 1920.0;
@@ -33,6 +35,15 @@ const POP: f32 = 0.08;
 /// on the way, over BOX_S.
 const BOX_FROM: f32 = 0.6;
 const BOX_S: f32 = 0.22;
+/// Word slam: the size a word drops in from, how long the drop takes, the share of it in which the
+/// word fades in, and how far the line is jolted when it lands (a share of the font size) and for
+/// how long. The jolt goes along one of these directions, by the word's place in the transcript.
+const SLAM_FROM: f32 = 2.2;
+const SLAM_S: f32 = 0.12;
+const SLAM_FADE: f32 = 0.4;
+const JOLT: f32 = 0.035;
+const JOLT_S: f32 = 0.15;
+const JOLT_DIRECTIONS: [[f32; 2]; 4] = [[1.0, 0.6], [-0.8, 0.8], [0.6, -1.0], [-1.0, -0.4]];
 /// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
 /// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly).
 const RISE_FROM: f32 = 0.45;
@@ -93,6 +104,8 @@ struct Placed {
     chars: usize,
     /// Its place in the transcript, which decides which way it leans.
     index: usize,
+    /// How much larger than the style's size it is set: a key word's emphasis, else 1.
+    size: f32,
 }
 
 struct Line {
@@ -168,7 +181,8 @@ struct Guide {
 }
 
 #[derive(PartialEq)]
-struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>);
+/// The frame's line, its words' states, its guide shape, and how far the line is jolted.
+struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>, [f32; 2]);
 
 struct Sink {
     pb: PathBuilder,
@@ -445,6 +459,18 @@ fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             tilt: lean(w) * STICKER_TILT,
             ..steady
         },
+        Animation::WordSlam => {
+            // Dropped in from twice its size and landed in 0.12 s, no overshoot, visible from
+            // the first 40% of the drop; nothing before it is said.
+            let p = reached(t, w, SLAM_S);
+            let eased = 1.0 - (1.0 - p) * (1.0 - p);
+            WordState {
+                on,
+                scale: SLAM_FROM + (1.0 - SLAM_FROM) * eased,
+                opacity: (p / SLAM_FADE).min(1.0),
+                ..steady
+            }
+        }
         Animation::LetterRise => WordState {
             on,
             enter: ((t - (w.start - LEAD_S)) / rise_timing(w).1).clamp(0.0, 1.0),
@@ -492,6 +518,7 @@ fn parts<'a>(w: &'a Placed, st: &WordState, fs: f32, rising: bool) -> Vec<(&'a P
 fn lift(anim: Animation) -> f32 {
     match anim {
         Animation::WordBounce => BOUNCE,
+        Animation::WordSlam => SLAM_FROM - 1.0,
         Animation::Stickers => STICKER_LIFT,
         _ => POP,
     }
@@ -766,9 +793,6 @@ impl Scene {
             f32::from(face.ascender()) * em,
             -f32::from(face.descender()) * em,
         );
-        let row_h = LINE_HEIGHT * fs + 2.0 * pad_wy;
-        // Half-leading, as CSS does: the face's content area centred in the line box.
-        let baseline_in_row = pad_wy + (LINE_HEIGHT * fs - (ascent + descent)) / 2.0 + ascent;
         // A boxed word's padding already separates it from the next, so the boxes
         // sit almost touching instead of adding a whole space on top.
         let base_gap = if boxed {
@@ -781,10 +805,12 @@ impl Scene {
         let reach = |dx: f32, dy: f32| dx.abs().max(dy.abs());
         // What a caption's drawing reaches past its block: the soft edges of a shadow and a glow, the
         // shadow's offset, an outline, and an italic's lean over the top corner.
-        let margin = style.shadow_blur * 3.0
+        let margin = (style.shadow_blur * 3.0
             + reach(style.shadow_offset_x, style.shadow_offset_y)
             + style.glow_blur * 3.0
-            + style.stroke_width
+            + style.stroke_width)
+            // A key word's effects are as much larger as the word.
+            * style.emphasis_scale.max(1.0)
             + if style.italic { fs * ITALIC_SKEW } else { 0.0 }
             + match style.animation {
                 // The soft words' blur, a turned word's corners, the bar under the line.
@@ -792,16 +818,25 @@ impl Scene {
                 Animation::WordBounce | Animation::Stickers => fs * 0.15,
                 Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
                 Animation::LetterRise => fs * RISE_FROM,
+                Animation::WordSlam => fs * JOLT * 1.5,
                 _ => 0.0,
             }
             + 2.0;
 
         let offset = input.caption_offset_ms;
         let words: Vec<_> = input.transcript.words().collect();
-        let lines = cut(&words, style.words_per_line.max(1) as usize)
+        let ranges = cut(&words, style.words_per_line.max(1) as usize);
+        // The key words, sized up and alone on a row when the style asks for it.
+        let key = emphasis(&words, &ranges);
+        let big = style.emphasis_scale > 1.0;
+        let lines = ranges
             .into_iter()
             .map(|range| {
                 let first = range.start;
+                let sizes: Vec<f32> = key[range.clone()]
+                    .iter()
+                    .map(|&k| if k && big { style.emphasis_scale } else { 1.0 })
+                    .collect();
                 let chunk = &words[range];
                 let texts: Vec<String> = chunk
                     .iter()
@@ -813,11 +848,12 @@ impl Scene {
                 let lean = Transform::from_row(1.0, 0.0, -ITALIC_SKEW, 1.0, 0.0, 0.0);
                 let shaped: Vec<_> = texts
                     .iter()
-                    .map(|text| {
+                    .zip(&sizes)
+                    .map(|(text, size)| {
                         let (glyphs, advance) = shape(
                             book.face(book.for_text(primary, &fallbacks, text)),
                             text,
-                            fs,
+                            fs * size,
                         );
                         let glyphs = if style.italic {
                             glyphs.and_then(|p| p.transform(lean))
@@ -846,21 +882,25 @@ impl Scene {
                         }
                     })
                     .collect();
-                let mut rows: Vec<(Vec<usize>, f32)> = vec![];
+                // Rows: words fill a row until the next does not fit; a key word has a row to
+                // itself, and the row is as tall as its word.
+                let mut rows: Vec<(Vec<usize>, f32, f32)> = vec![];
                 for (i, (_, adv)) in shaped.iter().enumerate() {
                     let slot = adv + 2.0 * pad_wx;
+                    let alone = sizes[i] > 1.0;
                     match rows.last_mut() {
-                        Some((row, w)) if *w + sep + slot <= max_row => {
+                        Some((row, w, k)) if !alone && *k <= 1.0 && *w + sep + slot <= max_row => {
                             row.push(i);
                             *w += sep + slot;
                         }
-                        _ => rows.push((vec![i], slot)),
+                        _ => rows.push((vec![i], slot, sizes[i])),
                     }
                 }
+                let height_of = |k: f32| LINE_HEIGHT * fs * k + 2.0 * pad_wy;
                 let inner_w = rows.iter().map(|r| r.1).fold(0.0, f32::max);
                 let (block_w, block_h) = (
                     inner_w + 2.0 * pad_bx,
-                    rows.len() as f32 * row_h + 2.0 * pad_by,
+                    rows.iter().map(|r| height_of(r.2)).sum::<f32>() + 2.0 * pad_by,
                 );
                 // The block is centred on (position_x, position_y) and clamped so it
                 // never leaves the frame, whatever a drag asks for. One wider than the
@@ -876,8 +916,12 @@ impl Scene {
                 let y0 = place(style.position_y, block_h, height as f32);
                 let mut placed: Vec<Option<Placed>> = (0..chunk.len()).map(|_| None).collect();
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
-                for (r, (row, row_w)) in rows.iter().enumerate() {
-                    let top = y0 + pad_by + r as f32 * row_h;
+                let mut top = y0 + pad_by;
+                for (row, row_w, k) in &rows {
+                    let row_h = height_of(*k);
+                    // Half-leading, as CSS does, for this row's size.
+                    let baseline_in_row =
+                        pad_wy + (LINE_HEIGHT * fs * k - (ascent + descent) * k) / 2.0 + ascent * k;
                     let mut x = x0 + pad_bx + (inner_w - row_w) / 2.0;
                     // In a right-to-left line the first word is the rightmost.
                     let order: Vec<usize> = if right_to_left {
@@ -897,20 +941,23 @@ impl Scene {
                             ink_x: x + pad_wx,
                             ink_w: *adv,
                             baseline: top + baseline_in_row,
-                            em_top: top + baseline_in_row - ascent,
+                            em_top: top + baseline_in_row - ascent * k,
                             clusters: clusters[i]
                                 .iter()
                                 .filter_map(|c| c.clone().transform(at))
                                 .collect(),
                             chars: texts[i].chars().count(),
                             index: first + i,
+                            size: sizes[i],
                         });
                         x += slot_w + sep;
                     }
+                    top += row_h;
                 }
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
-                let grow = inner_w.max(row_h) * lift(style.animation);
+                let tallest = rows.iter().map(|r| height_of(r.2)).fold(0.0, f32::max);
+                let grow = inner_w.max(tallest) * lift(style.animation);
                 Line {
                     first,
                     start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
@@ -996,7 +1043,33 @@ impl Scene {
                 .collect()
         });
         let guide = line.and_then(|i| self.guide(&self.lines[i], t));
-        FrameKey(line, states, guide)
+        let jolt = line.map_or([0.0; 2], |i| self.jolt(&self.lines[i], t));
+        FrameKey(line, states, guide, jolt)
+    }
+
+    /// How far the line is knocked at `t`, in pixels: each word landing jolts it, along a fixed
+    /// direction by its place in the transcript, the knock dying away to nothing (a polynomial
+    /// envelope, not a sine, so every build agrees).
+    fn jolt(&self, line: &Line, t: f32) -> [f32; 2] {
+        if self.style.animation != Animation::WordSlam {
+            return [0.0; 2];
+        }
+        let landed = |w: &Placed| w.start - LEAD_S + SLAM_S;
+        let Some(w) = line
+            .words
+            .iter()
+            .filter(|w| landed(w) <= t)
+            .max_by(|a, b| landed(a).total_cmp(&landed(b)))
+        else {
+            return [0.0; 2];
+        };
+        let left = 1.0 - (t - landed(w)) / JOLT_S;
+        if left <= 0.0 {
+            return [0.0; 2];
+        }
+        let [dx, dy] = JOLT_DIRECTIONS[w.index % JOLT_DIRECTIONS.len()];
+        let push = JOLT * self.style.font_size * left * left;
+        [dx * push, dy * push]
     }
 
     /// The sliding box or the line bar at `t`, for the animations that have one.
@@ -1045,6 +1118,7 @@ impl Scene {
         (index, line): (usize, &Line),
         states: &[WordState],
         guide: Option<Guide>,
+        jolt: [f32; 2],
         cache: &mut LayerCache,
     ) {
         let s = &self.style;
@@ -1056,7 +1130,7 @@ impl Scene {
             Transform::from_translate(-cx, -cy)
                 .post_scale(st.scale, st.scale)
                 .post_rotate(st.tilt)
-                .post_translate(cx, cy)
+                .post_translate(cx + jolt[0], cy + jolt[1])
         };
         // A solid shadow is an extrusion; `word_press` sinks the word's face into it, a share of the
         // way to the back, and the extrusion that is left is the stretch from there on.
@@ -1071,7 +1145,10 @@ impl Scene {
         };
         let face = |w: &Placed, st: &WordState| {
             let k = sunk(st);
-            pivot(w, st).post_translate(s.shadow_offset_x * k, s.shadow_offset_y * k)
+            pivot(w, st).post_translate(
+                s.shadow_offset_x * w.size * k,
+                s.shadow_offset_y * w.size * k,
+            )
         };
         if let Some(path) = line.block.and_then(|b| rounded_rect(b, self.block_radius)) {
             let p = paint(colour(s.background_color, s.background_opacity));
@@ -1105,22 +1182,27 @@ impl Scene {
                 }
             }
         }
-        let stroke = (s.stroke_width > 0.0).then(|| Stroke {
-            width: s.stroke_width,
-            line_join: LineJoin::Round,
-            line_cap: LineCap::Round,
-            ..Stroke::default()
-        });
+        // `k` is the word's size against the style's: a key word's outline grows with it.
+        let stroke = |k: f32| {
+            (s.stroke_width > 0.0).then(|| Stroke {
+                width: s.stroke_width * k,
+                line_join: LineJoin::Round,
+                line_cap: LineCap::Round,
+                ..Stroke::default()
+            })
+        };
         // Stroke under fill, so a thick outline grows outward instead of eating the letter.
-        let ink_with = |px: &mut Pixmap, path: &Path, fill: &Paint, edge: Color, at: Transform| {
-            if let Some(stroke) = &stroke {
-                px.stroke_path(path, &paint(edge), stroke, at, None);
-            }
-            px.fill_path(path, fill, FillRule::Winding, at, None);
-        };
-        let ink = |px: &mut Pixmap, path: &Path, fill: Color, edge: Color, at: Transform| {
-            ink_with(px, path, &paint(fill), edge, at);
-        };
+        let ink_with =
+            |px: &mut Pixmap, path: &Path, fill: &Paint, edge: Color, at: Transform, k: f32| {
+                if let Some(stroke) = &stroke(k) {
+                    px.stroke_path(path, &paint(edge), stroke, at, None);
+                }
+                px.fill_path(path, fill, FillRule::Winding, at, None);
+            };
+        let ink =
+            |px: &mut Pixmap, path: &Path, fill: Color, edge: Color, at: Transform, k: f32| {
+                ink_with(px, path, &paint(fill), edge, at, k);
+            };
         let (bx, by) = (line.bounds.x(), line.bounds.y());
         let local = |at: Transform| at.post_translate(-bx as f32, -by as f32);
         let layer = || Pixmap::new(line.bounds.width(), line.bounds.height());
@@ -1192,7 +1274,9 @@ impl Scene {
                         let steps = if s.shadow_blur > 0.0 {
                             1
                         } else {
-                            ((s.shadow_offset_x.abs().max(s.shadow_offset_y.abs()) * (1.0 - from))
+                            ((s.shadow_offset_x.abs().max(s.shadow_offset_y.abs())
+                                * w.size
+                                * (1.0 - from))
                                 .ceil() as usize)
                                 .clamp(1, 96)
                         };
@@ -1223,10 +1307,10 @@ impl Scene {
                                 let at = Transform::from_translate(0.0, *down)
                                     .post_concat(pivot(w, st))
                                     .post_translate(
-                                        s.shadow_offset_x * along,
-                                        s.shadow_offset_y * along,
+                                        s.shadow_offset_x * w.size * along,
+                                        s.shadow_offset_y * w.size * along,
                                     );
-                                ink(&mut shadow, path, c, c, local(at));
+                                ink(&mut shadow, path, c, c, local(at), w.size);
                             }
                         }
                     }
@@ -1258,7 +1342,7 @@ impl Scene {
                         for (path, down, shown) in parts(w, st, s.font_size, rising) {
                             let c = colour(solid(s.glow_color), st.opacity * shown);
                             let at = Transform::from_translate(0.0, down).post_concat(face(w, st));
-                            ink(&mut halo, path, c, c, local(at));
+                            ink(&mut halo, path, c, c, local(at), w.size);
                         }
                     }
                     blur(&mut halo, s.glow_blur / 2.0);
@@ -1358,6 +1442,7 @@ impl Scene {
                 | Animation::WordBounce
                 | Animation::LyricFocus
                 | Animation::LetterRise
+                | Animation::WordSlam
                 | Animation::WordPress => st.on,
                 Animation::None
                 | Animation::HighlightBox
@@ -1369,6 +1454,8 @@ impl Scene {
                 | Animation::WordUnderline
                 | Animation::Typewriter => 0.0,
             };
+            // A key word is always in its highlight colour.
+            let lit = if w.size > 1.0 { 1.0 } else { lit };
             let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
             let fill = match gradient_stops(&s.fill_colors, &tint) {
                 Some(stops) => LinearGradient::new(
@@ -1398,7 +1485,7 @@ impl Scene {
                 // leave the plain word's soft edge showing round it, a pale fringe.
                 let (on, at) = (sweep(), face(w, st));
                 if st.fill >= 1.0 {
-                    ink_with(canvas, path, &on, edge, at);
+                    ink_with(canvas, path, &on, edge, at, w.size);
                 } else if let Some(within) = word_box(path, w, st, 0)
                     && let (Some(mut passed), Some(mut ahead), Some(mask)) = (
                         Pixmap::new(within.width(), within.height()),
@@ -1407,9 +1494,9 @@ impl Scene {
                     )
                 {
                     let at = at.post_translate(-within.x() as f32, -within.y() as f32);
-                    ink_with(&mut passed, path, &on, edge, at);
+                    ink_with(&mut passed, path, &on, edge, at, w.size);
                     passed.apply_mask(&mask);
-                    ink_with(&mut ahead, path, &fill, edge, at);
+                    ink_with(&mut ahead, path, &fill, edge, at, w.size);
                     let mut rest = mask;
                     rest.invert();
                     ahead.apply_mask(&rest);
@@ -1437,7 +1524,7 @@ impl Scene {
                         let at = Transform::from_translate(0.0, down)
                             .post_concat(face(w, st))
                             .post_translate(-within.x() as f32, -within.y() as f32);
-                        ink_with(&mut group, part, &fill, edge, at);
+                        ink_with(&mut group, part, &fill, edge, at, w.size);
                         let p = PixmapPaint {
                             opacity: st.opacity * shown,
                             ..PixmapPaint::default()
@@ -1459,7 +1546,7 @@ impl Scene {
                 continue;
             }
             if st.opacity >= 1.0 && st.soften <= 0.0 && !(typed && st.fill < 1.0) {
-                ink_with(canvas, path, &fill, edge, face(w, st));
+                ink_with(canvas, path, &fill, edge, face(w, st), w.size);
             } else {
                 let sigma = st.soften * s.font_size * FOCUS_BLUR;
                 let reach = if st.soften > 0.0 {
@@ -1473,7 +1560,7 @@ impl Scene {
                     // Composited as one group, like CSS opacity, so the stroke under
                     // the fill does not show through a translucent letter.
                     let at = face(w, st).post_translate(-within.x() as f32, -within.y() as f32);
-                    ink_with(&mut group, path, &fill, edge, at);
+                    ink_with(&mut group, path, &fill, edge, at, w.size);
                     if typed && let Some(mask) = cut(w.ink_x + w.ink_w * st.fill, within) {
                         group.apply_mask(&mask);
                     }
@@ -1665,8 +1752,14 @@ impl Renderer {
             }
             if let Some(i) = key.0 {
                 let line = &self.scene.lines[i];
-                self.scene
-                    .draw(&mut scratch, (i, line), &key.1, key.2, &mut self.layers);
+                self.scene.draw(
+                    &mut scratch,
+                    (i, line),
+                    &key.1,
+                    key.2,
+                    key.3,
+                    &mut self.layers,
+                );
             }
             for (row, span) in sum.chunks_mut(row_len).zip(rows(area, width)) {
                 for (acc, byte) in row.iter_mut().zip(&scratch.data()[span]) {
@@ -1747,8 +1840,14 @@ impl Renderer {
             } else if let Some(i) = keys[0].0 {
                 let line = &self.scene.lines[i];
                 let key = &keys[0];
-                self.scene
-                    .draw(&mut self.canvas, (i, line), &key.1, key.2, &mut self.layers);
+                self.scene.draw(
+                    &mut self.canvas,
+                    (i, line),
+                    &key.1,
+                    key.2,
+                    key.3,
+                    &mut self.layers,
+                );
             }
             unpremultiply(self.canvas.data(), &mut self.rgba, bounds, width);
             self.dirty = Some(bounds);
@@ -2452,6 +2551,125 @@ mod tests {
         assert_eq!(pieces("Noto Sans Thai", "สวัสดี"), 1);
     }
 
+    const FIGURES: &[(&str, f32, f32)] = &[
+        ("we", 0.0, 0.4),
+        ("grew", 0.4, 0.8),
+        ("40", 0.8, 1.2),
+        ("percent", 1.2, 1.6),
+    ];
+
+    fn emphasised(scale: f32) -> Scene {
+        let patch = serde_json::json!({
+            "emphasis_scale": scale, "words_per_line": 4, "motion_blur": 0
+        });
+        Scene::new(&book(), styled("none", FIGURES, patch))
+    }
+
+    #[test]
+    fn a_key_word_is_larger_and_alone_on_its_row() {
+        let scene = emphasised(1.5);
+        let words = &scene.lines[0].words;
+        let row = |i: usize| words[i].slot.y();
+        // "we grew" share a row, "40" has its own, and so does "percent" under it.
+        assert_eq!(row(0), row(1));
+        assert!(row(2) > row(0) && row(3) > row(2), "three rows, in order");
+        assert_eq!(words[2].size, 1.5);
+        assert_eq!(words[0].size, 1.0);
+        let height = |i: usize| words[i].glyphs.as_ref().unwrap().bounds().height();
+        assert!(height(2) > 1.3 * height(0), "the key word is set larger");
+        assert!(
+            words[2].slot.height() > 1.3 * words[0].slot.height(),
+            "and its row is taller"
+        );
+        // Off, the same words are one row at one size.
+        let flat = emphasised(1.0);
+        assert!(
+            flat.lines[0]
+                .words
+                .iter()
+                .all(|w| w.size == 1.0 && w.slot.y() == flat.lines[0].words[0].slot.y())
+        );
+        // The captions are the same ones: emphasis splits rows, never captions.
+        assert_eq!(scene.lines.len(), flat.lines.len());
+        assert_eq!(scene.lines[0].start, flat.lines[0].start);
+    }
+
+    #[test]
+    fn a_word_the_user_marks_is_the_key_word_whatever_the_rule_says() {
+        let mut input = styled(
+            "none",
+            FIGURES,
+            serde_json::json!({ "emphasis_scale": 2.0, "words_per_line": 4 }),
+        );
+        for w in input
+            .transcript
+            .segments
+            .iter_mut()
+            .flat_map(|s| &mut s.words)
+        {
+            // Clear the figure the rule would pick and mark the first word instead.
+            w.emphasis = match w.text.as_str() {
+                "we" => Some(true),
+                "40" => Some(false),
+                _ => None,
+            };
+        }
+        let scene = Scene::new(&book(), input);
+        let sizes: Vec<f32> = scene.lines[0].words.iter().map(|w| w.size).collect();
+        assert_eq!(sizes, [2.0, 1.0, 1.0, 1.0]);
+    }
+
+    fn slamming() -> Scene {
+        let patch = serde_json::json!({ "font_size": 100, "motion_blur": 0 });
+        Scene::new(&book(), styled("word_slam", WORDS, patch))
+    }
+
+    #[test]
+    fn a_slammed_word_starts_large_and_invisible_and_lands_at_rest() {
+        let scene = slamming();
+        // The second word starts at 0.5: before that it is not there at all.
+        let before = &scene.key(0.2).1[1];
+        assert_eq!(before.opacity, 0.0, "hidden until said");
+        let start = &scene.key(0.5 - LEAD_S + 0.01).1[1];
+        assert!(
+            start.scale > 2.0,
+            "it drops in from about twice its size: {}",
+            start.scale
+        );
+        assert!(start.opacity > 0.0 && start.opacity < 1.0);
+        let landed = &scene.key(0.5 - LEAD_S + SLAM_S + 0.01).1[1];
+        assert_eq!((landed.scale, landed.opacity), (1.0, 1.0));
+        // With no overshoot: it never goes under its resting size on the way.
+        for step in 0..=24 {
+            let t = 0.48 + step as f32 * 0.005;
+            assert!(scene.key(t).1[1].scale >= 1.0, "t = {t}");
+        }
+    }
+
+    #[test]
+    fn the_line_jolts_when_a_word_lands_and_is_still_again_after() {
+        let scene = slamming();
+        let line = &scene.lines[0];
+        let landing = 0.5 - LEAD_S + SLAM_S;
+        let at = |dt: f32| scene.jolt(line, landing + dt);
+        assert_eq!(at(-0.05), scene.jolt(line, 0.3), "nothing new has landed");
+        let hit = at(0.01);
+        let size = scene.style.font_size;
+        let push = (hit[0] * hit[0] + hit[1] * hit[1]).sqrt();
+        assert!(
+            push > 0.0 && push < 0.05 * size * 1.2,
+            "a small knock: {push}"
+        );
+        let later = at(0.07);
+        assert!(
+            (later[0].abs() + later[1].abs()) < (hit[0].abs() + hit[1].abs()),
+            "it dies away"
+        );
+        assert_eq!(at(JOLT_S + 0.001), [0.0, 0.0]);
+        // The jolt is in the frame's identity, so the frame is drawn again as it moves.
+        assert!(scene.key(landing + 0.01) != scene.key(landing + 0.02));
+    }
+
     #[test]
     fn the_active_caption_bounds_track_the_rendered_line() {
         let mut r = Renderer::new(Scene::new(&book(), input("word_highlight", WORDS, 3)));
@@ -2951,6 +3169,7 @@ mod tests {
             "stickers",
             "word_press",
             "letter_rise",
+            "word_slam",
         ] {
             let mut r = Renderer::new(Scene::new(&book(), input(anim, WORDS, 3)));
             r.render(0.6);
@@ -3011,6 +3230,7 @@ mod tests {
             "stickers",
             "word_press",
             "letter_rise",
+            "word_slam",
         ] {
             cases.push((anim.to_string(), styled(anim, WORDS, serde_json::json!({}))));
         }
@@ -3074,6 +3294,13 @@ mod tests {
             cases.push((
                 format!("{anim}+chunky"),
                 styled(anim, WORDS, chunky.clone()),
+            ));
+        }
+        let keyed = serde_json::json!({ "emphasis_scale": 1.5, "words_per_line": 4 });
+        for anim in ["word_pop", "word_slam"] {
+            cases.push((
+                format!("{anim}+emphasis"),
+                styled(anim, FIGURES, keyed.clone()),
             ));
         }
         let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
@@ -3264,6 +3491,7 @@ mod tests {
         ("stickers", 0x5c9bad18f058c1c7),
         ("word_press", 0xf26273125dfc6bf6),
         ("letter_rise", 0xa5777bf2546741b8),
+        ("word_slam", 0xbb8901e9660c8178),
         ("word_highlight+stroke", 0xa886db0bfe0007d8),
         ("word_fade+stroke", 0x100c37255aee5408),
         ("word_pop+stroke", 0x8bbaecd606e3c7e3),
@@ -3289,6 +3517,8 @@ mod tests {
         ("letter_rise+motion_blur", 0xc6a43e297f4ba114),
         ("word_press+chunky", 0xd89028e2bff00030),
         ("word_pop+chunky", 0x064022aaf29214a8),
+        ("word_pop+emphasis", 0x0e7b974001700c3c),
+        ("word_slam+emphasis", 0x44c54b4d5b5630fa),
         ("watermark", 0xe22c164ced6e9dd5),
     ];
 }

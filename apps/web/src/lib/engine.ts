@@ -42,6 +42,7 @@ interface Exports {
     offsetMs: number,
   ): number;
   oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
+  oc_set_emphasis(ptr: number, len: number, index: number, state: number): number;
 }
 
 /** The rows of the overlay that changed, from `top`, the frame's width. */
@@ -86,6 +87,8 @@ export interface CaptionLine {
   start: number;
   end: number;
   text: string;
+  /** For each word, whether it is a key word as things stand: the user's choice, else the rule's. */
+  emphasis: boolean[];
 }
 
 /**
@@ -134,6 +137,11 @@ export interface CaptionEditor {
    * spaces inside stay (collapsed to one), so it is still a single word.
    */
   setWord(t: Transcript, index: number, text: string): Transcript;
+  /**
+   * Marks a word a key word (`true`), not one (`false`), or leaves it to the engine's rule
+   * (`null`), keeping everything else.
+   */
+  setEmphasis(t: Transcript, index: number, state: boolean | null): Transcript;
 }
 
 export interface CaptionRenderer {
@@ -340,6 +348,8 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       setWord: (t, index, text) =>
         parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
+      setEmphasis: (t, index, state) =>
+        parse(x.oc_set_emphasis(...json(t), index, state === null ? -1 : state ? 1 : 0)),
       snapPosition: (p, size, threshold) => {
         x.oc_snap_position(p.x, p.y, size.width, size.height, threshold);
         const [sx, sy, onX, onY] = resultFloats(x);

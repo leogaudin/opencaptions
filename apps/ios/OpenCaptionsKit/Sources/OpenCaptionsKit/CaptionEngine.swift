@@ -35,6 +35,8 @@ public struct CaptionLine: Codable, Equatable, Sendable {
     public var start: Double
     public var end: Double
     public var text: String
+    /// For each word, whether it is a key word as things stand: the user's choice, else the engine's rule.
+    public var emphasis: [Bool]
 }
 
 /// A caption position after magnetism toward the video's centre lines.
@@ -290,6 +292,13 @@ public actor CaptionEngine {
         let (ptr, len) = try put(json: t)
         let (tp, tl) = put(text)
         return try decoded(oc_set_word(ptr, len, UInt32(index), tp, tl), as: Transcript.self)
+    }
+
+    /// Marks a word a key word (true), not one (false), or leaves it to the engine's rule (nil).
+    public func setEmphasis(_ t: Transcript, index: Int, to state: Bool?) throws -> Transcript {
+        let (ptr, len) = try put(json: t)
+        let code: Int32 = state.map { $0 ? 1 : 0 } ?? -1
+        return try decoded(oc_set_emphasis(ptr, len, UInt32(index), code), as: Transcript.self)
     }
 }
 

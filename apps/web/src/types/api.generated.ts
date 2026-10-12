@@ -1383,7 +1383,7 @@ export interface components {
              * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam";
             /**
              * Words Per Line
              * @default 3
@@ -1461,6 +1461,11 @@ export interface components {
              * @default 0
              */
             extrude_shade: number;
+            /**
+             * Emphasis Scale
+             * @default 1
+             */
+            emphasis_scale: number;
         };
         /**
          * SubtitleExportLinks
@@ -1781,6 +1786,8 @@ export interface components {
              * @default 1
              */
             confidence: number;
+            /** Emphasis */
+            emphasis?: boolean | null;
         };
     };
     responses: never;

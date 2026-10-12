@@ -355,5 +355,8 @@
   "Add a gradient color": "Добавить цвет градиента",
   "Remove this gradient color": "Убрать этот цвет градиента",
   "Extrusion shading": "Затенение объёма",
-  "Rise": "Подъём"
+  "Rise": "Подъём",
+  "Slam": "Удар",
+  "Emphasis size": "Размер акцента",
+  "Key word": "Ключевое слово"
 }

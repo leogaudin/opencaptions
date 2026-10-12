@@ -118,6 +118,7 @@ struct StylePanel: View {
                 }
                 Row("Highlight colors") { highlightColors }
                 LabeledSlider("Words per line", value: intBinding(\.wordsPerLine), range: 1...10, step: 1)
+                LabeledSlider("Emphasis size", value: model.binding(\.emphasisScale), range: 1...2.5, step: 0.05)
                 LabeledSlider("Word spacing", value: model.binding(\.wordSpacing), range: 0...0.6, step: 0.02)
             }
         case .background:
@@ -272,6 +273,7 @@ struct StylePanel: View {
         case .stickers: "Stickers"
         case .wordPress: "Press"
         case .letterRise: "Rise"
+        case .wordSlam: "Slam"
         }
     }
 

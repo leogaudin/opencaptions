@@ -27,7 +27,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -58,7 +59,8 @@
       "italic": false,
       "motion_blur": 0.6,
       "fill_colors": [],
-      "extrude_shade": 0.5
+      "extrude_shade": 0.5,
+      "emphasis_scale": 1.25
     }
   },
   {
@@ -89,7 +91,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -120,7 +123,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -151,7 +155,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -183,7 +188,8 @@
       "italic": false,
       "motion_blur": 0.8,
       "fill_colors": [],
-      "extrude_shade": 0.6
+      "extrude_shade": 0.6,
+      "emphasis_scale": 1.3
     }
   },
   {
@@ -215,7 +221,8 @@
       "italic": false,
       "motion_blur": 0,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -247,7 +254,8 @@
       "italic": false,
       "motion_blur": 0.6,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -279,7 +287,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -311,7 +320,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     }
   },
   {
@@ -342,7 +352,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     },
     "pro": true
   },
@@ -374,7 +385,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     },
     "pro": true
   },
@@ -406,7 +418,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
     },
     "pro": true
   },
@@ -438,7 +451,8 @@
       "italic": false,
       "motion_blur": 0.5,
       "fill_colors": ["#FFF36B", "#FFB800"],
-      "extrude_shade": 0.6
+      "extrude_shade": 0.6,
+      "emphasis_scale": 1
     },
     "pro": true
   },
@@ -470,7 +484,41 @@
       "italic": false,
       "motion_blur": 0.7,
       "fill_colors": [],
-      "extrude_shade": 0
+      "extrude_shade": 0,
+      "emphasis_scale": 1
+    },
+    "pro": true
+  },
+  {
+    "id": "builtin:slam",
+    "name": "Slam",
+    "config": {
+      "font": "Montserrat",
+      "font_size": 96,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FFE600"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.5,
+      "position_y": 0.78,
+      "animation": "word_slam",
+      "words_per_line": 2,
+      "word_spacing": 0.1,
+      "stroke_width": 8,
+      "stroke_color": "#000000",
+      "shadow_blur": 0,
+      "shadow_color": "#1F1F1FFF",
+      "shadow_offset_x": 6,
+      "shadow_offset_y": 8,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "upper",
+      "italic": false,
+      "motion_blur": 1,
+      "fill_colors": [],
+      "extrude_shade": 0.5,
+      "emphasis_scale": 1.5
     },
     "pro": true
   }

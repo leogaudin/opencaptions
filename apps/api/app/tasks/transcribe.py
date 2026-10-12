@@ -170,7 +170,7 @@ def transcribe_video(
             project = session.get(Project, UUID(project_id))
             if project is None:
                 raise RuntimeError("Project disappeared during transcription")
-            project.transcript = transcript.model_dump()
+            project.transcript = transcript.model_dump(exclude_none=True)
             project.status = "transcribed"
             project.error = None
             session.commit()
@@ -242,7 +242,9 @@ def transcribe_upload(
             transcript = _transcribe_audio(
                 task, local_audio, provider=provider, model=model, language=language
             )
-        s3.put_object_bytes(result_key, transcript.model_dump_json().encode(), "application/json")
+        s3.put_object_bytes(
+            result_key, transcript.model_dump_json(exclude_none=True).encode(), "application/json"
+        )
         task.set_job_status(
             "completed",
             progress=progress.DONE,
