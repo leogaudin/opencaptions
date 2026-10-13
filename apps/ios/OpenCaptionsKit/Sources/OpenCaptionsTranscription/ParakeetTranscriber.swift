@@ -10,9 +10,9 @@ import OpenCaptionsKit
 /// model is fetched on demand into FluidAudio's own cache (excluded from backup) and never bundled.
 /// FluidAudio cuts long audio into windows itself, and decodes again a window that came back empty.
 public final class ParakeetTranscriber: Transcriber {
-    /// The FluidAudio build of a model id (an old id included); Ultra for any other.
+    /// The FluidAudio build of a model id; Ultra for any other.
     static func version(of id: String) -> AsrModelVersion {
-        SpeechModels.model(id)?.id == SpeechModels.parakeetReduxID ? .redux : .ultra
+        id == SpeechModels.parakeetReduxID ? .redux : .ultra
     }
 
     private static func folder(_ id: String) -> URL { AsrModels.defaultCacheDirectory(for: version(of: id)) }
@@ -80,10 +80,6 @@ public final class ParakeetTranscriber: Transcriber {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         try? excluded.setResourceValues(values)
-        // Ultra took v3's place: the ~480 MB of v3 that earlier versions of the app left behind go.
-        if version == .ultra {
-            try? FileManager.default.removeItem(at: AsrModels.defaultCacheDirectory(for: .v3))
-        }
     }
 
     public func transcribe(

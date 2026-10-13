@@ -56,10 +56,6 @@ public enum SpeechModels {
     public static let parakeetUltraID = "parakeet-ultra"
     public static let parakeetReduxID = "parakeet-redux"
 
-    /// Ids that were offered once, and the model that took their place: a stored or asked-for old id
-    /// still resolves.
-    private static let replaced = ["parakeet-tdt-0.6b-v3": parakeetUltraID]
-
     /// The speech model built into iOS 26. Only offered where it exists.
     public static let appleSpeechID = "apple-speech"
 
@@ -95,7 +91,6 @@ public enum SpeechModels {
     public static let defaultID = "large-v3-turbo"
 
     public static func model(_ id: String) -> SpeechModel? {
-        let id = replaced[id] ?? id
-        return all.first { $0.id == id }
+        all.first { $0.id == id }
     }
 }

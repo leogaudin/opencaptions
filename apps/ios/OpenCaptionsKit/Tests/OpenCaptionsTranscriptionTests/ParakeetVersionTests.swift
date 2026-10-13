@@ -9,10 +9,6 @@ struct ParakeetVersionTests {
         #expect(ParakeetTranscriber.version(of: SpeechModels.parakeetReduxID) == .redux)
     }
 
-    @Test func theIdOfParakeetV3RunsUltra() {
-        #expect(ParakeetTranscriber.version(of: "parakeet-tdt-0.6b-v3") == .ultra)
-    }
-
     @Test func theBuildsKeepTheirDownloadsApart() {
         let folders = [AsrModelVersion.ultra, .redux, .v3].map { AsrModels.defaultCacheDirectory(for: $0) }
         #expect(Set(folders).count == 3, "deleting one must leave the others")

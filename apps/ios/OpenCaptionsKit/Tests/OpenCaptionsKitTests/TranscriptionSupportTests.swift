@@ -27,12 +27,6 @@ import Testing
         #expect(whisper.covers("ja") && whisper.covers("tr"))
     }
 
-    @Test func theIdOfParakeetV3IsUltra() {
-        // Parakeet v3 was offered once: a stored or sent id of it is the model that took its place.
-        #expect(SpeechModels.model("parakeet-tdt-0.6b-v3")?.id == SpeechModels.parakeetUltraID)
-        #expect(SpeechModels.model(SpeechModels.parakeetReduxID)?.id == SpeechModels.parakeetReduxID)
-    }
-
     @Test func appleSpeechIsBuiltInAndOnlyWhereIOSHasIt() {
         let apple = SpeechModels.model(SpeechModels.appleSpeechID)
         if #available(iOS 26.0, macOS 26.0, *) {
