@@ -100,7 +100,7 @@ async def test_health_reports_infrastructure_when_self_hosted(client: AsyncClien
     assert r.status_code == 200
     body = r.json()
     assert set(body["services"].keys()) == {"database", "redis", "storage"}
-    assert body["transcription"]["default_model"] == settings.whisper_model
+    assert body["transcription"]["default_model"] == settings.default_model
 
 
 @pytest.mark.asyncio
@@ -112,7 +112,7 @@ async def test_transcribe_rejects_model_override_in_hosted_mode(
     """A client that sends another model is told no, before anything is enqueued."""
     calls = _stub_celery(monkeypatch)
     monkeypatch.setattr(settings, "hosted_mode", True)
-    monkeypatch.setattr(settings, "whisper_model", "large-v3-turbo")
+    monkeypatch.setattr(settings, "default_model", "large-v3-turbo")
     client_a, owner_a = user_a
     project_id = await seed_project(owner_a)
 
@@ -156,7 +156,7 @@ async def test_transcribe_allows_default_model_and_no_model_in_hosted_mode(
     """Naming the configured default changes nothing, so it is not an override."""
     calls = _stub_celery(monkeypatch)
     monkeypatch.setattr(settings, "hosted_mode", True)
-    monkeypatch.setattr(settings, "whisper_model", "large-v3-turbo")
+    monkeypatch.setattr(settings, "default_model", "large-v3-turbo")
     monkeypatch.setattr(settings, "transcription_provider", "local")
     client_a, owner_a = user_a
 
@@ -177,7 +177,7 @@ async def test_transcribe_honours_model_override_when_self_hosted(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls = _stub_celery(monkeypatch)
-    monkeypatch.setattr(settings, "whisper_model", "large-v3-turbo")
+    monkeypatch.setattr(settings, "default_model", "large-v3-turbo")
     client_a, owner_a = user_a
     project_id = await seed_project(owner_a)
 

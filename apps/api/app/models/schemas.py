@@ -463,7 +463,7 @@ class TranscriptionSettings(BaseModel):
         "itself is never exposed.",
     )
     model: str | None = Field(
-        description="Configured default Whisper model identifier. Matches one of "
+        description="Configured default model identifier. Matches one of "
         "`available_models[].id` unless overridden to a custom model path. Null in "
         "hosted mode, where the model is fixed and not the user's concern."
     )

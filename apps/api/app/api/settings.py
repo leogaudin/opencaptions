@@ -47,7 +47,7 @@ async def get_settings(
             if hosted or not env_settings.transcription_remote_url
             else env_settings.transcription_remote_url,
             remote_configured=False if hosted else remote.configured(),
-            model=None if hosted else env_settings.whisper_model,
+            model=None if hosted else env_settings.default_model,
             device=None if hosted else env_settings.whisper_device,
             openai_configured=False if hosted else bool(env_settings.openai_api_key),
             supported_languages=[

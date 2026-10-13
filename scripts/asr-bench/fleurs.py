@@ -53,6 +53,9 @@ CHARACTER_SCORED = {"ja", "zh"}
 SHERPA = {
     "parakeet": ("csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
                  {"en", "fr", "de", "es", "it", "pt", "pl", "ru"}),
+    # Moondream's Parakeet Ultra (v3 trained further), exported by export_ultra.py.
+    "parakeet-ultra": ("leogaudin/sherpa-onnx-nemo-parakeet-ultra-int8",
+                       {"en", "fr", "de", "es", "it", "pt", "pl", "ru"}),
     # The int8 build loses most of this model's accuracy; qwen3.py runs the real one (bf16, PyTorch).
     "qwen3-0.6b": ("csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25", set(LANGS)),
     "cohere": ("csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01",
@@ -97,6 +100,9 @@ def edits(ref: list[str], hyp: list[str]) -> int:
     return row[-1]
 
 
+LOCAL: dict[str, str] = {}
+
+
 def make_decoder(engine: str, threads: int):
     """A function (audio, language) -> text, and the languages the engine covers (None: all)."""
     if engine in SHERPA:
@@ -104,11 +110,13 @@ def make_decoder(engine: str, threads: int):
         from huggingface_hub import snapshot_download
 
         repo, covers = SHERPA[engine]
-        folder = snapshot_download(repo, allow_patterns=["*.onnx", "*.onnx.data", "tokens.txt", "tokenizer/*"])
+        # A folder on disk stands in for the repository (`--local parakeet-ultra=DIR`): a build not uploaded yet.
+        folder = LOCAL.get(engine) or snapshot_download(
+            repo, allow_patterns=["*.onnx", "*.onnx.data", "tokens.txt", "tokenizer/*"])
         cache: dict[str, object] = {}
 
         def recognizer(lang: str):
-            if engine == "parakeet":
+            if engine.startswith("parakeet"):
                 key = "all"
                 if key not in cache:
                     cache[key] = sherpa_onnx.OfflineRecognizer.from_transducer(
@@ -157,7 +165,10 @@ def main() -> int:
     parser.add_argument("languages", nargs="?", default="all", help="comma-separated codes, or all")
     parser.add_argument("count", nargs="?", type=int, default=20, help="clips per language")
     parser.add_argument("--threads", type=int, default=0, help="CPU threads (0: all)")
+    parser.add_argument("--local", action="append", default=[], metavar="ENGINE=DIR",
+                        help="a folder to use for a sherpa-onnx engine, in place of its repository")
     args = parser.parse_args()
+    LOCAL.update(item.split("=", 1) for item in args.local)
 
     wanted = list(LANGS) if args.languages == "all" else args.languages.split(",")
     for engine in args.engine.split(","):

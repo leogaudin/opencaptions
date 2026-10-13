@@ -100,7 +100,7 @@ async def capabilities(
             ModelOption(id=m.id, label=m.label, note=m.note, languages=m.language_codes)
             for m in all_models()
         ],
-        default_model=None if hosted else settings.whisper_model,
+        default_model=None if hosted else settings.default_model,
         languages=[LanguageOption(code=lang.code, label=lang.label) for lang in all_languages()],
         max_upload_mb=settings.max_upload_size_mb,
         max_duration_s=settings.max_video_duration_s,
@@ -193,7 +193,7 @@ async def create_transcription(
             "This instance forwards transcription elsewhere, and the request came from a "
             "forwarding instance: it would go round in a circle.",
         )
-    if settings.hosted_mode and model and model != settings.whisper_model:
+    if settings.hosted_mode and model and model != settings.default_model:
         raise http_error(
             status.HTTP_403_FORBIDDEN,
             "transcription_choice_disabled",
@@ -252,7 +252,7 @@ async def create_transcription(
             audio_key(job.id),
             result_key(job.id),
             provider=settings.transcription_provider,
-            model=model or settings.whisper_model,
+            model=model or settings.default_model,
             language=language,
         )
     except Exception:

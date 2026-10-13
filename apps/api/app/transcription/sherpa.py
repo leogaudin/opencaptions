@@ -104,6 +104,7 @@ def _snapshot(model: asr_models.AsrModelInfo, *, local_only: bool) -> str:
     assert model.repo is not None
     return snapshot_download(
         model.repo,
+        revision=model.revision,
         cache_dir=model_dir(),
         local_files_only=local_only,
         allow_patterns=["*.onnx", "tokens.txt"],

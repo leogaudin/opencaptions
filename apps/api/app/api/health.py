@@ -73,7 +73,7 @@ async def health() -> HealthResponse:
             device=device_result.resolved,
             compute_type=compute_result.resolved,
             default_provider=settings.transcription_provider,
-            default_model=settings.whisper_model,
+            default_model=settings.default_model,
             requested_device=device_result.requested,
             requested_compute_type=compute_result.requested,
             device_fallback_reason=device_result.reason,

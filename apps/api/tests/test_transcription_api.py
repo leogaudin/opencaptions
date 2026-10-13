@@ -67,8 +67,8 @@ async def test_capabilities_need_a_key_and_describe_the_instance(
     caps = r.json()
     assert caps["api_version"] == TRANSCRIPTION_API_VERSION
     assert caps["instance_name"] == settings.instance_name
-    assert caps["default_model"] == settings.whisper_model
-    assert any(m["id"] == settings.whisper_model for m in caps["models"])
+    assert caps["default_model"] == settings.default_model
+    assert any(m["id"] == settings.default_model for m in caps["models"])
     assert caps["max_upload_mb"] == settings.max_upload_size_mb
     assert caps["result_ttl_h"] == settings.transcription_result_ttl_h
 
@@ -158,7 +158,7 @@ async def test_hosted_mode_pins_the_model(
 ) -> None:
     monkeypatch.setattr(settings, "hosted_mode", True)
     assert (await _post(first_client, model="tiny")).status_code == 403
-    assert (await _post(first_client, model=settings.whisper_model)).status_code == 202
+    assert (await _post(first_client, model=settings.default_model)).status_code == 202
 
 
 async def _finish(

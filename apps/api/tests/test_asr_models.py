@@ -10,7 +10,7 @@ import pytest
 
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services import asr_models
-from app.transcription import language_id, router
+from app.transcription import language_id, router, sherpa
 from app.transcription.base import ProgressCallback, TranscriptionProvider
 from app.transcription.sherpa import segments_from_words, words_from_tokens
 
@@ -20,7 +20,7 @@ class TestRegistry:
         """Small, Parakeet, Large v3 Turbo and Large v3, in ascending size, as on the phone."""
         assert [m.id for m in asr_models.all_models()] == [
             "small",
-            "parakeet-tdt-0.6b-v3",
+            "parakeet-ultra",
             "large-v3-turbo",
             "large-v3",
         ]
@@ -28,7 +28,7 @@ class TestRegistry:
         assert all(m.languages is None for m in whisper)
 
     def test_parakeet_is_listed_with_its_languages(self) -> None:
-        parakeet = asr_models.find("parakeet-tdt-0.6b-v3")
+        parakeet = asr_models.find("parakeet-ultra")
         assert parakeet is not None
         assert parakeet.engine == "sherpa-onnx"
         assert parakeet.repo
@@ -37,10 +37,15 @@ class TestRegistry:
         # What it was not trained on.
         assert not {"ja", "ko", "zh", "tr", "id"} & parakeet.languages
 
+    def test_parakeet_is_fetched_from_a_pinned_commit(self) -> None:
+        parakeet = asr_models.find("parakeet-ultra")
+        assert parakeet is not None
+        assert parakeet.revision is not None and len(parakeet.revision) == 40
+
     def test_the_default_model_is_offered(self) -> None:
         from app.core.config import settings
 
-        assert asr_models.find(settings.whisper_model) is not None
+        assert asr_models.find(settings.default_model) is not None
 
     def test_ids_are_unique(self) -> None:
         ids = [m.id for m in asr_models.all_models()]
@@ -49,6 +54,22 @@ class TestRegistry:
     def test_an_unlisted_id_is_not_found(self) -> None:
         assert asr_models.find("not-a-model") is None
         assert asr_models.find(None) is None
+
+
+def test_a_model_is_downloaded_at_its_pinned_commit(monkeypatch: pytest.MonkeyPatch) -> None:
+    import huggingface_hub
+
+    asked: list[dict[str, Any]] = []
+
+    def fake(repo: str, **kwargs: Any) -> str:
+        asked.append({"repo": repo, **kwargs})
+        return "/models/folder"
+
+    monkeypatch.setattr(huggingface_hub, "snapshot_download", fake)
+    model = asr_models.find("parakeet-ultra")
+    assert model is not None
+    assert sherpa._snapshot(model, local_only=False) == "/models/folder"
+    assert asked[0]["repo"] == model.repo and asked[0]["revision"] == model.revision
 
 
 class TestTokens:
@@ -148,9 +169,9 @@ class TestRouter:
     ) -> None:
         _identify(monkeypatch, ("fr", 0.97))
         transcript = router.LocalProvider().transcribe(
-            "a.wav", language="auto", model="parakeet-tdt-0.6b-v3"
+            "a.wav", language="auto", model="parakeet-ultra"
         )
-        assert engines["sherpa-onnx"].calls == [{"language": "fr", "model": "parakeet-tdt-0.6b-v3"}]
+        assert engines["sherpa-onnx"].calls == [{"language": "fr", "model": "parakeet-ultra"}]
         assert transcript.language == "fr"
         assert transcript.language_detection == "auto"
 
@@ -162,44 +183,43 @@ class TestRouter:
 
         monkeypatch.setattr(language_id, "detect", fail)
         transcript = router.LocalProvider().transcribe(
-            "a.wav", language="de", model="parakeet-tdt-0.6b-v3"
+            "a.wav", language="de", model="parakeet-ultra"
         )
         assert transcript.language_detection == "manual"
 
-    def test_an_uncovered_language_goes_to_the_default_whisper_model(
-        self,
-        engines: dict[str, _FakeEngine],
-        monkeypatch: pytest.MonkeyPatch,
+    def test_an_uncovered_language_is_refused_not_redirected(
+        self, engines: dict[str, _FakeEngine], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _identify(monkeypatch, ("ja", 0.9))
-        monkeypatch.setattr(router, "settings", SimpleNamespace(whisper_model="large-v3-turbo"))
-        told: list[str] = []
-        router.LocalProvider().transcribe(
-            "a.wav",
-            language="auto",
-            model="parakeet-tdt-0.6b-v3",
-            on_progress=lambda _f, message: told.append(message),
-        )
+        with pytest.raises(router.LanguageNotCoveredError, match="Choose another model"):
+            router.LocalProvider().transcribe("a.wav", language="auto", model="parakeet-ultra")
+        with pytest.raises(router.LanguageNotCoveredError, match="ja"):
+            router.LocalProvider().transcribe("a.wav", language="ja", model="parakeet-ultra")
         assert engines["sherpa-onnx"].calls == []
-        assert engines["faster-whisper"].calls == [{"language": "auto", "model": "large-v3-turbo"}]
-        assert engines["faster-whisper"].prepared == ["large-v3-turbo"]
-        assert any("does not cover" in m and "ja" in m for m in told)
+        assert engines["faster-whisper"].calls == []
 
-    def test_an_unidentifiable_recording_goes_to_whisper_too(
+    def test_an_unidentifiable_recording_is_the_models_to_try(
         self, engines: dict[str, _FakeEngine], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _identify(monkeypatch, None)
-        router.LocalProvider().transcribe("a.wav", language="auto", model="parakeet-tdt-0.6b-v3")
-        assert engines["sherpa-onnx"].calls == []
-        assert len(engines["faster-whisper"].calls) == 1
+        router.LocalProvider().transcribe("a.wav", language="auto", model="parakeet-ultra")
+        assert engines["sherpa-onnx"].calls == [{"language": "auto", "model": "parakeet-ultra"}]
+        assert engines["faster-whisper"].calls == []
+
+    def test_no_model_named_is_the_default_one(
+        self, engines: dict[str, _FakeEngine], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(router, "settings", SimpleNamespace(default_model="small"))
+        router.LocalProvider().transcribe("a.wav", language="en")
+        assert engines["faster-whisper"].calls == [{"language": "en", "model": "small"}]
 
     def test_prepare_and_cache_checks_follow_the_model(
         self, engines: dict[str, _FakeEngine]
     ) -> None:
         provider = router.LocalProvider()
-        provider.prepare("parakeet-tdt-0.6b-v3")
+        provider.prepare("parakeet-ultra")
         provider.prepare("small")
-        assert engines["sherpa-onnx"].prepared == ["parakeet-tdt-0.6b-v3"]
+        assert engines["sherpa-onnx"].prepared == ["parakeet-ultra"]
         assert engines["faster-whisper"].prepared == ["small"]
 
 

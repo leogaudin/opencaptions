@@ -265,7 +265,7 @@ async def start_transcription(
     # is allowed since it changes nothing.
     if settings.hosted_mode:
         provider_override = body.provider and body.provider != settings.transcription_provider
-        model_override = body.model and body.model != settings.whisper_model
+        model_override = body.model and body.model != settings.default_model
         if provider_override or model_override:
             raise http_error(
                 status.HTTP_403_FORBIDDEN,
@@ -292,7 +292,7 @@ async def start_transcription(
         str(job.id),
         str(proj.id),
         provider=body.provider or settings.transcription_provider,
-        model=body.model or settings.whisper_model,
+        model=body.model or settings.default_model,
         language=body.language,
     )
     job.celery_task_id = async_result.id

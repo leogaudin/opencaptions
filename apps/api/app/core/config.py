@@ -35,7 +35,9 @@ class Settings(BaseSettings):
 
     # ----- Transcription -----
     transcription_provider: str = "local"  # 'local', 'openai' or 'opencaptions'
-    whisper_model: str = "large-v3-turbo"
+    # What a request that names no model gets. Parakeet Ultra covers 25 European languages; for another one
+    # a person chooses a model that does. On a GPU, where Whisper is the fast one, set this to a Whisper size.
+    default_model: str = "parakeet-ultra"
     whisper_device: str = "auto"  # 'auto', 'cpu', 'cuda', 'cuda:0', etc.
     whisper_compute_type: str = "int8"
     # Threads for the models that are not Whisper (sherpa-onnx); 0 uses every core the

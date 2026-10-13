@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from app.core.config import settings
 from app.services.whisper_models import (
     WHISPER_MODELS,
     WhisperModelInfo,
@@ -32,7 +31,6 @@ class TestWhisperModelRegistry:
     def test_default_model_is_present(self) -> None:
         """The configured default must be one of the advertised models."""
         ids = {m.id for m in WHISPER_MODELS}
-        assert settings.whisper_model in ids
         assert "large-v3-turbo" in ids
 
     def test_common_models_present(self) -> None:

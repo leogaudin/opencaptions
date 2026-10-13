@@ -3,7 +3,7 @@
 A model is looked up in `asr_models`; an id nothing lists goes to faster-whisper, as it
 always has. A model that covers only some languages is never handed audio in another: the
 language is identified first when it was not given, and a recording the model cannot
-transcribe goes to the deployment's default Whisper model instead, saying so.
+transcribe is refused, saying which language it is: the person chooses a model that covers it.
 """
 
 from __future__ import annotations
@@ -26,6 +26,10 @@ from app.transcription.sherpa import model_dir
 logger = logging.getLogger(__name__)
 
 
+class LanguageNotCoveredError(ValueError):
+    """The chosen model does not transcribe the language of the recording."""
+
+
 class LocalProvider(TranscriptionProvider):
     """Transcription on this machine with the engine of the chosen model."""
 
@@ -37,9 +41,11 @@ class LocalProvider(TranscriptionProvider):
         return get_provider(info.engine if info else "faster-whisper")
 
     def prepare(self, model: str | None = None) -> None:
+        model = model or settings.default_model
         self._engine(model).prepare(model)
 
     def is_model_cached(self, model: str | None = None) -> bool:
+        model = model or settings.default_model
         return self._engine(model).is_model_cached(model)
 
     def transcribe(
@@ -50,6 +56,7 @@ class LocalProvider(TranscriptionProvider):
         model: str | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> Transcript:
+        model = model or settings.default_model
         info = asr_models.find(model)
         if info is None or info.languages is None:
             return self._engine(model).transcribe(
@@ -61,27 +68,17 @@ class LocalProvider(TranscriptionProvider):
         if asked_auto:
             found = language_id.detect(read_wav(audio_path), model_dir())
             spoken = found[0] if found else ""
-        if spoken in info.languages:
-            transcript = self._engine(model).transcribe(
-                audio_path, language=spoken, model=model, on_progress=on_progress
+        # A language nobody could name is the model's to try; one it is known not to cover is not.
+        if spoken and spoken not in info.languages:
+            raise LanguageNotCoveredError(
+                f"{info.label} does not cover this language ({spoken}). Choose another model."
             )
-            if asked_auto:
-                transcript = transcript.model_copy(update={"language_detection": "auto"})
-            return transcript
-
-        fallback = settings.whisper_model
-        message = (
-            f"{info.label} does not cover this language"
-            f"{f' ({spoken})' if spoken else ''}, using {fallback} instead"
+        transcript = self._engine(model).transcribe(
+            audio_path, language=spoken or "auto", model=model, on_progress=on_progress
         )
-        logger.info(message)
-        if on_progress:
-            on_progress(0.0, message)
-        whisper = get_provider("faster-whisper")
-        whisper.prepare(fallback)
-        return whisper.transcribe(
-            audio_path, language=language, model=fallback, on_progress=on_progress
-        )
+        if asked_auto:
+            transcript = transcript.model_copy(update={"language_detection": "auto"})
+        return transcript
 
 
 register(LocalProvider())

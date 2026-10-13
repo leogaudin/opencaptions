@@ -27,6 +27,8 @@ class AsrModelInfo:
     languages: frozenset[str] | None = None
     # Hugging Face repository holding the files (engines other than faster-whisper).
     repo: str | None = None
+    # The commit of that repository to fetch: a repository's latest files can change under us.
+    revision: str | None = None
 
     @property
     def language_codes(self) -> list[str] | None:
@@ -34,33 +36,34 @@ class AsrModelInfo:
         return None if self.languages is None else sorted(self.languages)
 
 
-# Parakeet TDT v3 (NVIDIA): the 25 European languages it was trained on.
-_PARAKEET_V3_LANGUAGES = frozenset(
+# Parakeet TDT v3 (NVIDIA) and Ultra (Moondream, trained from it): the 25 European languages.
+_PARAKEET_LANGUAGES = frozenset(
     "bg hr cs da nl en et fi fr de el hu it lv lt mt pl pt ro ru sk sl es sv uk".split()  # noqa: SIM905
 )
 
 _SHERPA_MODELS: tuple[AsrModelInfo, ...] = (
     AsrModelInfo(
-        id="parakeet-tdt-0.6b-v3",
-        label="Parakeet v3 (fast)",
+        id="parakeet-ultra",
+        label="Parakeet Ultra (fast)",
         note=(
-            "About 2.5x faster than Large v3 Turbo on CPU, somewhat less accurate; "
+            "About 2.5x faster than Large v3 Turbo on CPU, a little less accurate; "
             "25 European languages only; ~0.65 GB download."
         ),
         engine="sherpa-onnx",
-        languages=_PARAKEET_V3_LANGUAGES,
-        repo="csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
+        languages=_PARAKEET_LANGUAGES,
+        repo="leogaudin/sherpa-onnx-nemo-parakeet-ultra-int8",
+        revision="f7bc472677ff70be95cdb0ef9df509fee6f5ec0b",
     ),
 )
 
 # What is offered: the iPhone app's list, so a person has the same choice on either. Other
-# faster-whisper sizes still run (an API client may name one, and so may `WHISPER_MODEL`); they
+# faster-whisper sizes still run (an API client may name one, and so may `DEFAULT_MODEL`); they
 # are only not listed, because a longer ladder is noise to choose from.
 _OFFERED_WHISPER = ("small", "large-v3-turbo", "large-v3")
 
 # Where the models other than Whisper sit in the list, which is in ascending size:
 # after the Whisper size they are closest to.
-_AFTER = {"parakeet-tdt-0.6b-v3": "small"}
+_AFTER = {"parakeet-ultra": "small"}
 
 
 def _build() -> list[AsrModelInfo]:

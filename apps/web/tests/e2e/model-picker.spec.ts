@@ -92,7 +92,7 @@ test.describe("Local Whisper model selection", () => {
     await expect(page.getByTestId("language-en").locator("input")).toBeChecked();
 
     await page.getByTestId("back").click();
-    await page.getByTestId("model-parakeet-tdt-0.6b-v3").click();
+    await page.getByTestId("model-parakeet-ultra").click();
     await page.getByTestId("next").click();
     await expect(page.getByTestId("language-fr")).toBeVisible();
     await expect(page.getByTestId("language-ja")).toHaveCount(0);

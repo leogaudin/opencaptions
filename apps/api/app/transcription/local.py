@@ -66,7 +66,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             return self._model
 
     def prepare(self, model: str | None = None) -> None:
-        self._load_model(model or settings.whisper_model)
+        self._load_model(model or settings.default_model)
 
     def is_model_cached(self, model: str | None = None) -> bool:
         """Whether the weights are on disk, so a caller can say which is about to happen.
@@ -78,7 +78,7 @@ class LocalWhisperProvider(TranscriptionProvider):
 
         try:
             download_model(
-                model or settings.whisper_model,
+                model or settings.default_model,
                 local_files_only=True,
                 cache_dir=settings_resolve_model_dir(),
             )
@@ -94,7 +94,7 @@ class LocalWhisperProvider(TranscriptionProvider):
         model: str | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> Transcript:
-        model_name = model or settings.whisper_model
+        model_name = model or settings.default_model
         whisper = self._load_model(model_name)
 
         whisper_lang = None if language in {"auto", ""} else language

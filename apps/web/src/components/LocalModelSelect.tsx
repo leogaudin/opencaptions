@@ -3,7 +3,7 @@ import type { WhisperModelOption } from "@/types";
 
 /**
  * The list is the server's, which offers what the iPhone app does. A custom server default
- * (`WHISPER_MODEL`) outside it is added in front, so the choice shown is the one in force.
+ * (`DEFAULT_MODEL`) outside it is added in front, so the choice shown is the one in force.
  */
 export function productWhisperModelsWithDefault(
   models: WhisperModelOption[],

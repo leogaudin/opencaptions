@@ -52,7 +52,7 @@ async def test_a_model_says_which_languages_it_transcribes(first_client: AsyncCl
     r = await first_client.get("/api/v1/settings")
     by_id = {m["id"]: m for m in r.json()["transcription"]["available_models"]}
     assert by_id["large-v3-turbo"]["languages"] is None
-    parakeet = by_id["parakeet-tdt-0.6b-v3"]["languages"]
+    parakeet = by_id["parakeet-ultra"]["languages"]
     assert parakeet == sorted(parakeet) and len(parakeet) == 25
     assert "fr" in parakeet and "ja" not in parakeet
 

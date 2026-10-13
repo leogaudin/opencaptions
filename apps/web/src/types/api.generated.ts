@@ -1663,7 +1663,7 @@ export interface components {
             remote_configured: boolean;
             /**
              * Model
-             * @description Configured default Whisper model identifier. Matches one of `available_models[].id` unless overridden to a custom model path. Null in hosted mode, where the model is fixed and not the user's concern.
+             * @description Configured default model identifier. Matches one of `available_models[].id` unless overridden to a custom model path. Null in hosted mode, where the model is fixed and not the user's concern.
              */
             model: string | null;
             /**
