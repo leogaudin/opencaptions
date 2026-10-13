@@ -47,11 +47,18 @@ public struct SpeechModel: Equatable, Sendable, Identifiable {
 }
 
 public enum SpeechModels {
-    /// Parakeet TDT v3's 25 European languages.
+    /// Parakeet's 25 European languages.
     public static let parakeetLanguages: Set<String> = [
         "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de", "el", "hu", "it",
         "lv", "lt", "mt", "pl", "pt", "ro", "ru", "sk", "sl", "es", "sv", "uk",
     ]
+
+    public static let parakeetUltraID = "parakeet-ultra"
+    public static let parakeetReduxID = "parakeet-redux"
+
+    /// Ids that were offered once, and the model that took their place: a stored or asked-for old id
+    /// still resolves.
+    private static let replaced = ["parakeet-tdt-0.6b-v3": parakeetUltraID]
 
     /// The speech model built into iOS 26. Only offered where it exists.
     public static let appleSpeechID = "apple-speech"
@@ -60,12 +67,17 @@ public enum SpeechModels {
     /// models (the multilingual ones are as good in English), nothing superseded or redundant.
     private static let downloadable: [SpeechModel] = [
         .init(id: "small", label: "Whisper Small", variant: "openai_whisper-small_216MB", megabytes: 217),
-        // FluidAudio's Core ML build of Parakeet TDT v3 (about 480 MB). Faster than Whisper for
-        // somewhat more errors; see docs/project/speech-model-benchmarks.md.
+        // Moondream's Parakeet Redux through FluidAudio: v3 with a ternary encoder, a third of the download for
+        // a few more errors, worse in noise and in some languages (iOS 18; the first load takes minutes).
         .init(
-            id: "parakeet-tdt-0.6b-v3", label: "Parakeet v3", megabytes: 480, engine: .parakeet,
+            id: parakeetReduxID, label: "Parakeet Redux", megabytes: 220, engine: .parakeet,
             languages: parakeetLanguages),
         .init(id: "large-v3-turbo", label: "Whisper Large v3 Turbo", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
+        // Moondream's Parakeet Ultra (v3 trained further) through FluidAudio, about 630 MB. Faster than
+        // Whisper for somewhat more errors; see docs/project/speech-model-benchmarks.md.
+        .init(
+            id: parakeetUltraID, label: "Parakeet Ultra", megabytes: 632, engine: .parakeet,
+            languages: parakeetLanguages),
         .init(id: "large-v3", label: "Whisper Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
     ]
 
@@ -83,6 +95,7 @@ public enum SpeechModels {
     public static let defaultID = "large-v3-turbo"
 
     public static func model(_ id: String) -> SpeechModel? {
-        all.first { $0.id == id }
+        let id = replaced[id] ?? id
+        return all.first { $0.id == id }
     }
 }

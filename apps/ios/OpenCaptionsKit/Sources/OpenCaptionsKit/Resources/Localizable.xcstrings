@@ -1771,6 +1771,83 @@
           }
         }
       }
+    },
+    "Preparing the model for this phone, only the first time. This can take several minutes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparation du modèle pour ce téléphone, uniquement la première fois. Cela peut prendre plusieurs minutes."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando el modelo para este teléfono, solo la primera vez. Puede tardar varios minutos."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Modell wird für dieses Telefon vorbereitet, nur beim ersten Mal. Das kann einige Minuten dauern."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przygotowywanie modelu dla tego telefonu, tylko za pierwszym razem. Może to potrwać kilka minut."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando o modelo para este celular, só na primeira vez. Isso pode levar vários minutos."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparazione del modello per questo telefono, solo la prima volta. Può richiedere diversi minuti."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末向けにモデルを準備しています（初回のみ）。数分かかることがあります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 휴대폰에 맞게 모델을 준비하는 중입니다(처음 한 번만). 몇 분 걸릴 수 있습니다."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подготовка модели для этого телефона, только в первый раз. Это может занять несколько минут."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model bu telefon için hazırlanıyor, yalnızca ilk seferde. Birkaç dakika sürebilir."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menyiapkan model untuk ponsel ini, hanya sekali saja. Ini bisa memakan waktu beberapa menit."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在为这部手机准备模型，仅首次需要。可能需要几分钟。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

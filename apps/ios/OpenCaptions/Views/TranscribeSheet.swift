@@ -400,7 +400,8 @@ struct TranscribeSheet: View {
         switch id {
         case "small": "For older iPhones"
         case SpeechModels.defaultID: "The one to use: nearly as accurate as Large v3, and much faster"
-        case "parakeet-tdt-0.6b-v3": "Faster, 25 European languages"
+        case SpeechModels.parakeetUltraID: "Faster, 25 European languages"
+        case SpeechModels.parakeetReduxID: "Small download, 25 European languages"
         case SpeechModels.appleSpeechID: "Apple's own, for the languages iOS offers"
         default: nil
         }

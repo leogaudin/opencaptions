@@ -16,13 +16,21 @@ import Testing
     }
 
     @Test func aModelThatCoversSomeLanguagesIsNeverAskedForAnother() throws {
-        let parakeet = try #require(SpeechModels.model("parakeet-tdt-0.6b-v3"))
-        #expect(parakeet.engine == .parakeet)
-        #expect(parakeet.covers("fr") && parakeet.covers("ru"))
-        #expect(!parakeet.covers("ja") && !parakeet.covers("tr") && !parakeet.covers("zh"))
-        #expect(parakeet.covers(nil) && parakeet.covers("auto"), "detecting is the model's business")
+        for id in [SpeechModels.parakeetUltraID, SpeechModels.parakeetReduxID] {
+            let parakeet = try #require(SpeechModels.model(id))
+            #expect(parakeet.engine == .parakeet)
+            #expect(parakeet.covers("fr") && parakeet.covers("ru"))
+            #expect(!parakeet.covers("ja") && !parakeet.covers("tr") && !parakeet.covers("zh"))
+            #expect(parakeet.covers(nil) && parakeet.covers("auto"), "detecting is the model's business")
+        }
         let whisper = try #require(SpeechModels.model("large-v3-turbo"))
         #expect(whisper.covers("ja") && whisper.covers("tr"))
+    }
+
+    @Test func theIdOfParakeetV3IsUltra() {
+        // Parakeet v3 was offered once: a stored or sent id of it is the model that took its place.
+        #expect(SpeechModels.model("parakeet-tdt-0.6b-v3")?.id == SpeechModels.parakeetUltraID)
+        #expect(SpeechModels.model(SpeechModels.parakeetReduxID)?.id == SpeechModels.parakeetReduxID)
     }
 
     @Test func appleSpeechIsBuiltInAndOnlyWhereIOSHasIt() {

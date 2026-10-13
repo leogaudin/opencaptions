@@ -19,7 +19,7 @@ public final class LocalTranscriber: Transcriber {
     public func isDownloaded(_ id: String) -> Bool {
         switch engine(id) {
         case .whisperKit: whisper.isDownloaded(id)
-        case .parakeet: parakeet.isDownloaded()
+        case .parakeet: parakeet.isDownloaded(id)
         case .appleSpeech: true  // iOS holds it, and Apple fetches a language the first time it is used
         }
     }
@@ -28,7 +28,7 @@ public final class LocalTranscriber: Transcriber {
     public func sizeOnDisk(_ id: String) -> Int64 {
         switch engine(id) {
         case .whisperKit: whisper.sizeOnDisk(id)
-        case .parakeet: parakeet.sizeOnDisk()
+        case .parakeet: parakeet.sizeOnDisk(id)
         case .appleSpeech: 0
         }
     }
@@ -37,7 +37,7 @@ public final class LocalTranscriber: Transcriber {
     public func delete(_ id: String) throws {
         switch engine(id) {
         case .whisperKit: try whisper.delete(id)
-        case .parakeet: try parakeet.delete()
+        case .parakeet: try parakeet.delete(id)
         case .appleSpeech: break
         }
     }
@@ -47,7 +47,7 @@ public final class LocalTranscriber: Transcriber {
         guard let model = SpeechModels.model(id) else { throw TranscriptionError.unknownModel(id) }
         switch model.engine {
         case .whisperKit: try await whisper.download(id, progress: progress)
-        case .parakeet: try await parakeet.download(megabytes: model.megabytes, progress: progress)
+        case .parakeet: try await parakeet.download(id, megabytes: model.megabytes, progress: progress)
         case .appleSpeech: break
         }
         // The default model is the one people use: have it loaded by the time they ask, as at launch.
@@ -59,7 +59,7 @@ public final class LocalTranscriber: Transcriber {
     public func preload(_ id: String) {
         switch engine(id) {
         case .whisperKit: whisper.preload(id)
-        case .parakeet: parakeet.preload()
+        case .parakeet: parakeet.preload(id)
         case .appleSpeech: break
         }
     }

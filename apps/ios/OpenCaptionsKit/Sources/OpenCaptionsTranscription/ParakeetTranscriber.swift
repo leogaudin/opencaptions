@@ -6,12 +6,16 @@ import OpenCaptionsKit
     import UIKit
 #endif
 
-/// On-device transcription with Parakeet TDT v3 through FluidAudio (Core ML, the Neural Engine). The
+/// On-device transcription with Parakeet (Ultra, Redux) through FluidAudio (Core ML, the Neural Engine). The
 /// model is fetched on demand into FluidAudio's own cache (excluded from backup) and never bundled.
 /// FluidAudio cuts long audio into windows itself, and decodes again a window that came back empty.
 public final class ParakeetTranscriber: Transcriber {
-    private static let version = AsrModelVersion.v3
-    private static var folder: URL { AsrModels.defaultCacheDirectory(for: version) }
+    /// The FluidAudio build of a model id (an old id included); Ultra for any other.
+    static func version(of id: String) -> AsrModelVersion {
+        SpeechModels.model(id)?.id == SpeechModels.parakeetReduxID ? .redux : .ultra
+    }
+
+    private static func folder(_ id: String) -> URL { AsrModels.defaultCacheDirectory(for: version(of: id)) }
     private let managers = ManagerCache()
 
     public init() {
@@ -26,19 +30,20 @@ public final class ParakeetTranscriber: Transcriber {
         #endif
     }
 
-    public func isDownloaded() -> Bool {
-        AsrModels.modelsExist(at: Self.folder, version: Self.version)
+    public func isDownloaded(_ id: String) -> Bool {
+        AsrModels.modelsExist(at: Self.folder(id), version: Self.version(of: id))
     }
 
     /// What the model takes on disk, in bytes (0 if it is not downloaded).
-    public func sizeOnDisk() -> Int64 {
-        isDownloaded() ? DiskUsage.bytes(in: Self.folder) : 0
+    public func sizeOnDisk(_ id: String) -> Int64 {
+        isDownloaded(id) ? DiskUsage.bytes(in: Self.folder(id)) : 0
     }
 
     /// Removes the model. It downloads again the next time it is chosen.
-    public func delete() throws {
-        guard FileManager.default.fileExists(atPath: Self.folder.path) else { return }
-        try FileManager.default.removeItem(at: Self.folder)
+    public func delete(_ id: String) throws {
+        let folder = Self.folder(id)
+        guard FileManager.default.fileExists(atPath: folder.path) else { return }
+        try FileManager.default.removeItem(at: folder)
     }
 
     public func releaseModels() {
@@ -47,17 +52,18 @@ public final class ParakeetTranscriber: Transcriber {
 
     /// Starts loading the downloaded model, so it is ready (or nearly) by the time someone has picked a
     /// language. Loading is the longest wait there is, and the model stays loaded.
-    public func preload() {
-        guard isDownloaded() else { return }
-        Task { _ = try? await managers.manager() }
+    public func preload(_ id: String) {
+        guard isDownloaded(id) else { return }
+        Task { _ = try? await managers.manager(Self.version(of: id)) }
     }
 
     /// Downloads the model, reporting the fraction done against its known size (megabytes), as bytes
     /// arrive on disk. Does nothing if it is there.
-    public func download(megabytes: Int, progress: @escaping @Sendable (Double) -> Void) async throws {
-        guard !isDownloaded() else { return }
+    public func download(_ id: String, megabytes: Int, progress: @escaping @Sendable (Double) -> Void) async throws {
+        guard !isDownloaded(id) else { return }
         let expected = Double(megabytes) * 1_000_000
-        let folder = Self.folder
+        let version = Self.version(of: id)
+        let folder = Self.folder(id)
         let baseline = DiskUsage.bytes(in: folder)
         let watcher = Task {
             while !Task.isCancelled {
@@ -66,7 +72,7 @@ public final class ParakeetTranscriber: Transcriber {
             }
         }
         defer { watcher.cancel() }
-        try await AsrModels.download(version: Self.version)
+        try await AsrModels.download(version: version)
         watcher.cancel()
         _ = await watcher.result
         progress(1)
@@ -74,20 +80,25 @@ public final class ParakeetTranscriber: Transcriber {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         try? excluded.setResourceValues(values)
+        // Ultra took v3's place: the ~480 MB of v3 that earlier versions of the app left behind go.
+        if version == .ultra {
+            try? FileManager.default.removeItem(at: AsrModels.defaultCacheDirectory(for: .v3))
+        }
     }
 
     public func transcribe(
         source: URL, language: String?, model: String,
         progress: @escaping @Sendable (Double, String) -> Void
     ) async throws -> Transcript {
-        guard isDownloaded() else { throw TranscriptionError.modelNotDownloaded(model) }
+        guard isDownloaded(model) else { throw TranscriptionError.modelNotDownloaded(model) }
+        let version = Self.version(of: model)
         let requested = language.flatMap { $0 == "auto" ? nil : $0 }
         if let requested, !SpeechModels.parakeetLanguages.contains(requested) {
             throw TranscriptionError.unsupportedLanguage(requested)
         }
 
         // The model loads while the audio is read (and may already be loaded, or loading, from `preload`).
-        let loading = Task { try await managers.manager() }
+        let loading = Task { try await managers.manager(version) }
         progress(0, KitStrings.localized("Reading the audio…"))
         let samples: [Float]
         let duration: Double
@@ -99,7 +110,12 @@ public final class ParakeetTranscriber: Transcriber {
             throw error
         }
 
-        progress(0, KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
+        // Redux is compiled for the Neural Engine on its first load, which takes several minutes and shows nothing.
+        progress(
+            0,
+            version == .redux
+                ? KitStrings.localized("Preparing the model for this phone, only the first time. This can take several minutes.")
+                : KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
         let manager = try await loading.value
 
         let fractions = await manager.transcriptionProgressStream
@@ -147,16 +163,20 @@ public final class ParakeetTranscriber: Transcriber {
 /// once and not for every transcription.
 private actor ManagerCache {
     private var current: Task<AsrManager, Error>?
+    private var currentVersion: AsrModelVersion?
 
-    func manager() async throws -> AsrManager {
-        if let current { return try await value(of: current) }
+    /// The loaded model; another version's is let go first (a model is hundreds of MB, so only one is held).
+    func manager(_ version: AsrModelVersion) async throws -> AsrManager {
+        if let current, currentVersion == version { return try await value(of: current) }
+        await release()
         let task = Task { () throws -> AsrManager in
-            let models = try await AsrModels.loadFromCache(version: .v3)
+            let models = try await AsrModels.loadFromCache(version: version)
             let manager = AsrManager(config: .default)
             try await manager.loadModels(models)
             return manager
         }
         current = task
+        currentVersion = version
         return try await value(of: task)
     }
 
@@ -166,6 +186,7 @@ private actor ManagerCache {
         } catch {
             // A failed load is not kept: the next one tries again.
             current = nil
+            currentVersion = nil
             throw error
         }
     }
@@ -173,6 +194,7 @@ private actor ManagerCache {
     func release() async {
         guard let task = current else { return }
         current = nil
+        currentVersion = nil
         task.cancel()
         if let manager = try? await task.value { await manager.cleanup() }
     }

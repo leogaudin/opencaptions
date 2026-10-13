@@ -13,7 +13,7 @@ import Testing
     }
 
     @Test func aModelIsOnlyOfferedItsLanguages() async throws {
-        let parakeet = try #require(SpeechModels.model("parakeet-tdt-0.6b-v3"))
+        let parakeet = try #require(SpeechModels.model(SpeechModels.parakeetUltraID))
         let offered = await TranscriptionLanguages.offered(by: parakeet).map(\.code)
         #expect(offered.contains("fr") && !offered.contains("ja"))
         let whisper = try #require(SpeechModels.model("large-v3-turbo"))
