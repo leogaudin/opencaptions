@@ -28,9 +28,9 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Neon** | A glowing neon face. |
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |
-| **Chunky 3D** | White letters that, as each word is said, turn gold and rise out of the page on a shaded extrusion. |
+| **Pop** | White letters with an orange outline that, as each word is said, rise out of the page on a short golden extrusion, with a soft dark shadow to read against any picture. |
 | **Poster** | Tall condensed capitals stacked into a block, every row as wide as the widest, the word being said in red. |
-| **Slam** | Heavy capitals dropping in, the line jolting. |
+| **Slam** | Heavy capitals dropping in, the line knocked down a little as each lands. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
 | **Glow Intro** | Soft, glowing capitals: each word comes into focus out of a blur, the whole line pushes slowly toward you and floats, and the word being said glows brighter. |
 
@@ -61,8 +61,7 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
 **Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, **Rise**, **Slam**, **Drift**, or **None**.
-Each tile shows the animation on your own caption. **Motion blur** smears the words that move along
-their path, the same in the editor and in the download; at 0 every frame is sharp.
+Each tile shows the animation on your own caption.
 
 ## Outline
 

@@ -9,6 +9,7 @@ transcribe is refused, saying which language it is: the person chooses a model t
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from app.core.config import settings
 from app.models.schemas import Transcript
@@ -22,6 +23,9 @@ from app.transcription.base import (
 )
 from app.transcription.chunking import read_wav
 from app.transcription.sherpa import model_dir
+
+if TYPE_CHECKING:
+    from app.transcription.fetch_progress import FetchPlan
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +51,10 @@ class LocalProvider(TranscriptionProvider):
     def is_model_cached(self, model: str | None = None) -> bool:
         model = model or settings.default_model
         return self._engine(model).is_model_cached(model)
+
+    def fetch_plan(self, model: str | None = None) -> FetchPlan | None:
+        model = model or settings.default_model
+        return self._engine(model).fetch_plan(model)
 
     def transcribe(
         self,

@@ -153,8 +153,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var textCase: TextCase
     /// Letters leaned to the right (the engine shears the upright face).
     public var italic: Bool
-    /// The shutter as a share of 1/30 s: moving words smear along their path. 0 is off.
-    public var motionBlur: Double
     /// A vertical gradient over each word's letters, top to baseline; empty is `textColor`.
     public var fillColors: [String]
     /// How much a solid shadow (an extrusion) darkens from the front to the back, 0...1.
@@ -171,7 +169,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         wordSpacing: Double, strokeWidth: Double, strokeColor: String, shadowBlur: Double,
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
-        motionBlur: Double = 0.5, fillColors: [String] = [], extrudeShade: Double = 0, extrudeBack: String = "#00000000",
+        fillColors: [String] = [], extrudeShade: Double = 0, extrudeBack: String = "#00000000",
         layout: CaptionLayout = .line
     ) {
         self.font = font
@@ -196,7 +194,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.glowColor = glowColor
         self.textCase = textCase
         self.italic = italic
-        self.motionBlur = motionBlur
         self.fillColors = fillColors
         self.extrudeShade = extrudeShade
         self.extrudeBack = extrudeBack
@@ -227,7 +224,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             glowColor: try c.decodeIfPresent(String.self, forKey: .glowColor) ?? "#FFFFFF",
             textCase: try c.decodeIfPresent(TextCase.self, forKey: .textCase) ?? .none,
             italic: try c.decodeIfPresent(Bool.self, forKey: .italic) ?? false,
-            motionBlur: try c.decodeIfPresent(Double.self, forKey: .motionBlur) ?? 0.5,
             fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
             extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0,
             extrudeBack: try c.decodeIfPresent(String.self, forKey: .extrudeBack) ?? "#00000000",
@@ -272,7 +268,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case glowColor = "glow_color"
         case textCase = "text_case"
         case italic
-        case motionBlur = "motion_blur"
         case fillColors = "fill_colors"
         case extrudeShade = "extrude_shade"
         case extrudeBack = "extrude_back"

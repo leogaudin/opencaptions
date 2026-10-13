@@ -1447,11 +1447,6 @@ export interface components {
              */
             italic: boolean;
             /**
-             * Motion Blur
-             * @default 0.5
-             */
-            motion_blur: number;
-            /**
              * Fill Colors
              * @default []
              */

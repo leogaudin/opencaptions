@@ -46,7 +46,7 @@ test.describe("OpenCaptions UI", () => {
       .locator("label")
       .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-testid")?.slice(6)));
     // What the iPhone app offers, in ascending size.
-    expect(ids).toEqual(["small", "parakeet-ultra", "large-v3-turbo", "large-v3"]);
+    expect(ids).toEqual(["small", "parakeet-ultra", "large-v3-turbo"]);
   });
 
   test("nav from home to upload works", async ({ page }) => {

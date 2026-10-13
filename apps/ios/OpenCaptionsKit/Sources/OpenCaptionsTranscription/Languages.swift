@@ -44,6 +44,17 @@ public enum TranscriptionLanguages {
         return languages
     }
 
+    /// The languages most people caption in, first: a model's flags are the first of these it covers.
+    private static let prominent = ["en", "zh", "es", "fr", "de", "pt", "ru", "ja", "it", "ar", "hi", "ko"]
+
+    /// A few flags to recognise a model's reach by, and how many more languages it has.
+    public static func glance(of languages: [TranscriptionLanguage], flags limit: Int = 3) -> (flags: [String], more: Int) {
+        let rank = { (code: String) in prominent.firstIndex(of: code) ?? prominent.count }
+        let ordered = languages.sorted { rank($0.code) < rank($1.code) }
+        let shown = Array(ordered.prefix(limit))
+        return (shown.map(\.flag), languages.count - shown.count)
+    }
+
     /// The country a language's flag stands for, where it has a natural one.
     private static let regions: [String: String] = [
         "en": "GB", "zh": "CN", "de": "DE", "es": "ES", "ru": "RU", "ko": "KR", "fr": "FR", "ja": "JP",

@@ -28,8 +28,6 @@ extension EngineSuites {
             p.styleConfig.textColor = "#FFFFFF"
             p.styleConfig.strokeWidth = 0
             p.styleConfig.shadowBlur = 0
-            // The fade-in of the first frame would otherwise be averaged with the empty ones before it.
-            p.styleConfig.motionBlur = 0
             p.styleConfig.fontSize = 140
             return p
         }

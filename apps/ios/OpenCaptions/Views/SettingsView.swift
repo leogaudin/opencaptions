@@ -186,10 +186,7 @@ struct SettingsView: View {
         let downloaded = app.transcriber.isDownloaded(model.id)
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(model.label).font(.system(size: 16, weight: .semibold))
-                    if app.entitlements.locks(model: model.id) { ProBadge() }
-                }
+                Text(model.label).font(.system(size: 16, weight: .semibold))
                 Group {
                     if model.isBuiltIn {
                         Text("Built into iOS")
@@ -215,9 +212,7 @@ struct SettingsView: View {
                     .buttonStyle(CircleButtonStyle())
                     .accessibilityLabel("Delete \(model.label)")
             } else {
-                Button("Download") {
-                    if app.entitlements.locks(model: model.id) { showPro = true } else { requestDownload(model) }
-                }
+                Button("Download") { requestDownload(model) }
                 .buttonStyle(PillButtonStyle(prominent: true))
             }
         }

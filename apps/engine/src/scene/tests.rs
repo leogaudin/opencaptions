@@ -124,9 +124,7 @@ fn styled(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value)
         "background_color": "#000000", "background_opacity": 0.0,
         "position_x": 0.5, "position_y": 0.5, "animation": animation,
         "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
-        "shadow_blur": 0, "shadow_color": "#00000000",
-        // Off unless a case asks, so the cases that predate it still pin what they pinned.
-        "motion_blur": 0
+        "shadow_blur": 0, "shadow_color": "#00000000"
     }))
     .unwrap();
     for (k, v) in patch.as_object().unwrap() {
@@ -383,74 +381,8 @@ fn the_active_word_changes_the_frame_and_steady_frames_are_reused() {
     );
 }
 
-fn blurred(animation: &str, motion_blur: f32) -> Renderer {
-    let patch = serde_json::json!({ "motion_blur": motion_blur });
-    Renderer::new(Scene::new(&book(), styled(animation, WORDS, patch)))
-}
-
-/// How many pixels are neither clear nor solid: the soft edges and the smears.
-fn partial(rgba: &[u8]) -> usize {
-    rgba.chunks(4).filter(|p| p[3] != 0 && p[3] != 255).count()
-}
-
-#[test]
-fn a_moving_word_leaves_a_trail_along_its_path() {
-    // word_pop scales the word up as it starts: the shutter sees it smaller a moment ago.
-    let t = 0.52;
-    let (mut sharp, mut smeared) = (blurred("word_pop", 0.0), blurred("word_pop", 1.0));
-    sharp.render(t);
-    smeared.render(t);
-    assert_ne!(
-        sharp.rgba(),
-        smeared.rgba(),
-        "the shutter changed the frame"
-    );
-    assert!(
-        partial(smeared.rgba()) > partial(sharp.rgba()),
-        "the trail is made of partial alpha"
-    );
-}
-
-#[test]
-fn a_still_frame_is_the_same_with_or_without_blur() {
-    // Mid-word, nothing moves within the shutter: one draw, byte for byte the sharp one.
-    for animation in ["none", "word_highlight", "highlight_box", "word_pop"] {
-        let (mut sharp, mut smeared) = (blurred(animation, 0.0), blurred(animation, 1.0));
-        sharp.render(0.3);
-        smeared.render(0.3);
-        assert_eq!(sharp.rgba(), smeared.rgba(), "{animation}");
-    }
-}
-
-#[test]
-fn a_blurred_frame_reaches_the_next_and_back_without_leaving_traces() {
-    let mut r = blurred("word_bounce", 1.0);
-    let times = [0.52, 0.3, 0.505, 2.5];
-    for t in times {
-        r.render(t);
-        let mut fresh = blurred("word_bounce", 1.0);
-        fresh.render(t);
-        assert_eq!(r.rgba(), fresh.rgba(), "t = {t}");
-    }
-    assert!(r.rgba().iter().all(|&b| b == 0), "cleared after the line");
-}
-
-#[test]
-fn a_blurred_second_of_full_frames_stays_cheap() {
-    let mut r = blurred("word_bounce", 1.0);
-    let start = std::time::Instant::now();
-    for i in 0..30 {
-        r.render(0.4 + i as f32 / 30.0);
-    }
-    let took = start.elapsed();
-    println!("30 blurred frames: {took:?}");
-    // A loose ceiling in an unoptimised build; the release build is several times faster.
-    assert!(took.as_secs_f32() < 15.0, "{took:?}");
-}
-
 fn drifting(words: &[(&str, f32, f32)], patch: serde_json::Value) -> Renderer {
     let mut patch = patch;
-    patch["motion_blur"] = 0.into();
     if patch.get("font_size").is_none() {
         patch["font_size"] = 200.into();
     }
@@ -592,8 +524,6 @@ fn a_drifting_glow_stays_cheap() {
 }
 
 fn lone(animation: &str, patch: serde_json::Value) -> Renderer {
-    let mut patch = patch;
-    patch["motion_blur"] = 0.into();
     Renderer::new(Scene::new(
         &book(),
         styled(animation, &[("HELLO", 0.0, 1.0)], patch),
@@ -717,7 +647,7 @@ fn a_pressed_word_lifts_its_face_off_a_back_that_stays_put() {
 }
 
 fn rising(words: &[(&str, f32, f32)]) -> Renderer {
-    let patch = serde_json::json!({ "font_size": 120, "motion_blur": 0 });
+    let patch = serde_json::json!({ "font_size": 120 });
     Renderer::new(Scene::new(&book(), styled("letter_rise", words, patch)))
 }
 
@@ -810,7 +740,7 @@ fn a_slammed_lines_shadow_follows_its_jolt() {
     // The extrusion and the glow are kept between frames; the line's knock moves them, so a frame
     // drawn after others must be the one drawn fresh, all through the knock.
     let patch = serde_json::json!({
-        "font_size": 100, "motion_blur": 0, "shadow_color": "#C2410C", "shadow_offset_y": 12,
+        "font_size": 100, "shadow_color": "#C2410C", "shadow_offset_y": 12,
         "glow_blur": 10
     });
     let input = styled("word_slam", WORDS, patch);
@@ -829,7 +759,7 @@ fn a_slammed_lines_shadow_follows_its_jolt() {
 }
 
 fn slamming() -> Scene {
-    let patch = serde_json::json!({ "font_size": 100, "motion_blur": 0 });
+    let patch = serde_json::json!({ "font_size": 100 });
     Scene::new(&book(), styled("word_slam", WORDS, patch))
 }
 
@@ -864,15 +794,15 @@ fn the_line_jolts_when_a_word_lands_and_is_still_again_after() {
     assert_eq!(at(-0.05), scene.jolt(line, 0.3), "nothing new has landed");
     let hit = at(0.01);
     let size = scene.style.font_size;
-    let push = (hit[0] * hit[0] + hit[1] * hit[1]).sqrt();
     assert!(
-        push > 0.0 && push < 0.05 * size * 1.2,
-        "a small knock: {push}"
+        hit[1] > 0.0 && hit[1] < 0.05 * size,
+        "a small knock, down: {hit:?}"
     );
+    assert_eq!(hit[0], 0.0, "never sideways: that reads as a tremble");
     let later = at(0.07);
     assert!(
-        (later[0].abs() + later[1].abs()) < (hit[0].abs() + hit[1].abs()),
-        "it dies away"
+        later[1] < hit[1] && later[1] >= 0.0,
+        "it dies away, without crossing rest"
     );
     assert_eq!(at(JOLT_S + 0.001), [0.0, 0.0]);
     // The jolt is in the frame's identity, so the frame is drawn again as it moves.
@@ -891,7 +821,6 @@ fn stacked(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value
     let mut patch = patch;
     patch["layout"] = "stack".into();
     patch["words_per_line"] = 5.into();
-    patch["motion_blur"] = 0.into();
     Scene::new(&book(), styled(animation, words, patch))
 }
 
@@ -1541,18 +1470,6 @@ fn golden_cases() -> Vec<(String, SceneInput)> {
             cases.push((format!("{anim}+{name}"), styled(anim, WORDS, patch.clone())));
         }
     }
-    for anim in [
-        "word_pop",
-        "word_bounce",
-        "highlight_slide",
-        "none",
-        "letter_rise",
-    ] {
-        cases.push((
-            format!("{anim}+motion_blur"),
-            styled(anim, WORDS, serde_json::json!({ "motion_blur": 1.0 })),
-        ));
-    }
     let chunky = serde_json::json!({
         "fill_colors": ["#FFF36B", "#FFB800"], "stroke_width": 6, "stroke_color": "#3B1A00",
         "shadow_blur": 0, "shadow_color": "#C2410C", "shadow_offset_y": 16, "extrude_shade": 0.6
@@ -1762,7 +1679,7 @@ const GOLDEN: &[(&str, u64)] = &[
     ("stickers", 0x5c9bad18f058c1c7),
     ("word_press", 0xf26273125dfc6bf6),
     ("letter_rise", 0x9bf46ac595f09960),
-    ("word_slam", 0x8b017b454af2f0ab),
+    ("word_slam", 0x01b67dcf00483f0b),
     ("drift", 0x4db2b22b1c3c5323),
     ("word_highlight+stroke", 0xa886db0bfe0007d8),
     ("word_fade+stroke", 0x100c37255aee5408),
@@ -1782,11 +1699,6 @@ const GOLDEN: &[(&str, u64)] = &[
     ("word_highlight+pill", 0x39e4fe882e5dfa3b),
     ("word_fade+pill", 0xbcf444e5865cfa9c),
     ("word_pop+pill", 0xc9c9ca585f268aa2),
-    ("word_pop+motion_blur", 0x7cafa1034b42134a),
-    ("word_bounce+motion_blur", 0xfe8ce16569a3e8c2),
-    ("highlight_slide+motion_blur", 0x4a203c274cc98750),
-    ("none+motion_blur", 0x73229f3640871f60),
-    ("letter_rise+motion_blur", 0x8930aa30d029025d),
     ("word_press+chunky", 0xe55ee93138faa2d6),
     ("word_pop+chunky", 0x064022aaf29214a8),
     ("word_pop+stack", 0x7a2ceb6d7115026e),

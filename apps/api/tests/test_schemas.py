@@ -62,7 +62,6 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     s = StyleConfig()
     assert (s.shadow_offset_x, s.shadow_offset_y, s.glow_blur) == (0, 0, 0)
     assert (s.text_case, s.italic) == ("none", False)
-    assert s.motion_blur == 0.5
     assert (s.fill_colors, s.extrude_shade) == ([], 0)
     assert s.extrude_back == "#00000000"
     assert s.layout == "line"
@@ -86,7 +85,6 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     for bad in (
         {"shadow_offset_x": 41},
         {"glow_blur": 41},
-        {"motion_blur": 1.1},
         {"extrude_shade": 1.1},
         {"layout": "grid"},
         {"fill_colors": ["#111111"] * 5},

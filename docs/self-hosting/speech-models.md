@@ -27,8 +27,8 @@ runs on the CPU.
 
 A transcription worker loads the model, does one job, and exits. A model therefore never stays in memory
 after its job, and an idle stack uses none of it. The price is a model load per job. If a model is
-too big for the machine's memory, pick a smaller one: Whisper Small needs about 1.1 GB, Large v3 Turbo
-about 2.2 GB and Large v3 about 4.3 GB on top of the rest of the stack, and Parakeet about 1.2 GB. Those
+too big for the machine's memory, pick a smaller one: Whisper Small needs about 1.1 GB, Large v3
+about 2.2 GB on top of the rest of the stack, and Parakeet about 1.2 GB. Those
 figures come from the [benchmarks](../project/speech-model-benchmarks.md#speed-and-memory-cpu).
 
 Whether a model runs on the GPU is `WHISPER_DEVICE` (`auto` by default); see [GPU acceleration](./gpu.md).

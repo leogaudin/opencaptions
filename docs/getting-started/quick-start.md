@@ -34,8 +34,8 @@ your instance: nothing is sent anywhere, and the first account is an ordinary us
 
 :::note[The first transcription is slower]
 A speech model is downloaded the first time you use it, into a `models` folder next to the compose
-file, and reused after that. Whisper Large v3 Turbo, the default, is about 1.6 GB. A smaller model
-such as Whisper Small (about 480 MB) is a good way to try things out. See
+file, and reused after that. The default, Parakeet Ultra, is about 0.65 GB; Whisper Large v3 is about
+1.6 GB. A smaller model such as Whisper Small (about 480 MB) is a good way to try things out. See
 [Transcription](../guides/transcription.md) for the choices.
 :::
 

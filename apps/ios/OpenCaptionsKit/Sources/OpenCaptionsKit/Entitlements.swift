@@ -25,17 +25,12 @@ public struct Entitlements: Equatable, Sendable {
     /// Free videos go up to this short side (1080p) and this frame rate.
     public static let freeShortSide = 1080
     public static let freeFrameRate = 30.0
-    /// The one speech model Pro unlocks: the slower, larger Large v3. Large v3 Turbo, almost as good,
-    /// is free.
-    public static let proModelIDs: Set<String> = ["large-v3"]
 
     public init(isPro: Bool) { self.isPro = isPro }
 
     public var watermark: String? { isPro ? nil : Self.watermarkText }
 
     public func locks(preset: Preset) -> Bool { !isPro && preset.pro }
-
-    public func locks(model id: String) -> Bool { !isPro && Self.proModelIDs.contains(id) }
 
     /// Whether saving at this size is Pro: its short side is above 1080 pixels.
     public func locks(resolution: ExportOptions.Resolution, for project: Project) -> Bool {

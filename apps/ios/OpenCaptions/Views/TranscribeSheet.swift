@@ -10,13 +10,16 @@ struct TranscribeSheet: View {
     @Environment(\.dismiss) private var dismiss
     let model: EditorModel
 
-    @State private var modelID = SpeechModels.defaultID
+    /// Remembered between runs, like the language: the model someone chose last is the one they will want.
+    @AppStorage("transcribeModel") private var storedModelID = SpeechModels.defaultID
+    private var modelID: String { SpeechModels.initial(stored: storedModelID) }
+    /// The languages each model offers, for the flags on its row (Apple's depends on this iOS, so it is asked).
+    @State private var languagesByModel: [String: [TranscriptionLanguage]] = [:]
     /// Remembered between runs: someone who picks Spanish once is probably transcribing Spanish.
     @AppStorage("transcribeLanguage") private var language = ""
     @State private var downloading: Double?
     @State private var askAboutData = false
     @State private var failure: String?
-    @State private var showPro = false
     @State private var connecting = false
     /// The languages the chosen model can be asked for (all of them until it has said), and the second step.
     @State private var offered = TranscriptionLanguages.all
@@ -46,11 +49,13 @@ struct TranscribeSheet: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(downloading != nil)
         .onDisappear { model.dismissTranscriptionFailure() }
-        .sheet(isPresented: $showPro) { ProSheet() }
         .sheet(isPresented: $connecting, onDismiss: { if app.serverConnection != nil { sourceChoice = true } }) {
             ConnectServerSheet().presentationBackground(Theme.background).presentationCornerRadius(24)
         }
         .task(id: onServer) { await loadServerModels() }
+        .task {
+            for option in SpeechModels.all { languagesByModel[option.id] = await TranscriptionLanguages.offered(by: option) }
+        }
         // The languages are the model's: the list follows it, and so does the choice, which must be one of them.
         .task(id: "\(modelID) \(onServer)") {
             let languages = onServer ? TranscriptionLanguages.all : await TranscriptionLanguages.offered(by: chosen)
@@ -362,19 +367,14 @@ struct TranscribeSheet: View {
     /// there is exactly one, and it should not read as a list of options to tick.
     private func modelRow(_ option: SpeechModel) -> some View {
         let selected = option.id == modelID
-        let locked = app.entitlements.locks(model: option.id)
-        return Button {
-            if locked { showPro = true } else { modelID = option.id }
-        } label: {
+        return Button { storedModelID = option.id } label: {
             HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(option.label).font(.system(size: 16, weight: .semibold))
-                        if locked { ProBadge() }
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(option.label).font(.system(size: 16, weight: .semibold))
                     if let hint = Self.hint(option.id) {
                         Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                     }
+                    if let languages = languagesByModel[option.id] { languageFlags(languages) }
                 }
                 Spacer(minLength: 8)
                 if !option.isBuiltIn, app.transcriber.isDownloaded(option.id) {
@@ -396,13 +396,27 @@ struct TranscribeSheet: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
+    /// A few flags and how many more languages there are, so a model's reach shows at a glance.
+    private func languageFlags(_ languages: [TranscriptionLanguage]) -> some View {
+        let glance = TranscriptionLanguages.glance(of: languages)
+        return HStack(spacing: 4) {
+            Text(glance.flags.joined()).font(.system(size: 12))
+            if glance.more > 0 { Text("+\(glance.more)").font(.system(size: 11, weight: .semibold).monospacedDigit()) }
+        }
+        .foregroundStyle(Theme.textSecondary)
+        .padding(.horizontal, 7).padding(.vertical, 2)
+        .background(Theme.stroke.opacity(0.6), in: .capsule)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(languages.count) languages")
+    }
+
     private static func hint(_ id: String) -> LocalizedStringKey? {
         switch id {
-        case "small": "For older iPhones"
-        case SpeechModels.defaultID: "The one to use: nearly as accurate as Large v3, and much faster"
-        case SpeechModels.parakeetUltraID: "Faster, 25 European languages"
-        case SpeechModels.parakeetReduxID: "Small download, 25 European languages"
-        case SpeechModels.appleSpeechID: "Apple's own, for the languages iOS offers"
+        case "small": "OpenAI's smaller, less precise model"
+        case "large-v3-turbo": "OpenAI's default, bigger model"
+        case SpeechModels.parakeetUltraID: "NVIDIA's default, bigger model"
+        case SpeechModels.parakeetReduxID: "NVIDIA's smaller, less precise model"
+        case SpeechModels.appleSpeechID: "Apple's own, built into iOS"
         default: nil
         }
     }

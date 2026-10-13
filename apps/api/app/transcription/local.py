@@ -18,6 +18,7 @@ from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.transcription import chunking
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.device import resolve_compute_type, resolve_device
+from app.transcription.fetch_progress import FetchPlan
 from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,15 @@ class LocalWhisperProvider(TranscriptionProvider):
 
     def prepare(self, model: str | None = None) -> None:
         self._load_model(model or settings.default_model)
+
+    def fetch_plan(self, model: str | None = None) -> FetchPlan | None:
+        from faster_whisper.utils import _MODELS
+
+        name = model or settings.default_model
+        repo = name if "/" in name else _MODELS.get(name)
+        if repo is None:
+            return None
+        return FetchPlan(repo, settings_resolve_model_dir(), patterns=_WEIGHT_FILES)
 
     def is_model_cached(self, model: str | None = None) -> bool:
         """Whether the weights are on disk, so a caller can say which is about to happen.
@@ -347,6 +357,16 @@ def _words_from_segment_text(seg: Any) -> list[Word]:
         )
         for i, token in enumerate(tokens)
     ]
+
+
+# The files faster-whisper fetches for a model (its own `download_model` allow list).
+_WEIGHT_FILES = (
+    "config.json",
+    "preprocessor_config.json",
+    "model.bin",
+    "tokenizer.json",
+    "vocabulary.*",
+)
 
 
 def settings_resolve_model_dir() -> str:

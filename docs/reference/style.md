@@ -35,7 +35,6 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `shadow_offset_x`, `shadow_offset_y` | -40 to 40 | `0`, `0` | Where the shadow falls. With no blur it is solid and drawn as an extrusion. |
 | `glow_blur` | 0 to 40 | `0` | A halo around the letters. `0` is none. |
 | `glow_color` | Colour, with optional alpha | `#FFFFFF` | |
-| `motion_blur` | 0 to 1 | `0.5` | The shutter, as a share of 1/30 s whatever the frame rate. Moving words smear along their path; `0` is off. Still frames are unaffected. |
 | `fill_colors` | 0 to 4 colours | none | A vertical gradient over each word's letters, from the top of the line to the baseline. Empty is `text_color`. |
 | `extrude_shade` | 0 to 1 | `0` | How much a solid shadow (an extrusion) darkens from front to back, with a lit edge just behind the letters. Pick a shadow colour that is not black, or there is nothing to darken. |
 | `extrude_back` | colour | `#00000000` | The colour an extrusion fades to at its back, from `shadow_color` at the front. Fully transparent for none. |

@@ -179,10 +179,6 @@ pub struct Style {
     /// Letters leaned to the right, drawn from the upright face by shearing it.
     #[serde(default)]
     pub italic: bool,
-    /// The shutter, as a share of 1/30 s, whatever the frame rate: moving words smear along
-    /// their path by averaging sub-frames, so the preview and the export blur alike. 0 is off.
-    #[serde(default = "default_motion_blur")]
-    pub motion_blur: f32,
     /// A vertical gradient over each word's letters, top to baseline; empty is `text_color`.
     #[serde(default)]
     pub fill_colors: Vec<Rgba>,
@@ -195,10 +191,6 @@ pub struct Style {
     pub extrude_back: Rgba,
     #[serde(default)]
     pub layout: Layout,
-}
-
-fn default_motion_blur() -> f32 {
-    0.5
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -351,7 +343,6 @@ impl SceneInput {
         within("shadow_offset_x", s.shadow_offset_x, -1000.0, 1000.0)?;
         within("shadow_offset_y", s.shadow_offset_y, -1000.0, 1000.0)?;
         within("glow_blur", s.glow_blur, 0.0, 500.0)?;
-        within("motion_blur", s.motion_blur, 0.0, 1.0)?;
         within("extrude_shade", s.extrude_shade, 0.0, 1.0)?;
         if s.fill_colors.len() > 4 {
             return Err("fill_colors holds at most 4 colours".into());

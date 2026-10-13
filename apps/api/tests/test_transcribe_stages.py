@@ -99,6 +99,43 @@ def test_a_model_that_must_be_fetched_says_so_before_the_load(run: Any) -> None:
     assert events[0] == ("stage", progress.TRANSCRIBE_FETCHING_MODEL.message)
 
 
+def test_a_model_being_fetched_fills_the_bar_with_what_has_arrived(
+    run: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from contextlib import contextmanager
+
+    @contextmanager
+    def watching(plan: Any, report: Any) -> Any:
+        assert plan == "the plan"
+        report(0.5)
+        yield
+
+    monkeypatch.setattr(transcribe.fetch_progress, "watching", watching)
+    provider = _Provider([], cached=False)
+    provider.fetch_plan = lambda model=None: "the plan"  # type: ignore[method-assign, assignment, return-value]
+    events, _ = run(provider)
+    fetching = progress.TRANSCRIBE_FETCHING_MODEL.message
+    assert ("broadcast", 0.5, fetching) in events
+    assert events.index(("broadcast", 0.5, fetching)) < events.index(("prepare", "m"))
+
+
+def test_a_cached_model_has_no_download_to_watch(run: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import contextmanager
+
+    plans: list[Any] = []
+
+    @contextmanager
+    def watching(plan: Any, report: Any) -> Any:
+        plans.append(plan)
+        yield
+
+    monkeypatch.setattr(transcribe.fetch_progress, "watching", watching)
+    provider = _Provider([], cached=True)
+    provider.fetch_plan = lambda model=None: "the plan"  # type: ignore[method-assign, assignment, return-value]
+    run(provider)
+    assert plans == [None]
+
+
 def test_progress_is_written_down_so_a_refreshed_page_reads_it(run: Any) -> None:
     events, _ = run(_Provider([]))
     assert ("broadcast", 0.4, "Transcribed 4.0s / 10.0s") in events

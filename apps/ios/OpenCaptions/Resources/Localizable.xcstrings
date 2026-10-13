@@ -155,6 +155,89 @@
         }
       }
     },
+    "%lld languages": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld langues"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld idiomas"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Sprachen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Języki: %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld idiomas"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld lingue"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Языков: %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dil"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 言語"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개 언어"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 种语言"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld bahasa"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld languages"
+          }
+        }
+      }
+    },
     "%lld MB": {
       "extractionState": "manual",
       "localizations": {
@@ -1387,79 +1470,85 @@
         }
       }
     },
-    "Apple's own, for the languages iOS offers": {
+    "Apple's own, built into iOS": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Celui d’Apple, pour les langues proposées par iOS"
+            "value": "Celui d’Apple, intégré à iOS"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El de Apple, para los idiomas que ofrece iOS"
+            "value": "El de Apple, integrado en iOS"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Von Apple, für die Sprachen, die iOS anbietet"
+            "value": "Das von Apple, in iOS integriert"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Własny model Apple, dla języków dostępnych w iOS"
+            "value": "Własny model Apple, wbudowany w iOS"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O da Apple, para os idiomas que o iOS oferece"
+            "value": "O da Apple, integrado ao iOS"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quello di Apple, per le lingue offerte da iOS"
+            "value": "Quello di Apple, integrato in iOS"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Модель Apple, для языков, которые поддерживает iOS"
+            "value": "Модель Apple, встроенная в iOS"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple’ın kendi modeli, iOS’un sunduğu diller için"
+            "value": "Apple’ın kendi modeli, iOS’a yerleşik"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple純正。iOSが対応する言語向け"
+            "value": "Apple 独自のモデルで、iOS に内蔵"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple 자체 모델, iOS가 지원하는 언어용"
+            "value": "Apple 자체 모델, iOS에 내장"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple 自带，适用于 iOS 支持的语言"
+            "value": "Apple 自家的模型，已内置于 iOS"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Milik Apple sendiri, untuk bahasa yang ditawarkan iOS"
+            "value": "Model Apple sendiri, bawaan iOS"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's own, built into iOS"
           }
         }
       }
@@ -5776,83 +5865,6 @@
         }
       }
     },
-    "Faster, 25 European languages": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plus rapide, 25 langues européennes"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Más rápido, 25 idiomas europeos"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schneller, 25 europäische Sprachen"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Szybszy, 25 języków europejskich"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mais rápido, 25 idiomas europeus"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Più veloce, 25 lingue europee"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Быстрее, 25 европейских языков"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daha hızlı, 25 Avrupa dili"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "より高速、ヨーロッパ25言語"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "더 빠름, 유럽 25개 언어"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更快，支持 25 种欧洲语言"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lebih cepat, 25 bahasa Eropa"
-          }
-        }
-      }
-    },
     "Fewer frames: a smaller file.": {
       "extractionState": "manual",
       "localizations": {
@@ -6240,89 +6252,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Font"
-          }
-        }
-      }
-    },
-    "For older iPhones": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For older iPhones"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour les iPhone plus anciens"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Para iPhone más antiguos"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Für ältere iPhones"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dla starszych iPhone’ów"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Para iPhones mais antigos"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Per gli iPhone più vecchi"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Для старых iPhone"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eski iPhone’lar için"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "古いiPhone向け"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "오래된 iPhone용"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "适用于较旧的 iPhone"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Untuk iPhone lama"
           }
         }
       }
@@ -9253,83 +9182,6 @@
         }
       }
     },
-    "Motion blur": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flou de mouvement"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desenfoque de movimiento"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bewegungsunschärfe"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rozmycie ruchu"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desfoque de movimento"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sfocatura di movimento"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Размытие движения"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hareket bulanıklığı"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "モーションブラー"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "모션 블러"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "动态模糊"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Blur gerakan"
-          }
-        }
-      }
-    },
     "Moves every caption against the audio, without transcribing again.": {
       "extractionState": "manual",
       "localizations": {
@@ -10183,6 +10035,172 @@
         }
       }
     },
+    "NVIDIA's default, bigger model": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle par défaut de NVIDIA, plus grand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo predeterminado de NVIDIA, más grande"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Standardmodell von NVIDIA, größer"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domyślny, większy model NVIDIA"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O modelo padrão da NVIDIA, maior"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il modello predefinito di NVIDIA, più grande"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Основная модель NVIDIA, побольше"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA’nın varsayılan, daha büyük modeli"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA の標準の大きめのモデル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA의 기본, 더 큰 모델"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA 的默认、较大的模型"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model bawaan NVIDIA, lebih besar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA's default, bigger model"
+          }
+        }
+      }
+    },
+    "NVIDIA's smaller, less precise model": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle de NVIDIA, plus petit et moins précis"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo de NVIDIA, más pequeño y menos preciso"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das kleinere, weniger genaue Modell von NVIDIA"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mniejszy, mniej dokładny model NVIDIA"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O modelo menor e menos preciso da NVIDIA"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il modello più piccolo e meno preciso di NVIDIA"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель NVIDIA поменьше и менее точная"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA’nın daha küçük, daha az doğru modeli"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA の小さめで精度が控えめなモデル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA의 더 작고 덜 정확한 모델"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA 较小、精度较低的模型"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model NVIDIA yang lebih kecil dan kurang akurat"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NVIDIA's smaller, less precise model"
+          }
+        }
+      }
+    },
     "On this device · %@": {
       "extractionState": "manual",
       "localizations": {
@@ -10718,6 +10736,172 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sumber terbuka (AGPL-3.0). Memakai model Whisper, WhisperKit (MIT), dan font Inter (SIL OFL)."
+          }
+        }
+      }
+    },
+    "OpenAI's default, bigger model": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle par défaut d’OpenAI, plus grand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo predeterminado de OpenAI, más grande"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Standardmodell von OpenAI, größer"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domyślny, większy model OpenAI"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O modelo padrão da OpenAI, maior"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il modello predefinito di OpenAI, più grande"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Основная модель OpenAI, побольше"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI’nin varsayılan, daha büyük modeli"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI の標準の大きめのモデル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI의 기본, 더 큰 모델"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI 的默认、较大的模型"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model bawaan OpenAI, lebih besar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI's default, bigger model"
+          }
+        }
+      }
+    },
+    "OpenAI's smaller, less precise model": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle d’OpenAI, plus petit et moins précis"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo de OpenAI, más pequeño y menos preciso"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das kleinere, weniger genaue Modell von OpenAI"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mniejszy, mniej dokładny model OpenAI"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O modelo menor e menos preciso da OpenAI"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il modello più piccolo e meno preciso di OpenAI"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель OpenAI поменьше и менее точная"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI’nin daha küçük, daha az doğru modeli"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI の小さめで精度が控えめなモデル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI의 더 작고 덜 정확한 모델"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI 较小、精度较低的模型"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model OpenAI yang lebih kecil dan kurang akurat"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI's smaller, less precise model"
           }
         }
       }
@@ -16041,83 +16225,6 @@
         }
       }
     },
-    "The Large v3 speech model": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le modèle vocal Large v3"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El modelo de voz Large v3"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Das Sprachmodell Large v3"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model mowy Large v3"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O modelo de voz Large v3"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Il modello vocale Large v3"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Речевая модель Large v3"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Large v3 konuşma modeli"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "音声モデル Large v3"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Large v3 음성 모델"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Large v3 语音模型"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model suara Large v3"
-          }
-        }
-      }
-    },
     "The audio of a video is sent to %@ to be transcribed, and deleted there afterwards.": {
       "extractionState": "manual",
       "localizations": {
@@ -16499,89 +16606,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Model tidak dapat diunduh: %@"
-          }
-        }
-      }
-    },
-    "The one to use: nearly as accurate as Large v3, and much faster": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The one to use: nearly as accurate as Large v3, and much faster"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Celui à choisir : presque aussi précis que Large v3, et bien plus rapide"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El recomendado: casi tan preciso como Large v3, y mucho más rápido"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Empfehlung: fast so genau wie Large v3 und viel schneller"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Najlepszy wybór: prawie tak dokładny jak Large v3, a znacznie szybszy"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O recomendado: quase tão preciso quanto o Large v3, e bem mais rápido"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quello da usare: quasi preciso come Large v3, e molto più veloce"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Лучший выбор: почти так же точен, как Large v3, и намного быстрее"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Önerilen: Large v3 kadar doğru ve çok daha hızlı"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "おすすめ：Large v3 に迫る精度で、ずっと高速"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "추천: Large v3에 가까운 정확도에 훨씬 빠릅니다"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "首选：精度接近 Large v3，速度快得多"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yang disarankan: hampir seakurat Large v3, dan jauh lebih cepat"
           }
         }
       }
@@ -19739,83 +19763,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "sekitar %lld dtk lagi"
-          }
-        }
-      }
-    },
-    "Small download, 25 European languages": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Petit téléchargement, 25 langues européennes"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descarga pequeña, 25 idiomas europeos"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kleiner Download, 25 europäische Sprachen"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Małe pobranie, 25 języków europejskich"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Download pequeno, 25 idiomas europeus"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Download ridotto, 25 lingue europee"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小さなダウンロード、ヨーロッパ25言語"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "작은 다운로드, 유럽 25개 언어"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Небольшая загрузка, 25 европейских языков"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Küçük indirme, 25 Avrupa dili"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unduhan kecil, 25 bahasa Eropa"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下载体积小，支持 25 种欧洲语言"
           }
         }
       }

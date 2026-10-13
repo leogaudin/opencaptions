@@ -31,7 +31,7 @@ _ID_TO_META: dict[str, tuple[str, str]] = {
     "medium": ("Medium", "Moderate speed, good accuracy; ~1.5 GB download."),
     "large-v1": ("Large v1", "Slow on CPU, high accuracy; ~3 GB download."),
     "large-v2": ("Large v2", "Slow on CPU, high accuracy; ~3 GB download."),
-    "large-v3": ("Large v3", "Slow on CPU, highest accuracy; ~3 GB download."),
+    "large-v3": ("Large v3 (original)", "Slow on CPU, highest accuracy; ~3 GB download."),
     "large": ("Large (latest)", "Alias for the newest large model; slow on CPU; ~3 GB download."),
     "distil-large-v2": (
         "Distil-Large v2",
@@ -54,7 +54,7 @@ _ID_TO_META: dict[str, tuple[str, str]] = {
         "Distilled large-v3.5: near-large accuracy, roughly 2x faster; ~1.5 GB download.",
     ),
     "large-v3-turbo": (
-        "Large v3 Turbo",
+        "Large v3",
         "Large-v3 accuracy at a fraction of the runtime; ~1.6 GB download.",
     ),
     "turbo": ("Turbo (Large v3)", "Alias for large-v3-turbo; ~1.6 GB download."),

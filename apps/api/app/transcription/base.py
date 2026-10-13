@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from app.models.schemas import Transcript
+
+if TYPE_CHECKING:
+    from app.transcription.fetch_progress import FetchPlan
 
 
 class ProgressCallback(Protocol):
@@ -46,6 +49,13 @@ class TranscriptionProvider(ABC):
 
         Kept apart so a caller can say "Loading model" for the load and "Transcribing" for
         the rest. Nothing to do for a hosted API.
+        """
+        return None
+
+    def fetch_plan(self, model: str | None = None) -> FetchPlan | None:
+        """What `prepare` will download, so a caller can show how far it has got.
+
+        None for a provider with nothing to fetch, or that cannot say.
         """
         return None
 

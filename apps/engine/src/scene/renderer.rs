@@ -11,9 +11,6 @@ pub(super) struct LayerCache {
 /// how the line is jolted and drifts: all the layers depend on.
 pub(super) type LayerKey = (usize, Vec<[u32; 6]>, [u32; 5]);
 
-/// How many sub-frames the shutter averages when something moves within it.
-pub(super) const BLUR_SAMPLES: usize = 8;
-
 /// Renders a scene frame by frame into straight-alpha RGBA, touching only the
 /// pixels a caption occupies and skipping frames identical to the last.
 pub struct Renderer {
@@ -21,11 +18,8 @@ pub struct Renderer {
     pub(super) scene: Scene,
     pub(super) canvas: Pixmap,
     pub(super) rgba: Vec<u8>,
-    /// What the last frame was made from: the keys of its sub-frames (a single one when nothing
-    /// moved within the shutter), the first being the frame's own time.
-    pub(super) last: Option<Vec<FrameKey>>,
-    /// The frame a sub-frame is drawn on before it is added to the average.
-    pub(super) scratch: Option<Pixmap>,
+    /// What the last frame was made from.
+    pub(super) last: Option<FrameKey>,
     pub(super) dirty: Option<IntRect>,
     /// The rows the last `render` changed, `top..bottom`: all of them the first time.
     pub(super) changed: (u32, u32),
@@ -40,7 +34,6 @@ impl Renderer {
             rgba: vec![0; (w * h * 4) as usize],
             scene,
             last: None,
-            scratch: None,
             dirty: None,
             changed: (0, 0),
         };
@@ -77,68 +70,10 @@ impl Renderer {
         }
     }
 
-    /// The keys of the sub-frames the shutter opens over before `t`, `t`'s own first: just that
-    /// one when none of them differs, so a still frame costs a single draw.
-    fn sample_keys(&self, t: f32) -> Vec<FrameKey> {
-        let mut keys = vec![self.scene.key(t)];
-        let shutter = self.scene.style.motion_blur / 30.0;
-        if shutter > 0.0 {
-            for k in 1..BLUR_SAMPLES {
-                keys.push(
-                    self.scene
-                        .key(t - shutter * k as f32 / (BLUR_SAMPLES - 1) as f32),
-                );
-            }
-            if keys.iter().all(|key| *key == keys[0]) {
-                keys.truncate(1);
-            }
-        }
-        keys
-    }
-
-    /// Draws every sub-frame in `keys` over `area` and puts their average onto the canvas.
-    /// Integer sums of premultiplied bytes, so every build averages alike.
-    fn draw_blurred(&mut self, keys: &[FrameKey], area: IntRect) {
-        let width = self.scene.width;
-        let mut scratch = self.scratch.take().unwrap_or_else(|| {
-            Pixmap::new(width, self.scene.height).expect("frame dimensions are validated")
-        });
-        let row_len = area.width() as usize * 4;
-        let mut sum = vec![0u32; row_len * area.height() as usize];
-        for key in keys {
-            for span in rows(area, width) {
-                scratch.data_mut()[span].fill(0);
-            }
-            if let Some(i) = key.0 {
-                let line = &self.scene.lines[i];
-                self.scene.draw(
-                    &mut scratch,
-                    (i, line),
-                    &key.1,
-                    key.2,
-                    key.3,
-                    &mut self.layers,
-                );
-            }
-            for (row, span) in sum.chunks_mut(row_len).zip(rows(area, width)) {
-                for (acc, byte) in row.iter_mut().zip(&scratch.data()[span]) {
-                    *acc += u32::from(*byte);
-                }
-            }
-        }
-        let n = keys.len() as u32;
-        for (row, span) in sum.chunks(row_len).zip(rows(area, width)) {
-            for (byte, acc) in self.canvas.data_mut()[span].iter_mut().zip(row) {
-                *byte = ((acc + n / 2) / n) as u8;
-            }
-        }
-        self.scratch = Some(scratch);
-    }
-
     /// Bring the frame to time `t`; returns whether any pixel changed.
     pub fn render(&mut self, t: f32) -> bool {
-        let keys = self.sample_keys(t);
-        if self.last.as_ref() == Some(&keys) {
+        let key = self.scene.key(t);
+        if self.last.as_ref() == Some(&key) {
             return false;
         }
         let width = self.scene.width;
@@ -153,21 +88,8 @@ impl Renderer {
             let (top, bottom) = (r.y() as u32, r.bottom() as u32);
             changed = Some(changed.map_or((top, bottom), |(t, b)| (t.min(top), b.max(bottom))));
         };
-        // Where the frame draws: its line's box, or the union of the boxes of the lines the
-        // shutter saw (one arriving or leaving within it).
-        let area = keys
-            .iter()
-            .filter_map(|k| k.0)
-            .map(|i| self.scene.lines[i].bounds)
-            .reduce(|a, b| {
-                IntRect::from_ltrb(
-                    a.x().min(b.x()),
-                    a.y().min(b.y()),
-                    a.right().max(b.right()),
-                    a.bottom().max(b.bottom()),
-                )
-                .unwrap_or(a)
-            });
+        // Where the frame draws: its line's box.
+        let area = key.0.map(|i| self.scene.lines[i].bounds);
         // The watermark is drawn again, over whatever it overlaps, when a caption clears or draws
         // where it is; otherwise it is left as it is.
         let mark = self.scene.mark.as_ref().map(|m| m.rect);
@@ -194,11 +116,8 @@ impl Renderer {
             self.clear_mark();
         }
         if let Some(bounds) = area {
-            if keys.len() > 1 {
-                self.draw_blurred(&keys, bounds);
-            } else if let Some(i) = keys[0].0 {
+            if let Some(i) = key.0 {
                 let line = &self.scene.lines[i];
-                let key = &keys[0];
                 self.scene.draw(
                     &mut self.canvas,
                     (i, line),
@@ -214,7 +133,7 @@ impl Renderer {
         if redraw_mark {
             self.draw_mark();
         }
-        self.last = Some(keys);
+        self.last = Some(key);
         true
     }
 
@@ -240,7 +159,7 @@ impl Renderer {
 
     /// Index of the active line among all lines.
     pub fn active_index(&self) -> Option<usize> {
-        self.last.as_ref()?.first()?.0
+        self.last.as_ref()?.0
     }
 
     /// Flat index of the active line's first word, so the editor can map a word back to the

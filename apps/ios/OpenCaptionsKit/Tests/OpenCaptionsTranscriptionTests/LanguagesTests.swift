@@ -20,6 +20,16 @@ import Testing
         #expect(await TranscriptionLanguages.offered(by: whisper).count == TranscriptionLanguages.all.count)
     }
 
+    @Test func aModelShowsAFewFlagsAndHowManyLanguagesAreLeft() async throws {
+        let parakeet = try #require(SpeechModels.model(SpeechModels.parakeetUltraID))
+        let some = TranscriptionLanguages.glance(of: await TranscriptionLanguages.offered(by: parakeet))
+        #expect(some.flags == ["\u{1F1EC}\u{1F1E7}", "\u{1F1EA}\u{1F1F8}", "\u{1F1EB}\u{1F1F7}"], "English, Spanish, French: the first it covers")
+        #expect(some.more == 25 - 3)
+        let few = [TranscriptionLanguage(code: "de", label: "German")]
+        #expect(TranscriptionLanguages.glance(of: few).more == 0)
+        #expect(TranscriptionLanguages.glance(of: []).flags.isEmpty)
+    }
+
     @Test func theStartingLanguageIsTheRememberedOneElseTheDevicesElseTheFirst() {
         let list = [TranscriptionLanguage(code: "de", label: "German"), TranscriptionLanguage(code: "fr", label: "French")]
         #expect(TranscriptionLanguages.initial(stored: "fr", among: list, device: "de") == "fr")

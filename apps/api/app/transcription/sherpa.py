@@ -21,6 +21,7 @@ from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services import asr_models
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.chunking import SAMPLE_RATE, Words, decode_window, read_wav, windows
+from app.transcription.fetch_progress import FetchPlan
 from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
@@ -98,6 +99,10 @@ def segments_from_words(words: list[Word]) -> list[TranscriptSegment]:
     return segments
 
 
+# What a model needs from its repository: the weights and the vocabulary.
+_PATTERNS = ("*.onnx", "tokens.txt")
+
+
 def _snapshot(model: asr_models.AsrModelInfo, *, local_only: bool) -> str:
     from huggingface_hub import snapshot_download
 
@@ -107,7 +112,7 @@ def _snapshot(model: asr_models.AsrModelInfo, *, local_only: bool) -> str:
         revision=model.revision,
         cache_dir=model_dir(),
         local_files_only=local_only,
-        allow_patterns=["*.onnx", "tokens.txt"],
+        allow_patterns=list(_PATTERNS),
     )
 
 
@@ -133,6 +138,11 @@ class SherpaProvider(TranscriptionProvider):
         except Exception:  # noqa: BLE001, any failure to resolve locally means not cached
             return False
         return True
+
+    def fetch_plan(self, model: str | None = None) -> FetchPlan | None:
+        info = self._info(model)
+        assert info.repo is not None
+        return FetchPlan(info.repo, model_dir(), info.revision, _PATTERNS)
 
     def _load(self, model: str | None) -> Any:
         info = self._info(model)

@@ -6,7 +6,7 @@
 
 **Animated captions for your videos. Open source, self-hosted, and on your iPhone.**
 
-Transcribe with Whisper, style every word, and export a burned-in video or subtitle files.
+Transcribe with Whisper or Parakeet, style every word, and export a burned-in video or subtitle files.
 Nothing leaves your machine unless you say so.
 
 **[opencaptions.app](https://opencaptions.app)**: try the looks on a sample clip, right in your browser.
@@ -21,7 +21,7 @@ Nothing leaves your machine unless you say so.
 
 ## Features
 
-- **Word-level transcription** with faster-whisper on your machine, the OpenAI API with your own
+- **Word-level transcription** with Parakeet or Whisper on your machine, the OpenAI API with your own
   key, or another OpenCaptions server (a GPU box at home, say)
 - **Animated styles** with presets and a full custom panel: fonts, colours, outline, background,
   animation, position
@@ -29,7 +29,7 @@ Nothing leaves your machine unless you say so.
 - **Export** a burned-in MP4, WebM or ProRes, SRT, VTT and JSON, or just the captions on a green
   screen to key out in your video editor
 - **The preview is the export**: one Rust engine draws both, so what you see is what you get
-- **iPhone and iPad app** with on-device Whisper, no server and no account
+- **iPhone and iPad app** with on-device Whisper, Parakeet and Apple Speech, no server and no account
 - **Many scripts and languages**: Latin, Cyrillic, Arabic, Hebrew, Indic, Thai, CJK and more, and
   an interface in 13 languages
 - **Private by design**: no telemetry, no tracking, accounts are local to your instance

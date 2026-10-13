@@ -46,7 +46,7 @@ _SHERPA_MODELS: tuple[AsrModelInfo, ...] = (
         id="parakeet-ultra",
         label="Parakeet Ultra (fast)",
         note=(
-            "About 2.5x faster than Large v3 Turbo on CPU, a little less accurate; "
+            "About 2.5x faster than Large v3 on CPU, a little less accurate; "
             "25 European languages only; ~0.65 GB download."
         ),
         engine="sherpa-onnx",
@@ -59,7 +59,7 @@ _SHERPA_MODELS: tuple[AsrModelInfo, ...] = (
 # What is offered: the iPhone app's list, so a person has the same choice on either. Other
 # faster-whisper sizes still run (an API client may name one, and so may `DEFAULT_MODEL`); they
 # are only not listed, because a longer ladder is noise to choose from.
-_OFFERED_WHISPER = ("small", "large-v3-turbo", "large-v3")
+_OFFERED_WHISPER = ("small", "large-v3-turbo")
 
 # Where the models other than Whisper sit in the list, which is in ascending size:
 # after the Whisper size they are closest to.

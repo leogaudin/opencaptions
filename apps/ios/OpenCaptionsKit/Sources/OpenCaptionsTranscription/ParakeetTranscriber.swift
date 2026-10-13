@@ -62,7 +62,6 @@ public final class ParakeetTranscriber: Transcriber {
     public func download(_ id: String, megabytes: Int, progress: @escaping @Sendable (Double) -> Void) async throws {
         guard !isDownloaded(id) else { return }
         let expected = Double(megabytes) * 1_000_000
-        let version = Self.version(of: id)
         let folder = Self.folder(id)
         let baseline = DiskUsage.bytes(in: folder)
         let watcher = Task {
@@ -72,7 +71,10 @@ public final class ParakeetTranscriber: Transcriber {
             }
         }
         defer { watcher.cancel() }
-        try await AsrModels.download(version: version)
+        // Only the files: `AsrModels.download` also loads (compiles) each model, minutes of waiting with
+        // nothing to show. Loading is the first transcription's, which says what it is doing.
+        try await ModelHub.download(
+            id == SpeechModels.parakeetReduxID ? .parakeetRedux : .parakeetUltra, to: folder.deletingLastPathComponent())
         watcher.cancel()
         _ = await watcher.result
         progress(1)

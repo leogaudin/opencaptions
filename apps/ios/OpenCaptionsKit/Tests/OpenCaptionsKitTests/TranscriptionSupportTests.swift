@@ -8,11 +8,19 @@ import Testing
         let models = SpeechModels.all.filter { !$0.isBuiltIn }
         #expect(Set(SpeechModels.all.map(\.id)).count == SpeechModels.all.count)
         #expect(models.map(\.megabytes) == models.map(\.megabytes).sorted())
-        #expect(SpeechModels.model(SpeechModels.defaultID)?.id == "large-v3-turbo")
+        #expect(SpeechModels.model(SpeechModels.defaultID)?.id == SpeechModels.parakeetUltraID)
+        #expect(SpeechModels.model("large-v3") == nil, "the one Large v3 is the 627 MB build")
         #expect(SpeechModels.all.allSatisfy { !$0.englishOnly }, "multilingual models only")
         #expect(SpeechModels.model("nonsense") == nil)
         #expect(models.allSatisfy { $0.megabytes > 0 })
         #expect(models.filter { $0.engine == .whisperKit }.allSatisfy { !$0.variant.isEmpty }, "WhisperKit names a folder")
+    }
+
+    @Test func theModelChosenLastIsTheStartingOneIfThePhoneStillOffersIt() {
+        #expect(SpeechModels.initial(stored: "small") == "small")
+        #expect(SpeechModels.initial(stored: "large-v3-turbo") == "large-v3-turbo")
+        #expect(SpeechModels.initial(stored: "") == SpeechModels.defaultID, "nothing chosen yet")
+        #expect(SpeechModels.initial(stored: "large-v3") == SpeechModels.defaultID, "a model that is gone")
     }
 
     @Test func aModelThatCoversSomeLanguagesIsNeverAskedForAnother() throws {

@@ -28,6 +28,7 @@ from app.services import progress
 from app.services.audio import AudioExtractionError, extract_audio, probe_duration
 from app.tasks.common import TaskContext
 from app.tasks.common import sync_session_factory as _sync_session_factory
+from app.transcription import fetch_progress
 from app.transcription.words import clean_transcript
 
 # Names this pipeline in every event it publishes.
@@ -63,14 +64,19 @@ def _transcribe_audio(
     # Loading blocks until the weights are on disk, which on first use means
     # fetching gigabytes. Say which is happening before it starts, or the bar
     # sits at the same number for minutes with no explanation.
+    fetching = not transcription_provider.is_model_cached(model)
     task.enter_stage(
-        progress.TRANSCRIBE_LOADING_MODEL
-        if transcription_provider.is_model_cached(model)
-        else progress.TRANSCRIBE_FETCHING_MODEL,
-        STAGE,
+        progress.TRANSCRIBE_FETCHING_MODEL if fetching else progress.TRANSCRIBE_LOADING_MODEL, STAGE
     )
 
-    transcription_provider.prepare(model)
+    # Fetching weights reports how much has arrived: the bar fills, and then the work starts it again.
+    plan = transcription_provider.fetch_plan(model) if fetching else None
+
+    def _on_fetched(fraction: float) -> None:
+        task.report_progress(fraction, progress.TRANSCRIBE_FETCHING_MODEL.message, STAGE)
+
+    with fetch_progress.watching(plan, _on_fetched):
+        transcription_provider.prepare(model)
     # The weights are in; what follows is the work itself. Leaving the stage at "Loading
     # model" until the first segment came back made a long first stretch (the voice
     # detection pass and the first window) read as a model that would not load.

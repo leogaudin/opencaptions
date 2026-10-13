@@ -60,12 +60,13 @@ const STACK_ROW_SHARE: f32 = 0.55;
 const STACK_MAX_SCALE: f32 = 3.0;
 const STACK_LEADING: f32 = 1.0;
 /// Word slam: the size a word drops in from, how long the drop takes, the share of it in which the
-/// word fades in, and how far the line is jolted when it lands (a share of the font size) and for
-/// how long. The jolt goes along one of these directions, by the word's place in the transcript.
+/// word fades in, and how far the line is knocked down when it lands (a share of the font size) and
+/// for how long. Always down, then back to rest: a knock in a new direction at every word read as
+/// a tremble.
 const SLAM_FROM: f32 = 1.7;
 const SLAM_S: f32 = 0.12;
 const SLAM_FADE: f32 = 0.4;
-const JOLT: f32 = 0.035;
+const JOLT: f32 = 0.025;
 const JOLT_S: f32 = 0.15;
 /// Drift: how long a word takes to come into focus, how blurred it starts (a share of the font
 /// size), how far the line pushes in over its life and bobs (shares of the font size and of the
@@ -78,7 +79,6 @@ const DRIFT_PERIOD_S: f32 = 3.0;
 const DRIFT_GLOW_REST: f32 = 0.55;
 /// A line that does not drift.
 const NO_DRIFT: [f32; 3] = [0.0, 0.0, 1.0];
-const JOLT_DIRECTIONS: [[f32; 2]; 4] = [[1.0, 0.6], [-0.8, 0.8], [0.6, -1.0], [-1.0, -0.4]];
 /// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
 /// and starts a `RISE_STAGGER_S` after the one before it (less, in a word said quickly, and so that
 /// the letters of a long word start within `RISE_SPREAD_S` of the first: the word is whole soon

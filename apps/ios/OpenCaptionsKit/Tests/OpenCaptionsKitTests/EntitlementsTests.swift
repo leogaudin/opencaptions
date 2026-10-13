@@ -40,13 +40,6 @@ import Testing
         #expect(Entitlements.free.limit(ExportOptions(), for: uhd).outputSize(width: 3840, height: 2160) == (1920, 1080))
     }
 
-    @Test func largeV3IsProAndTheTurboIsNot() {
-        #expect(Entitlements.free.locks(model: "large-v3"))
-        #expect(!Entitlements.free.locks(model: "large-v3-turbo"))
-        #expect(!Entitlements.pro.locks(model: "large-v3"))
-        #expect(SpeechModels.model("large-v3") != nil, "and it is a model there is")
-    }
-
     @Test func presetsSayWhichArePro() throws {
         let presets = try Presets.load(from: Repo.presets)
         #expect(presets.first?.pro == false, "the default is free")

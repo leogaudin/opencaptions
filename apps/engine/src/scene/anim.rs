@@ -206,9 +206,8 @@ impl Scene {
         ]
     }
 
-    /// How far the line is knocked at `t`, in pixels: each word landing jolts it, along a fixed
-    /// direction by its place in the transcript, the knock dying away to nothing (a polynomial
-    /// envelope, not a sine, so every build agrees).
+    /// How far the line is knocked at `t`, in pixels: each word landing pushes it down, the knock
+    /// dying away to nothing (a polynomial envelope, not a sine, so every build agrees).
     pub(super) fn jolt(&self, line: &Line, t: f32) -> [f32; 2] {
         if self.style.animation != Animation::WordSlam {
             return [0.0; 2];
@@ -226,9 +225,7 @@ impl Scene {
         if left <= 0.0 {
             return [0.0; 2];
         }
-        let [dx, dy] = JOLT_DIRECTIONS[w.index % JOLT_DIRECTIONS.len()];
-        let push = JOLT * self.style.font_size * left * left;
-        [dx * push, dy * push]
+        [0.0, JOLT * self.style.font_size * left * left]
     }
 
     /// The sliding box or the line bar at `t`, for the animations that have one.

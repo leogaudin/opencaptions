@@ -68,13 +68,12 @@ public enum SpeechModels {
         .init(
             id: parakeetReduxID, label: "Parakeet Redux", megabytes: 220, engine: .parakeet,
             languages: parakeetLanguages),
-        .init(id: "large-v3-turbo", label: "Whisper Large v3 Turbo", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
+        .init(id: "large-v3-turbo", label: "Whisper Large v3", variant: "openai_whisper-large-v3-v20240930_626MB", megabytes: 627),
         // Moondream's Parakeet Ultra (v3 trained further) through FluidAudio, about 630 MB. Faster than
         // Whisper for somewhat more errors; see docs/project/speech-model-benchmarks.md.
         .init(
             id: parakeetUltraID, label: "Parakeet Ultra", megabytes: 632, engine: .parakeet,
             languages: parakeetLanguages),
-        .init(id: "large-v3", label: "Whisper Large v3", variant: "openai_whisper-large-v3_947MB", megabytes: 948),
     ]
 
     private static let appleSpeech = SpeechModel(
@@ -86,9 +85,14 @@ public enum SpeechModels {
         return downloadable
     }
 
-    /// Large v3 quality at two thirds of the size and much faster; the one to recommend. It is the model
-    /// selected when asking to transcribe and the one kept loaded at launch, whichever it is.
-    public static let defaultID = "large-v3-turbo"
+    /// The model selected the first time someone asks to transcribe, and the one kept loaded at launch. Parakeet
+    /// Ultra: the fastest of the accurate ones, for the 25 European languages most captions are in.
+    public static let defaultID = parakeetUltraID
+
+    /// The model to start from: the one chosen last if this phone still offers it, else the default.
+    public static func initial(stored: String) -> String {
+        model(stored)?.id ?? defaultID
+    }
 
     public static func model(_ id: String) -> SpeechModel? {
         all.first { $0.id == id }

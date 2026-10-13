@@ -141,7 +141,6 @@ struct StylePanel: View {
                 ChoiceStrip(
                     options: CaptionAnimation.allCases, selection: style.animation, title: animationName,
                     images: animationTiles, pick: { choice in model.updateStyle { $0.animation = choice } })
-                LabeledSlider("Motion blur", value: model.binding(\.motionBlur), range: 0...1, step: 0.05)
             }
         case .outline:
             section {

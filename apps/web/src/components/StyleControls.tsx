@@ -92,9 +92,7 @@ export function StyleControls() {
       {tab === "background" && (
         <BackgroundPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
       )}
-      {tab === "animation" && (
-        <AnimationPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
-      )}
+      {tab === "animation" && <AnimationPanel style={style} setStyle={setStyle} />}
       {tab === "outline" && (
         <OutlinePanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
       )}
@@ -296,15 +294,7 @@ function BackgroundPanel({
   );
 }
 
-function AnimationPanel({
-  style,
-  setStyle,
-  throttled,
-}: {
-  style: StyleConfig;
-  setStyle: Setter;
-  throttled: Setter;
-}) {
+function AnimationPanel({ style, setStyle }: { style: StyleConfig; setStyle: Setter }) {
   const t = useT();
   const tiles = useLookPreviews(
     ANIMATIONS.map((animation) => ({ id: animation, config: { ...style, animation } })),
@@ -325,15 +315,6 @@ function AnimationPanel({
           const animation = ANIMATIONS.find((a) => a === id);
           if (animation) setStyle({ animation });
         }}
-      />
-      <SliderField
-        label={t("Motion blur")}
-        value={style.motion_blur}
-        min={0}
-        max={1}
-        step={0.05}
-        decimals={2}
-        onChange={(motion_blur) => throttled({ motion_blur })}
       />
     </Panel>
   );

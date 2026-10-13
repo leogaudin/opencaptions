@@ -2,8 +2,9 @@
 
 A job's progress bar is simply the fraction its one long step reports, a render
 or a transcription moving 0..1, not several steps squeezed into sub-ranges of
-the bar. The short phases around it (preparing, downloading the model) report no
-fraction of their own: the bar waits at 0 and only the message changes. The task
+the bar. The short phases around it (preparing) report no fraction of their own: the bar
+waits at 0 and only the message changes. Downloading a model is the exception, as it takes
+minutes: it fills the bar with the share of the files that has arrived. The task
 and the endpoint that receives a sub-task's reports name the same phase, so the
 stored message and the broadcast one cannot drift apart.
 """
@@ -30,8 +31,8 @@ RENDERING = Stage("Rendering")
 TRANSCRIBE_STARTING = Stage("Starting")
 TRANSCRIBE_DOWNLOADING = Stage("Downloading video")
 TRANSCRIBE_EXTRACTING = Stage("Extracting audio")
-# Loading cached weights is a moment; fetching them is minutes and gigabytes.
-# Only the message distinguishes them, and neither reports a fraction.
+# Loading cached weights is a moment; fetching them is minutes and gigabytes. Fetching reports
+# the share that has arrived (when the Hub says how big the files are); loading reports none.
 TRANSCRIBE_LOADING_MODEL = Stage("Loading model")
 TRANSCRIBE_FETCHING_MODEL = Stage("Downloading model, first use only, this takes a while")
 TRANSCRIBING = Stage("Transcribing")

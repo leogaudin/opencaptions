@@ -33,7 +33,7 @@ PRIVATE BY DESIGN
 No account. No analytics. No cloud. Your videos stay on your device. If you run your own OpenCaptions server, the app can send audio there instead, but only if you set it up.
 
 FREE, AND PRO WHEN YOU WANT MORE
-The free app has everything you need to caption a video and save it up to 1080p at 30 fps, with a small mark in the corner. Pro is a single purchase, with no subscription ever: it removes the mark and adds 4K, 60 fps, HDR, every caption style and the most accurate speech model.
+The free app has everything you need to caption a video and save it up to 1080p at 30 fps, with a small mark in the corner. Pro is a single purchase, with no subscription ever: it removes the mark and adds 4K, 60 fps, HDR, and every caption style.
 
 OPEN SOURCE
 OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or host the web version with Docker: github.com/leogaudin/opencaptions

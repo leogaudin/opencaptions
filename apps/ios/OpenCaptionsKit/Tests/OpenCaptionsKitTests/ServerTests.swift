@@ -291,7 +291,7 @@ private func fixture(_ name: String) throws -> Data {
         let onTheServer = SpeechModels.all.map(\.id).filter { ![SpeechModels.appleSpeechID, SpeechModels.parakeetReduxID].contains($0) }
         #expect(try caps(models: everything, default: "large-v3-turbo").leanModels.map(\.id) == onTheServer)
         // A server that offers fewer offers fewer.
-        #expect(try caps(models: ["small", "large-v3"], default: "small").leanModels.map(\.id) == ["small", "large-v3"])
+        #expect(try caps(models: ["small", "large-v3-turbo"], default: "small").leanModels.map(\.id) == ["small", "large-v3-turbo"])
         // An operator's own default is kept, first, even off the ladder.
         #expect(try caps(models: ["small", "my-finetune"], default: "my-finetune").leanModels.map(\.id) == ["my-finetune", "small"])
         // A hosted server fixes the model and lists none.

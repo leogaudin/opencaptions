@@ -36,15 +36,16 @@ Undo and redo are in the toolbar.
 
 | Model | Download | Notes |
 |---|---|---|
-| **Whisper Small** | 217 MB | The smallest, fastest to try. |
-| **Parakeet Redux** | 220 MB | A small download for the 25 European languages. A little less accurate, and it does worse in noise. The first time on a phone it is prepared for the Neural Engine, which takes several minutes. |
-| **Whisper Large v3 Turbo** | 627 MB | The default, and the best all-round accuracy. |
-| **Parakeet Ultra** | 632 MB | Fast, for its 25 European languages. It took the place of Parakeet v3. |
-| **Whisper Large v3** | 948 MB | The most accurate Whisper. |
+| **Whisper Small** | 217 MB | OpenAI's smaller, less precise model. |
+| **Parakeet Redux** | 220 MB | NVIDIA's smaller, less precise model, for 25 European languages. It does worse in noise. The first time on a phone it is prepared for the Neural Engine, which takes several minutes. |
+| **Whisper Large v3** | 627 MB | OpenAI's bigger model, the best all-round accuracy, for about 100 languages. |
+| **Parakeet Ultra** | 632 MB | The default: NVIDIA's bigger model, fast, for 25 European languages. |
 | **Apple Speech** | Built into iOS 26 and later | Needs nothing to download. |
 
-Models are downloaded once and run on the phone. **Settings** lists them with their size on disk, and
-you can delete the ones you do not use. The language list follows the model, as it does on the web.
+Models are downloaded once and run on the phone. Each model's row shows a few flags and how many more
+languages it covers. **Settings** lists them with their size on disk, and you can delete the ones you do not
+use. The language list follows the model, as it does on the web, and the model you chose last is the one
+offered next time.
 
 While a long video is transcribed, the app tells you to keep it open until it finishes. If the speech
 model skips a loud stretch, a **second pass** re-reads it and keeps only the words two readings agree on.
@@ -67,7 +68,7 @@ The app says whenever audio is about to be sent to a server, and names its host.
 
 The free app has everything you need to caption a video and save it up to 1080p at 30 fps, with a small
 mark in the corner. **Pro** is a single purchase, with no subscription: it removes the mark and adds 4K,
-60 fps, HDR, every caption style and the most accurate speech model. The code is the same either way,
+60 fps, HDR, and every caption style. The code is the same either way,
 and a [build you make yourself](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) has
 everything unlocked.
 

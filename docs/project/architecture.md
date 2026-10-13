@@ -151,8 +151,8 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
     laid down three times to read as light); upper case (drawn, never stored: the transcript is
     untouched); and italic (the upright face sheared by about 11 degrees, so any font leans and
     no italic file has to be fetched). Every field after `shadow_color` is optional with a
-    default of "off", so a style saved before it existed opens unchanged (the exception is
-    `motion_blur`, which defaults to 0.5). `fill_colors` paints each word with a vertical gradient
+    default of "off", so a style saved before it existed opens unchanged (a stored `motion_blur`, a field that
+    was removed, is ignored). `fill_colors` paints each word with a vertical gradient
     from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
     depth: its stamps are laid from the back forward, so each pixel takes the colour of the
     nearest stamp that covers it, and the first step is lightened as a lit edge.
@@ -161,13 +161,6 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
     thickness, the cursor, the sliding box's corner, a label's radius, the blur of a soft word,
     how far a letter rises, and the outline, shadow and extrusion, so every animation works in a
     stack.
-  - *Motion blur.* When `motion_blur` is above 0, a frame at `t` is the average of eight
-    sub-frames drawn at `t - motion_blur/30 · k/7` seconds (the shutter is a share of 1/30 s, so
-    the fps does not change the look). If every sub-frame has the same key (nothing moves within
-    the shutter), one draw is taken, so still frames cost nothing and are byte-identical to a sharp
-    one. Otherwise each is drawn in full, whichever line is up then, and they are summed as
-    integers on the premultiplied bytes over the union of their boxes, so a line arriving within
-    the shutter ghosts in. The frame's identity is the list of sub-frame keys.
   - *Highlight colours.* `highlight_colors` is a list of one to four hex colours, the first the
     primary (a row of pickers with a plus and a remove, on both editors). A look that marks each
     word (the lit word, a box, a label, an underline, the cursor) takes the colours in turn, word
@@ -182,7 +175,7 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
     dark extrusion with a little shading), Boom (the word being said grows and is drawn over its neighbours), Lyric
     (soft until said, and the line never changes size), Stickers, Plain, Neon, Typewriter and
     Handwritten (a marker stroke laid under the words as they are said), and the four built on the
-    newer features: Chunky 3D (white letters, the word being said turning gold and rising on a shaded extrusion),
+    newer features: Pop (white letters in an orange outline, the word being said rising on a short golden extrusion),
     Cascade (letters rising one after another), Slam (heavy capitals dropping in), Poster (a stack of rows scaled to one width) and Glow Intro (floating, glowing capitals that come into focus).
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by
     the engine (`CaptionEngine.samples`: the same drawing as the preview and the export, in a
@@ -275,8 +268,8 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 
 - `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`
   names. Models download on first use into `models/`.
-  - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small, Large v3 Turbo and
-    Large v3, the phone's; another size runs when named by an API client or by `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
+  - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small and Large v3 (the Turbo
+    build), the phone's; another size runs when named by an API client or by `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
     Everything is decoded: the voice-detection
     filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The
@@ -501,14 +494,17 @@ disk.
 
 ### Speech models
 
-- **The list.** The Whisper sizes WhisperKit publishes (Whisper Small, Large v3 Turbo and Large v3;
-  no English-only or superseded ones), Parakeet Ultra and Parakeet Redux (FluidAudio, Core ML: faster, 25 European
+- **The list.** The Whisper sizes WhisperKit publishes (Whisper Small and Large v3, the 627 MB build; no
+  English-only or superseded ones, and no second, slower Large v3), Parakeet Ultra and Parakeet Redux (FluidAudio, Core ML: faster, 25 European
   languages, offered only for those; Redux is the small download and does worse in noise), and on iOS 26 Apple's own `SpeechTranscriber` (built in,
   nothing to download, a language must be chosen). Each model names the engine that runs it
   (`SpeechModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
   reasons, with measurements, are in the [speech model benchmarks](./speech-model-benchmarks.md).
-- **Downloads.** On demand, into a backup-excluded folder, never bundled. The default is Large v3
-  Turbo (the best quality for its size), and a metered connection asks before a download.
+- **Downloads.** On demand, into a backup-excluded folder, never bundled. The default is Parakeet
+  Ultra, and the model chosen last is the one offered next (`transcribeModel`). A Parakeet download fetches the
+  files only (`ModelHub.download`): FluidAudio's own `AsrModels.download` also compiles each model, minutes with
+  nothing to show, so that is left to the first load, which says what it is doing. A metered connection asks
+  before a download.
 - **Loading** a model into memory is the longest wait: the first time on a phone, Core ML prepares
   it for that chip (minutes on an iPhone 14 for the Turbo model), and the system keeps the result,
   so later loads take seconds. The screen says so. Loading starts early and beside the reading of
@@ -579,8 +575,7 @@ factors differ to look the same.
   name. The iOS preview asks the engine where it is (`oc_watermark_rect`) and keeps it on a layer of
   its own, so dragging or pinching a caption never moves it;
 - saves at up to 1080p and 30 fps, and turns an HDR video into an ordinary one;
-- locks the styles marked `"pro": true` in `presets.json` (the web ignores the flag) and the Large
-  v3 speech model (Large v3 Turbo is free).
+- locks the styles marked `"pro": true` in `presets.json` (the web ignores the flag).
 
 The screens lock what the tier lacks and show `ProSheet`; the save also passes its options through
 `Entitlements.limit`, so a remembered choice cannot get past a screen. Nothing else is gated: the

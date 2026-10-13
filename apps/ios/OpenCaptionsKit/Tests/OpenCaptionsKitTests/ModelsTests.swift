@@ -53,10 +53,18 @@ import Testing
         #expect(!style.matches(presets[1]))
     }
 
+    @Test func aStyleSavedWithTheRemovedMotionBlurStillOpens() throws {
+        var json = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
+        json["motion_blur"] = 0.8
+        let style = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(style == (try Repo.defaultStyle()))
+    }
+
     @Test func aStyleSavedBeforeItsLaterFieldsStillOpens() throws {
         var json = try #require(
             JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
-        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "motion_blur", "fill_colors", "extrude_shade", "extrude_back", "layout"] {
+        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "fill_colors", "extrude_shade", "extrude_back", "layout"] {
             json.removeValue(forKey: key)
         }
         let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))

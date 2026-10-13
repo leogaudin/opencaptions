@@ -17,12 +17,11 @@ from app.transcription.sherpa import segments_from_words, words_from_tokens
 
 class TestRegistry:
     def test_the_list_is_the_iphones(self) -> None:
-        """Small, Parakeet, Large v3 Turbo and Large v3, in ascending size, as on the phone."""
+        """Small, Parakeet and Large v3 (the Turbo build), in ascending size, as on the phone."""
         assert [m.id for m in asr_models.all_models()] == [
             "small",
             "parakeet-ultra",
             "large-v3-turbo",
-            "large-v3",
         ]
         whisper = [m for m in asr_models.all_models() if m.engine == "faster-whisper"]
         assert all(m.languages is None for m in whisper)

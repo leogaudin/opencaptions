@@ -20,7 +20,6 @@ struct ProSheet: View {
                 benefit("speedometer", "60 frames per second")
                 benefit("sun.max.fill", "HDR videos stay HDR")
                 benefit("textformat", "Every caption style")
-                benefit("waveform", "The Large v3 speech model")
                 benefit("drop.degreesign.slash", "No watermark on your videos")
             }
             .card()
