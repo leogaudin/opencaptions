@@ -126,11 +126,11 @@ struct EditorView: View {
             if phase != .active { Task { await model.flush() } }
             // The system takes the hardware encoder from an app that leaves the screen, which ends a
             // save abruptly. Stopping it ourselves leaves a clear message instead of a dead app.
-            if phase == .background {
+            if phase == .background, exporter?.continuesInBackground != true {
                 exporter?.interrupt(String(localized: "The save stopped because OpenCaptions left the screen. Keep it open while it saves, then try again."))
             }
         }
-        // A long job needs the app in the foreground: there is no background processing.
+        // Before iOS 26 a long job needs the app in the foreground: there is no background processing.
         .onChange(of: model.isTranscribing) { _, busy in
             UIApplication.shared.isIdleTimerDisabled = busy
         }
@@ -292,7 +292,9 @@ struct EditorView: View {
                 }
                 if fraction > 0 { ProgressBar(value: fraction) }
                 HStack {
-                    Text("Keep OpenCaptions open until this finishes.")
+                    Text(BackgroundJob.isSupported
+                        ? "You can leave OpenCaptions. The progress shows on your lock screen."
+                        : "Keep OpenCaptions open until this finishes.")
                         .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                     Spacer()
                     Button("Cancel") { model.cancelTranscription() }

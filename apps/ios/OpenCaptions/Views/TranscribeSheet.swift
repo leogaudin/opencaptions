@@ -424,7 +424,9 @@ struct TranscribeSheet: View {
     private func footer(_ button: some View) -> some View {
         VStack(spacing: 8) {
             button
-            Text(onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
+            Text(BackgroundJob.isSupported
+                ? "You can leave OpenCaptions. The progress shows on your lock screen."
+                : onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
         }
         .padding(.horizontal, 18)

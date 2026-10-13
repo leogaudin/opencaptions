@@ -525,7 +525,7 @@ disk.
   audio (AAC, about 1 MB a minute), uploads it, follows the job, fetches the `Transcript` and tells
   the server to forget it. The transcribe sheet then lists the server's models and downloads
   nothing. A pairing link opened on the phone asks before it is used, because it decides where the
-  audio goes. The upload and the wait happen while the app is open (no background upload yet);
+  audio goes. The upload and the wait go on in the background where iOS 26 allows it (see Long jobs), and otherwise while the app is open;
   plain `http` is allowed only to local-network addresses.
 
 ### Settings
@@ -588,8 +588,16 @@ Pro sheet shows the store's price. A debug build picks the tier in Settings or w
 
 ### Long jobs
 
-The app asks the user to keep it in the foreground and keeps the screen awake during a download, a
-transcription or a save. There is no background processing. Editor models belong to the app, not to
+The app keeps the screen awake during a download, a transcription or a save. On iOS 26 a transcription or a
+save the user started goes on when they leave the app: `BackgroundJob` (the Kit) submits a
+`BGContinuedProcessingTaskRequest` as the job begins, under an identifier permitted in the Info.plist by its
+prefix (`org.leogaudin.opencaptions.job.*`, one fresh suffix per job), reports the job's fraction to the task's
+`Progress`, and ends it with the job. The system draws the card on the lock screen and in the Dynamic Island,
+and its cancel button, or the system running short of time or memory, reaches the job as `onStop`. Where it
+is refused, or before iOS 26, the job is inert and works as it always has: the sheets ask the user to keep the
+app open, and a save is stopped with a message when the app leaves the screen, since the system takes the
+hardware encoder away from an app that is not in front. `ExportController.continuesInBackground` is what
+tells the screen not to stop a save that the system is keeping alive. Editor models belong to the app, not to
 a screen, so a transcription or an autosave in progress carries on when the user goes back to the
 project list, where the project's row shows its progress.
 

@@ -282,11 +282,17 @@ public final class EditorModel {
 
     public func startTranscription(with transcriber: any Transcriber, model: String, language: String?) {
         guard !isTranscribing, let source = store.sourceURL(for: project.id) else { return }
-        transcription = .running(fraction: 0, message: String(localized: "Starting…", bundle: .module))
+        let starting = String(localized: "Starting…", bundle: .module)
+        transcription = .running(fraction: 0, message: starting)
+        // It goes on if the user leaves the app, with progress on the lock screen where iOS allows it.
+        let job = BackgroundJob.begin(
+            title: String(localized: "Transcribing your video", bundle: .module), subtitle: starting,
+            onStop: { [weak self] in self?.cancelTranscription() })
         let report: @Sendable (Double, String) -> Void = { [weak self] fraction, message in
             Task { @MainActor in
                 guard let self, self.isTranscribing else { return }
                 self.transcription = .running(fraction: fraction, message: message)
+                job.update(fraction: fraction, subtitle: message)
             }
         }
         transcriptionTask = Task { [weak self] in
@@ -299,10 +305,13 @@ public final class EditorModel {
                 self?.transcription = .idle
                 self?.selectedLine = nil
                 self?.changed()
+                job.end(success: true)
             } catch is CancellationError {
                 self?.transcription = .idle
+                job.end(success: false)
             } catch {
                 self?.transcription = .failed(error.localizedDescription)
+                job.end(success: false)
             }
         }
     }

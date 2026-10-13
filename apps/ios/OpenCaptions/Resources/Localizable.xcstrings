@@ -1162,6 +1162,89 @@
         }
       }
     },
+    "Adding the captions to your video. You can leave OpenCaptions: the progress shows on your lock screen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajout des sous-titres à votre vidéo. Vous pouvez quitter OpenCaptions : la progression s’affiche sur l’écran verrouillé."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadiendo los subtítulos a tu vídeo. Puedes salir de OpenCaptions: el progreso se muestra en la pantalla de bloqueo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Untertitel werden in dein Video eingefügt. Du kannst OpenCaptions verlassen: Der Fortschritt erscheint auf dem Sperrbildschirm."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodajemy napisy do wideo. Możesz wyjść z OpenCaptions: postęp widać na ekranie blokady."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionando as legendas ao seu vídeo. Você pode sair do OpenCaptions: o progresso aparece na tela bloqueada."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiunta dei sottotitoli al video. Puoi uscire da OpenCaptions: l’avanzamento appare nella schermata di blocco."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавляем субтитры к видео. Можно выйти из OpenCaptions: ход выполнения виден на экране блокировки."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar videonuza ekleniyor. OpenCaptions’tan çıkabilirsiniz: ilerleme kilit ekranında görünür."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動画に字幕を追加しています。OpenCaptions を離れても大丈夫です。進行状況はロック画面に表示されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영상에 자막을 추가하는 중입니다. OpenCaptions를 나가도 됩니다. 진행 상황은 잠금 화면에 표시됩니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在为视频添加字幕。你可以离开 OpenCaptions：进度会显示在锁定屏幕上。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menambahkan teks ke video Anda. Anda bisa keluar dari OpenCaptions: kemajuan tampil di layar kunci."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adding the captions to your video. You can leave OpenCaptions: the progress shows on your lock screen."
+          }
+        }
+      }
+    },
     "Address, e.g. 192.168.1.20:5173": {
       "extractionState": "manual",
       "localizations": {
@@ -19455,6 +19538,89 @@
           "stringUnit": {
             "state": "translated",
             "value": "Anda memakai data seluler atau hotspot. Koneksi Wi‑Fi akan menghemat kuota Anda."
+          }
+        }
+      }
+    },
+    "You can leave OpenCaptions. The progress shows on your lock screen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez quitter OpenCaptions. La progression s’affiche sur l’écran verrouillé."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes salir de OpenCaptions. El progreso se muestra en la pantalla de bloqueo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du kannst OpenCaptions verlassen. Der Fortschritt erscheint auf dem Sperrbildschirm."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Możesz wyjść z OpenCaptions. Postęp widać na ekranie blokady."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode sair do OpenCaptions. O progresso aparece na tela bloqueada."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puoi uscire da OpenCaptions. L’avanzamento appare nella schermata di blocco."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Можно выйти из OpenCaptions. Ход выполнения виден на экране блокировки."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCaptions’tan çıkabilirsiniz. İlerleme kilit ekranında görünür."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCaptions を離れても大丈夫です。進行状況はロック画面に表示されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCaptions를 나가도 됩니다. 진행 상황은 잠금 화면에 표시됩니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你可以离开 OpenCaptions。进度会显示在锁定屏幕上。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anda bisa keluar dari OpenCaptions. Kemajuan tampil di layar kunci."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can leave OpenCaptions. The progress shows on your lock screen."
           }
         }
       }

@@ -49,7 +49,9 @@ struct ExportSheet: View {
                 TimeLeft(fraction: fraction, startedAt: controller.startedAt)
             }
             ProgressBar(value: fraction)
-            Text("Adding the captions to your video. Keep OpenCaptions open until it finishes.")
+            Text(BackgroundJob.isSupported
+                ? "Adding the captions to your video. You can leave OpenCaptions: the progress shows on your lock screen."
+                : "Adding the captions to your video. Keep OpenCaptions open until it finishes.")
                 .font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
             Button("Cancel") {
                 controller.cancel()

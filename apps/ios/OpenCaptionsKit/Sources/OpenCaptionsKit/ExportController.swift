@@ -23,6 +23,7 @@ public final class ExportController {
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var watchdog: Task<Void, Never>?
     @ObservationIgnored private var lastProgress = ContinuousClock.now
+    @ObservationIgnored private var job: BackgroundJob?
 
     /// `stallLimit` is how long an export may go without any progress before it is stopped:
     /// a file is never worth waiting on forever if something has stopped moving.
@@ -36,17 +37,25 @@ public final class ExportController {
         return false
     }
 
+    /// Whether the system lets the save go on if the app leaves the screen.
+    public var continuesInBackground: Bool { job?.continuesInBackground == true }
+
     public func start(project: Project, source: URL) {
         guard !isRunning else { return }
         state = .running(fraction: 0)
         startedAt = Date()
         lastProgress = .now
         let run = run
+        // The save goes on if the user leaves the app, with progress on the lock screen where iOS allows it.
+        job = BackgroundJob.begin(
+            title: String(localized: "Saving your video", bundle: .module), subtitle: "OpenCaptions",
+            onStop: { [weak self] in self?.cancel() })
         let report: @Sendable (Double) -> Void = { [weak self] fraction in
             Task { @MainActor in
                 guard let self, self.isRunning else { return }
                 self.lastProgress = .now
                 self.state = .running(fraction: fraction)
+                self.job?.update(fraction: fraction)
             }
         }
         watchdog?.cancel()
@@ -57,6 +66,7 @@ public final class ExportController {
                 if ContinuousClock.now - self.lastProgress > stallLimit {
                     self.task?.cancel()
                     self.state = .failed(String(localized: "It stopped making progress, so it was stopped. Please try again.", bundle: .module))
+                    self.endJob(success: false)
                     return
                 }
             }
@@ -67,10 +77,13 @@ public final class ExportController {
                 guard self?.isRunning == true else { return }  // stopped by the watchdog meanwhile
                 self?.watchdog?.cancel()
                 self?.state = .done(url)
+                self?.endJob(success: true)
             } catch is CancellationError {
                 if self?.isRunning == true { self?.state = .idle }
+                self?.endJob(success: false)
             } catch {
                 if self?.isRunning == true { self?.state = .failed(error.localizedDescription) }
+                self?.endJob(success: false)
             }
         }
     }
@@ -81,12 +94,19 @@ public final class ExportController {
         task?.cancel()
         watchdog?.cancel()
         state = .failed(reason)
+        endJob(success: false)
     }
 
     public func cancel() {
         task?.cancel()
         watchdog?.cancel()
         state = .idle
+        endJob(success: false)
+    }
+
+    private func endJob(success: Bool) {
+        job?.end(success: success)
+        job = nil
     }
 
     public func dismiss() {

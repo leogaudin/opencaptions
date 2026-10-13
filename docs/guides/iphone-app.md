@@ -47,7 +47,9 @@ languages it covers. **Settings** lists them with their size on disk, and you ca
 use. The language list follows the model, as it does on the web, and the model you chose last is the one
 offered next time.
 
-While a long video is transcribed, the app tells you to keep it open until it finishes. If the speech
+On iOS 26 and later, a transcription or a save you started goes on when you leave the app, and its
+progress shows on the lock screen and in the Dynamic Island, with a button to stop it. On earlier versions the
+app asks you to keep it open until it finishes. If the speech
 model skips a loud stretch, a **second pass** re-reads it and keeps only the words two readings agree on.
 
 ## Use your own server instead

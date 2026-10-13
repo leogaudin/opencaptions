@@ -41,6 +41,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- A transcription or a save the user started carries on when they leave the app (iOS 26), under a
+	     random suffix: see BackgroundJob. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>org.leogaudin.opencaptions.job.*</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Reaches an OpenCaptions server on your network to transcribe your videos there.</string>
 </dict>
