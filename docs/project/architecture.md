@@ -499,8 +499,8 @@ disk.
 ### Speech models
 
 - **The list.** The Whisper sizes WhisperKit publishes (Whisper Small, Large v3 Turbo and Large v3;
-  no English-only or superseded ones), Parakeet v3 (FluidAudio, Core ML: faster, 25 European
-  languages, offered only for those), and on iOS 26 Apple's own `SpeechTranscriber` (built in,
+  no English-only or superseded ones), Parakeet Ultra and Parakeet Redux (FluidAudio, Core ML: faster, 25 European
+  languages, offered only for those; Redux is the small download and does worse in noise), and on iOS 26 Apple's own `SpeechTranscriber` (built in,
   nothing to download, a language must be chosen). Each model names the engine that runs it
   (`SpeechModel.engine`) and `LocalTranscriber` routes to it; adding a model is listing it. The
   reasons, with measurements, are in the [speech model benchmarks](./speech-model-benchmarks.md).

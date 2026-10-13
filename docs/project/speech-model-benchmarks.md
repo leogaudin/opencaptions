@@ -226,11 +226,33 @@ made the decoder repeat itself. Measure each model before trusting a build.
 
 ## On the phone
 
-Not measured: written from FluidAudio's own benchmarks and its source. Parakeet v3 runs through FluidAudio
-on the Neural Engine (480 MB); its first load on a given chip compiles the model once and the system keeps
-the result. Apple's `SpeechTranscriber` (iOS 26) is offered as a proof of concept: its results can lack
-time ranges, so the app spreads a result's words over the time it has and logs how many got a time of
-their own. Both need measuring on a phone against Whisper before either is the default.
+Not measured here: written from FluidAudio's own benchmarks and its source. The phone offers two Parakeet
+builds from Moondream, both trained from v3 (same 25 languages and vocabulary, CC-BY-4.0), through FluidAudio
+on the Neural Engine. FluidAudio's figures, which are not ours:
+
+| | v3 (before) | Ultra | Redux |
+|---|---|---|---|
+| What | NVIDIA's model | v3 trained further at full precision | v3 with a ternary encoder |
+| Download | 480 MB | 632 MB | 220 MB |
+| Librispeech clean / other (WER %) | 2.27 / 4.12 | 2.13 / 3.81 | 2.71 / 5.12 |
+| FLEURS, mean of 24 languages (WER %) | 14.81 | 11.67 | 13.06 |
+| Speed on the Neural Engine (test-clean) | 128.6x | 126.7x | 83.9x |
+
+Ultra replaced v3 on the phone: more accurate on every FLEURS language FluidAudio lists, at the same speed.
+Redux is the small download. Moondream's own table has it degrade in noise (MUSAN 6.72 to 9.04) and on some
+languages (French 7.71 against 4.81), which is why it is the small option and not the recommendation. It
+needs iOS 18, and its first load compiles it for the Neural Engine for several minutes (the screen says so;
+the system keeps the result). The server keeps v3: Ultra has not been exported to sherpa-onnx and measured on
+the CPU yet.
+
+Redux is on the phone only. Moondream's own runtime for it (`photon`, the `moondream` package) depends on
+`kestrel-kernels`, which is under a proprietary licence that grants no rights without a written agreement with
+M87 Labs, and its client reads an API key and sends telemetry. That cannot go into an AGPL image that people
+host themselves, so it is not evaluated further, and its kernels are not to be inspected or worked around.
+
+Apple's `SpeechTranscriber` (iOS 26) is offered as a proof of concept: its results can lack time ranges, so
+the app spreads a result's words over the time it has and logs how many got a time of their own. All of them
+need measuring on a phone against Whisper before any is the default.
 
 ## Not measured
 

@@ -37,8 +37,9 @@ Undo and redo are in the toolbar.
 | Model | Download | Notes |
 |---|---|---|
 | **Whisper Small** | 217 MB | The smallest, fastest to try. |
-| **Parakeet v3** | 480 MB | Fast, for its 25 European languages. |
+| **Parakeet Redux** | 220 MB | A small download for the 25 European languages. A little less accurate, and it does worse in noise. The first time on a phone it is prepared for the Neural Engine, which takes several minutes. |
 | **Whisper Large v3 Turbo** | 627 MB | The default, and the best all-round accuracy. |
+| **Parakeet Ultra** | 632 MB | Fast, for its 25 European languages. It took the place of Parakeet v3. |
 | **Whisper Large v3** | 948 MB | The most accurate Whisper. |
 | **Apple Speech** | Built into iOS 26 and later | Needs nothing to download. |
 
