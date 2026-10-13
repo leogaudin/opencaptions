@@ -7,7 +7,7 @@ sidebar:
 
 # Speech model benchmarks
 
-The local provider runs Whisper (faster-whisper) and, as an option, Parakeet v3 (sherpa-onnx). This page
+The local provider runs Whisper (faster-whisper) and, as an option, Parakeet Ultra (sherpa-onnx). This page
 holds the measurements behind that choice and behind the transcription settings, so the next model is
 judged the same way.
 
@@ -31,6 +31,7 @@ four minutes per language: differences under two points are noise.
 | Whisper small | 7.0 | 15.2 | 9.1 | 5.2 | 7.3 | 6.6 | 15.7 | 11.6 | 19.9 | 14.6 | 11.0 | 25.4 | 17.1 |
 | Whisper distil-large-v3.5 | 5.5 | | | | | | | | | | | | |
 | Parakeet v3 (int8) | 7.0 | 9.0 | 4.7 | 2.3 | 3.9 | 4.2 | 9.5 | 10.3 | | | | | |
+| **Parakeet Ultra (int8)**, measured on a Mac (below) | 4.8 | 7.9 | 3.8 | 2.5 | 2.2 | 4.7 | 8.6 | 8.5 | | | | | |
 | Cohere Transcribe (int8) | 7.0 | 6.7 | 4.4 | 2.9 | 3.2 | 6.8 | 9.2 | | | | 5.4 | 13.7 | 23.8 |
 | Qwen3-ASR 1.7B (bf16, PyTorch) | **3.0** | **4.6** | 3.6 | 2.5 | **1.8** | 4.2 | 14.8 | 5.4 | 11.1 | **5.0** | 3.5 | 14.1 | 7.9 |
 | Qwen3-ASR 0.6B (bf16, PyTorch) | 3.9 | 9.0 | 4.9 | 5.2 | 5.7 | 7.1 | 27.4 | 9.5 | 12.7 | 8.8 | 8.0 | 13.7 | 7.8 |
@@ -44,6 +45,32 @@ against 6.2), Turkish and Korean; Cohere is level with Whisper on French. Parake
 times Whisper's errors on the languages it covers (Portuguese is level); the leaderboard figures put
 them level, which these int8 builds do not reproduce. Parakeet covers 25 European languages, not
 Turkish, Indonesian, Japanese, Korean or Chinese.
+
+### Parakeet Ultra against v3 and Turbo, in one session
+
+Ultra is Moondream's v3 trained further, for the same 25 languages (CC-BY-4.0). The sherpa-onnx int8 build
+the server runs is `leogaudin/sherpa-onnx-nemo-parakeet-ultra-int8`, made by `scripts/asr-bench/export_ultra.py`
+(Ultra's weights renamed into NVIDIA's v3, the vocabulary checked equal, then sherpa-onnx's own export and int8
+quantisation). The three models ran together with the same harness and the same clips, on an **Apple-silicon Mac,
+4 threads**, not the Xeon above: read the speed as a ranking. Error rate in percent, 20 clips per language.
+
+| Model | en | fr | de | es | it | pt | pl | ru | mean | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Parakeet v3 (int8) | 7.7 | 8.7 | 5.3 | 3.3 | 3.2 | 4.7 | 10.5 | 9.5 | 6.6 | 24.4x |
+| **Parakeet Ultra (int8)** | 4.8 | 7.9 | 3.8 | 2.5 | 2.2 | 4.7 | 8.6 | 8.5 | 5.4 | 22.6x |
+| Whisper large-v3-turbo (int8) | 5.7 | 8.3 | 3.6 | 1.9 | 2.2 | 4.2 | 6.2 | 6.4 | 4.8 | 2.0x |
+
+Ultra is better than v3 on seven of eight languages and level on Portuguese, at the same speed and memory (the
+process peaked near 3 GB), and 11 times faster than Turbo here. It is still behind Turbo on Spanish, Portuguese,
+Polish and Russian (by 0.5 to 2.4 points; Polish and Russian are the clear ones) and ahead of it on English
+and French. Twenty clips: differences under two points are noise.
+Not run: the whole film (its reference lines are not in the repository), so "lines found" and empty stretches for
+Ultra are unknown, as are noisy speech and the Xeon's speed.
+
+Three existing Hugging Face copies of Ultra in the sherpa-onnx layout were compared with this export: all three
+have byte-identical decoder and joiner files, two have the encoder's weights and graph bit-identical to it, and one
+has different encoder weights. They are unpinned repositories of private people; the server uses its own repository, at
+a pinned commit.
 
 ## Speed and memory (CPU)
 
@@ -216,10 +243,15 @@ made the decoder repeat itself. Measure each model before trusting a build.
 
 ## What was chosen
 
-- **Default: Whisper large-v3-turbo.** The most accurate or level on most languages measured, 99 languages,
-  1.6 GB, and its speed does not depend on the CPU. Voice filter off, hallucination guard on, beam 5.
-- **Parakeet v3 is offered as the fast model** for its 25 languages: about 2.6x faster and half the memory.
-  A recording in another language goes to Whisper, and the job says so.
+- **Default: Parakeet Ultra** for its 25 languages; for every other, a person chooses Whisper large-v3-turbo
+  (the router identifies the language and refuses a model that does not cover it). Ultra is within about a point of
+  Turbo on the languages measured and about 11 times faster on a CPU; Turbo is the most accurate or level on most
+  languages measured, 99 languages, 1.6 GB, and its speed does not depend on the CPU. Whisper: voice filter off,
+  hallucination guard on, beam 5. On a GPU, where Whisper is the fast one, the default is Whisper
+  (`DEFAULT_MODEL`).
+- **Parakeet Ultra is offered as the fast model** for its 25 languages: about 2.6x faster than Turbo (measured with
+  v3, whose speed Ultra matches) and half the memory, and more accurate than v3 was.
+  A recording in another language is refused, and the person chooses Whisper.
 - **Candidate, not wired in:** Omnilingual ASR 1B, for the languages Whisper cannot do.
 - **Not offered:** Qwen3-ASR (above), Cohere Transcribe, Canary 180M and SenseVoice (too inaccurate),
   Moonshine (English only).
@@ -238,12 +270,11 @@ on the Neural Engine. FluidAudio's figures, which are not ours:
 | FLEURS, mean of 24 languages (WER %) | 14.81 | 11.67 | 13.06 |
 | Speed on the Neural Engine (test-clean) | 128.6x | 126.7x | 83.9x |
 
-Ultra replaced v3 on the phone: more accurate on every FLEURS language FluidAudio lists, at the same speed.
+Ultra replaced v3 on the phone and on the server: more accurate on every FLEURS language FluidAudio lists, at the same speed.
 Redux is the small download. Moondream's own table has it degrade in noise (MUSAN 6.72 to 9.04) and on some
 languages (French 7.71 against 4.81), which is why it is the small option and not the recommendation. It
 needs iOS 18, and its first load compiles it for the Neural Engine for several minutes (the screen says so;
-the system keeps the result). The server keeps v3: Ultra has not been exported to sherpa-onnx and measured on
-the CPU yet.
+the system keeps the result). The server runs Ultra too (above).
 
 Redux is on the phone only. Moondream's own runtime for it (`photon`, the `moondream` package) depends on
 `kestrel-kernels`, which is under a proprietary licence that grants no rights without a written agreement with
@@ -265,6 +296,8 @@ Canary 1B, Qwen3-ASR through llama.cpp, and noisy or accented speech beyond the 
 ```sh
 uv run scripts/asr-bench/fleurs.py large-v3-turbo,small all 20   # a faster-whisper size
 uv run scripts/asr-bench/fleurs.py parakeet,qwen3-0.6b,cohere en,fr,de 20   # the sherpa-onnx int8 builds
+uv run scripts/asr-bench/export_ultra.py OUT   # Parakeet Ultra as sherpa-onnx int8 files (NeMo, 16 GB of RAM is comfortable)
+uv run scripts/asr-bench/fleurs.py parakeet-ultra en,fr,de 20 --local parakeet-ultra=OUT   # a build not uploaded yet
 uv run scripts/asr-bench/qwen3.py 1.7b en,fr,id 20                          # PyTorch bf16; 0.6b too, --no-hint
 ONEDNN_MAX_CPU_ISA=AVX2 uv run scripts/asr-bench/qwen3.py 1.7b en 4         # a CPU without AVX-512 or AMX
 uv run scripts/asr-bench/longtail.py                                           # Whisper against Omnilingual, 5 languages

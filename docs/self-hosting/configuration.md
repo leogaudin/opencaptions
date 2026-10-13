@@ -64,7 +64,7 @@ Password reset by email turns on when a host is set. See [Accounts](./accounts.m
 | Setting | Default | |
 |---|---|---|
 | `TRANSCRIPTION_PROVIDER` | `local` | `local`, `openai` or `opencaptions`. The default selected in the app. |
-| `WHISPER_MODEL` | `large-v3-turbo` | The default Whisper model. |
+| `DEFAULT_MODEL` | `parakeet-ultra` | The model a request that names none uses. |
 | `WHISPER_DEVICE` | `auto` | `auto`, `cpu`, `cuda` or `cuda:0`. |
 | `WHISPER_COMPUTE_TYPE` | `int8` | |
 | `ASR_THREADS` | `0` | Threads for the models that are not Whisper. `0` uses every core available. |

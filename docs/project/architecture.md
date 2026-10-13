@@ -276,7 +276,7 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 - `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`
   names. Models download on first use into `models/`.
   - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small, Large v3 Turbo and
-    Large v3, the phone's; another size runs when named by an API client or by `WHISPER_MODEL`.
+    Large v3, the phone's; another size runs when named by an API client or by `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
     Everything is decoded: the voice-detection
     filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The
@@ -285,12 +285,15 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
     stretches empty; `WHISPER_FILL_GAPS=true` decodes each long empty stretch again, twice,
     keeping only the words both readings give (`chunking.second_look`). Off by default: it
     costs several times the transcription time on action content ([measurements](./speech-model-benchmarks.md)).
-  - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet v3 is the first. It
+  - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet Ultra is the first. It
     cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
     for being "not speech", and decodes a window again in halves when it comes back empty
     though it is not quiet. A model that covers only some languages is never given another:
     the language is identified first (`language_id.py`) when it was not chosen, and a recording
-    outside the model's languages goes to the default Whisper model, which the job says.
+    outside the model's languages is refused, naming the language (`LanguageNotCoveredError`).
+
+  Parakeet Ultra is fetched from `leogaudin/sherpa-onnx-nemo-parakeet-ultra-int8` at a pinned
+  commit (`AsrModelInfo.revision`), built by `scripts/asr-bench/export_ultra.py`.
 
   Adding a model is adding an entry there (and an engine, if it needs one); nothing above the
   provider seam changes. How the choices were made, with measurements, is in the [speech model benchmarks](./speech-model-benchmarks.md).

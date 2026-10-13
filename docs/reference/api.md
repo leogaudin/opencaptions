@@ -62,7 +62,7 @@ the server with [safeguards](../self-hosting/security.md#fetching-a-video-from-a
 |---|---|
 | `language` | A two-letter code such as `en` or `fr`, or `auto` to detect it. Defaults to `auto`. |
 | `provider` | `local`, `openai` or `opencaptions`. Omit it for the server's default. |
-| `model` | A model id such as `large-v3-turbo` or `parakeet-tdt-0.6b-v3`. Omit it for the default. |
+| `model` | A model id such as `large-v3-turbo` or `parakeet-ultra`. Omit it for the default. |
 
 `GET /settings` lists the models and languages the server offers. On a server in hosted mode, `provider` and
 `model` are fixed and a request that names others is refused.

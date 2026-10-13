@@ -44,8 +44,8 @@ captions on a green screen to key out in your own video editor. See [Exporting](
 
 ## Which speech model should I use?
 
-Whisper Large v3 Turbo, the default, for the best accuracy across languages. Parakeet v3 when speed matters and
-your language is one of its 25. Whisper Small to try things out quickly. The measurements behind this are in the
+Parakeet Ultra, the default on a server, when your language is one of its 25 European ones: it is fast and nearly as
+accurate. Whisper Large v3 Turbo for the best accuracy across languages, and for every other language. Whisper Small to try things out quickly. The measurements behind this are in the
 [benchmarks](./project/speech-model-benchmarks.md).
 
 ## Why are some of my words wrong, or missing?

@@ -16,11 +16,14 @@ The default provider, `local`, runs a speech model on the machine the stack is o
 Two engines run the models:
 
 - **faster-whisper** (on the CPU, or on an NVIDIA GPU) runs every Whisper size.
-- **sherpa-onnx** (on the CPU) runs the other models. Parakeet v3, for 25 European languages, is the first.
+- **sherpa-onnx** (on the CPU) runs the other models. Parakeet Ultra (NVIDIA's Parakeet v3 trained further by Moondream), for 25 European languages, is the first.
 
 A model is downloaded the first time someone uses it, from Hugging Face, into the `models` folder next to
 the compose file, and it is kept there. To get it ready ahead of time, run one short transcription with it.
-The default model is `large-v3-turbo`, set by `WHISPER_MODEL`.
+The default model is `parakeet-ultra`, set by `DEFAULT_MODEL`. A model that covers only some languages refuses a
+recording in another one and says which language it was; the person chooses a model that covers it, and that
+model is downloaded then. On a GPU, where Whisper is the fast one, set `DEFAULT_MODEL=large-v3-turbo`: Parakeet
+runs on the CPU.
 
 A transcription worker loads the model, does one job, and exits. A model therefore never stays in memory
 after its job, and an idle stack uses none of it. The price is a model load per job. If a model is
