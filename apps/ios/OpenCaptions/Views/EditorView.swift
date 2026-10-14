@@ -130,7 +130,7 @@ struct EditorView: View {
                 exporter?.interrupt(String(localized: "The save stopped because OpenCaptions left the screen. Keep it open while it saves, then try again."))
             }
         }
-        // Before iOS 26 a long job needs the app in the foreground: there is no background processing.
+        // A transcription needs the app in the foreground: the speech models do not run in the background.
         .onChange(of: model.isTranscribing) { _, busy in
             UIApplication.shared.isIdleTimerDisabled = busy
         }
@@ -292,9 +292,7 @@ struct EditorView: View {
                 }
                 if fraction > 0 { ProgressBar(value: fraction) }
                 HStack {
-                    Text(BackgroundJob.isSupported
-                        ? "You can leave OpenCaptions. The progress shows on your lock screen."
-                        : "Keep OpenCaptions open until this finishes.")
+                    Text("Keep OpenCaptions open until this finishes.")
                         .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                     Spacer()
                     Button("Cancel") { model.cancelTranscription() }
