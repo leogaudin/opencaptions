@@ -9,7 +9,7 @@
 Transcribe with Whisper or Parakeet, style every word, and export a burned-in video or subtitle files.
 Nothing leaves your machine unless you say so.
 
-**[opencaptions.app](https://opencaptions.app)**: try the looks on a sample clip, right in your browser.
+**[Documentation](https://docs.opencaptions.app)** · **[Try it in your browser](https://opencaptions.app)** · **[Self-host it](#quick-start)**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![CI](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml/badge.svg)](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml)
@@ -55,6 +55,7 @@ To build from source instead, clone the repository and run `docker compose up -d
 
 - [Documentation](https://docs.opencaptions.app): the guides, self-hosting, the HTTP API and the
   reference. It is plain Markdown in [docs/](docs/index.md), built into that site with [Starlight](apps/docs)
+- [Try it in your browser](https://opencaptions.app): the looks on a sample clip, nothing to install
 - [Self-hosting](docs/self-hosting/installation.md): installation, configuration, security, GPU
   acceleration, backups
 - [Architecture](docs/project/architecture.md): how it works, including the engine and the iOS app
@@ -75,4 +76,21 @@ the code where the AGPL cannot go, such as the App Store. Third-party components
 licences, see [NOTICE](NOTICE).
 
 Built and maintained by [Leo Gaudin](https://github.com/leogaudin).
-Support the project on [GitHub Sponsors](https://github.com/sponsors/leogaudin).
+
+## Support the project
+
+OpenCaptions is free and has no tracking. If it is useful to you, you can support it with crypto:
+
+<table>
+  <tr>
+    <td align="center"><b>BTC</b><br><img src="docs/donate/btc.png" alt="BTC address QR code" width="160"></td>
+    <td align="center"><b>ETH</b><br><img src="docs/donate/eth.png" alt="ETH address QR code" width="160"></td>
+    <td align="center"><b>XMR</b><br><img src="docs/donate/xmr.png" alt="XMR address QR code" width="160"></td>
+  </tr>
+</table>
+
+```text
+BTC  bc1qac8u7xc5zan6a6fng8gqp7drapau9208d0l9wp
+ETH  0xc5C9fE87f10BdC4FecEF9De48cD3ba942640774e
+XMR  86bcvPxVaqpTgXuk7FPuJa9sYXbUZnAAFj1sdSiSpr8bWpmW2VhMAF4dzXP2Lead3XFRDurqHnYcKNC2RLPQWvVJ9hbM2Kg
+```
