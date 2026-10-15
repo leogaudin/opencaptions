@@ -203,13 +203,26 @@ struct SectionLabel: View {
 /// How far the end of a scrolling page stays above the screen's bottom edge, so that the last row can be
 /// scrolled clear of the tab bar and the fade over it: the bar (49 and the home indicator, about 34), the
 /// fade (44) and a little air.
-let tabBarClearance: CGFloat = 49 + 34 + 44 + 8
+#if os(macOS)
+    let tabBarClearance: CGFloat = 16
+#else
+    let tabBarClearance: CGFloat = 49 + 34 + 44 + 8
+#endif
 
 extension View {
     /// Lets what scrolls dissolve into the page just above the tab bar, instead of being cut off at
     /// its edge: a short fade from clear to the page's colour, ending where the bar begins, and
     /// plain page colour behind the bar itself, so there is one fade and not two.
     func fadesIntoTabBar() -> some View {
+        #if os(macOS)
+            // The Mac has no tab bar to fade into.
+            self
+        #else
+            fadingIntoTabBar
+        #endif
+    }
+
+    private var fadingIntoTabBar: some View {
         overlay(alignment: .bottom) {
             GeometryReader { screen in
                 let bar = 49 + screen.safeAreaInsets.bottom

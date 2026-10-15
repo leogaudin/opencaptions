@@ -7,6 +7,8 @@ import SwiftUI
 struct ExportSheet: View {
     @Environment(\.dismiss) private var dismiss
     let controller: ExportController
+    /// What a file saved from here is called by default: the project's title.
+    var suggestedName = "OpenCaptions"
     @State private var photosMessage: String?
     @State private var contentHeight: CGFloat = 220
 
@@ -38,6 +40,7 @@ struct ExportSheet: View {
         .presentationDragIndicator(.visible)
         .tint(Theme.accent)
         .interactiveDismissDisabled(controller.isRunning)
+        .macSheetWidth(380)
     }
 
     private func running(_ fraction: Double) -> some View {
@@ -65,9 +68,20 @@ struct ExportSheet: View {
         VStack(spacing: 12) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
                 .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.textPrimary)
-            HStack(spacing: 12) {
-                ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
+            // One under the other: three labels side by side do not fit a narrow sheet, in some languages.
+            VStack(spacing: 10) {
+                #if os(macOS)
+                    // The Mac puts the file where the user chooses; sharing is the second thing to do with it.
+                    Button { Task { await saveCopy(url) } } label: {
+                        Label("Save…", systemImage: "square.and.arrow.down")
+                    }
                     .buttonStyle(PrimaryButtonStyle())
+                    ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
+                        .buttonStyle(SecondaryButtonStyle())
+                #else
+                    ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up") }
+                        .buttonStyle(PrimaryButtonStyle())
+                #endif
                 Button { Task { await saveToPhotos(url) } } label: {
                     Label("Photos", systemImage: "photo.on.rectangle")
                 }
@@ -81,6 +95,20 @@ struct ExportSheet: View {
         }
         .animation(.default, value: photosMessage)
     }
+
+    #if os(macOS)
+        /// Asks where to put the video, named after the project, and copies it there.
+        private func saveCopy(_ url: URL) async {
+            let name = suggestedName.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+            do {
+                if try await SaveDialog.copy(url, suggesting: "\(name).\(url.pathExtension)") != nil {
+                    photosMessage = String(localized: "Saved.")
+                }
+            } catch {
+                photosMessage = String(localized: "Could not save: \(error.localizedDescription)")
+            }
+        }
+    #endif
 
     private func saveToPhotos(_ url: URL) async {
         guard await PHPhotoLibrary.requestAuthorization(for: .addOnly) == .authorized else {

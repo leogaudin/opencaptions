@@ -28,6 +28,7 @@ struct PickedMovie: Transferable {
 struct ProjectsView: View {
     @Environment(AppModel.self) private var app
     @State private var picked: PhotosPickerItem?
+    @State private var showFileImporter = false
     @State private var importing: String?  // what the spinner says, while there is one
     /// How much of the picked video the system has handed over (it may have to fetch it from iCloud).
     @State private var importFraction: Double?
@@ -69,6 +70,9 @@ struct ProjectsView: View {
             guard let item else { return }
             Task { await load(item) }
         }
+        .modifier(
+            VideoFileImport(
+                show: $showFileImporter, canImport: path.isEmpty, load: { url in Task { await load(file: url) } }))
         .onChange(of: path) { _, path in
             if path.isEmpty { app.reload() }
         }
@@ -122,13 +126,30 @@ struct ProjectsView: View {
         HStack(spacing: 10) {
             Wordmark()
             Spacer()
+            #if os(macOS)
+                // The Mac has no tab for Settings: its window opens from here (and with ⌘,).
+                SettingsLink { Image(systemName: "gearshape") }
+                    .buttonStyle(CircleButtonStyle())
+                    .help("Settings")
+            #endif
             if !app.projects.isEmpty {
-                picker { Image(systemName: "plus") }.buttonStyle(CircleButtonStyle(prominent: true))
+                #if os(macOS)
+                    // The Mac imports a file first; the photos are one click away.
+                    picker { Image(systemName: "photo.on.rectangle") }
+                        .buttonStyle(CircleButtonStyle())
+                        .help("Import from Photos")
+                    Button { showFileImporter = true } label: { Image(systemName: "plus") }
+                        .buttonStyle(CircleButtonStyle(prominent: true))
+                        .help("Import Video…")
+                #else
+                    picker { Image(systemName: "plus") }.buttonStyle(CircleButtonStyle(prominent: true))
+                #endif
             }
         }
         .padding(.horizontal, 18)
         .padding(.top, 4)
         .padding(.bottom, 8)
+        .titlebarInset()
     }
 
     /// `.current` hands over the video as it is stored; the default may transcode it first,
@@ -155,11 +176,22 @@ struct ProjectsView: View {
             }
             Text("Nothing is uploaded: the transcription runs on your device.")
                 .font(.system(size: 14)).foregroundStyle(Theme.textSecondary).multilineTextAlignment(.center)
-            picker {
-                Label("Import a video", systemImage: "plus")
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .padding(.horizontal, 40)
+            #if os(macOS)
+                VStack(spacing: 12) {
+                    Button { showFileImporter = true } label: { Label("Import a video", systemImage: "plus") }
+                        .buttonStyle(PrimaryButtonStyle())
+                    picker { Label("Import from Photos", systemImage: "photo.on.rectangle") }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
+                .frame(maxWidth: 360)
+                .padding(.horizontal, 40)
+            #else
+                picker {
+                    Label("Import a video", systemImage: "plus")
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .padding(.horizontal, 40)
+            #endif
             Spacer()
             Spacer()
         }
@@ -168,7 +200,7 @@ struct ProjectsView: View {
 
     /// One sentence for the translator, with the word to stress marked in bold: it is drawn in the accent.
     private var tagline: AttributedString {
-        var text = AttributedString(localized: "Transcribe, restyle and **save** a video, all on this phone.")
+        var text = AttributedString(localized: ThisDevice.tagline)
         for run in text.runs where run.inlinePresentationIntent?.contains(.stronglyEmphasized) == true {
             text[run.range].foregroundColor = Theme.accent
         }
@@ -205,18 +237,48 @@ struct ProjectsView: View {
             return
         }
         let received = Date()
-        guard let info = try? await VideoProbe.probe(movie.url) else {
-            try? FileManager.default.removeItem(at: movie.url)
-            app.errorMessage = String(localized: "That file does not look like a video.")
-            return
-        }
-        pending = PendingImport(
-            url: movie.url, title: String(localized: "Video \(Date().formatted(date: .abbreviated, time: .shortened))"),
-            info: info, poster: await PendingImport.poster(of: movie.url))
+        guard await prepare(movie.url) else { return }
         // Where the wait went, for the diagnostics log: the system handing the video over is the long part.
         Diagnostics.log(
             "import: \(Int(received.timeIntervalSince(began) * 1000)) ms to receive it from Photos, "
                 + "\(Int(Date().timeIntervalSince(received) * 1000)) ms to read it")
+    }
+
+    /// A video file the user chose or dropped (from Finder, or Files), copied to a file of ours like a picked
+    /// one, and then imported by the same road.
+    private func load(file: URL) async {
+        importing = String(localized: "Preparing your video…")
+        importFraction = nil
+        defer {
+            importing = nil
+            importFraction = nil
+        }
+        // A file picked in a sandboxed app is opened for as long as it is asked for.
+        let scoped = file.startAccessingSecurityScopedResource()
+        defer { if scoped { file.stopAccessingSecurityScopedResource() } }
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(file.pathExtension.isEmpty ? "mov" : file.pathExtension)
+        do {
+            try await Task.detached { try FileManager.default.copyItem(at: file, to: copy) }.value
+        } catch {
+            app.errorMessage = String(localized: "That video could not be read.")
+            return
+        }
+        _ = await prepare(copy)
+    }
+
+    /// Looks at a video file of ours and shows the import confirmation for it. False if it is not a video.
+    private func prepare(_ url: URL) async -> Bool {
+        guard let info = try? await VideoProbe.probe(url) else {
+            try? FileManager.default.removeItem(at: url)
+            app.errorMessage = String(localized: "That file does not look like a video.")
+            return false
+        }
+        pending = PendingImport(
+            url: url, title: String(localized: "Video \(Date().formatted(date: .abbreviated, time: .shortened))"),
+            info: info, poster: await PendingImport.poster(of: url))
+        return true
     }
 
     /// The picked video as a file of ours. The system makes the file (from iCloud if it has to), and says
@@ -448,5 +510,29 @@ struct RenameSheet: View {
                 selection = TextSelection(range: title.startIndex..<title.endIndex)
             }
         }
+    }
+}
+
+/// A video file, from Finder or Files: chosen in a panel (which the menu's Import Video opens too), or dropped
+/// on the window.
+private struct VideoFileImport: ViewModifier {
+    @Binding var show: Bool
+    /// False while a project is open: the project list is not what the menu's Import acts on then.
+    let canImport: Bool
+    let load: (URL) -> Void
+
+    func body(content: Content) -> some View {
+        var action: (@MainActor () -> Void)?
+        if canImport { action = { show = true } }
+        return content
+            .fileImporter(isPresented: $show, allowedContentTypes: [.movie]) { result in
+                if case .success(let url) = result { load(url) }
+            }
+            .dropDestination(for: URL.self) { urls, _ in
+                guard let url = urls.first(where: { $0.isFileURL }) else { return false }
+                load(url)
+                return true
+            }
+            .focusedSceneValue(\.importVideo, action)
     }
 }

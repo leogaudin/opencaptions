@@ -469,83 +469,6 @@
         }
       }
     },
-    "Loading the model… the first time on this phone can take a few minutes.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chargement du modèle… la première fois sur ce téléphone, cela peut prendre quelques minutes."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando el modelo… la primera vez en este teléfono puede tardar unos minutos."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modell wird geladen … beim ersten Mal auf diesem Telefon kann es einige Minuten dauern."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ładowanie modelu… za pierwszym razem na tym telefonie może to potrwać kilka minut."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carregando o modelo… na primeira vez neste celular pode levar alguns minutos."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Caricamento del modello… la prima volta su questo telefono può richiedere qualche minuto."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "モデルを読み込み中… この端末での初回は数分かかることがあります。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "모델을 불러오는 중… 이 휴대폰에서 처음에는 몇 분이 걸릴 수 있습니다."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Загрузка модели… в первый раз на этом телефоне это может занять несколько минут."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model yükleniyor… bu telefonda ilk seferde birkaç dakika sürebilir."
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Memuat model… pertama kali di ponsel ini bisa memakan waktu beberapa menit."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在加载模型… 在这部手机上首次加载可能需要几分钟。"
-          }
-        }
-      }
-    },
     "No speech was found in this video.": {
       "extractionState": "manual",
       "localizations": {
@@ -1855,79 +1778,79 @@
         }
       }
     },
-    "Preparing the model for this phone, only the first time. This can take several minutes.": {
+    "Optimizing for this device and this version of OpenCaptions… This can take a few minutes, and only happens again after an update.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Préparation du modèle pour ce téléphone, uniquement la première fois. Cela peut prendre plusieurs minutes."
+            "value": "Optimisation pour cet appareil et cette version d’OpenCaptions… Cela peut prendre quelques minutes, et ne se reproduit qu’après une mise à jour."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparando el modelo para este teléfono, solo la primera vez. Puede tardar varios minutos."
+            "value": "Optimizando para este dispositivo y esta versión de OpenCaptions… Puede tardar unos minutos y solo vuelve a ocurrir tras una actualización."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Das Modell wird für dieses Telefon vorbereitet, nur beim ersten Mal. Das kann einige Minuten dauern."
+            "value": "Wird für dieses Gerät und diese Version von OpenCaptions optimiert … Das kann einige Minuten dauern und passiert erst nach einem Update wieder."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Przygotowywanie modelu dla tego telefonu, tylko za pierwszym razem. Może to potrwać kilka minut."
+            "value": "Optymalizacja pod to urządzenie i tę wersję OpenCaptions… Może to potrwać kilka minut i powtórzy się dopiero po aktualizacji."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparando o modelo para este celular, só na primeira vez. Isso pode levar vários minutos."
+            "value": "Otimizando para este dispositivo e esta versão do OpenCaptions… Pode levar alguns minutos e só acontece de novo após uma atualização."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparazione del modello per questo telefono, solo la prima volta. Può richiedere diversi minuti."
+            "value": "Ottimizzazione per questo dispositivo e questa versione di OpenCaptions… Può richiedere qualche minuto e si ripete solo dopo un aggiornamento."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この端末向けにモデルを準備しています（初回のみ）。数分かかることがあります。"
+            "value": "このデバイスとこのバージョンのOpenCaptions向けに最適化しています… 数分かかることがありますが、アップデート後にしか再び行われません。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이 휴대폰에 맞게 모델을 준비하는 중입니다(처음 한 번만). 몇 분 걸릴 수 있습니다."
+            "value": "이 기기와 이 버전의 OpenCaptions에 맞게 최적화하는 중… 몇 분 걸릴 수 있으며, 업데이트 후에만 다시 진행됩니다."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подготовка модели для этого телефона, только в первый раз. Это может занять несколько минут."
+            "value": "Оптимизация под это устройство и эту версию OpenCaptions… Это может занять несколько минут и повторится только после обновления."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Model bu telefon için hazırlanıyor, yalnızca ilk seferde. Birkaç dakika sürebilir."
+            "value": "Bu cihaz ve OpenCaptions’ın bu sürümü için optimize ediliyor… Birkaç dakika sürebilir ve yalnızca bir güncellemeden sonra yeniden yapılır."
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Menyiapkan model untuk ponsel ini, hanya sekali saja. Ini bisa memakan waktu beberapa menit."
+            "value": "Mengoptimalkan untuk perangkat ini dan versi OpenCaptions ini… Ini bisa memakan waktu beberapa menit dan hanya terjadi lagi setelah pembaruan."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在为这部手机准备模型，仅首次需要。可能需要几分钟。"
+            "value": "正在针对此设备和此版本的 OpenCaptions 优化… 可能需要几分钟，且仅在更新后才会再次进行。"
           }
         }
       }

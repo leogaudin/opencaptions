@@ -53,7 +53,12 @@ struct SettingsView: View {
                     aboutSection
                 }
                 .padding(.horizontal, 16)
-                .containerRelativeFrame(.horizontal)
+                #if os(macOS)
+                    // As wide as the window and no wider, whatever a row would like to be.
+                    .frame(maxWidth: .infinity)
+                #else
+                    .containerRelativeFrame(.horizontal)
+                #endif
             }
             .clipped()
             .scrollIndicators(.hidden)
@@ -266,7 +271,7 @@ struct SettingsView: View {
             SectionLabel("About")
             VStack(alignment: .leading, spacing: 14) {
                 Wordmark()
-                Text("Captions that move, made on your phone. Nothing is uploaded: the speech is transcribed on this device.")
+                Text(ThisDevice.about)
                     .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
                 storageRow("Version", Self.version)
                 Link(destination: URL(string: "https://github.com/leogaudin/opencaptions")!) {

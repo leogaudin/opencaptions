@@ -1,6 +1,7 @@
-# OpenCaptions for iOS
+# OpenCaptions for iPhone, iPad and Mac
 
-The native app: everything runs on the phone, with no server and no accounts. It
+The native app: everything runs on the device, with no server and no accounts. One target builds for
+iPhone, iPad and Mac (macOS 15, Apple silicon), as one App Store record. It
 reuses the caption engine (`apps/engine`) for drawing and edits, WhisperKit and Parakeet
 (FluidAudio) for transcription, and AVFoundation for decode and encode. See
 [`docs/project/architecture.md`](../../docs/project/architecture.md).
@@ -23,12 +24,19 @@ make ios-engine    # build the engine into apps/ios/Build/OpenCaptionsEngine.xcf
 make ios-test      # run the OpenCaptionsKit tests on the Mac (no simulator)
 make ios-project   # generate OpenCaptions.xcodeproj
 make ios-build     # build the app for the Apple-silicon simulator
+make mac-build     # build the same target for the Mac
 ```
 
 `ios-test` and `ios-build` need `ios-engine` first. `OC_WHISPER_E2E=1 make ios-test` also runs one
 test that downloads the `small` model and transcribes real speech (network, about a minute;
 `OC_WHISPER_MODELS=<dir>` keeps the model between runs). Open `apps/ios/OpenCaptions.xcodeproj`
 in Xcode to run on a simulator or device.
+
+**A model's first load after every rebuild is slow.** Core ML builds a model's Neural Engine plan on its first
+load and caches it, but the cache belongs to the build of the app and to the OS: a rebuild (or an OS update) pays
+it again, about 30 s for Parakeet Ultra on an M1 Mac and minutes on a phone. When you time a load or a
+transcription, use the second launch of one build. See "Loading" in `docs/project/architecture.md`. (`OC_RESET=1`
+in the debug launch switches also wipes the app's projects each launch: it is for screenshots.)
 
 Transcription runs on the phone by default. Settings → "Where to transcribe" can point it at
 another OpenCaptions server instead (paste the link the web app's Account page makes when you
@@ -44,7 +52,12 @@ OpenCaptionsKit/         # a Swift package with everything testable
 Build/                   # gitignored: the engine xcframework, DerivedData
 ```
 
-The simulator slice is Apple-silicon only; Intel Macs are not supported.
+The simulator and Mac slices are Apple-silicon only; Intel Macs are not supported. The Mac app is the same
+target (`supportedDestinations: [iOS, macOS]`): run it from Xcode with the "My Mac" destination, or
+`make mac-build`. `make mac-upload` archives and sends it to TestFlight, like `ios-upload` (same API key), and
+needs a Mac distribution certificate, its installer certificate and a Mac App Store profile for
+`org.leogaudin.opencaptions` (`Config/ExportOptions-macOS.plist` names them). The Mac app is sandboxed
+(`Config/OpenCaptions-macOS.entitlements`), so try the archived build, not only a Debug one, before a release.
 
 ## Releasing to the App Store
 

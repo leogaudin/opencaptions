@@ -7,7 +7,7 @@ struct SourcePicker: View {
     @Binding var useServer: Bool
 
     var body: some View {
-        InlinePicker(title: "Where", options: [false, true], selection: $useServer, label: { $0 ? "Remote server" : "On this phone" })
+        InlinePicker(title: "Where", options: [false, true], selection: $useServer, label: { $0 ? "Remote server" : ThisDevice.here })
             .card()
     }
 }

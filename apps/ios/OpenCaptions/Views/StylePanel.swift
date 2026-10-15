@@ -93,33 +93,20 @@ struct StylePanel: View {
                     .buttonStyle(.plain)
                 }
                 LabeledSlider("Size", value: intBinding(\.fontSize), range: CaptionGestures.fontSizeRange, step: 1)
-                Row("Letter case") {
-                    SegmentedPills(
-                        options: TextCase.allCases, selection: model.binding(\.textCase),
-                        label: { $0 == .upper ? "Uppercase" : "Normal" })
-                        .frame(maxWidth: 220)
-                }
-                Row("Slant") {
-                    SegmentedPills(
-                        options: [false, true], selection: model.binding(\.italic),
-                        label: { $0 ? "Italic" : "Upright" })
-                        .frame(maxWidth: 220)
-                }
-                Row("Alignment") {
-                    SegmentedPills(
-                        options: [CaptionAlign.left, .center, .right, .justify],
-                        selection: Binding(get: { style.align }, set: { model.setAlign($0) }),
-                        label: alignName)
-                        .frame(maxWidth: 280)
-                }
+                InlinePicker(
+                    title: "Letter case", options: TextCase.allCases, selection: model.binding(\.textCase),
+                    label: { $0 == .upper ? "Uppercase" : "Normal" })
+                InlinePicker(
+                    title: "Slant", options: [false, true], selection: model.binding(\.italic),
+                    label: { $0 ? "Italic" : "Upright" })
+                InlinePicker(
+                    title: "Alignment", options: [CaptionAlign.left, .center, .right, .justify],
+                    selection: Binding(get: { style.align }, set: { model.setAlign($0) }), label: alignName)
                 LabeledSlider("Letter spacing", value: model.binding(\.letterSpacing), range: -0.2...1, step: 0.01)
                 LabeledSlider("Stretch", value: model.binding(\.stretch), range: 0.5...2, step: 0.01)
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
-                Row("Fill") {
-                    SegmentedPills(
-                        options: [false, true], selection: gradientOn, label: { $0 ? "Gradient" : "Solid" })
-                        .frame(maxWidth: 220)
-                }
+                InlinePicker(
+                    title: "Fill", options: [false, true], selection: gradientOn, label: { $0 ? "Gradient" : "Solid" })
                 if !style.fillColors.isEmpty {
                     Row("Gradient colors") {
                         colorList(\.fillColors, label: "Gradient colors", add: "Add a gradient color", remove: "Remove this gradient color")
@@ -159,12 +146,9 @@ struct StylePanel: View {
                 }
                 if style.shadowBlur <= 0 && (style.shadowOffsetX != 0 || style.shadowOffsetY != 0) {
                     LabeledSlider("Extrusion shading", value: model.binding(\.extrudeShade), range: 0...1, step: 0.05)
-                    Row("Extrusion") {
-                        SegmentedPills(
-                            options: [false, true], selection: extrusionGraded,
-                            label: { $0 ? "Gradient" : "Solid" })
-                            .frame(maxWidth: 220)
-                    }
+                    InlinePicker(
+                        title: "Extrusion", options: [false, true], selection: extrusionGraded,
+                        label: { $0 ? "Gradient" : "Solid" })
                     if extrusionGraded.wrappedValue {
                         Row("Extrusion back color") { ColorPicker("Extrusion back color", selection: color(\.extrudeBack), supportsOpacity: false).labelsHidden() }
                     }
@@ -439,7 +423,7 @@ private struct LabeledSlider: View {
                     .font(.system(size: 14, weight: .semibold).monospacedDigit())
                     .foregroundStyle(Theme.textSecondary)
             }
-            Slider(value: $value, in: range, step: step)
+            SteppedSlider(value: $value, range: range, step: step)
         }
     }
 }
@@ -460,9 +444,9 @@ private struct OffsetControl: View {
                 nudge("arrow.counterclockwise", "Reset the offset") { model.setOffset(ms: 0) }
                     .disabled(ms == 0)
             }
-            Slider(
+            SteppedSlider(
                 value: Binding(get: { Double(ms) }, set: { model.setOffset(ms: Int($0.rounded())) }),
-                in: Double(EditorModel.offsetRangeMs.lowerBound)...Double(EditorModel.offsetRangeMs.upperBound),
+                range: Double(EditorModel.offsetRangeMs.lowerBound)...Double(EditorModel.offsetRangeMs.upperBound),
                 step: 10)
         }
     }

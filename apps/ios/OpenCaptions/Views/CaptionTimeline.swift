@@ -79,6 +79,16 @@ struct CaptionTimeline: View {
             // A child's own gesture (a caption, an edge) wins over this one.
             .gesture(scrub)
             .simultaneousGesture(pinch)
+            // On the Mac, two fingers on the trackpad (or a modifier key with the wheel) scroll it.
+            .onHorizontalScroll { scroll(by: Double($0)) }
+    }
+
+    /// Scrolls the timeline `points` across, as a drag of that length would, pausing a playing video.
+    private func scroll(by points: Double) {
+        coast?.cancel()
+        if playback.isPlaying { playback.pause() }
+        playback.seek(
+            to: TimelineScale.scrubbed(from: playback.time, translation: points, pointsPerSecond: px, span: span))
     }
 
     private var tracksAndPlayhead: some View {

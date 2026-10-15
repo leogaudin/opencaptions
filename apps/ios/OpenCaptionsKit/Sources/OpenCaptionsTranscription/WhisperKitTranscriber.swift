@@ -137,7 +137,7 @@ public final class WhisperKitTranscriber: Transcriber {
             throw error
         }
 
-        progress(0, KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
+        progress(0, KitStrings.localized("Optimizing for this device and this version of OpenCaptions… This can take a few minutes, and only happens again after an update."))
         let pipe = try await loading.value.pipe
 
         // The language is always chosen (the screen offers no "detect"): left alone WhisperKit would

@@ -108,12 +108,9 @@ public final class ParakeetTranscriber: Transcriber {
             throw error
         }
 
-        // Redux is compiled for the Neural Engine on its first load, which takes several minutes and shows nothing.
-        progress(
-            0,
-            version == .redux
-                ? KitStrings.localized("Preparing the model for this phone, only the first time. This can take several minutes.")
-                : KitStrings.localized("Loading the model… the first time on this phone can take a few minutes."))
+        // The first load of a build on a device is Core ML preparing the Neural Engine plan, which takes up to
+        // minutes and shows nothing: the screen says what it is doing.
+        progress(0, KitStrings.localized("Optimizing for this device and this version of OpenCaptions… This can take a few minutes, and only happens again after an update."))
         let manager = try await loading.value
 
         let fractions = await manager.transcriptionProgressStream

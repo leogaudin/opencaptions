@@ -5024,83 +5024,6 @@
         }
       }
     },
-    "Downloaded once (%lld MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent iPhone.": {
-      "extractionState": "manual",
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Téléchargé une fois (%lld Mo), puis fonctionne sur cet appareil. Les gros modèles sont plus lents et plus précis, et les plus gros demandent un iPhone récent."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se descarga una vez (%lld MB) y luego se ejecuta en este dispositivo. Los modelos grandes son más lentos y precisos, y los mayores necesitan un iPhone reciente."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wird einmal geladen (%lld MB) und läuft dann auf diesem Gerät. Größere Modelle sind langsamer und genauer, die größten brauchen ein aktuelles iPhone."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pobierany raz (%lld MB), potem działa na tym urządzeniu. Większe modele są wolniejsze i dokładniejsze, a największe wymagają nowego iPhone’a."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Baixado uma vez (%lld MB), depois roda neste dispositivo. Modelos maiores são mais lentos e precisos, e os maiores exigem um iPhone recente."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scaricato una volta (%lld MB), poi gira su questo dispositivo. I modelli più grandi sono più lenti e precisi, e i maggiori richiedono un iPhone recente."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скачивается один раз (%lld МБ), затем работает на этом устройстве. Большие модели медленнее и точнее, а самым большим нужен новый iPhone."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bir kez indirilir (%lld MB), sonra bu cihazda çalışır. Büyük modeller daha yavaş ve daha doğrudur; en büyükleri yeni bir iPhone gerektirir."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一度ダウンロード（%lld MB）すると、このデバイスで動作します。大きいモデルほど遅く正確で、最大のものは新しいiPhoneが必要です。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "한 번 다운로드(%lld MB)하면 이 기기에서 실행됩니다. 큰 모델일수록 느리지만 정확하며, 가장 큰 모델은 최신 iPhone이 필요합니다."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只需下载一次（%lld MB），之后在此设备上运行。模型越大越慢但越准确，最大的模型需要较新的 iPhone。"
-          }
-        },
-        "id": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diunduh sekali (%lld MB), lalu berjalan di perangkat ini. Model yang lebih besar lebih lambat dan akurat, dan yang terbesar memerlukan iPhone terbaru."
-          }
-        }
-      }
-    },
     "Downloaded. Transcription runs on this device.": {
       "extractionState": "manual",
       "localizations": {
@@ -20231,6 +20154,930 @@
           "stringUnit": {
             "state": "translated",
             "value": "Persegi"
+          }
+        }
+      }
+    },
+    "Transcribe, restyle and **save** a video, all on this Mac.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcrivez, stylisez et **enregistrez** une vidéo, le tout sur ce Mac."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribe, da estilo y **guarda** un vídeo, todo en este Mac."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkribiere, gestalte und **sichere** ein Video, alles auf diesem Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkrybuj, stylizuj i **zapisuj** wideo, wszystko na tym Macu."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcreva, estilize e **salve** um vídeo, tudo neste Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascrivi, personalizza e **salva** un video, tutto su questo Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расшифровывайте, оформляйте и **сохраняйте** видео, всё на этом Mac."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir videoyu çevirin, biçimlendirin ve **kaydedin**, hepsi bu Mac’te."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動画の文字起こし、スタイル変更、**保存**まで、すべてこのMacで。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "동영상을 받아쓰고, 스타일을 바꾸고, **저장**까지, 모두 이 Mac에서."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转写、设计样式并**保存**视频，全部在这台 Mac 上完成。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkripsikan, ubah gaya, dan **simpan** video, semua di Mac ini."
+          }
+        }
+      }
+    },
+    "Captions that move, made on your Mac. Nothing is uploaded: the speech is transcribed on this device.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des sous-titres animés, créés sur votre Mac. Rien n’est envoyé : la parole est transcrite sur cet appareil."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subtítulos con movimiento, hechos en tu Mac. No se sube nada: la voz se transcribe en este dispositivo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bewegte Untertitel, auf deinem Mac erstellt. Es wird nichts hochgeladen: Die Sprache wird auf diesem Gerät transkribiert."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruchome napisy, tworzone na Macu. Nic nie jest przesyłane: mowa jest transkrybowana na tym urządzeniu."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legendas animadas, feitas no seu Mac. Nada é enviado: a fala é transcrita neste dispositivo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sottotitoli animati, creati sul tuo Mac. Non viene caricato nulla: il parlato è trascritto su questo dispositivo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Анимированные субтитры, созданные на Mac. Ничего не загружается: речь расшифровывается на этом устройстве."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac’inizde yapılan hareketli altyazılar. Hiçbir şey yüklenmez: konuşma bu cihazda çevrilir."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macで作る動く字幕。何もアップロードされず、音声はこのデバイス上で文字起こしされます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac에서 만드는 움직이는 자막. 아무것도 업로드되지 않으며, 음성은 이 기기에서 받아쓰기됩니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上制作会动的字幕。不会上传任何内容：语音在此设备上转写。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teks yang bergerak, dibuat di Mac Anda. Tidak ada yang diunggah: ucapan ditranskripsi di perangkat ini."
+          }
+        }
+      }
+    },
+    "On this Mac": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur ce Mac"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En este Mac"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem Mac"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na tym Macu"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neste Mac"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su questo Mac"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом Mac"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac’te"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このMac"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 Mac"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在此 Mac 上"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Di Mac ini"
+          }
+        }
+      }
+    },
+    "There is not enough room: this needs about %@ and the Mac has %@ free. Choose a smaller size or frame rate, or free up space.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il n’y a pas assez de place : il faut environ %@ et le Mac dispose de %@. Choisissez une taille ou une cadence plus petite, ou libérez de l’espace."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay espacio suficiente: se necesitan unos %@ y el Mac tiene %@ libres. Elige un tamaño o una velocidad menor, o libera espacio."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht genug Platz: Es werden etwa %@ benötigt, der Mac hat %@ frei. Wähle eine kleinere Größe oder Bildrate oder schaffe Platz."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Za mało miejsca: potrzeba około %@, a Mac ma wolne %@. Wybierz mniejszy rozmiar lub liczbę klatek albo zwolnij miejsce."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não há espaço suficiente: são necessários cerca de %@ e o Mac tem %@ livres. Escolha um tamanho ou taxa de quadros menor, ou libere espaço."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spazio insufficiente: servono circa %@ e il Mac ne ha %@ liberi. Scegli una dimensione o una frequenza minore, oppure libera spazio."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не хватает места: нужно около %@, а на Mac свободно %@. Выберите меньший размер или частоту кадров либо освободите место."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeterli yer yok: yaklaşık %@ gerekiyor, Mac’te %@ boş. Daha küçük bir boyut veya kare hızı seçin ya da yer açın."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空き容量が足りません。約%@必要ですが、空きは%@です。サイズやフレームレートを下げるか、空き容量を増やしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "공간이 부족합니다. 약 %@가 필요하지만 Mac의 여유 공간은 %@입니다. 더 작은 크기나 프레임 속도를 고르거나 공간을 확보하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空间不足：需要约 %@，Mac 仅剩 %@。请选择更小的尺寸或帧率，或释放空间。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruang tidak cukup: dibutuhkan sekitar %@ dan Mac hanya punya %@ kosong. Pilih ukuran atau kecepatan bingkai yang lebih kecil, atau kosongkan ruang."
+          }
+        }
+      }
+    },
+    "Import Video…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer une vidéo…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar vídeo…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video importieren…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importuj wideo…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar vídeo…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa video…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импортировать видео…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video İçe Aktar…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ビデオを読み込む…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비디오 가져오기…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入视频…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impor Video…"
+          }
+        }
+      }
+    },
+    "Export…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportieren…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksportuj…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспорт…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa Aktar…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "書き出す…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내보내기…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekspor…"
+          }
+        }
+      }
+    },
+    "Save…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sichern…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisz…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvar…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydet…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simpan…"
+          }
+        }
+      }
+    },
+    "Import from Photos": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer depuis Photos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar desde Fotos"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Fotos importieren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importuj ze Zdjęć"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar do Fotos"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa da Foto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импортировать из Фото"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraflar’dan İçe Aktar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真から読み込む"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사진에서 가져오기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从照片导入"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impor dari Foto"
+          }
+        }
+      }
+    },
+    "Saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistré."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardado."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesichert."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisano."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvo."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvato."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранено."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydedildi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存しました。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장했습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已保存。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tersimpan."
+          }
+        }
+      }
+    },
+    "Playback": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducción"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiedergabe"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odtwarzanie"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reprodução"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riproduzione"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Воспроизведение"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynatma"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再生"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재생"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "播放"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pemutaran"
+          }
+        }
+      }
+    },
+    "Play/Pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture/Pause"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir/Pausar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiedergabe/Pause"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odtwórz/Wstrzymaj"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproduzir/Pausar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riproduci/Pausa"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Воспроизведение/Пауза"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynat/Duraklat"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再生/一時停止"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재생/일시 정지"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "播放/暂停"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Putar/Jeda"
+          }
+        }
+      }
+    },
+    "Downloaded once (%lld MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent device.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargé une fois (%lld Mo), puis fonctionne sur cet appareil. Les gros modèles sont plus lents et plus précis, et les plus gros demandent un appareil récent."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se descarga una vez (%lld MB) y luego se ejecuta en este dispositivo. Los modelos grandes son más lentos y precisos, y los mayores necesitan un dispositivo reciente."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird einmal geladen (%lld MB) und läuft dann auf diesem Gerät. Größere Modelle sind langsamer und genauer, die größten brauchen ein aktuelles Gerät."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobierany raz (%lld MB), potem działa na tym urządzeniu. Większe modele są wolniejsze i dokładniejsze, a największe wymagają nowego urządzenia."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baixado uma vez (%lld MB), depois roda neste dispositivo. Modelos maiores são mais lentos e precisos, e os maiores exigem um dispositivo recente."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scaricato una volta (%lld MB), poi gira su questo dispositivo. I modelli più grandi sono più lenti e precisi, e i maggiori richiedono un dispositivo recente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скачивается один раз (%lld МБ), затем работает на этом устройстве. Большие модели медленнее и точнее, а самым большим нужен новое устройство."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir kez indirilir (%lld MB), sonra bu cihazda çalışır. Büyük modeller daha yavaş ve daha doğrudur; en büyükleri yeni bir cihaz gerektirir."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一度ダウンロード（%lld MB）すると、このデバイスで動作します。大きいモデルほど遅く正確で、最大のものは新しいデバイスが必要です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 다운로드(%lld MB)하면 이 기기에서 실행됩니다. 큰 모델일수록 느리지만 정확하며, 가장 큰 모델은 최신 기기이 필요합니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只需下载一次（%lld MB），之后在此设备上运行。模型越大越慢但越准确，最大的模型需要较新的设备。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diunduh sekali (%lld MB), lalu berjalan di perangkat ini. Model yang lebih besar lebih lambat dan akurat, dan yang terbesar memerlukan perangkat terbaru."
           }
         }
       }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- `make mac-upload`: sends the Mac archive to App Store Connect (TestFlight, then the Mac App Store), the same
+     app record as the iPhone's. Signed with the Mac distribution certificate and its installer certificate (both
+     with their private keys in the keychain) and the Mac App Store profile for the bundle id: see the iOS
+     README for how to make them. -->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>teamID</key>
+	<string>R32B9PWM4R</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>installerSigningCertificate</key>
+	<string>Mac Installer Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>org.leogaudin.opencaptions</key>
+		<string>OpenCaptions Mac App Store</string>
+	</dict>
+	<key>uploadSymbols</key>
+	<true/>
+</dict>
+</plist>

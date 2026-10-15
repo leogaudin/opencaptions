@@ -123,10 +123,12 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
 - **Position.** `position_x`/`position_y` are the normalized centre of the
   caption block, clamped so it stays in frame. The editor drags the block and
   hit-tests words using the geometry the engine reports (`active_*`).
-  Dragging is magnetic toward the video's centre lines: the engine's `snap_to_centre`
-  pulls an axis to 0.5 when the block's centre is within a few screen pixels of it (the
-  editor passes the preview's size and the threshold in pixels, then draws a guide line
-  while snapped), so every editor snaps the same way.
+  Dragging is magnetic: the engine's `snap_axis` pulls the block's start, middle and end to the frame's
+  near margin, its centre and its far margin (the margin is 6% of the width, the same distance down as across)
+  when one is within a few screen pixels, so a caption can sit centred or flush against either margin whatever
+  its width. The editor passes the axis's size, the pull in pixels, the block's length (`active_*`) and which
+  part of it `position` holds (the start for `align: left`, the end for `right`, else the middle), then draws a
+  guide at the line returned while snapped, so every editor snaps the same way.
 - **Edits.** Cutting captions, retiming a word edge and editing a word also live
   in the engine (`edit.rs`). A word is edited one at a time (renamed, or deleted
   by clearing it): text of several words is refused, because splitting a word
@@ -425,10 +427,14 @@ and refuses per-job provider or model choices. The SPA only reflects what the AP
 returns. An entitlement seam (`services/entitlements.py`) is where per-user
 limits would plug in.
 
-## iOS app
+## Apple apps (iPhone, iPad, Mac)
 
-`apps/ios`. Everything runs on the phone: no server and no accounts (a server is an option, below).
-It is a SwiftUI app over three things it does not reimplement.
+`apps/ios`. Everything runs on the device: no server and no accounts (a server is an option, below).
+It is a SwiftUI app over three things it does not reimplement. The iPhone, iPad and Mac apps are **one
+multiplatform target** (`supportedDestinations: [iOS, macOS]`) with one bundle id, so they are one App
+Store record, and one purchase of Pro (a StoreKit entitlement, with no account or server) covers all
+three: universal purchase. Below, "iOS" is the iPhone and iPad; the Mac is described at the end of the
+section.
 
 | Piece | iOS |
 |---|---|
@@ -511,9 +517,13 @@ disk.
   files only (`ModelHub.download`): FluidAudio's own `AsrModels.download` also compiles each model, minutes with
   nothing to show, so that is left to the first load, which says what it is doing. A metered connection asks
   before a download.
-- **Loading** a model into memory is the longest wait: the first time on a phone, Core ML prepares
-  it for that chip (minutes on an iPhone 14 for the Turbo model), and the system keeps the result,
-  so later loads take seconds. The screen says so. Loading starts early and beside the reading of
+- **Loading** a model into memory is the longest wait: the first load, Core ML builds the model's Neural Engine
+  plan for that chip (about 30 s for Parakeet Ultra's encoder on an M1 Mac with 8 GB, minutes on an iPhone 14 for
+  the Turbo model), and the system keeps the result, so later loads take seconds (the same Mac: 2.8 s). The cache
+  belongs to the build of the app and to the OS: **a new build of the app, or an update of the OS, pays it
+  again.** That is every rebuild during development, so time a load on the second launch of one build, never the
+  first, and a user pays it once after installing or updating. The screen says "Optimizing for this device and this
+  version of OpenCaptions…" (not "loading", and not "the first time", which is wrong after an update). Loading starts early and beside the reading of
   the audio: the default model as the app opens (when it is downloaded), any other as soon as it is
   chosen in the Transcribe sheet, while the language is picked. The loaded model stays for the next
   transcription and is let go on a memory warning or when the app leaves the screen.
@@ -591,6 +601,39 @@ engine and the rest are open source. A build from source is Pro; an App Store bu
 configuration the scheme runs with, so a purchase can be tried in Xcode with a test price), and the
 Pro sheet shows the store's price. A debug build picks the tier in Settings or with
 `OC_TIER=free|pro`, and shows a test price.
+
+### The Mac app
+
+The same target built for macOS 15 (Apple silicon: the engine's macOS slice is arm64). Nearly all of the app
+is shared; what differs is small and lives in a few places:
+
+- **The preview.** `PreviewCore` (`Views/PreviewCore.swift`) holds the drawing (the player's layer, the
+  engine's picture over it, the watermark's mask, the centre guides) and the live drag and pinch, and has no
+  `#if`: a host gives it a layer and its size and turns its own input into intents (`tap`, `doubleTap`, the
+  drag's and the pinch's), and every calculation is still `CaptionGestures`'s. `PreviewUIView` (touch
+  recognisers) is the iPhone's host and `PreviewNSView` (click, double click, pan and the trackpad's
+  magnification recognisers) the Mac's. A Mac layer has its origin at the bottom, so the core is told it is
+  `flipped`: it lays its layers out from the top inside a container that is turned over, each turned back so its
+  picture is upright (the masks, the live transforms and the drawing were checked to behave as on iOS).
+- **Platform shims**, all in `Platform.swift`, so the views carry almost no `#if`: keeping the machine awake
+  (`KeepAwake`: the idle timer, or `ProcessInfo.beginActivity`), the clipboard, the haptic tick (a Force Touch
+  trackpad's), the modifiers for iPhone-only chrome (navigation bar, tab bar, status bar, keyboard type), the
+  sentences that name a phone or a Mac (`ThisDevice`), and the save panel (`SaveDialog`).
+- **The window.** One window with the projects (Settings is its own window, ⌘,), a minimum size, and menus:
+  File gains Import Video… (⌘O) and Export… (⌘E), and a Playback menu has Play/Pause. A menu acts on the window
+  in front, so each screen publishes what it can do as a focused value (`AppCommands.swift`); the Space bar is a
+  key press on the editor and not a menu shortcut, since a menu shortcut would take the space typed into a text
+  field.
+- **Import** has three entries that meet in one path: the Photos picker, a file chosen in the system's panel, and
+  a file dropped on the window. A file is copied into the app's own temporary folder (a sandboxed app opens a
+  chosen file for as long as it is asked for) and then imported as a picked video is.
+- **Saving** offers Save… first (the save panel, named after the project, which also grants the sandbox the right
+  to write there), then Share and Photos.
+- **No background jobs.** `BackgroundJob` is the phone's; the Mac keeps the machine awake instead, and a save
+  carries on whether or not the window is in front.
+- **Release.** `make mac-build`, `make mac-archive` and `make mac-upload` (with the same API key as the
+  iPhone's) build, archive and send it to TestFlight for the same app record. The sandbox entitlements
+  (`Config/OpenCaptions-macOS.entitlements`) are the user-selected files, the network and Photos.
 
 ### Long jobs
 

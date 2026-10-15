@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 #if os(iOS)
     import UIKit
@@ -59,13 +60,52 @@ enum Clipboard {
     }
 }
 
+/// The sentences that name the device the app is on (a phone or a Mac), which a translator cannot be handed
+/// as one sentence with a word left out: each is written out for each.
+enum ThisDevice {
+    static var tagline: String.LocalizationValue {
+        #if os(macOS)
+            "Transcribe, restyle and **save** a video, all on this Mac."
+        #else
+            "Transcribe, restyle and **save** a video, all on this phone."
+        #endif
+    }
+
+    static var about: LocalizedStringKey {
+        #if os(macOS)
+            "Captions that move, made on your Mac. Nothing is uploaded: the speech is transcribed on this device."
+        #else
+            "Captions that move, made on your phone. Nothing is uploaded: the speech is transcribed on this device."
+        #endif
+    }
+
+    /// Where the speech is transcribed, as an option next to the remote server.
+    static var here: LocalizedStringKey {
+        #if os(macOS)
+            "On this Mac"
+        #else
+            "On this phone"
+        #endif
+    }
+
+    static func noRoom(need: String, free: String) -> LocalizedStringKey {
+        #if os(macOS)
+            "There is not enough room: this needs about \(need) and the Mac has \(free) free. Choose a smaller size or frame rate, or free up space."
+        #else
+            "There is not enough room: this needs about \(need) and the phone has \(free) free. Choose a smaller size or frame rate, or free up space."
+        #endif
+    }
+}
+
 extension View {
     /// Hides the system's navigation bar, for a screen that draws its own (the iPhone's; the Mac has none to hide).
     func hidesNavigationBar() -> some View {
         #if os(iOS)
             toolbar(.hidden, for: .navigationBar)
         #else
-            self
+            // The Mac puts a navigation stack's back button in the window's toolbar: hidden, the screen's own
+            // is the only one, and the toolbar leaves no strip of its own at the top.
+            toolbar(.hidden, for: .windowToolbar)
         #endif
     }
 
@@ -113,4 +153,36 @@ extension View {
             self
         #endif
     }
+
+    /// A Mac window cannot be made smaller than the editor needs; on the iPhone the screen is what it is.
+    func macWindowMinimum() -> some View {
+        #if os(macOS)
+            frame(minWidth: 880, minHeight: 600)
+        #else
+            self
+        #endif
+    }
 }
+
+#if os(macOS)
+    /// The Mac's way to put a file somewhere the user chooses: the system's save panel, which also gives a
+    /// sandboxed app the right to write there.
+    @MainActor
+    enum SaveDialog {
+        /// Asks where to put a copy of `file`, and copies it there. The chosen place, or nil if the user cancelled.
+        static func copy(_ file: URL, suggesting name: String) async throws -> URL? {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = name
+            panel.canCreateDirectories = true
+            if let type = UTType(filenameExtension: file.pathExtension) { panel.allowedContentTypes = [type] }
+            let chosen: URL? = await withCheckedContinuation { continuation in
+                panel.begin { response in continuation.resume(returning: response == .OK ? panel.url : nil) }
+            }
+            guard let chosen else { return nil }
+            // The panel has already asked about replacing a file that is there.
+            if FileManager.default.fileExists(atPath: chosen.path) { try FileManager.default.removeItem(at: chosen) }
+            try FileManager.default.copyItem(at: file, to: chosen)
+            return chosen
+        }
+    }
+#endif

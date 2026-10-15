@@ -16,6 +16,7 @@ struct EditorView: View {
     @State private var edit: WordEdit?
     @State private var exporter: ExportController?
     @State private var showExport = false
+    @FocusState private var keyboardFocus: Bool
 
     /// What the style sheet rests at: low enough to leave the caption (low in the frame) in view.
     private static let styleDetent = PresentationDetent.fraction(0.3)
@@ -53,6 +54,18 @@ struct EditorView: View {
         .hidesNavigationBar()
         .hidesTabBar()
         .hidesStatusBar(fullScreen)
+        // What the Mac's menus can do here, and the Space bar (when no text field is taking the typing).
+        .focusedSceneValue(\.exportVideo, { showSaveOptions = true })
+        .focusedSceneValue(\.togglePlayback, { playback.toggle() })
+        .focusable()
+        .focused($keyboardFocus)
+        .focusEffectDisabled()
+        .onKeyPress(.space) {
+            guard edit == nil else { return .ignored }
+            playback.toggle()
+            return .handled
+        }
+        .onAppear { keyboardFocus = true }
         .overlay(alignment: .top) { progress }
         .overlay { wordEditor }
         .sheet(isPresented: $showTranscribe) {
@@ -90,7 +103,7 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showExport) {
             if let exporter {
-                ExportSheet(controller: exporter).presentationBackground(Theme.surface).presentationCornerRadius(24)
+                ExportSheet(controller: exporter, suggestedName: model.project.title).presentationBackground(Theme.surface).presentationCornerRadius(24)
             }
         }
         // A failure is shown until it is read, not for a moment in a banner.
@@ -255,6 +268,7 @@ struct EditorView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+        .titlebarInset()
     }
     private var style: some View { StylePanel(model: model, presets: app.presets) }
 

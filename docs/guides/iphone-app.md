@@ -16,13 +16,28 @@ The app is being prepared for the App Store. Until it is there, you can
 [build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) with Xcode.
 :::
 
+## On the Mac
+
+The same app runs on a Mac with Apple silicon (**macOS 15** or later), in one window with the editor
+laid out wide: the video and the style controls side by side, the timeline under them. It does everything
+the phone does, with the Mac's ways of doing it:
+
+- **Import** a video by dragging it from Finder onto the window, with **File → Import Video…** (⌘O), or from Photos.
+- **Click** the video to play or pause (the Space bar does too), **double-click** a word to fix it, **drag** the
+  caption to move it (it snaps to the centre lines and the margins), and **pinch** on the trackpad to change its size.
+- **Save…** asks where to put the captioned video, named after the project (⌘E opens the save options). Share and
+  Photos are there too.
+- **Settings** is a window of its own (⌘,).
+
+One purchase of Pro covers the iPhone, the iPad and the Mac, with no account: it is the same App Store app.
+
 ## Make captions
 
 1. **Add a video** from your photos. You see it with its length and size, and can rename it, before it is imported.
 2. **Transcribe.** The sheet asks, as the web app does, for the speech model and then the language.
    The first use of a model downloads it, and a card shows the progress.
 3. **Edit.** The video takes the screen with a compact timeline under it. Tap to play or pause. The corner button takes the picture full screen, leaving a smaller timeline under it.
-   While paused, **drag** the caption to move it (it snaps to the centre lines, with a small haptic tick),
+   While paused, **drag** the caption to move it (it snaps to the centre lines and the margins, with a small haptic tick),
    **pinch** to change the size, and **double-tap** a word to fix it. Drag the edges of a caption on the
    timeline to retime it, pinch the timeline to zoom, and scrub by dragging it.
 4. **Style.** Open the style controls: the same eighteen looks and the same settings as the web.
@@ -37,12 +52,20 @@ Undo and redo are in the toolbar.
 | Model | Download | Notes |
 |---|---|---|
 | **Whisper Small** | 217 MB | OpenAI's smaller, less precise model. |
-| **Parakeet Redux** | 220 MB | NVIDIA's smaller, less precise model, for 25 European languages. It does worse in noise. The first time on a phone it is prepared for the Neural Engine, which takes several minutes. |
+| **Parakeet Redux** | 220 MB | NVIDIA's smaller, less precise model, for 25 European languages. It does worse in noise. The first time it is optimized for your device, which takes several minutes (see below). |
 | **Whisper Large v3** | 627 MB | OpenAI's bigger model, the best all-round accuracy, for about 100 languages. |
 | **Parakeet Ultra** | 632 MB | The default: NVIDIA's bigger model, fast, for 25 European languages. |
 | **Apple Speech** | Built into iOS 26 and later | Needs nothing to download. |
 
-Models are downloaded once and run on the phone. Each model's row shows a few flags and how many more
+Models are downloaded once and run on the phone.
+
+**The first transcription is slower.** A model must be optimized for your device's Neural Engine before it runs
+fast, and the screen says "Optimizing for this device and this version of OpenCaptions…". It takes from about half
+a minute (Parakeet Ultra on an M1 Mac) to several minutes (the biggest models on an older iPhone). The system keeps
+the result, so every later load takes a few seconds. It is done again after an update of OpenCaptions or of
+iOS or macOS, because the result belongs to that exact version of the app and of the system.
+
+ Each model's row shows a few flags and how many more
 languages it covers. **Settings** lists them with their size on disk, and you can delete the ones you do not
 use. The language list follows the model, as it does on the web, and the model you chose last is the one
 offered next time.

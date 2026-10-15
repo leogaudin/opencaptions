@@ -10,8 +10,8 @@ struct ProgressBar: View {
         GeometryReader { geometry in
             let filled = max(height, geometry.size.width * min(max(value, 0), 1))
             ZStack(alignment: .leading) {
-                Capsule().fill(Theme.raised)
-                Capsule().strokeBorder(Theme.textPrimary.opacity(0.28), lineWidth: 1)
+                // A quiet track in the text colour, so it shows on any surface without an edge of its own.
+                Capsule().fill(Theme.textPrimary.opacity(0.14))
                 Capsule().fill(Theme.accent)
                     .frame(width: value > 0 ? filled : 0)
                     .animation(.easeOut(duration: 0.25), value: value)

@@ -16,15 +16,24 @@ struct RootView: View {
     @State private var shown = false
 
     var body: some View {
-        TabView(selection: $page) {
-            Tab("Projects", systemImage: "rectangle.stack.fill", value: Page.projects) { ProjectsView() }
-            Tab("Settings", systemImage: "gearshape.fill", value: Page.settings) { SettingsView() }
-        }
-        .tint(Theme.textPrimary)
-        // The content fades into the page behind the bar (`fadesIntoTabBar`), so the bar needs no
-        // edge of its own.
-        .tabBarBackgroundHidden()
-        .opacity(shown ? 1 : 0)
-        .onAppear { withAnimation(.easeOut(duration: 0.35)) { shown = true } }
+        screens
+            .opacity(shown ? 1 : 0)
+            .onAppear { withAnimation(.easeOut(duration: 0.35)) { shown = true } }
     }
+
+    #if os(macOS)
+        /// The Mac's window shows the projects; Settings is its own window (⌘,).
+        private var screens: some View { ProjectsView() }
+    #else
+        private var screens: some View {
+            TabView(selection: $page) {
+                Tab("Projects", systemImage: "rectangle.stack.fill", value: Page.projects) { ProjectsView() }
+                Tab("Settings", systemImage: "gearshape.fill", value: Page.settings) { SettingsView() }
+            }
+            .tint(Theme.textPrimary)
+            // The content fades into the page behind the bar (`fadesIntoTabBar`), so the bar needs no
+            // edge of its own.
+            .tabBarBackgroundHidden()
+        }
+    #endif
 }

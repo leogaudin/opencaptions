@@ -126,7 +126,7 @@ struct SaveOptionsSheet: View {
         VStack(spacing: 6) {
             estimateRow
             if !fits, let free = freeBytes {
-                Text("There is not enough room: this needs about \(Self.size(options.estimatedBytes(for: project) ?? 0)) and the phone has \(Self.size(free)) free. Choose a smaller size or frame rate, or free up space.")
+                Text(ThisDevice.noRoom(need: Self.size(options.estimatedBytes(for: project) ?? 0), free: Self.size(free)))
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

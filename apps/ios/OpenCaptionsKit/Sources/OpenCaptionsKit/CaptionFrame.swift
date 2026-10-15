@@ -46,10 +46,12 @@ extension CaptionFrame {
     public static let hdrExportWhiteScale = 5.0
 
     /// The overlay for an HDR video's preview: half-float, in extended linear sRGB, with white at
-    /// `hdrWhiteScale` (a layer showing it must set `wantsExtendedDynamicRangeContent`).
-    public func hdrCGImage(using context: CIContext) -> CGImage? {
+    /// `whiteScale`, which is `hdrWhiteScale` unless the screen has less room above white than that (a layer
+    /// showing it must set `wantsExtendedDynamicRangeContent`). A channel that goes past what the screen
+    /// can show is cut off, which turns a colour that was bright into one that is only saturated.
+    public func hdrCGImage(using context: CIContext, whiteScale: Double = hdrWhiteScale) -> CGImage? {
         context.createCGImage(
-            ciImage.scaled(by: Self.hdrWhiteScale), from: CGRect(x: 0, y: 0, width: width, height: height),
+            ciImage.scaled(by: whiteScale), from: CGRect(x: 0, y: 0, width: width, height: height),
             format: .RGBAh, colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB))
     }
 }

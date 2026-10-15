@@ -167,6 +167,20 @@ ios-upload: ios-archive ## Archive and send it to App Store Connect (TestFlight)
 	@cd apps/ios && $(IOS_EXPORT_ENV) xcodebuild -exportArchive -archivePath Build/OpenCaptions.xcarchive \
 	 -exportOptionsPlist $(IOS_EXPORT_OPTIONS) -exportPath Build/Export $(IOS_AUTH)
 
+# The Mac app is the same target and the same App Store record as the iPhone's: one purchase of Pro covers both.
+MAC_EXPORT_OPTIONS ?= Config/ExportOptions-macOS.plist
+
+mac-archive: ios-project ## Archive the Mac App Store build; IOS_BUILD=<number> to set the build number
+	$(IOS_ONLY)
+	@cd apps/ios && rm -rf Build/OpenCaptions-mac.xcarchive && xcodebuild archive -project OpenCaptions.xcodeproj \
+	 -scheme OpenCaptions -configuration AppStore -destination 'generic/platform=macOS' \
+	 -archivePath Build/OpenCaptions-mac.xcarchive -allowProvisioningUpdates \
+	 CURRENT_PROJECT_VERSION=$(IOS_BUILD) -quiet
+
+mac-upload: mac-archive ## Archive the Mac app and send it to App Store Connect (TestFlight); same API key as ios-upload
+	@cd apps/ios && $(IOS_EXPORT_ENV) xcodebuild -exportArchive -archivePath Build/OpenCaptions-mac.xcarchive \
+	 -exportOptionsPlist $(MAC_EXPORT_OPTIONS) -exportPath Build/Export-mac $(IOS_AUTH)
+
 # --- Operations -----------------------------------------------------------
 
 migration:           ## New migration. Usage: make migration MSG="add foo"

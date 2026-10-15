@@ -50,6 +50,7 @@ workflow, `.github/workflows/ios.yml`); nobody without a Mac is blocked:
 make ios-engine    # the engine as an xcframework (needs Rust 1.85+ and the Apple targets)
 make ios-test      # OpenCaptionsKit's tests, on the Mac
 make ios-build     # the app for the simulator
+make mac-build     # the same app, for the Mac
 ```
 
 Two things that are easy to get wrong:
@@ -116,7 +117,7 @@ images, which is what an end user does.
 | `apps/api/` | FastAPI + Celery workers. Pydantic models, Alembic migrations, services, tasks. |
 | `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. A second entry (`demo.html`, `src/demo/`) is the static public demo site (see `docs/project/architecture.md`). |
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
-| `apps/ios/` | The iPhone/iPad app: SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
+| `apps/ios/` | The iPhone/iPad/Mac app (one multiplatform target): SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
 | `scripts/` | `ci-local.sh` (acceptance gate), `check-ci-parity.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
 | `docs/` | The documentation, plain Markdown (guides, self-hosting, reference), built into the site in `apps/docs/`. `docs/project/architecture.md` is the design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |

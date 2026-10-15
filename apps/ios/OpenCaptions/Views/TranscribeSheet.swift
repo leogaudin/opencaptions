@@ -358,7 +358,7 @@ struct TranscribeSheet: View {
                 ? "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen."
                 : downloaded
                 ? "Downloaded. Transcription runs on this device."
-                : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent iPhone.")
+                : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent device.")
                 .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
         }
     }
