@@ -33,10 +33,17 @@ extension Color {
 
     /// One colour for light and one for dark, following the interface style it is drawn in.
     init(light: String, dark: String) {
-        self = Color(
-            uiColor: UIColor { traits in
-                UIColor(ColorHex.color(traits.userInterfaceStyle == .dark ? dark : light))
-            })
+        #if os(iOS)
+            self = Color(
+                uiColor: UIColor { traits in
+                    UIColor(ColorHex.color(traits.userInterfaceStyle == .dark ? dark : light))
+                })
+        #else
+            self = Color(
+                nsColor: NSColor(name: nil) { appearance in
+                    NSColor(ColorHex.color(appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light))
+                })
+        #endif
     }
 }
 

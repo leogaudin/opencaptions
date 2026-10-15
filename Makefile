@@ -131,6 +131,12 @@ ios-build: ios-project ## Build the iOS app for the simulator
 	 -destination 'generic/platform=iOS Simulator' -derivedDataPath Build/DerivedData \
 	 CODE_SIGNING_ALLOWED=NO -quiet
 
+mac-build: ios-project ## Build the Mac app (the same target, for macOS)
+	$(IOS_ONLY)
+	@cd apps/ios && xcodebuild build -project OpenCaptions.xcodeproj -scheme OpenCaptions \
+	 -destination 'generic/platform=macOS' -derivedDataPath Build/DerivedData \
+	 CODE_SIGNING_ALLOWED=NO -quiet
+
 # The build number must rise with every upload to App Store Connect: the date and time do.
 IOS_BUILD ?= $(shell date +%y%m%d%H%M)
 # What the export does (see Config/ExportOptions.plist); a different plist can sign with another certificate or only export.

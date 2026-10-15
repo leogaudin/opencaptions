@@ -42,7 +42,7 @@ struct TranscribeSheet: View {
         NavigationStack {
             firstStep
                 .navigationDestination(isPresented: $showLanguages) { secondStep }
-                .toolbar(.hidden, for: .navigationBar)
+                .hidesNavigationBar()
         }
         .background(Theme.background)
         .tint(Theme.accent)
@@ -168,7 +168,7 @@ struct TranscribeSheet: View {
         }
         .background(Theme.background)
         .navigationBarBackButtonHidden()
-        .toolbar(.hidden, for: .navigationBar)
+        .hidesNavigationBar()
         .interactiveDismissDisabled(busy)
     }
 
@@ -196,7 +196,7 @@ struct TranscribeSheet: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.textSecondary)
             TextField("Search languages", text: $search)
-                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .noAutocapitalization().autocorrectionDisabled()
             if !search.isEmpty {
                 Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
                     .foregroundStyle(Theme.textSecondary).accessibilityLabel("Clear")
@@ -450,8 +450,8 @@ struct TranscribeSheet: View {
                 askAboutData = true
                 return
             }
-            UIApplication.shared.isIdleTimerDisabled = true
-            defer { UIApplication.shared.isIdleTimerDisabled = false }
+            KeepAwake.set(true)
+            defer { KeepAwake.set(false) }
             downloading = 0
             let started = Date()
             Diagnostics.log("model download start \(modelID)")

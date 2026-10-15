@@ -1,3 +1,4 @@
+#if os(iOS)
 import UIKit
 
 /// Hiding the system navigation bar (the screens draw their own) also switches off the
@@ -12,3 +13,4 @@ extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
         viewControllers.count > 1
     }
 }
+#endif

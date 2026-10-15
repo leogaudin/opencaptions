@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "OpenCaptionsKit",
     defaultLocalization: "en",
-    platforms: [.iOS(.v18), .macOS(.v14)],
+    platforms: [.iOS(.v18), .macOS(.v15)],
     products: [
         .library(name: "OpenCaptionsKit", targets: ["OpenCaptionsKit"]),
         .library(name: "OpenCaptionsTranscription", targets: ["OpenCaptionsTranscription"]),

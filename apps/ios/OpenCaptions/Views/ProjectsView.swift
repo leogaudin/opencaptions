@@ -82,7 +82,7 @@ struct ProjectsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .fadesIntoTabBar()
-        .toolbar(.hidden, for: .navigationBar)
+        .hidesNavigationBar()
         .overlay { if importing != nil { importingCard } }
         .navigationDestination(for: UUID.self) { id in
             if let project = app.projects.first(where: { $0.id == id }) {

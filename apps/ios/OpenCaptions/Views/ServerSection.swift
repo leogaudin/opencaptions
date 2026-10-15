@@ -118,7 +118,7 @@ struct ConnectServerSheet: View {
                 field("Address, e.g. 192.168.1.20:5173", text: $address, focus: .address)
                 SecureField("Key (oc_…)", text: $key)
                     .focused($focus, equals: .key)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .noAutocapitalization().autocorrectionDisabled()
                     .font(.system(size: 16, weight: .medium))
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
@@ -138,8 +138,8 @@ struct ConnectServerSheet: View {
     private func field(_ placeholder: LocalizedStringKey, text: Binding<String>, focus target: Field) -> some View {
         TextField(placeholder, text: text)
             .focused($focus, equals: target)
-            .keyboardType(.URL)
-            .textInputAutocapitalization(.never).autocorrectionDisabled()
+            .urlKeyboard()
+            .noAutocapitalization().autocorrectionDisabled()
             .font(.system(size: 16, weight: .medium))
             .padding(.horizontal, 14).padding(.vertical, 12)
             .background(Theme.raised, in: .rect(cornerRadius: 12))
@@ -147,7 +147,7 @@ struct ConnectServerSheet: View {
 
     private func paste() {
         problem = nil
-        guard let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let text = Clipboard.string?.trimmingCharacters(in: .whitespacesAndNewlines),
             let link = URL(string: text), let connection = ServerConnection.parse(link: link)
         else {
             problem = String(localized: "The clipboard does not hold an OpenCaptions link.")

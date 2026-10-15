@@ -297,8 +297,8 @@ struct SettingsView: View {
     private func startDownload(_ model: SpeechModel) {
         downloading[model.id] = 0
         Task {
-            UIApplication.shared.isIdleTimerDisabled = true
-            defer { UIApplication.shared.isIdleTimerDisabled = false }
+            KeepAwake.set(true)
+            defer { KeepAwake.set(false) }
             do {
                 try await app.transcriber.download(model.id) { fraction in
                     Task { @MainActor in

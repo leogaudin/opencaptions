@@ -2,6 +2,8 @@ import AVFoundation
 import CoreImage
 import OpenCaptionsKit
 import SwiftUI
+
+#if os(iOS)
 import UIKit
 
 /// The preview: the source video with the caption engine's frame drawn over it, on
@@ -172,3 +174,22 @@ final class PreviewUIView: UIView, UIGestureRecognizerDelegate {
         }
     }
 }
+
+#else
+
+/// Until the Mac's host of the preview: the picture is drawn by the same core, but nothing yet hosts it.
+struct PreviewView: View {
+    let playback: Playback
+    let project: Project
+    let fonts: FontCache
+    let ratio: Double
+    var suspended = false
+    var watermark: String?
+    let onTogglePlay: () -> Void
+    let onAdjust: (_ position: (x: Double, y: Double)?, _ fontSize: Int?) -> Void
+    let onEditWord: (_ index: Int) -> Void
+
+    var body: some View { Color.black }
+}
+
+#endif

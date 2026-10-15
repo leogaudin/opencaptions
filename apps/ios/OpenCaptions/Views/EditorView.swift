@@ -50,9 +50,9 @@ struct EditorView: View {
             .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
         .background(Theme.background.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .statusBarHidden(fullScreen)
+        .hidesNavigationBar()
+        .hidesTabBar()
+        .hidesStatusBar(fullScreen)
         .overlay(alignment: .top) { progress }
         .overlay { wordEditor }
         .sheet(isPresented: $showTranscribe) {
@@ -132,15 +132,15 @@ struct EditorView: View {
         }
         // A transcription needs the app in the foreground: the speech models do not run in the background.
         .onChange(of: model.isTranscribing) { _, busy in
-            UIApplication.shared.isIdleTimerDisabled = busy
+            KeepAwake.set(busy)
         }
         .onChange(of: exporter?.isRunning) { _, busy in
-            UIApplication.shared.isIdleTimerDisabled = busy == true
+            KeepAwake.set(busy == true)
         }
         .onDisappear {
             playback.pause()
             // A transcription carries on after the user leaves, and still needs the screen on.
-            UIApplication.shared.isIdleTimerDisabled = model.isTranscribing
+            KeepAwake.set(model.isTranscribing)
             Task { await model.flush() }
         }
     }
@@ -325,7 +325,7 @@ private struct WordEditCard: View {
                     .focused($focused)
                     .submitLabel(.done)
                     .onSubmit(save)
-                    .textInputAutocapitalization(.never)
+                    .noAutocapitalization()
                     .autocorrectionDisabled()
                     .font(.system(size: 22, weight: .bold))
                     .padding(.horizontal, 14).padding(.vertical, 12)

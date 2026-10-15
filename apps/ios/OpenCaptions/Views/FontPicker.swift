@@ -114,7 +114,7 @@ struct FontPickerSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Theme.textSecondary)
                 TextField("Search fonts", text: $query)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .noAutocapitalization().autocorrectionDisabled()
             }
             .padding(.horizontal, 14).padding(.vertical, 11)
             .background(Theme.raised, in: .rect(cornerRadius: 12))

@@ -23,7 +23,7 @@ struct RootView: View {
         .tint(Theme.textPrimary)
         // The content fades into the page behind the bar (`fadesIntoTabBar`), so the bar needs no
         // edge of its own.
-        .toolbarBackground(.hidden, for: .tabBar)
+        .tabBarBackgroundHidden()
         .opacity(shown ? 1 : 0)
         .onAppear { withAnimation(.easeOut(duration: 0.35)) { shown = true } }
     }
