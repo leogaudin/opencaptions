@@ -1,15 +1,36 @@
 use super::*;
 
+/// How letters are set apart and drawn wider or narrower than the face has them: the two dials that
+/// reshape a face. `NONE` leaves it exactly as designed, to the last bit.
+#[derive(Clone, Copy)]
+pub(super) struct Tracking {
+    /// Extra space after each letter but the last, as a share of the size.
+    pub spacing: f32,
+    /// How much wider the letters are drawn (and their advances with them).
+    pub stretch: f32,
+}
+
+impl Tracking {
+    pub(super) const NONE: Self = Self {
+        spacing: 0.0,
+        stretch: 1.0,
+    };
+}
+
 pub(super) struct Sink {
     pb: PathBuilder,
     scale: f32,
+    stretch: f32,
     dx: f32,
     dy: f32,
 }
 
 impl Sink {
     pub(super) fn at(&self, x: f32, y: f32) -> (f32, f32) {
-        (self.dx + x * self.scale, self.dy - y * self.scale)
+        (
+            self.dx + x * self.scale * self.stretch,
+            self.dy - y * self.scale,
+        )
     }
 }
 
@@ -37,6 +58,16 @@ impl OutlineBuilder for Sink {
 
 /// Glyph outlines for `text` with the pen at the origin on the baseline, and the advance.
 pub(super) fn shape(face: &Face, text: &str, size: f32) -> (Option<Path>, f32) {
+    shape_tracked(face, text, size, Tracking::NONE)
+}
+
+/// `shape`, with the letters set apart and stretched as `tracking` says.
+pub(super) fn shape_tracked(
+    face: &Face,
+    text: &str,
+    size: f32,
+    tracking: Tracking,
+) -> (Option<Path>, f32) {
     let mut buf = UnicodeBuffer::new();
     buf.push_str(text);
     // Direction, script and language from the text itself: Arabic and Hebrew run right to left,
@@ -47,17 +78,28 @@ pub(super) fn shape(face: &Face, text: &str, size: f32) -> (Option<Path>, f32) {
     let mut sink = Sink {
         pb: PathBuilder::new(),
         scale,
+        stretch: tracking.stretch,
         dx: 0.0,
         dy: 0.0,
     };
+    let gap = tracking.spacing * size;
     let mut pen = 0i32;
-    for (info, pos) in glyphs.glyph_infos().iter().zip(glyphs.glyph_positions()) {
-        sink.dx = (pen + pos.x_offset) as f32 * scale;
+    for (n, (info, pos)) in glyphs
+        .glyph_infos()
+        .iter()
+        .zip(glyphs.glyph_positions())
+        .enumerate()
+    {
+        sink.dx = (pen + pos.x_offset) as f32 * scale * tracking.stretch + gap * n as f32;
         sink.dy = -(pos.y_offset as f32) * scale;
         face.outline_glyph(GlyphId(info.glyph_id as u16), &mut sink);
         pen += pos.x_advance;
     }
-    (sink.pb.finish(), pen as f32 * scale)
+    let between = glyphs.len().saturating_sub(1) as f32;
+    (
+        sink.pb.finish(),
+        pen as f32 * scale * tracking.stretch + gap * between,
+    )
 }
 
 /// Whether `c` is in a script whose letters join or reorder, so that a word of it cannot be taken
@@ -71,9 +113,12 @@ pub(super) fn is_connected(c: char) -> bool {
 /// One outline for each grapheme cluster of `text`, in reading order, with the pen at the origin
 /// on the baseline like `shape`. A word of a connected script is a single cluster: it moves as a
 /// piece and is never broken apart.
-pub(super) fn cluster_paths(face: &Face, text: &str, size: f32) -> Vec<Path> {
+pub(super) fn cluster_paths(face: &Face, text: &str, size: f32, tracking: Tracking) -> Vec<Path> {
     if text.chars().any(is_connected) {
-        return shape(face, text, size).0.into_iter().collect();
+        return shape_tracked(face, text, size, tracking)
+            .0
+            .into_iter()
+            .collect();
     }
     let mut buf = UnicodeBuffer::new();
     buf.push_str(text);
@@ -81,8 +126,14 @@ pub(super) fn cluster_paths(face: &Face, text: &str, size: f32) -> Vec<Path> {
     let glyphs = rustybuzz::shape(face, &[], buf);
     let scale = size / face.units_per_em() as f32;
     let mut groups: Vec<(u32, PathBuilder)> = vec![];
+    let gap = tracking.spacing * size;
     let mut pen = 0i32;
-    for (info, pos) in glyphs.glyph_infos().iter().zip(glyphs.glyph_positions()) {
+    for (n, (info, pos)) in glyphs
+        .glyph_infos()
+        .iter()
+        .zip(glyphs.glyph_positions())
+        .enumerate()
+    {
         let at = match groups.iter().position(|(c, _)| *c == info.cluster) {
             Some(at) => at,
             None => {
@@ -93,7 +144,8 @@ pub(super) fn cluster_paths(face: &Face, text: &str, size: f32) -> Vec<Path> {
         let mut sink = Sink {
             pb: std::mem::replace(&mut groups[at].1, PathBuilder::new()),
             scale,
-            dx: (pen + pos.x_offset) as f32 * scale,
+            stretch: tracking.stretch,
+            dx: (pen + pos.x_offset) as f32 * scale * tracking.stretch + gap * n as f32,
             dy: -(pos.y_offset as f32) * scale,
         };
         face.outline_glyph(GlyphId(info.glyph_id as u16), &mut sink);

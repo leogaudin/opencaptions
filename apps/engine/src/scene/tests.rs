@@ -720,8 +720,9 @@ fn a_word_of_a_connected_script_is_one_piece() {
     ] {
         b.add(font).unwrap();
     }
-    let pieces =
-        |family: &str, text: &str| cluster_paths(b.face(b.primary(family)), text, 64.0).len();
+    let pieces = |family: &str, text: &str| {
+        cluster_paths(b.face(b.primary(family)), text, 64.0, Tracking::NONE).len()
+    };
     assert_eq!(pieces("Inter", "HELLO"), 5);
     assert_eq!(pieces("Noto Sans Arabic", "مرحبا"), 1);
     assert_eq!(pieces("Noto Sans Devanagari", "नमस्ते"), 1);
@@ -819,7 +820,7 @@ const POSTER: &[(&str, f32, f32)] = &[
 
 fn stacked(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value) -> Scene {
     let mut patch = patch;
-    patch["layout"] = "stack".into();
+    patch["align"] = "justify".into();
     patch["words_per_line"] = 5.into();
     Scene::new(&book(), styled(animation, words, patch))
 }
@@ -981,6 +982,96 @@ fn position_places_and_clamps_the_block() {
     assert!(
         (cx + cw / 2.0 - 540.0).abs() < 1.0 && (cy + ch / 2.0 - 960.0).abs() < 1.0,
         "centred"
+    );
+}
+
+/// The first word's letters, as (width, font size) in the scene's pixels.
+fn first_word_ink(patch: serde_json::Value) -> (f32, f32) {
+    let scene = Scene::new(&book(), styled("none", WORDS, patch));
+    (scene.lines[0].words[0].ink_w, scene.style.font_size)
+}
+
+#[test]
+fn stretch_draws_the_letters_wider_and_spacing_opens_them() {
+    let (plain, _) = first_word_ink(serde_json::json!({}));
+    let (narrow, _) = first_word_ink(serde_json::json!({ "stretch": 0.5 }));
+    assert!(
+        (narrow / plain - 0.5).abs() < 1e-3,
+        "half the width at half the stretch: {narrow} of {plain}"
+    );
+    let (open, size) = first_word_ink(serde_json::json!({ "letter_spacing": 0.1 }));
+    let letters = WORDS[0].0.chars().count() as f32;
+    assert!(
+        (open - plain - 0.1 * size * (letters - 1.0)).abs() < 0.01,
+        "a tenth of the size after every letter but the last: {open} from {plain}"
+    );
+    let (tight, _) = first_word_ink(serde_json::json!({ "letter_spacing": -0.05 }));
+    assert!(tight < plain, "negative spacing tightens");
+}
+
+#[test]
+fn left_and_right_hold_the_block_by_their_edge_whatever_the_words() {
+    // Lines of different widths: the edge the rows are aligned to is where `position_x` says.
+    for (align, x) in [("left", 0.1_f32), ("right", 0.9)] {
+        let scene = Scene::new(
+            &book(),
+            styled(
+                "none",
+                WORDS,
+                serde_json::json!({ "align": align, "position_x": x, "words_per_line": 2 }),
+            ),
+        );
+        assert!(scene.lines.len() > 1);
+        for line in &scene.lines {
+            let edge = if align == "left" {
+                line.anchor.left()
+            } else {
+                line.anchor.right()
+            };
+            assert!(
+                (edge - x * 1080.0).abs() < 1.0,
+                "{align}: a line's edge is at {edge}"
+            );
+        }
+    }
+}
+
+#[test]
+fn rows_start_at_the_left_edge_and_end_at_the_right_one() {
+    let rows = |align: &str| {
+        let scene = Scene::new(
+            &book(),
+            styled(
+                "none",
+                FIGURES,
+                serde_json::json!({
+                    "align": align, "words_per_line": 4, "font_size": 190, "position_x": 0.5
+                }),
+            ),
+        );
+        let line = &scene.lines[0];
+        let mut firsts: Vec<(f32, f32)> = vec![];
+        let mut top = f32::MIN;
+        for w in &line.words {
+            if w.slot.top() > top + 1.0 {
+                top = w.slot.top();
+                firsts.push((w.slot.left(), w.slot.right()));
+            } else if let Some(last) = firsts.last_mut() {
+                last.1 = w.slot.right();
+            }
+        }
+        (line.anchor, firsts)
+    };
+    let (block, left) = rows("left");
+    assert!(left.len() > 1, "the words need more than one row");
+    assert!(
+        left.iter().all(|r| (r.0 - block.left()).abs() < 1.0),
+        "flush left"
+    );
+    let (block, right) = rows("right");
+    assert!(
+        right.iter().all(|r| (r.1 - block.right()).abs() < 1.0),
+        "flush right"
     );
 }
 
@@ -1481,7 +1572,7 @@ fn golden_cases() -> Vec<(String, SceneInput)> {
         ));
     }
     let poster = serde_json::json!({
-        "layout": "stack", "words_per_line": 4,
+        "align": "justify", "words_per_line": 4,
         "stroke_width": 4, "stroke_color": "#000000"
     });
     for anim in ["word_pop", "letter_rise", "highlight_box"] {

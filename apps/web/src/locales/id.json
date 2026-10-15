@@ -356,10 +356,15 @@
   "Extrusion shading": "Bayangan ekstrusi",
   "Rise": "Naik",
   "Slam": "Hantam",
-  "Layout": "Tata letak",
-  "Line": "Baris",
-  "Stack": "Tumpuk",
   "Extrusion": "Ekstrusi",
   "Extrusion back color": "Warna belakang ekstrusi",
-  "Drift": "Melayang"
+  "Drift": "Melayang",
+  "Alignment": "Perataan",
+  "Left": "Kiri",
+  "Center": "Tengah",
+  "Right": "Kanan",
+  "Justify": "Rata kanan-kiri",
+  "Letter spacing": "Jarak huruf",
+  "Stretch": "Peregangan",
+  "Square": "Persegi"
 }

@@ -356,10 +356,15 @@
   "Extrusion shading": "Hacim gölgelemesi",
   "Rise": "Yükselme",
   "Slam": "Çarpma",
-  "Layout": "Yerleşim",
-  "Line": "Satır",
-  "Stack": "Yığın",
   "Extrusion": "Ekstrüzyon",
   "Extrusion back color": "Ekstrüzyon arka rengi",
-  "Drift": "Süzülme"
+  "Drift": "Süzülme",
+  "Alignment": "Hizalama",
+  "Left": "Sol",
+  "Center": "Orta",
+  "Right": "Sağ",
+  "Justify": "İki yana yaslı",
+  "Letter spacing": "Harf aralığı",
+  "Stretch": "Genişlik",
+  "Square": "Kare"
 }

@@ -356,10 +356,15 @@
   "Extrusion shading": "立体阴影",
   "Rise": "上升",
   "Slam": "重击",
-  "Layout": "版式",
-  "Line": "单行",
-  "Stack": "堆叠",
   "Extrusion": "立体厚度",
   "Extrusion back color": "立体厚度背面颜色",
-  "Drift": "漂浮"
+  "Drift": "漂浮",
+  "Alignment": "对齐",
+  "Left": "左",
+  "Center": "居中",
+  "Right": "右",
+  "Justify": "两端对齐",
+  "Letter spacing": "字间距",
+  "Stretch": "拉伸",
+  "Square": "方形"
 }

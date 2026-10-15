@@ -89,6 +89,7 @@ extension EngineSuites {
             #expect(families.contains("Inter"))
             #expect(families.contains("Poppins"), "the default preset's font ships with the engine")
             #expect(families.contains("Montserrat"), "the Bold preset's font ships with the engine")
+            #expect(families.contains("Nimbus Roman"), "the Title Card preset's font ships with the engine")
             #expect(try await engine.registerBundledFonts(in: Repo.fonts) == families)
             #expect(await engine.hasFont("Inter"))
             #expect(await engine.hasFont("No Such Family") == false)

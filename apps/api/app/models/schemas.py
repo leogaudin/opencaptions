@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # Transcript primitives
 
@@ -146,7 +146,7 @@ class StyleConfig(BaseModel):
     highlight_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
         default=["#7C3AED"], min_length=1, max_length=4
     )
-    background: Literal["none", "solid", "pill"] = "none"
+    background: Literal["none", "solid", "pill", "square"] = "none"
     background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
     background_opacity: float = Field(default=0.0, ge=0.0, le=1.0)
     # Normalised centre of the caption block, 0..1 across the frame. Default is
@@ -201,8 +201,26 @@ class StyleConfig(BaseModel):
     extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
     # The colour the back of an extrusion fades to from the shadow colour; transparent for none.
     extrude_back: str = Field(default="#00000000", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
-    # How the words are set in rows: filling lines, or a stack of short rows each scaled to one width.
-    layout: Literal["line", "stack"] = "line"
+    # How the rows sit in the block, and what position_x anchors: the block's centre, or for left and
+    # right its edge. Justify is a poster: short rows, each scaled to the widest one's width.
+    align: Literal["center", "left", "right", "justify"] = "center"
+    # Extra space after each letter, as a fraction of the font size (negative tightens).
+    letter_spacing: float = Field(default=0.0, ge=-0.2, le=1.0)
+    # How much wider (or narrower, below 1) the letters are drawn than the face has them.
+    stretch: float = Field(default=1.0, ge=0.5, le=2.0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_layout(cls, data: Any) -> Any:
+        """Styles saved before `align` have `layout`, whose `stack` is now `justify`."""
+        if isinstance(data, dict) and "layout" in data:
+            data = dict(data)
+            layout = data.pop("layout")
+            if layout not in ("line", "stack"):
+                raise ValueError("layout must be line or stack")
+            if layout == "stack":
+                data.setdefault("align", "justify")
+        return data
 
 
 # Project + Job

@@ -22,7 +22,7 @@ import {
 } from "@/components/StyleFields";
 import { msg, useT } from "@/lib/i18n";
 import { useLookPreviews } from "@/lib/presetPreviews";
-import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
+import { BUILTIN_PRESETS, positionOnAlign, presetLook, presetMatches } from "@/lib/presets";
 import {
   ANIMATION_NAMES,
   ANIMATIONS,
@@ -84,7 +84,10 @@ export function StyleControls() {
       </div>
 
       {tab === "presets" && (
-        <PresetStrip activeId={activePresetId} onPick={(config) => setStyle(presetLook(config))} />
+        <PresetStrip
+          activeId={activePresetId}
+          onPick={(config) => setStyle(presetLook(config, style))}
+        />
       )}
       {tab === "text" && (
         <TextPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />
@@ -109,10 +112,12 @@ const SLANT_NAMES: Record<(typeof SLANTS)[number], string> = {
   italic: msg("Italic"),
 };
 
-const LAYOUTS = ["line", "stack"] as const;
-const LAYOUT_NAMES: Record<(typeof LAYOUTS)[number], string> = {
-  line: msg("Line"),
-  stack: msg("Stack"),
+const ALIGNS = ["left", "center", "right", "justify"] as const;
+const ALIGN_NAMES: Record<(typeof ALIGNS)[number], string> = {
+  left: msg("Left"),
+  center: msg("Center"),
+  right: msg("Right"),
+  justify: msg("Justify"),
 };
 const FILLS = ["solid", "gradient"] as const;
 const FILL_NAMES: Record<(typeof FILLS)[number], string> = {
@@ -173,14 +178,34 @@ function TextPanel({
           onChange={(slant) => setStyle({ italic: slant === "italic" })}
         />
       </Field>
-      <Field label={t("Layout")}>
+      <Field label={t("Alignment")}>
         <Segmented
-          options={LAYOUTS}
-          value={style.layout}
-          label={(l) => t(LAYOUT_NAMES[l])}
-          onChange={(layout) => setStyle({ layout })}
+          options={ALIGNS}
+          value={style.align}
+          label={(a) => t(ALIGN_NAMES[a])}
+          onChange={(align) =>
+            setStyle({ align, position_x: positionOnAlign(style.align, align, style.position_x) })
+          }
         />
       </Field>
+      <SliderField
+        label={t("Letter spacing")}
+        value={style.letter_spacing}
+        min={-0.2}
+        max={1}
+        step={0.01}
+        decimals={2}
+        onChange={(letter_spacing) => throttled({ letter_spacing })}
+      />
+      <SliderField
+        label={t("Stretch")}
+        value={style.stretch}
+        min={0.5}
+        max={2}
+        step={0.01}
+        decimals={2}
+        onChange={(stretch) => throttled({ stretch })}
+      />
       <ColorField
         label={t("Text color")}
         value={style.text_color}

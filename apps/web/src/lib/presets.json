@@ -28,7 +28,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -60,7 +62,9 @@
       "fill_colors": [],
       "extrude_shade": 0.5,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -92,7 +96,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -124,7 +130,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -156,7 +164,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -189,7 +199,9 @@
       "fill_colors": [],
       "extrude_shade": 0.6,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -222,7 +234,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -255,7 +269,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -288,7 +304,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -321,7 +339,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     }
   },
   {
@@ -353,7 +373,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -386,7 +408,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -419,7 +443,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -452,7 +478,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#FFBB00",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -485,7 +513,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -518,7 +548,9 @@
       "fill_colors": [],
       "extrude_shade": 0.5,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   },
@@ -551,7 +583,44 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "stack"
+      "align": "justify",
+      "letter_spacing": 0,
+      "stretch": 1
+    },
+    "pro": true
+  },
+  {
+    "id": "builtin:title-card",
+    "name": "Title Card",
+    "config": {
+      "font": "Nimbus Roman",
+      "font_size": 84,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FFFFFF"],
+      "background": "square",
+      "background_color": "#000000",
+      "background_opacity": 1,
+      "position_x": 0.06,
+      "position_y": 0.5,
+      "animation": "none",
+      "words_per_line": 4,
+      "word_spacing": 0,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 0,
+      "shadow_color": "#00000000",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 0,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "upper",
+      "italic": false,
+      "fill_colors": [],
+      "extrude_shade": 0,
+      "extrude_back": "#00000000",
+      "align": "left",
+      "letter_spacing": -0.02,
+      "stretch": 0.79
     },
     "pro": true
   },
@@ -584,7 +653,9 @@
       "fill_colors": [],
       "extrude_shade": 0,
       "extrude_back": "#00000000",
-      "layout": "line"
+      "align": "center",
+      "letter_spacing": 0,
+      "stretch": 1
     },
     "pro": true
   }

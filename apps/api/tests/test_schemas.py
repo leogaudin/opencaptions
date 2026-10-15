@@ -64,7 +64,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
     assert (s.text_case, s.italic) == ("none", False)
     assert (s.fill_colors, s.extrude_shade) == ([], 0)
     assert s.extrude_back == "#00000000"
-    assert s.layout == "line"
+    assert (s.align, s.letter_spacing, s.stretch) == ("center", 0, 1)
     assert StyleConfig(shadow_offset_x=40, shadow_offset_y=-40).shadow_offset_x == 40
     for animation in (
         "word_sweep",
@@ -86,13 +86,26 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         {"shadow_offset_x": 41},
         {"glow_blur": 41},
         {"extrude_shade": 1.1},
+        {"align": "top"},
         {"layout": "grid"},
+        {"letter_spacing": 1.1},
+        {"letter_spacing": -0.3},
+        {"stretch": 0.4},
+        {"stretch": 2.1},
         {"fill_colors": ["#111111"] * 5},
         {"fill_colors": ["red"]},
         {"text_case": "lower"},
     ):
         with pytest.raises(ValidationError):
             StyleConfig(**bad)  # type: ignore[arg-type]
+
+
+def test_style_config_reads_the_layout_of_styles_saved_before_align() -> None:
+    assert StyleConfig(**{"layout": "stack"}).align == "justify"  # type: ignore[arg-type]
+    assert StyleConfig(**{"layout": "line"}).align == "center"  # type: ignore[arg-type]
+    assert StyleConfig(**{"layout": "stack", "align": "left"}).align == "left"  # type: ignore[arg-type]
+    assert "layout" not in StyleConfig(**{"layout": "stack"}).model_dump()  # type: ignore[arg-type]
+    assert StyleConfig(align="right", letter_spacing=-0.05, stretch=0.79).stretch == 0.79
 
 
 def test_style_config_highlight_colours_are_one_to_four_hex_colours() -> None:

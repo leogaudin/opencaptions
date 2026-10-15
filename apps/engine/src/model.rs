@@ -35,19 +35,27 @@ impl<'de> Deserialize<'de> for Rgba {
 #[serde(rename_all = "snake_case")]
 pub enum Background {
     None,
+    /// A rounded rectangle.
     Solid,
     Pill,
+    /// A rectangle with sharp corners.
+    Square,
 }
 
-/// How a caption's words are set in rows.
+/// How a caption's rows sit in its block, and where the block is anchored.
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
-pub enum Layout {
-    /// Words fill rows left to right up to the frame's width, all at one size.
+pub enum Align {
+    /// Rows are centred on each other, and the block on `position_x`.
     #[default]
-    Line,
-    /// A poster: short rows, each scaled up to the widest one's width and stacked tight.
-    Stack,
+    Center,
+    /// Rows start at the block's left edge, and `position_x` is where that edge sits.
+    Left,
+    /// Rows end at the block's right edge, and `position_x` is where that edge sits.
+    Right,
+    /// A poster: short rows, each scaled up to the widest one's width and stacked tight, the block
+    /// centred on `position_x`.
+    Justify,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
@@ -121,6 +129,10 @@ fn clear() -> Rgba {
     Rgba([0, 0, 0, 0])
 }
 
+fn one() -> f32 {
+    1.0
+}
+
 fn white() -> Rgba {
     Rgba([255, 255, 255, 255])
 }
@@ -190,7 +202,13 @@ pub struct Style {
     #[serde(default = "clear")]
     pub extrude_back: Rgba,
     #[serde(default)]
-    pub layout: Layout,
+    pub align: Align,
+    /// Extra space after each letter, a share of the font size (negative to tighten).
+    #[serde(default)]
+    pub letter_spacing: f32,
+    /// How much wider (or narrower, below 1) the letters are drawn than the face draws them.
+    #[serde(default = "one")]
+    pub stretch: f32,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -344,6 +362,8 @@ impl SceneInput {
         within("shadow_offset_y", s.shadow_offset_y, -1000.0, 1000.0)?;
         within("glow_blur", s.glow_blur, 0.0, 500.0)?;
         within("extrude_shade", s.extrude_shade, 0.0, 1.0)?;
+        within("letter_spacing", s.letter_spacing, -0.5, 2.0)?;
+        within("stretch", s.stretch, 0.25, 4.0)?;
         if s.fill_colors.len() > 4 {
             return Err("fill_colors holds at most 4 colours".into());
         }

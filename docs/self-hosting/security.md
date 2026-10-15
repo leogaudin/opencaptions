@@ -112,7 +112,7 @@ Nothing is sent to the project, and there is no telemetry. The server makes thes
 | When | To | What |
 |---|---|---|
 | A speech model is first used | Hugging Face | The model's files |
-| A font that is not bundled (Inter, Poppins, Montserrat are) is first used | Google Fonts | The font file, then kept in your storage |
+| A font that is not bundled (Inter, Poppins, Montserrat, Nimbus Roman are) is first used | Google Fonts | The font file, then kept in your storage |
 | A provider that sends audio away is chosen | OpenAI, or the OpenCaptions server you named | The audio of that video |
 | A video link is given | The address given | The video |
 

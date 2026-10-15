@@ -5,12 +5,13 @@
 import { msg } from "@/lib/i18n";
 import type { Animation, CaptionBackground, StyleConfig } from "@/types";
 
-export const BACKGROUNDS: readonly CaptionBackground[] = ["none", "solid", "pill"];
+export const BACKGROUNDS: readonly CaptionBackground[] = ["none", "solid", "pill", "square"];
 
 export const BACKGROUND_NAMES: Record<CaptionBackground, string> = {
   none: msg("None"),
   solid: msg("Solid"),
   pill: msg("Pill"),
+  square: msg("Square"),
 };
 
 export const ANIMATION_NAMES: Record<Animation, string> = {

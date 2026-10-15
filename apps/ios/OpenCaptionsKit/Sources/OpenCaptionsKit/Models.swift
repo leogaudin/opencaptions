@@ -104,11 +104,18 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case drift = "drift"
 }
 
-public enum CaptionLayout: String, Codable, CaseIterable, Sendable {
-    /// Words fill rows left to right, all at one size.
-    case line
+public enum CaptionAlign: String, Codable, CaseIterable, Sendable {
+    /// Rows are centred on each other, and the block on `positionX`.
+    case center
+    /// Rows start at the block's left edge, and `positionX` is where that edge sits.
+    case left
+    /// Rows end at the block's right edge, and `positionX` is where that edge sits.
+    case right
     /// A poster: short rows, each scaled up to the widest one's width and stacked tight.
-    case stack
+    case justify
+
+    /// A left- or right-aligned block is held by its edge.
+    var holdsAnEdge: Bool { self == .left || self == .right }
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
@@ -120,6 +127,8 @@ public enum Background: String, Codable, CaseIterable, Sendable {
     case none
     case solid
     case pill
+    /// A rectangle with sharp corners.
+    case square
 }
 
 /// Caption styling. Colours are `#RRGGBB` (`#RRGGBBAA` for the shadow). There is no
@@ -134,7 +143,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var background: Background
     public var backgroundColor: String
     public var backgroundOpacity: Double
-    /// Normalised centre of the caption block, 0...1 across the frame.
+    /// Normalised place of the caption block across the frame, 0...1: its centre, or for `left` and `right`
+    /// alignment its edge.
     public var positionX: Double
     public var positionY: Double
     public var animation: CaptionAnimation
@@ -159,8 +169,12 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var extrudeShade: Double
     /// The colour the back of an extrusion fades to from `shadowColor`; clear for none.
     public var extrudeBack: String
-    /// How the words are set in rows: filling lines, or a stack of short rows scaled to one width.
-    public var layout: CaptionLayout
+    /// How the rows sit in the block, and what `positionX` holds.
+    public var align: CaptionAlign
+    /// Extra space after each letter, as a share of the font size (negative to tighten).
+    public var letterSpacing: Double
+    /// How much wider (or narrower, below 1) the letters are drawn than the face has them.
+    public var stretch: Double
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -170,7 +184,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
         fillColors: [String] = [], extrudeShade: Double = 0, extrudeBack: String = "#00000000",
-        layout: CaptionLayout = .line
+        align: CaptionAlign = .center, letterSpacing: Double = 0, stretch: Double = 1
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -197,7 +211,9 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.fillColors = fillColors
         self.extrudeShade = extrudeShade
         self.extrudeBack = extrudeBack
-        self.layout = layout
+        self.align = align
+        self.letterSpacing = letterSpacing
+        self.stretch = stretch
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -227,14 +243,37 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             fillColors: try c.decodeIfPresent([String].self, forKey: .fillColors) ?? [],
             extrudeShade: try c.decodeIfPresent(Double.self, forKey: .extrudeShade) ?? 0,
             extrudeBack: try c.decodeIfPresent(String.self, forKey: .extrudeBack) ?? "#00000000",
-            layout: try c.decodeIfPresent(CaptionLayout.self, forKey: .layout) ?? .line)
+            align: try Self.decodeAlign(decoder, c),
+            letterSpacing: try c.decodeIfPresent(Double.self, forKey: .letterSpacing) ?? 0,
+            stretch: try c.decodeIfPresent(Double.self, forKey: .stretch) ?? 1)
     }
+
+    /// A project saved before `align` has a `layout`, whose `stack` is now `justify`.
+    private static func decodeAlign(_ decoder: Decoder, _ c: KeyedDecodingContainer<CodingKeys>) throws -> CaptionAlign {
+        if let align = try c.decodeIfPresent(CaptionAlign.self, forKey: .align) { return align }
+        let earlier = try decoder.container(keyedBy: Earlier.self)
+        return try earlier.decodeIfPresent(String.self, forKey: .layout) == "stack" ? .justify : .center
+    }
+
+    /// Where `positionX` goes when the alignment changes (as the web's `positionOnAlign`): a block held by its
+    /// edge moves to that edge, and back to the middle when it stops being; between centred ones it stays.
+    public func positionX(afterAligning to: CaptionAlign) -> Double {
+        guard align != to, align.holdsAnEdge || to.holdsAnEdge else { return positionX }
+        switch to {
+        case .left: return Self.edgeMargin
+        case .right: return 1 - Self.edgeMargin
+        case .center, .justify: return 0.5
+        }
+    }
+
+    private static let edgeMargin = 0.06
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
     /// end colour for a sweep): they become the first and second of the list.
     private enum Earlier: String, CodingKey {
         case highlightColor = "highlight_color"
         case highlightColorEnd = "highlight_color_end"
+        case layout
     }
 
     private static func decodeHighlightColors(_ decoder: Decoder, _ c: KeyedDecodingContainer<CodingKeys>) throws -> [String] {
@@ -271,6 +310,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case fillColors = "fill_colors"
         case extrudeShade = "extrude_shade"
         case extrudeBack = "extrude_back"
-        case layout
+        case align
+        case letterSpacing = "letter_spacing"
+        case stretch
     }
 }

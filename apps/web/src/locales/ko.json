@@ -356,10 +356,15 @@
   "Extrusion shading": "입체 음영",
   "Rise": "라이즈",
   "Slam": "슬램",
-  "Layout": "레이아웃",
-  "Line": "줄",
-  "Stack": "스택",
   "Extrusion": "입체 두께",
   "Extrusion back color": "입체 두께 뒷면 색상",
-  "Drift": "드리프트"
+  "Drift": "드리프트",
+  "Alignment": "정렬",
+  "Left": "왼쪽",
+  "Center": "가운데",
+  "Right": "오른쪽",
+  "Justify": "양쪽 맞춤",
+  "Letter spacing": "자간",
+  "Stretch": "너비 비율",
+  "Square": "사각형"
 }

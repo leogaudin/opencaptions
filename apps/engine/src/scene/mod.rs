@@ -23,9 +23,7 @@ mod tests;
 mod text;
 
 use crate::fonts::FontBook;
-use crate::model::{
-    Animation, Background, Layout, Rgba, SceneInput, Style, TextCase, cut, shifted,
-};
+use crate::model::{Align, Animation, Background, Rgba, SceneInput, Style, TextCase, cut, shifted};
 use anim::*;
 use draw::*;
 use ease::{ease_out_quad, lerp, linear, overshoot, ramp, wave};

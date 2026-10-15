@@ -105,12 +105,15 @@ struct StylePanel: View {
                         label: { $0 ? "Italic" : "Upright" })
                         .frame(maxWidth: 220)
                 }
-                Row("Layout") {
+                Row("Alignment") {
                     SegmentedPills(
-                        options: CaptionLayout.allCases, selection: model.binding(\.layout),
-                        label: { $0 == .stack ? "Stack" : "Line" })
-                        .frame(maxWidth: 220)
+                        options: [CaptionAlign.left, .center, .right, .justify],
+                        selection: Binding(get: { style.align }, set: { model.setAlign($0) }),
+                        label: alignName)
+                        .frame(maxWidth: 280)
                 }
+                LabeledSlider("Letter spacing", value: model.binding(\.letterSpacing), range: -0.2...1, step: 0.01)
+                LabeledSlider("Stretch", value: model.binding(\.stretch), range: 0.5...2, step: 0.01)
                 Row("Text color") { ColorPicker("Text color", selection: color(\.textColor), supportsOpacity: false).labelsHidden() }
                 Row("Fill") {
                     SegmentedPills(
@@ -266,6 +269,16 @@ struct StylePanel: View {
         case .none: "None"
         case .solid: "Solid"
         case .pill: "Pill"
+        case .square: "Square"
+        }
+    }
+
+    private func alignName(_ align: CaptionAlign) -> LocalizedStringKey {
+        switch align {
+        case .left: "Left"
+        case .center: "Center"
+        case .right: "Right"
+        case .justify: "Justify"
         }
     }
 

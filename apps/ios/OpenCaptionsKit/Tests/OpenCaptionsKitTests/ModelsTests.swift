@@ -64,11 +64,39 @@ import Testing
     @Test func aStyleSavedBeforeItsLaterFieldsStillOpens() throws {
         var json = try #require(
             JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
-        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "fill_colors", "extrude_shade", "extrude_back", "layout"] {
+        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "fill_colors", "extrude_shade", "extrude_back", "layout", "align", "letter_spacing", "stretch"] {
             json.removeValue(forKey: key)
         }
         let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
         #expect(old == (try Repo.defaultStyle()), "the missing fields take their defaults, which are the default look's")
+    }
+
+    @Test func aStyleSavedWithALayoutOpensWithTheAlignmentThatTookItsPlace() throws {
+        var json = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
+        json.removeValue(forKey: "align")
+        func decoded(_ layout: String) throws -> StyleConfig {
+            json["layout"] = layout
+            return try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))
+        }
+        #expect(try decoded("stack").align == .justify)
+        #expect(try decoded("line").align == .center)
+        let saved = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(try decoded("stack"))) as? [String: Any])
+        #expect(saved["layout"] == nil && saved["align"] as? String == "justify")
+    }
+
+    @Test func anEdgeAlignedBlockMovesToItsEdgeAndBackToTheMiddle() throws {
+        var style = try Repo.defaultStyle()
+        style.positionX = 0.3
+        #expect(style.positionX(afterAligning: .left) == 0.06)
+        #expect(style.positionX(afterAligning: .right) == 0.94)
+        #expect(style.positionX(afterAligning: .justify) == 0.3, "between centred alignments it stays")
+        style.align = .left
+        style.positionX = 0.1
+        #expect(style.positionX(afterAligning: .left) == 0.1, "the same alignment moves nothing")
+        #expect(style.positionX(afterAligning: .center) == 0.5)
+        #expect(style.positionX(afterAligning: .right) == 0.94)
     }
 
     @Test func aStyleSavedWithOneHighlightColourOpensWithThatColourFirst() throws {

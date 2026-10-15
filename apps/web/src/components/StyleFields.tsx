@@ -243,7 +243,8 @@ export function PresetSwatch({ config }: { config: StyleConfig }) {
           background: config.background === "none" ? "transparent" : bgRgba,
           color: config.text_color,
           padding: `${padding}px ${padding * 2}px`,
-          borderRadius: config.background === "pill" ? 9999 : 4,
+          borderRadius:
+            config.background === "pill" ? 9999 : config.background === "square" ? 0 : 4,
           fontFamily: `"${config.font}", system-ui, sans-serif`,
           fontWeight: 800,
           fontSize: 14,

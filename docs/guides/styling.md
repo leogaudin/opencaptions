@@ -32,6 +32,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Poster** | Tall condensed capitals stacked into a block, every row as wide as the widest, the word being said in red. |
 | **Slam** | Heavy capitals dropping in, the line knocked down a little as each lands. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
+| **Title Card** | Tall, condensed capitals in a bold serif, flush left on a sharp black rectangle, as on a film title card. |
 | **Glow Intro** | Soft, glowing capitals: each word comes into focus out of a blur, the whole line pushes slowly toward you and floats, and the word being said glows brighter. |
 
 A preset sets the whole style, so pick it first and adjust after. Selecting one keeps your caption
@@ -40,10 +41,14 @@ position, font size and words per line, which belong to your video.
 ## Text
 
 - **Font**: pick one of the fonts in use, or **More fonts** to search the whole Google Fonts catalogue.
-  Inter, Poppins and Montserrat come with the app. Any other font is downloaded from Google Fonts by
+  Inter, Poppins, Montserrat and Nimbus Roman come with the app. Any other font is downloaded from Google Fonts by
   the server the first time it is used, then kept, so the preview and the export use the same file.
   (On a server with no internet, a font that was never fetched falls back to Inter.)
-- **Layout**: **Line** (words fill rows) or **Stack** (a poster: short rows, each scaled to the same width).
+- **Alignment**: **Left**, **Center** or **Right** (rows sit against that side of the block, and on the left or
+  right the block is held by that edge, so every line starts in the same place), or **Justify** (a poster: short
+  rows, each scaled to the same width).
+- **Letter spacing** and **Stretch**: space the letters further apart or closer, and draw them wider or narrower
+  (below 1 is condensed). Together they make a bold serif into a tall, tight title face.
 - **Fill**: a plain colour, or a gradient of two to four colours from the top of the letters to the bottom.
 - **Font size**, **Letter case** (normal or uppercase) and **Slant** (upright or italic).
 - **Text color** and **Highlight colors**: a list of one to four colours. The first is the main one.

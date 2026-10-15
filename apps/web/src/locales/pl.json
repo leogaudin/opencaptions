@@ -356,10 +356,15 @@
   "Extrusion shading": "Cieniowanie wytłoczenia",
   "Rise": "Wznoszenie",
   "Slam": "Uderzenie",
-  "Layout": "Układ",
-  "Line": "Wiersz",
-  "Stack": "Stos",
   "Extrusion": "Ekstruzja",
   "Extrusion back color": "Kolor tyłu ekstruzji",
-  "Drift": "Dryf"
+  "Drift": "Dryf",
+  "Alignment": "Wyrównanie",
+  "Left": "Do lewej",
+  "Center": "Środek",
+  "Right": "Do prawej",
+  "Justify": "Wyjustowany",
+  "Letter spacing": "Odstępy między literami",
+  "Stretch": "Rozciągnięcie",
+  "Square": "Kwadrat"
 }

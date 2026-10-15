@@ -356,10 +356,15 @@
   "Extrusion shading": "立体の陰影",
   "Rise": "ライズ",
   "Slam": "スラム",
-  "Layout": "レイアウト",
-  "Line": "行",
-  "Stack": "スタック",
   "Extrusion": "押し出し",
   "Extrusion back color": "押し出しの奥の色",
-  "Drift": "ドリフト"
+  "Drift": "ドリフト",
+  "Alignment": "配置",
+  "Left": "左",
+  "Center": "中央",
+  "Right": "右",
+  "Justify": "両端揃え",
+  "Letter spacing": "文字間隔",
+  "Stretch": "幅",
+  "Square": "角形"
 }

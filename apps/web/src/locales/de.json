@@ -356,10 +356,15 @@
   "Extrusion shading": "Extrusionsschattierung",
   "Rise": "Aufsteigen",
   "Slam": "Einschlag",
-  "Layout": "Layout",
-  "Line": "Zeile",
-  "Stack": "Stapel",
   "Extrusion": "Extrusion",
   "Extrusion back color": "Farbe der Extrusionsrückseite",
-  "Drift": "Schweben"
+  "Drift": "Schweben",
+  "Alignment": "Ausrichtung",
+  "Left": "Links",
+  "Center": "Mitte",
+  "Right": "Rechts",
+  "Justify": "Blocksatz",
+  "Letter spacing": "Buchstabenabstand",
+  "Stretch": "Dehnung",
+  "Square": "Eckig"
 }

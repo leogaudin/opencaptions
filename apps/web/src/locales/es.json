@@ -356,10 +356,15 @@
   "Extrusion shading": "Sombreado de la extrusión",
   "Rise": "Subida",
   "Slam": "Golpe",
-  "Layout": "Disposición",
-  "Line": "Línea",
-  "Stack": "Pila",
   "Extrusion": "Extrusión",
   "Extrusion back color": "Color del fondo de la extrusión",
-  "Drift": "Deriva"
+  "Drift": "Deriva",
+  "Alignment": "Alineación",
+  "Left": "Izquierda",
+  "Center": "Centro",
+  "Right": "Derecha",
+  "Justify": "Justificado",
+  "Letter spacing": "Espaciado de letras",
+  "Stretch": "Estiramiento",
+  "Square": "Cuadrado"
 }

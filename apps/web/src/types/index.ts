@@ -97,7 +97,7 @@ export type DownloadResponse =
 // UI-only, hand-maintained: the WebSocket protocol is not in OpenAPI and these
 // unions are narrower than the API enums on purpose.
 /** Caption background style. */
-export type CaptionBackground = "none" | "solid" | "pill";
+export type CaptionBackground = "none" | "solid" | "pill" | "square";
 
 /** The application default: the first preset (Purple Punch), which matches the API's defaults. */
 export const defaultStyle = presets[0]!.config as StyleConfig;

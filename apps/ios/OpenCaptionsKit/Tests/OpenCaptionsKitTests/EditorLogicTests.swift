@@ -266,6 +266,20 @@ final class Counter { var value = 0 }
         #expect(style.matches(preset), "and it still reads as that preset")
     }
 
+    @Test func aLookAlignedToAnEdgeMovesTheBlockThereAndAnotherMovesItBack() throws {
+        let (model, _) = try make()
+        model.setPosition(x: 0.3, y: 0.2)
+        var look = try Repo.defaultStyle()
+        look.align = .left
+        model.apply(Preset(id: "l", name: "L", config: look))
+        #expect(model.project.styleConfig.positionX == 0.06 && model.project.styleConfig.positionY == 0.2)
+        model.setAlign(.right)
+        #expect(model.project.styleConfig.positionX == 0.94 && model.project.styleConfig.align == .right)
+        look.align = .center
+        model.apply(Preset(id: "c", name: "C", config: look))
+        #expect(model.project.styleConfig.positionX == 0.5)
+    }
+
     @Test func aDragAndAPinchSettleInOneChangeWithinLimits() async throws {
         let (model, _) = try make()
         await model.settled()

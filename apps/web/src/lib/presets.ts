@@ -26,13 +26,40 @@ export const BUILTIN_PRESETS = presets as BuiltinPreset[];
  * a line holds, which belong to the video and the user, so applying a preset must not move,
  * resize or re-break it.
  */
-export function presetLook(config: StyleConfig): Partial<StyleConfig> {
+export function presetLook(
+  config: StyleConfig,
+  current?: Pick<StyleConfig, "align">,
+): Partial<StyleConfig> {
   const { position_x, position_y, font_size, words_per_line, ...look } = config;
   void position_x;
   void position_y;
   void font_size;
   void words_per_line;
-  return look;
+  // A look aligned to an edge needs the block there: its place is that edge, not the centre.
+  return current && current.align !== config.align
+    ? { ...look, position_x: positionOnAlign(current.align, config.align, position_x) }
+    : look;
+}
+
+/** Where `position_x` puts the block's edge, for a caption aligned left or right (a margin). */
+const EDGE_MARGIN = 0.06;
+
+/**
+ * The place across the frame that goes with an alignment. A left- or right-aligned block is held by
+ * its edge, so changing to or from one moves the block to that edge (or back to the middle);
+ * between the centred alignments it stays where the user put it. The iOS app has the same rule in
+ * `StyleConfig.positionX(afterAligning:)`.
+ */
+export function positionOnAlign(
+  from: StyleConfig["align"],
+  to: StyleConfig["align"],
+  x: number,
+): number {
+  const edge = (a: StyleConfig["align"]) => a === "left" || a === "right";
+  if (from === to || !(edge(from) || edge(to))) return x;
+  if (to === "left") return EDGE_MARGIN;
+  if (to === "right") return 1 - EDGE_MARGIN;
+  return 0.5;
 }
 
 /**

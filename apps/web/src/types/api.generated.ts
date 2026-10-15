@@ -1357,7 +1357,7 @@ export interface components {
              * @default none
              * @enum {string}
              */
-            background: "none" | "solid" | "pill";
+            background: "none" | "solid" | "pill" | "square";
             /**
              * Background Color
              * @default #000000
@@ -1462,11 +1462,21 @@ export interface components {
              */
             extrude_back: string;
             /**
-             * Layout
-             * @default line
+             * Align
+             * @default center
              * @enum {string}
              */
-            layout: "line" | "stack";
+            align: "center" | "left" | "right" | "justify";
+            /**
+             * Letter Spacing
+             * @default 0
+             */
+            letter_spacing: number;
+            /**
+             * Stretch
+             * @default 1
+             */
+            stretch: number;
         };
         /**
          * SubtitleExportLinks

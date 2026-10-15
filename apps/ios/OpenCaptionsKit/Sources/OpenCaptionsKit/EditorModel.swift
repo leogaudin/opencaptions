@@ -243,9 +243,19 @@ public final class EditorModel {
     /// the caption the user placed, resize what they sized or cut the lines differently.
     public func apply(_ preset: Preset) {
         updateStyle(as: step()) {
-            let (x, y, size, words) = ($0.positionX, $0.positionY, $0.fontSize, $0.wordsPerLine)
+            // A look aligned to an edge needs the block there, so the place follows the alignment.
+            let (x, y, size, words) = ($0.positionX(afterAligning: preset.config.align), $0.positionY, $0.fontSize, $0.wordsPerLine)
             $0 = preset.config
             ($0.positionX, $0.positionY, $0.fontSize, $0.wordsPerLine) = (x, y, size, words)
+        }
+    }
+
+    /// Changes how the rows sit in the block, moving the block to its edge or back to the middle when that is
+    /// what the alignment holds it by.
+    public func setAlign(_ align: CaptionAlign) {
+        updateStyle(as: step()) {
+            $0.positionX = $0.positionX(afterAligning: align)
+            $0.align = align
         }
     }
 

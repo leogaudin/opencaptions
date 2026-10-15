@@ -103,10 +103,14 @@ impl Scene {
         );
         // A boxed word's padding already separates it from the next, so the boxes
         // sit almost touching instead of adding a whole space on top.
+        let tracking = Tracking {
+            spacing: style.letter_spacing,
+            stretch: style.stretch,
+        };
         let base_gap = if boxed {
             fs * 0.04
         } else {
-            shape(face, " ", fs).1
+            shape_tracked(face, " ", fs, tracking).1
         };
         let sep = base_gap + fs * style.word_spacing;
         let max_row = MAX_WIDTH * width as f32 - 2.0 * pad_bx;
@@ -157,10 +161,11 @@ impl Scene {
                 let shaped: Vec<_> = texts
                     .iter()
                     .map(|text| {
-                        let (glyphs, advance) = shape(
+                        let (glyphs, advance) = shape_tracked(
                             book.face(book.for_text(primary, &fallbacks, text)),
                             text,
                             fs,
+                            tracking,
                         );
                         let glyphs = if style.italic {
                             glyphs.and_then(|p| p.transform(lean))
@@ -178,7 +183,7 @@ impl Scene {
                             return vec![];
                         }
                         let face = book.face(book.for_text(primary, &fallbacks, text));
-                        let letters = cluster_paths(face, text, fs);
+                        let letters = cluster_paths(face, text, fs, tracking);
                         if style.italic {
                             letters
                                 .into_iter()
@@ -190,7 +195,7 @@ impl Scene {
                     })
                     .collect();
                 // Rows: words fill a row until the next does not fit (a stack's rows are short).
-                let stack = style.layout == Layout::Stack;
+                let stack = style.align == Align::Justify;
                 let limit = if stack {
                     STACK_ROW_SHARE * max_row
                 } else {
@@ -240,7 +245,20 @@ impl Scene {
                         (norm * limit - extent / 2.0).clamp(0.0, limit - extent)
                     }
                 };
-                let x0 = place(style.position_x, block_w, width as f32);
+                // Left and right align anchor the block by that edge, so a line of other words starts
+                // where the last one did, and the block is held inside the frame like any other.
+                let x0 = match style.align {
+                    Align::Left | Align::Right if block_w < width as f32 => {
+                        let edge = style.position_x * width as f32;
+                        let from = if style.align == Align::Left {
+                            edge
+                        } else {
+                            edge - block_w
+                        };
+                        from.clamp(0.0, width as f32 - block_w)
+                    }
+                    _ => place(style.position_x, block_w, width as f32),
+                };
                 let y0 = place(style.position_y, block_h, height as f32);
                 let mut placed: Vec<Option<Placed>> = (0..chunk.len()).map(|_| None).collect();
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
@@ -254,7 +272,14 @@ impl Scene {
                     let baseline_in_row = pad_wy * scale
                         + (lead * fs * k - (ascent + descent) * k) / 2.0
                         + ascent * k;
-                    let mut x = x0 + pad_bx + (inner_w - row_w * scale) / 2.0;
+                    let spare = inner_w - row_w * scale;
+                    let mut x = x0
+                        + pad_bx
+                        + match style.align {
+                            Align::Left => 0.0,
+                            Align::Right => spare,
+                            Align::Center | Align::Justify => spare / 2.0,
+                        };
                     // In a right-to-left line the first word is the rightmost.
                     let order: Vec<usize> = if right_to_left {
                         row.iter().rev().copied().collect()
@@ -305,6 +330,7 @@ impl Scene {
             .collect();
         let block_radius = match style.background {
             Background::Pill => f32::MAX,
+            Background::Square => 0.0,
             _ => 12.0 * k,
         };
         Self {

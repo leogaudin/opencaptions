@@ -156,7 +156,13 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
     from the top of the em box to the baseline, and `extrude_shade` darkens a solid shadow with
     depth: its stamps are laid from the back forward, so each pixel takes the colour of the
     nearest stamp that covers it, and the first step is lightened as a lit edge.
-  - *Stack layout.* `layout: "stack"` cuts rows at 0.55 of the usual width, then scales each row up to the widest row's natural width, at most three times, and
+  - *Alignment.* `align` is `center`, `left`, `right` or `justify`. Rows sit centred, against the block's left edge or
+    against its right edge; `left` and `right` also hold the block by that edge (`position_x` is the edge, so a line of other
+    words starts where the last one did, and the clients move the block to the edge, or back to the middle, when the alignment
+    changes: `positionOnAlign` on the web, `positionX(afterAligning:)` on iOS). Saved styles with `layout` read as `justify`
+    (`stack`) or `center`. `letter_spacing` (a share of the font size, after every letter but the last) and `stretch` (a horizontal scale of the
+    outlines and advances) reshape any face; both are applied where the text is shaped, so a default leaves every frame byte for byte as it was.
+  - *Justify layout.* `align: "justify"` cuts rows at 0.55 of the usual width, then scales each row up to the widest row's natural width, at most three times, and
     stacks them with leading of 1.0 of each row's own size. A word's `size` (its row's scale) is what every animation uses wherever it used the font size: the underline's
     thickness, the cursor, the sliding box's corner, a label's radius, the blur of a soft word,
     how far a letter rises, and the outline, shadow and extrusion, so every animation works in a
@@ -176,14 +182,14 @@ in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and 
     (soft until said, and the line never changes size), Stickers, Plain, Neon, Typewriter and
     Handwritten (a marker stroke laid under the words as they are said), and the four built on the
     newer features: Pop (white letters in an orange outline, the word being said rising on a short golden extrusion),
-    Cascade (letters rising one after another), Slam (heavy capitals dropping in), Poster (a stack of rows scaled to one width) and Glow Intro (floating, glowing capitals that come into focus).
+    Cascade (letters rising one after another), Slam (heavy capitals dropping in), Poster (a stack of rows scaled to one width), Title Card (condensed bold serif capitals flush left on a sharp black box) and Glow Intro (floating, glowing capitals that come into focus).
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by
     the engine (`CaptionEngine.samples`: the same drawing as the preview and the export, in a
     phone-shaped frame, cropped to the band around the caption), so each shows its real font,
     colours and highlight; the scene in use is put back after. A background with no opacity is
     given a visible one when chosen.
 - **Fonts.** Inter, Poppins (ExtraBold, the default preset's) and Montserrat (Black, the Bold
-  preset's) are bundled; Inter is the glyph fallback, so an offline install still draws. Any
+  preset's) and Nimbus Roman (Bold, the Title Card's: a clone of Times Bold, AGPL with URW's font exception) are bundled; Inter is the glyph fallback, so an offline install still draws. Any
   Google Fonts family can be chosen: the API fetches it once, keeps it in the store (`fonts/`), and
   gives the preview and the engine the same file. A bundled face wins over a requested one, and
   fallback only reaches bundled faces. The font row opens a list of the fonts in use, each name
@@ -487,7 +493,7 @@ holds:
 
 Writes are atomic (a temporary file, then a rename). The project list is a scan of the folder, and
 an unreadable project is hidden rather than failing the list. Subtitle files (SRT, VTT) are only
-exported by the Docker product. Fonts are the same as the server's: Inter, Poppins and Montserrat
+exported by the Docker product. Fonts are the same as the server's: Inter, Poppins, Montserrat and Nimbus Roman
 are bundled with the engine's other fonts, in the same order the server loads them, and a style that
 names another Google Fonts family fetches it once (TrueType, the weight nearest 800) and keeps it on
 disk.

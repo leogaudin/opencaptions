@@ -51,6 +51,17 @@ def test_the_default_font_ships_with_the_engine() -> None:
     assert (fonts / "Poppins-ExtraBold.ttf").is_file() and (fonts / "Poppins-OFL.txt").is_file()
 
 
+def test_the_title_cards_font_ships_with_the_engine() -> None:
+    # Nimbus Roman Bold is not on Google Fonts: the preset only draws if the engine has the file.
+    fonts = _PRESETS.parents[3] / "engine" / "fonts"
+    card = next(p for p in _presets() if p["name"] == "Title Card")
+    config = card["config"]
+    assert isinstance(config, dict) and config["font"] == "Nimbus Roman"
+    assert config["background"] == "square" and config["align"] == "left"
+    assert (fonts / "NimbusRoman-Bold.ttf").is_file()
+    assert (fonts / "NimbusRoman-LICENSE.txt").is_file()
+
+
 def test_the_bold_presets_font_ships_with_the_engine() -> None:
     # Montserrat Black is the one weight Google's 800 lookup cannot reach.
     fonts = _PRESETS.parents[3] / "engine" / "fonts"

@@ -163,7 +163,7 @@ function Demo() {
           </p>
           <PresetStrip
             activeId={active?.id}
-            onPick={(config) => setStyle(presetLook(config))}
+            onPick={(config) => setStyle(presetLook(config, style))}
             className="flex gap-2.5 overflow-x-auto p-1 md:grid md:grid-cols-3 md:overflow-visible"
             tileClassName="w-32 shrink-0 md:w-auto"
           />
