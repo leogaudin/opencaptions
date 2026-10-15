@@ -204,6 +204,9 @@ public actor CaptionEngine {
             var style = style
             style.positionX = 0.5
             style.positionY = 0.5
+            // A tile shows the look centred in its frame: a block held by its left or right edge would
+            // start at the middle of it and run off the side.
+            if style.align != .justify { style.align = .center }
             style.wordsPerLine = max(style.wordsPerLine, words.count)
             do {
                 try apply(

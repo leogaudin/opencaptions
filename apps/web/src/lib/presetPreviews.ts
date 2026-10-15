@@ -83,6 +83,9 @@ export async function drawLooks(looks: readonly Look[]): Promise<Record<string, 
         font_size: TILE_FONT_SIZE,
         position_x: 0.5,
         position_y: 0.5,
+        // A tile shows the look, centred in its frame: a block held by its left or right edge would
+        // start at the middle of it and run off the side.
+        align: look.config.align === "justify" ? "justify" : "center",
         words_per_line: WORDS.length,
       },
       width: FRAME.width,

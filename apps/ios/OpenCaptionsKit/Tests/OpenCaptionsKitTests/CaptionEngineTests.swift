@@ -35,6 +35,15 @@ extension EngineSuites {
             #expect(after == before)
         }
 
+        @Test func aSampleOfALeftAlignedLookIsDrawnCentredInItsFrame() async throws {
+            let centred = try Repo.defaultStyle()
+            var left = centred
+            left.align = .left
+            left.positionX = 0.06
+            let frames = await engine.samples(of: [centred, left], words: ["Make", "it", "pop"], width: 600, height: 300)
+            #expect(try #require(frames[0]).rgba == (try #require(frames[1])).rgba, "a tile is not held by an edge")
+        }
+
         @Test func everyPresetDrawsAndEachIsADifferentLook() async throws {
             try await engine.registerBundledFonts(in: Repo.fonts)
             let presets = try Presets.load(from: Repo.presets)
