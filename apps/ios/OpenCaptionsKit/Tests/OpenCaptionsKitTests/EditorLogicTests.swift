@@ -51,6 +51,17 @@ final class Counter { var value = 0 }
         #expect(CaptionGestures.blockCentre(position: 0.7, extent: 150, limit: 100) == 75, "too long: against the start")
     }
 
+    @Test func aBlockHeldByItsEdgeHasThatEdgeAtThePosition() {
+        // 40 long in a frame of 100: the edge at 0.1 puts the middle at 30 (left), or at -10 → kept in: 20 (right).
+        #expect(CaptionGestures.blockCentre(position: 0.1, extent: 40, limit: 100, anchor: .start) == 30)
+        #expect(CaptionGestures.blockCentre(position: 0.9, extent: 40, limit: 100, anchor: .end) == 70)
+        #expect(CaptionGestures.blockCentre(position: 0.95, extent: 40, limit: 100, anchor: .start) == 80, "kept inside")
+        #expect(CaptionGestures.blockCentre(position: 0.5, extent: 40, limit: 100, anchor: .middle) == 50)
+        #expect(CaptionAlign.left.anchor == .start && CaptionAlign.right.anchor == .end)
+        #expect(CaptionAlign.center.anchor == .middle && CaptionAlign.justify.anchor == .middle)
+        #expect(BlockAnchor.start.fraction == 0 && BlockAnchor.middle.fraction == 0.5 && BlockAnchor.end.fraction == 1)
+    }
+
     @Test func ticksStayApartAndLabelsAreReadable() {
         #expect(TimelineScale.tickStep(pointsPerSecond: 1000) == 0.1)
         #expect(TimelineScale.tickStep(pointsPerSecond: 70) == 1)

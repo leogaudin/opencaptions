@@ -42,7 +42,12 @@ export function presetLook(
 }
 
 /** Where `position_x` puts the block's edge, for a caption aligned left or right (a margin). */
-const EDGE_MARGIN = 0.06;
+export const EDGE_MARGIN = 0.06;
+
+/** Which part of a caption block `position_x` holds, for an alignment: its start, its middle or its end. */
+export function blockAnchor(align: StyleConfig["align"]): 0 | 0.5 | 1 {
+  return align === "left" ? 0 : align === "right" ? 1 : 0.5;
+}
 
 /**
  * The place across the frame that goes with an alignment. A left- or right-aligned block is held by

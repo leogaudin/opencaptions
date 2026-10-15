@@ -29,29 +29,56 @@ pub enum Edge {
     End,
 }
 
-/// A caption position after magnetism toward the video's centre lines.
+/// Where a dragged caption block lands on one axis, and the guide line it is on (a share of the axis).
 #[derive(Debug, PartialEq)]
-pub struct Snapped {
-    pub x: f32,
-    pub y: f32,
-    /// Whether `x` was pulled to the vertical centre line (0.5), and `y` to the horizontal.
-    pub on_x: bool,
-    pub on_y: bool,
+pub struct Snap {
+    pub position: f32,
+    /// The line the block snapped to, or `None` if it is free.
+    pub line: Option<f32>,
 }
 
-/// Magnetism for dragging the caption block: each axis snaps to the video's centre
-/// (0.5) when the block's centre is within `threshold` of it, measured in the same
-/// unit as `width` and `height` (the pixels the editor shows the video at), so the
-/// pull feels the same at any zoom. The two axes snap independently.
-pub fn snap_to_centre(x: f32, y: f32, width: f32, height: f32, threshold: f32) -> Snapped {
-    let near = |v: f32, extent: f32| (v - 0.5).abs() * extent <= threshold;
-    let (on_x, on_y) = (near(x, width), near(y, height));
-    Snapped {
-        x: if on_x { 0.5 } else { x },
-        y: if on_y { 0.5 } else { y },
-        on_x,
-        on_y,
+/// Magnetism for dragging the caption block along one axis. The block has three lines of its own, its
+/// start, its middle and its end, and the frame has three: a margin in from each side and the centre. Each
+/// of the block's lines is pulled to its own line of the frame (start to the near margin, middle to the
+/// centre, end to the far margin) when it is within `threshold` of it, so a caption can sit centred, or
+/// flush against either margin whatever its width.
+///
+/// `position` is where the block is held, as a share of the axis, and `anchor` which part of the block that
+/// is (0 its start, 0.5 its middle, 1 its end: a block aligned left is held by its start). `extent` is the
+/// block's length as a share of the axis, `size` the axis as the editor shows it and `threshold` the pull,
+/// both in pixels, so the pull feels the same at any zoom. `margin` is a share of the axis.
+pub fn snap_axis(
+    position: f32,
+    extent: f32,
+    anchor: f32,
+    size: f32,
+    threshold: f32,
+    margin: f32,
+) -> Snap {
+    // Which part of the block (0 start, 0.5 middle, 1 end) goes with which line of the frame.
+    let pairs = [(0.0, margin), (0.5, 0.5), (1.0, 1.0 - margin)];
+    let mut best: Option<(f32, Snap)> = None;
+    for (part, line) in pairs {
+        // Where the block must be held for that part to be on the line.
+        let held = line - (part - anchor) * extent;
+        let pull = (position - held).abs() * size;
+        if pull <= threshold && best.as_ref().is_none_or(|(nearest, _)| pull < *nearest) {
+            best = Some((
+                pull,
+                Snap {
+                    position: held,
+                    line: Some(line),
+                },
+            ));
+        }
     }
+    best.map_or(
+        Snap {
+            position,
+            line: None,
+        },
+        |(_, snap)| snap,
+    )
 }
 
 /// The captions as shown: times carry the caption offset, as the scene's do.
@@ -250,33 +277,65 @@ mod tests {
     }
 
     #[test]
-    fn the_caption_snaps_to_each_centre_line_within_the_threshold() {
-        // A 400 x 800 px preview, 8 px of pull: 0.02 across, 0.01 down.
-        let s = snap_to_centre(0.51, 0.84, 400.0, 800.0, 8.0);
+    fn the_caption_snaps_its_middle_to_the_centre_within_the_threshold() {
+        // A 400 px axis, 8 px of pull: 0.02 of it. A block held by its middle, 100 px (0.25) long.
+        let near = snap_axis(0.51, 0.25, 0.5, 400.0, 8.0, 0.06);
         assert_eq!(
-            s,
-            Snapped {
-                x: 0.5,
-                y: 0.84,
-                on_x: true,
-                on_y: false
+            near,
+            Snap {
+                position: 0.5,
+                line: Some(0.5)
             }
         );
-        let both = snap_to_centre(0.49, 0.505, 400.0, 800.0, 8.0);
+        let free = snap_axis(0.53, 0.25, 0.5, 400.0, 8.0, 0.06);
         assert_eq!(
-            (both.x, both.y, both.on_x, both.on_y),
-            (0.5, 0.5, true, true)
+            free,
+            Snap {
+                position: 0.53,
+                line: None
+            }
         );
-        let outside = snap_to_centre(0.53, 0.52, 400.0, 800.0, 8.0);
-        assert_eq!((outside.x, outside.y), (0.53, 0.52));
-        assert!(!outside.on_x && !outside.on_y);
         // The threshold is in pixels, so a bigger preview pulls over less of the range.
-        assert!(snap_to_centre(0.51, 0.1, 400.0, 800.0, 8.0).on_x);
-        assert!(!snap_to_centre(0.51, 0.1, 2000.0, 800.0, 8.0).on_x);
-        // Exactly at the edge of the threshold still snaps; a zero threshold only snaps on the line.
-        assert!(snap_to_centre(0.52, 0.1, 400.0, 800.0, 8.0).on_x);
-        assert!(snap_to_centre(0.5, 0.5, 400.0, 800.0, 0.0).on_x);
-        assert!(!snap_to_centre(0.5001, 0.5, 400.0, 800.0, 0.0).on_x);
+        assert!(snap_axis(0.51, 0.25, 0.5, 400.0, 8.0, 0.06).line.is_some());
+        assert!(snap_axis(0.51, 0.25, 0.5, 2000.0, 8.0, 0.06).line.is_none());
+        // Exactly at the threshold still snaps; a zero threshold only snaps on the line.
+        assert!(snap_axis(0.52, 0.25, 0.5, 400.0, 8.0, 0.06).line.is_some());
+        assert!(snap_axis(0.5, 0.25, 0.5, 400.0, 0.0, 0.06).line.is_some());
+        assert!(
+            snap_axis(0.5001, 0.25, 0.5, 400.0, 0.0, 0.06)
+                .line
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn each_end_of_the_block_snaps_to_its_own_margin() {
+        // Held by its middle and 0.25 long, its start is on the near margin (0.06) at 0.06 + 0.125 and its
+        // end on the far one at 0.94 - 0.125.
+        let start = snap_axis(0.19, 0.25, 0.5, 400.0, 8.0, 0.06);
+        assert_eq!(start.line, Some(0.06));
+        assert!((start.position - 0.185).abs() < 1e-6);
+        let end = snap_axis(0.82, 0.25, 0.5, 400.0, 8.0, 0.06);
+        assert_eq!(end.line, Some(0.94));
+        assert!((end.position - 0.815).abs() < 1e-6);
+        // Held by its start (a block aligned left) it is the position itself that goes to the margin, and
+        // its middle that goes to the centre: 0.5 - 0.125.
+        assert_eq!(snap_axis(0.07, 0.25, 0.0, 400.0, 8.0, 0.06).position, 0.06);
+        let middle = snap_axis(0.38, 0.25, 0.0, 400.0, 8.0, 0.06);
+        assert_eq!(middle.line, Some(0.5));
+        assert!((middle.position - 0.375).abs() < 1e-6);
+        // Held by its end: the position is the end, which goes to the far margin.
+        assert_eq!(snap_axis(0.93, 0.25, 1.0, 400.0, 8.0, 0.06).position, 0.94);
+    }
+
+    #[test]
+    fn the_nearest_line_wins_when_two_are_in_reach() {
+        // A block 0.8 long, held by its middle: it is centred at 0.5 and has its end on the far margin at
+        // 0.54. At 0.525 both are in reach of a 10 px pull on a 400 px axis, and the end (6 px) is nearer
+        // than the centre (10 px).
+        let near = snap_axis(0.525, 0.8, 0.5, 400.0, 10.0, 0.06);
+        assert_eq!(near.line, Some(0.94));
+        assert!((near.position - 0.54).abs() < 1e-6);
     }
 
     #[test]

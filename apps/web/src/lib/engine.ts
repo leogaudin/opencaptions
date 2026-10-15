@@ -32,7 +32,14 @@ interface Exports {
   oc_active_index(): number;
   oc_active_bounds(): number;
   oc_active_word_rects(): number;
-  oc_snap_position(x: number, y: number, width: number, height: number, threshold: number): number;
+  oc_snap_axis(
+    position: number,
+    extent: number,
+    anchor: number,
+    size: number,
+    threshold: number,
+    margin: number,
+  ): number;
   oc_fallback_fonts(ptr: number, len: number): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
   oc_retime_word(
@@ -95,26 +102,32 @@ export interface CaptionLine {
  * function of a transcript; words are addressed by their flat index across
  * segments, as captions are cut.
  */
-/** A caption position after magnetism toward the video's centre lines. */
-export interface SnappedPosition {
-  x: number;
-  y: number;
-  /** Whether x was pulled to the vertical centre line, and y to the horizontal one. */
-  onX: boolean;
-  onY: boolean;
+/** A caption position along one axis after magnetism toward the frame's centre and margins. */
+export interface SnappedAxis {
+  position: number;
+  /** The guide line the block is on, a share of the axis, or null if it is free. */
+  line: number | null;
 }
+
+/** Which part of a caption block is at its position: 0 its start, 0.5 its middle, 1 its end. */
+export type BlockAnchor = 0 | 0.5 | 1;
 
 export interface CaptionEditor {
   /**
-   * Magnetism for dragging the caption block: each axis snaps to the video's centre
-   * when the block's centre is within `threshold` of it. `size` is the preview's size
-   * in the unit of `threshold` (screen pixels), so the pull feels the same at any size.
+   * Magnetism for dragging the caption block along one axis: its start, middle and end are pulled to
+   * the frame's near margin, centre and far margin when within `threshold` of them. `position` is
+   * where the block is held, `anchor` which part of it that is, `extent` its length and `margin` the
+   * margins, shares of the axis; `size` is the axis as the preview shows it, in the unit of
+   * `threshold` (screen pixels), so the pull feels the same at any size.
    */
-  snapPosition(
-    position: { x: number; y: number },
-    size: { width: number; height: number },
+  snapAxis(
+    position: number,
+    extent: number,
+    anchor: BlockAnchor,
+    size: number,
     threshold: number,
-  ): SnappedPosition;
+    margin: number,
+  ): SnappedAxis;
   /**
    * The captions, cut every `wordsPerLine` words (fewer around a long pause) as the export
    * cuts them, with times as shown (the caption offset applied).
@@ -412,10 +425,10 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       setWord: (t, index, text) =>
         parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
-      snapPosition: (p, size, threshold) => {
-        x.oc_snap_position(p.x, p.y, size.width, size.height, threshold);
-        const [sx, sy, onX, onY] = resultFloats(x);
-        return { x: sx!, y: sy!, onX: onX === 1, onY: onY === 1 };
+      snapAxis: (position, extent, anchor, size, threshold, margin) => {
+        x.oc_snap_axis(position, extent, anchor, size, threshold, margin);
+        const [snapped, line] = resultFloats(x);
+        return { position: snapped!, line: line! < 0 ? null : line! };
       },
     };
   });

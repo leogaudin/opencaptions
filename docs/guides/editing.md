@@ -32,7 +32,8 @@ Pause the video and **double-click** a word in the preview. Type the correction 
 ## Move the caption
 
 While the video is paused, drag the caption block in the preview. It is pulled towards the centre lines
-of the picture, and a thin guide appears when it is centred on one. Where you drop it is the position
+of the picture, and towards a margin on each side, the top and the bottom (its edge goes to the margin, its
+middle to the centre); a thin guide appears when it is on one. Where you drop it is the position
 for every caption.
 
 ## Retime on the timeline

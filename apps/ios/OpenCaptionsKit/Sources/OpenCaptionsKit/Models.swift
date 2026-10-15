@@ -116,6 +116,32 @@ public enum CaptionAlign: String, Codable, CaseIterable, Sendable {
 
     /// A left- or right-aligned block is held by its edge.
     var holdsAnEdge: Bool { self == .left || self == .right }
+
+    /// How far in from its side a block held by its edge is put (a share of the frame).
+    public static let edgeMargin = 0.06
+
+    /// What the engine puts at `positionX` across the frame: the block's middle, or its edge.
+    public var anchor: BlockAnchor {
+        switch self {
+        case .left: .start
+        case .right: .end
+        case .center, .justify: .middle
+        }
+    }
+}
+
+/// Which part of a caption block sits at its position: the middle, or the edge it is held by.
+public enum BlockAnchor: Sendable {
+    case middle, start, end
+
+    /// The part of the block that is at the position: 0 its start, 0.5 its middle, 1 its end.
+    public var fraction: Double {
+        switch self {
+        case .start: 0
+        case .middle: 0.5
+        case .end: 1
+        }
+    }
 }
 
 public enum TextCase: String, Codable, CaseIterable, Sendable {
@@ -260,13 +286,11 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public func positionX(afterAligning to: CaptionAlign) -> Double {
         guard align != to, align.holdsAnEdge || to.holdsAnEdge else { return positionX }
         switch to {
-        case .left: return Self.edgeMargin
-        case .right: return 1 - Self.edgeMargin
+        case .left: return CaptionAlign.edgeMargin
+        case .right: return 1 - CaptionAlign.edgeMargin
         case .center, .justify: return 0.5
         }
     }
-
-    private static let edgeMargin = 0.06
 
     /// A project saved before the colours became a list holds the one colour (and, in a build or two, an
     /// end colour for a sweep): they become the first and second of the list.

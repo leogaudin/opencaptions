@@ -146,14 +146,20 @@ extension EngineSuites {
             }
         }
 
-        @Test func theCaptionSnapsToTheCentreLinesWithinThePull() async throws {
-            // A 400 x 800 pt preview with 8 pt of pull: 0.02 across, 0.01 down.
-            let near = CaptionEngine.snappedPosition(x: 0.51, y: 0.84, width: 400, height: 800, threshold: 8)
-            #expect(near == SnappedPosition(x: 0.5, y: Double(Float(0.84)), onX: true, onY: false))
-            let both = CaptionEngine.snappedPosition(x: 0.49, y: 0.505, width: 400, height: 800, threshold: 8)
-            #expect(both == SnappedPosition(x: 0.5, y: 0.5, onX: true, onY: true))
-            let free = CaptionEngine.snappedPosition(x: 0.53, y: 0.52, width: 400, height: 800, threshold: 8)
-            #expect(!free.onX && !free.onY && abs(free.x - 0.53) < 1e-6)
+        @Test func theCaptionSnapsToTheCentreAndTheMarginsWithinThePull() async throws {
+            // A 400 pt axis with 8 pt of pull (0.02 of it), margins of 0.06, a block 0.25 long held by its middle.
+            func snap(_ p: Double, _ anchor: BlockAnchor = .middle) -> SnappedAxis {
+                CaptionEngine.snappedAxis(position: p, extent: 0.25, anchor: anchor, size: 400, threshold: 8, margin: 0.06)
+            }
+            #expect(snap(0.51) == SnappedAxis(position: 0.5, line: 0.5))
+            #expect(snap(0.53).line == nil && abs(snap(0.53).position - 0.53) < 1e-6)
+            // Its start on the near margin (held at 0.06 + 0.125), its end on the far one (0.94 - 0.125).
+            #expect(snap(0.19).line == Float(0.06).asDouble && abs(snap(0.19).position - 0.185) < 1e-6)
+            #expect(snap(0.82).line == Float(0.94).asDouble && abs(snap(0.82).position - 0.815) < 1e-6)
+            // A block held by its start has that edge, and not its middle, at the position.
+            #expect(abs(snap(0.07, .start).position - 0.06) < 1e-6)
+            #expect(abs(snap(0.38, .start).position - 0.375) < 1e-6, "its middle goes to the centre")
+            #expect(abs(snap(0.93, .end).position - 0.94) < 1e-6)
         }
 
         @Test func linesAreCutLikeTheExportAndShowShiftedTimes() async throws {
@@ -207,3 +213,5 @@ extension EngineSuites {
         }
     }
 }
+
+private extension Float { var asDouble: Double { Double(self) } }

@@ -81,7 +81,7 @@ One offset, in milliseconds, that moves every caption earlier or later against t
 
 ## Position
 
-Drag the caption in the preview while the video is paused. It snaps to the centre lines of the picture.
+Drag the caption in the preview while the video is paused. It snaps to the centre lines of the picture, and to a margin on each side.
 
 ## Your own looks
 

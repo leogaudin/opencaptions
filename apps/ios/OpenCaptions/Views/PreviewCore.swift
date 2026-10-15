@@ -17,6 +17,8 @@ final class PreviewCore {
     private let overlay = CALayer()
     private let markLayer = CALayer()
     private let hole = CAShapeLayer()
+    /// The turned-over layer all the others are in, for a host that is flipped.
+    private var container: CALayer?
     private var markRect: FrameRect?
     private let player: AVPlayer
     private let engine = CaptionEngine.shared
@@ -30,6 +32,10 @@ final class PreviewCore {
     var onDrawn: () -> Void = {}
     /// How many fingers the host's pinch has down, for the moment when a drag hands over to a pinch.
     var pinchTouches: () -> Int = { 0 }
+    /// How far above SDR white the screen the preview is on can show, which the host reads when asked: an HDR
+    /// caption is drawn no brighter than this, or its colours clip and look saturated. A phone's is far
+    /// enough that the caption's own white level is the limit.
+    var hdrHeadroom: () -> Double = { CaptionFrame.hdrWhiteScale }
     /// Device pixels per point of the screen the preview is on: set by the host.
     var screenScale: CGFloat = 2
 
@@ -92,15 +98,30 @@ final class PreviewCore {
     private var drawnGeneration = 0
     private let verticalGuide = CALayer()
     private let horizontalGuide = CALayer()
+    /// The lines the caption is on while it is dragged (across, down), to tick when it comes to a new one.
+    private var snappedLine: (across: Double?, down: Double?) = (nil, nil)
     /// How close the caption's centre comes to a centre line of the video before it snaps, in points.
     private static let snapPull = 8.0
 
-    /// Puts the preview's layers on `host`, the layer of the view that shows them.
-    init(player: AVPlayer, host: CALayer) {
+    /// Puts the preview's layers on `host`, the layer of the view that shows them. `flipped` is for a host
+    /// whose layer has its origin at the bottom (a Mac view): the layers are then laid out from the top, as the
+    /// engine and the gestures measure, inside a container that is turned over, and each is turned back so that
+    /// its picture is the right way up.
+    init(player: AVPlayer, host: CALayer, flipped: Bool = false) {
         self.player = player
         playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = .resizeAspect
-        host.addSublayer(playerLayer)
+        let parent: CALayer
+        if flipped {
+            let container = CALayer()
+            container.isGeometryFlipped = true
+            host.addSublayer(container)
+            self.container = container
+            parent = container
+        } else {
+            parent = host
+        }
+        parent.addSublayer(playerLayer)
         overlay.contentsGravity = .resize
         overlay.magnificationFilter = .trilinear
         overlay.mask = hole
@@ -108,8 +129,8 @@ final class PreviewCore {
         hole.fillColor = CGColor(gray: 0, alpha: 1)
         markLayer.contentsGravity = .resize
         markLayer.magnificationFilter = .trilinear
-        host.addSublayer(overlay)
-        host.addSublayer(markLayer)
+        parent.addSublayer(overlay)
+        parent.addSublayer(markLayer)
         for guide in [verticalGuide, horizontalGuide] {
             guide.backgroundColor = CGColor(gray: 1, alpha: 0.9)
             guide.shadowColor = CGColor(gray: 0, alpha: 1)
@@ -117,7 +138,12 @@ final class PreviewCore {
             guide.shadowRadius = 0.5
             guide.shadowOffset = .zero
             guide.isHidden = true
-            host.addSublayer(guide)
+            parent.addSublayer(guide)
+        }
+        if flipped {
+            for layer in [playerLayer, overlay, markLayer, hole, verticalGuide, horizontalGuide] {
+                layer.isGeometryFlipped = true
+            }
         }
 
         // The player's own clock: every frame while playing, and on a seek.
@@ -135,14 +161,13 @@ final class PreviewCore {
     /// The host's size changed: the layers follow it.
     func layOut(in size: CGSize) {
         bounds = CGRect(origin: .zero, size: size)
+        container?.frame = bounds
         playerLayer.frame = bounds
         // Not `frame`, which means nothing while the layer is being transformed.
         hole.frame = CGRect(origin: .zero, size: bounds.size)
         overlay.bounds = CGRect(origin: .zero, size: bounds.size)
         overlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         placeMark()
-        verticalGuide.frame = CGRect(x: bounds.midX - 0.5, y: 0, width: 1, height: bounds.height)
-        horizontalGuide.frame = CGRect(x: 0, y: bounds.midY - 0.5, width: bounds.width, height: 1)
         // The scene is sized to the view, so a new size lays it out again.
         if let lastProject, let lastFonts {
             configure(project: lastProject, fonts: lastFonts, suspended: suspended, isPlaying: isPlaying, watermark: lastWatermark)
@@ -259,7 +284,7 @@ final class PreviewCore {
                     caption = active
                     drawnGeneration = sceneOfFrame
                     if let frame {
-                        let image = hdr ? frame.hdrCGImage(using: ciContext) : frame.cgImage(using: ciContext)
+                        let image = hdr ? frame.hdrCGImage(using: ciContext, whiteScale: min(CaptionFrame.hdrWhiteScale, max(1, hdrHeadroom()))) : frame.cgImage(using: ciContext)
                         overlay.contents = image
                         markLayer.contents = image
                     }
@@ -313,14 +338,15 @@ final class PreviewCore {
             if let box = caption?.bounds, frameSize.width > 0, frameSize.height > 0 {
                 let k = CGSize(width: bounds.width / frameSize.width, height: bounds.height / frameSize.height)
                 // Both ends by the same rule, so that a caption at rest has no offset at all.
-                func moved(_ to: Double, _ from: Double, _ extent: Double, _ limit: Double) -> CGFloat {
+                func moved(_ to: Double, _ from: Double, _ extent: Double, _ limit: Double, anchor: BlockAnchor) -> CGFloat {
                     CGFloat(
-                        CaptionGestures.blockCentre(position: to, extent: extent * Double(scale), limit: limit)
-                            - CaptionGestures.blockCentre(position: from, extent: extent, limit: limit))
+                        CaptionGestures.blockCentre(position: to, extent: extent * Double(scale), limit: limit, anchor: anchor)
+                            - CaptionGestures.blockCentre(position: from, extent: extent, limit: limit, anchor: anchor))
                 }
+                // Across, a block aligned left or right is held by that edge; down it is always by its middle.
                 offset = CGSize(
-                    width: moved(target.0, drawn.x, box.width * k.width, bounds.width),
-                    height: moved(target.1, drawn.y, box.height * k.height, bounds.height))
+                    width: moved(target.0, drawn.x, box.width * k.width, bounds.width, anchor: style.align.anchor),
+                    height: moved(target.1, drawn.y, box.height * k.height, bounds.height, anchor: .middle))
             }
             transform = CaptionGestures.liveTransform(offset: offset, scale: scale, pivot: centre, in: overlay.bounds.size)
         }
@@ -386,6 +412,7 @@ final class PreviewCore {
         }
         verticalGuide.isHidden = true
         horizontalGuide.isHidden = true
+        snappedLine = (nil, nil)
         let (position, size) = (live.position, live.fontSize)
         live = Live()
         guard position != nil || size != nil else {
@@ -480,26 +507,57 @@ final class PreviewCore {
         return location - down
     }
 
+    private static func snapped(
+        _ position: Double, extent: Double, anchor: BlockAnchor, size: Double, margin: Double
+    ) -> SnappedAxis {
+        CaptionEngine.snappedAxis(
+            position: position, extent: extent, anchor: anchor, size: size, threshold: snapPull, margin: margin)
+    }
+
+    /// Shows a guide line at `at` points along its axis, or hides it.
+    private func show(guide: CALayer, at: Double?, vertical: Bool) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        defer { CATransaction.commit() }
+        guard let at else {
+            guide.isHidden = true
+            return
+        }
+        guide.frame = vertical
+            ? CGRect(x: at - 0.5, y: 0, width: 1, height: bounds.height)
+            : CGRect(x: 0, y: at - 0.5, width: bounds.width, height: 1)
+        guide.isHidden = false
+    }
+
     /// Puts the caption where a drag has taken it, through the engine's pull to the centre lines. The
     /// answer comes back asynchronously and only the newest is used; the last one is what is committed.
     private func follow(translation: CGPoint, from start: (x: Double, y: Double), final: Bool) {
         let raw = CaptionGestures.draggedPosition(from: start, translation: translation.asSize, size: bounds.size)
         // At once, on this touch: asked of the engine's actor, the answer waited behind the frames it
         // was drawing, and the caption trailed the finger or stayed behind until it was lifted.
-        let snapped = CaptionEngine.snappedPosition(
-            x: raw.x, y: raw.y, width: bounds.width, height: bounds.height, threshold: Self.snapPull)
+        // The block's start, middle and end are pulled to the frame's margins and centre, by the engine's rule.
+        let box = caption?.bounds
+        let across = Self.snapped(
+            raw.x, extent: (box?.width ?? 0) / max(1, frameSize.width), anchor: style?.align.anchor ?? .middle,
+            size: bounds.width, margin: CaptionAlign.edgeMargin)
+        let down = Self.snapped(
+            raw.y, extent: (box?.height ?? 0) / max(1, frameSize.height), anchor: .middle, size: bounds.height,
+            margin: CaptionAlign.edgeMargin * bounds.width / max(1, bounds.height))
         if final {
             panning = false
             dragStart = nil
         } else {
             guard panning else { return }
-            if (snapped.onX && verticalGuide.isHidden) || (snapped.onY && horizontalGuide.isHidden) {
+            if across.line != snappedLine.across || down.line != snappedLine.down,
+                across.line != nil || down.line != nil
+            {
                 Haptics.tick()
             }
-            verticalGuide.isHidden = !snapped.onX
-            horizontalGuide.isHidden = !snapped.onY
+            snappedLine = (across.line, down.line)
+            show(guide: verticalGuide, at: across.line.map { $0 * bounds.width }, vertical: true)
+            show(guide: horizontalGuide, at: down.line.map { $0 * bounds.height }, vertical: false)
         }
-        live.position = (snapped.x, snapped.y)
+        live.position = (across.position, down.position)
         applyLive()
         if final { settleIfIdle() }
     }

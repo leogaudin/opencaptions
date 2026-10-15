@@ -220,57 +220,46 @@ mod abi {
         }
     }
 
-    /// Magnetism for dragging the caption block toward the video's centre lines. The
-    /// block's normalised centre (`x`, `y`) is pulled to 0.5 on an axis when it is
-    /// within `threshold` of it, with `width` and `height` the preview's size in the
-    /// unit of `threshold` (pixels). Leaves four little-endian f32 in the result
-    /// buffer: the snapped x and y, then 1.0 or 0.0 for whether each axis snapped.
+    /// Magnetism for dragging the caption block along one axis: `edit::snap_axis`, which pulls the block's
+    /// start, middle and end to the frame's near margin, centre and far margin. Leaves two little-endian
+    /// f32 in the result buffer: the snapped position, then the line it is on (a share of the axis), or -1
+    /// when it is free.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_snap_position(
-        x: f32,
-        y: f32,
-        width: f32,
-        height: f32,
+    pub extern "C" fn oc_snap_axis(
+        position: f32,
+        extent: f32,
+        anchor: f32,
+        size: f32,
         threshold: f32,
+        margin: f32,
     ) -> u32 {
-        let s = edit::snap_to_centre(x, y, width, height, threshold);
-        let mut out = Vec::with_capacity(16);
-        for v in [
-            s.x,
-            s.y,
-            f32::from(u8::from(s.on_x)),
-            f32::from(u8::from(s.on_y)),
-        ] {
+        let s = edit::snap_axis(position, extent, anchor, size, threshold, margin);
+        let mut out = Vec::with_capacity(8);
+        for v in [s.position, s.line.unwrap_or(-1.0)] {
             out.extend_from_slice(&v.to_le_bytes());
         }
         set_result(out);
         1
     }
 
-    /// `oc_snap_position`, with the four f32 written to `out` instead of the result buffer. It
-    /// touches no state the engine holds, so a caller may ask from any thread at any moment, as
-    /// a drag does on every touch.
+    /// `oc_snap_axis`, with the two f32 written to `out` instead of the result buffer. It touches no state
+    /// the engine holds, so a caller may ask from any thread at any moment, as a drag does on every touch.
     ///
     /// # Safety
-    /// `out` must point to room for four f32.
+    /// `out` must point to room for two f32.
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn oc_snap_position_into(
-        x: f32,
-        y: f32,
-        width: f32,
-        height: f32,
+    pub unsafe extern "C" fn oc_snap_axis_into(
+        position: f32,
+        extent: f32,
+        anchor: f32,
+        size: f32,
         threshold: f32,
+        margin: f32,
         out: *mut f32,
     ) {
-        let s = edit::snap_to_centre(x, y, width, height, threshold);
-        let values = [
-            s.x,
-            s.y,
-            f32::from(u8::from(s.on_x)),
-            f32::from(u8::from(s.on_y)),
-        ];
-        for (i, v) in values.into_iter().enumerate() {
-            // SAFETY: the caller gave room for four.
+        let s = edit::snap_axis(position, extent, anchor, size, threshold, margin);
+        for (i, v) in [s.position, s.line.unwrap_or(-1.0)].into_iter().enumerate() {
+            // SAFETY: the caller gave room for two.
             unsafe { out.add(i).write(v) };
         }
     }

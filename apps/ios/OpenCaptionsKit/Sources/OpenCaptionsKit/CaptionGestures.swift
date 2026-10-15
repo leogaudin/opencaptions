@@ -53,11 +53,20 @@ public enum CaptionGestures {
     }
 
     /// Where the engine puts the middle of a block `extent` long when asked for `position` (0...1) in a
-    /// frame `limit` long: centred on the position, but kept inside the frame (and against its start
+    /// frame `limit` long: centred on the position (or, for a block held by its `anchor` edge, that edge there), but kept inside the frame (and against its start
     /// if it is longer than the frame). The preview needs it to show a drag or a pinch where the
     /// release will land, which at a big size is not where the finger is.
-    public static func blockCentre(position: Double, extent: Double, limit: Double) -> Double {
-        let start = min(max(position * limit - extent / 2, 0), max(limit - extent, 0))
+    public static func blockCentre(
+        position: Double, extent: Double, limit: Double, anchor: BlockAnchor = .middle
+    ) -> Double {
+        // A block held by its edge has that edge at the position, not its middle.
+        let held: Double =
+            switch anchor {
+            case .middle: position * limit - extent / 2
+            case .start: position * limit
+            case .end: position * limit - extent
+            }
+        let start = min(max(held, 0), max(limit - extent, 0))
         return start + extent / 2
     }
 

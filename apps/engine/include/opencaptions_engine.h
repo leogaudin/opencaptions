@@ -57,13 +57,15 @@ uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
 uint32_t oc_watermark_rect(void);   /* one quad; 0 without a watermark */
 uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
 
-/* Dragging the caption: pulls the block's normalised centre (x, y) to 0.5 on an axis when it
- * is within threshold of it; width and height are the preview's size in threshold's unit
- * (pixels). Leaves four f32: snapped x, snapped y, then 1.0/0.0 for whether each snapped. */
-/* The same, written to out (four floats) rather than the result buffer; touches no engine state,
+/* Dragging the caption along one axis: the block's start, middle and end are pulled to the frame's near
+ * margin, centre and far margin when within threshold of them. position is where the block is held (a
+ * share of the axis) and anchor which part of it that is (0 start, 0.5 middle, 1 end); extent is its length
+ * as a share of the axis; size and threshold are in pixels; margin is a share of the axis. Leaves two f32:
+ * the snapped position, then the line it is on (a share of the axis), or -1 when free. */
+/* The same, written to out (two floats) rather than the result buffer; touches no engine state,
  * so it is safe to call from any thread at any time. */
-void oc_snap_position_into(float x, float y, float width, float height, float threshold, float *out);
-uint32_t oc_snap_position(float x, float y, float width, float height, float threshold);
+void oc_snap_axis_into(float position, float extent, float anchor, float size, float threshold, float margin, float *out);
+uint32_t oc_snap_axis(float position, float extent, float anchor, float size, float threshold, float margin);
 
 /* The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese, Korean, other
  * Asian scripts), as a JSON array of Google Fonts names. The host fetches them, registers each with

@@ -15,6 +15,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
 import { useAttachVideo, useVideo } from "@/lib/playback";
+import { blockAnchor, EDGE_MARGIN } from "@/lib/presets";
 import { videoSource } from "@/lib/sources";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
 import { useEditorStore } from "@/store/editorStore";
@@ -182,8 +183,11 @@ function CaptionCanvas({
   // Belongs to the gesture, not the scene: every move of a drag changes the style,
   // which rebuilds the scene and re-runs the drawing effect mid-drag.
   const dragFrom = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-  // The centre guides shown while the caption is snapped to them.
-  const [guides, setGuides] = useState({ x: false, y: false });
+  // The guide lines shown while the caption is snapped to one (a share of each axis), if it is.
+  const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({
+    x: null,
+    y: null,
+  });
 
   function onPointerDown(e: React.PointerEvent): void {
     if (editing) return;
@@ -204,21 +208,35 @@ function CaptionCanvas({
       x: clamp01(from.px + (e.clientX - from.x) / displayWidth),
       y: clamp01(from.py + (e.clientY - from.y) / displayHeight),
     };
-    // The pull is the engine's, measured against the unsnapped pointer position, so the
-    // caption lets go as soon as the pointer does.
-    const snapped = editor?.snapPosition(
-      raw,
-      { width: displayWidth, height: displayHeight },
+    // The pull is the engine's, measured against the unsnapped pointer position, so the caption
+    // lets go as soon as the pointer does. The block's start, middle and end go to the margins and
+    // the centre; down, the margin is the same distance from the edge as across.
+    const extentX = active ? (active.bounds.w * k) / displayWidth : 0;
+    const extentY = active ? (active.bounds.h * k) / displayHeight : 0;
+    const across = editor?.snapAxis(
+      raw.x,
+      extentX,
+      blockAnchor(scene.style.align),
+      displayWidth,
       SNAP_PX,
-    ) ?? { ...raw, onX: false, onY: false };
-    setStyleThrottled({ position_x: snapped.x, position_y: snapped.y });
+      EDGE_MARGIN,
+    ) ?? { position: raw.x, line: null };
+    const down = editor?.snapAxis(
+      raw.y,
+      extentY,
+      0.5,
+      displayHeight,
+      SNAP_PX,
+      (EDGE_MARGIN * displayWidth) / displayHeight,
+    ) ?? { position: raw.y, line: null };
+    setStyleThrottled({ position_x: across.position, position_y: down.position });
     setGuides((g) =>
-      g.x === snapped.onX && g.y === snapped.onY ? g : { x: snapped.onX, y: snapped.onY },
+      g.x === across.line && g.y === down.line ? g : { x: across.line, y: down.line },
     );
   }
   function endDrag(e: React.PointerEvent): void {
     dragFrom.current = null;
-    setGuides({ x: false, y: false });
+    setGuides({ x: null, y: null });
     e.currentTarget.releasePointerCapture(e.pointerId);
   }
 
@@ -268,16 +286,18 @@ function CaptionCanvas({
   return (
     <>
       <canvas ref={canvas} className="pointer-events-none absolute inset-0 h-full w-full" />
-      {guides.x && (
+      {guides.x !== null && (
         <div
           data-testid="caption-guide-x"
-          className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+          style={{ left: `${guides.x * 100}%` }}
+          className="pointer-events-none absolute inset-y-0 w-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
         />
       )}
-      {guides.y && (
+      {guides.y !== null && (
         <div
           data-testid="caption-guide-y"
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+          style={{ top: `${guides.y * 100}%` }}
+          className="pointer-events-none absolute inset-x-0 h-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
         />
       )}
       {interactive && bounds && !editing && paused && (

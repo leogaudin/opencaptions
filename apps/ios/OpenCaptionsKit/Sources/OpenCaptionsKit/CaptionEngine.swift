@@ -37,13 +37,11 @@ public struct CaptionLine: Codable, Equatable, Sendable {
     public var text: String
 }
 
-/// A caption position after magnetism toward the video's centre lines.
-public struct SnappedPosition: Equatable, Sendable {
-    public var x: Double
-    public var y: Double
-    /// Whether x was pulled to the vertical centre line, and y to the horizontal one.
-    public var onX: Bool
-    public var onY: Bool
+/// A caption position along one axis after magnetism toward the frame's centre and margins.
+public struct SnappedAxis: Equatable, Sendable {
+    public var position: Double
+    /// The guide line the block is on, a share of the axis, or nil if it is free.
+    public var line: Double?
 }
 
 public enum CaptionEdge: Int32, Sendable {
@@ -249,16 +247,17 @@ public actor CaptionEngine {
         return f.count == 4 ? FrameRect(x: f[0], y: f[1], width: f[2], height: f[3]) : nil
     }
 
-    /// Magnetism for dragging the caption block: each axis snaps to the video's centre when the block's
-    /// centre is within `threshold` of it. `width` and `height` are the preview's size in the unit of
-    /// `threshold` (points), so the pull feels the same at any size. Touches nothing the engine holds, so
-    /// a drag asks on every touch without waiting for the actor.
-    public nonisolated static func snappedPosition(
-        x: Double, y: Double, width: Double, height: Double, threshold: Double
-    ) -> SnappedPosition {
-        var v = [Float](repeating: 0, count: 4)
-        oc_snap_position_into(Float(x), Float(y), Float(width), Float(height), Float(threshold), &v)
-        return SnappedPosition(x: Double(v[0]), y: Double(v[1]), onX: v[2] == 1, onY: v[3] == 1)
+    /// Magnetism for dragging the caption along one axis (`oc_snap_axis_into`): the block's start, middle and
+    /// end are pulled to the frame's near margin, centre and far margin. `position` is where the block is held
+    /// (a share of the axis) and `anchor` which part of it that is; `extent` its length and `margin` the
+    /// margins, shares of the axis; `size` the axis as shown and `threshold` the pull, both in points.
+    public nonisolated static func snappedAxis(
+        position: Double, extent: Double, anchor: BlockAnchor, size: Double, threshold: Double, margin: Double
+    ) -> SnappedAxis {
+        var v = [Float](repeating: 0, count: 2)
+        oc_snap_axis_into(
+            Float(position), Float(extent), Float(anchor.fraction), Float(size), Float(threshold), Float(margin), &v)
+        return SnappedAxis(position: Double(v[0]), line: v[1] < 0 ? nil : Double(v[1]))
     }
 
     // MARK: Edits
