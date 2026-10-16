@@ -67,7 +67,7 @@ CONFIDENTIEL PAR CONCEPTION
 Pas de compte. Pas de statistiques. Pas de cloud. Vos vidéos restent sur votre appareil. Si vous avez votre propre serveur OpenCaptions, l’app peut lui envoyer l’audio, mais seulement si vous le configurez.
 
 GRATUIT, ET PRO POUR ALLER PLUS LOIN
-L’app gratuite contient tout pour sous-titrer une vidéo et l’enregistrer jusqu’en 1080p à 30 i/s, avec une petite marque dans un coin. Pro est un achat unique, jamais d’abonnement : il retire la marque et ajoute la 4K, 60 i/s, le HDR, tous les styles et le modèle de reconnaissance le plus précis.
+L’app gratuite contient tout pour sous-titrer une vidéo et l’enregistrer jusqu’en 1080p à 30 i/s, avec une petite marque dans un coin. Pro est un achat unique, jamais d’abonnement : il retire la marque et ajoute la 4K, 60 i/s, le HDR et tous les styles.
 
 OPEN SOURCE
 OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même ou hébergez la version web avec Docker : github.com/leogaudin/opencaptions
@@ -101,7 +101,7 @@ PRIVADA POR DISEÑO
 Sin cuenta. Sin analíticas. Sin nube. Tus vídeos se quedan en tu dispositivo. Si tienes tu propio servidor de OpenCaptions, la app puede enviarle el audio, pero solo si lo configuras.
 
 GRATIS, Y PRO CUANDO QUIERAS MÁS
-La app gratuita tiene todo para subtitular un vídeo y guardarlo hasta 1080p a 30 fps, con una pequeña marca en una esquina. Pro es un único pago, nunca una suscripción: quita la marca y añade 4K, 60 fps, HDR, todos los estilos y el modelo de voz más preciso.
+La app gratuita tiene todo para subtitular un vídeo y guardarlo hasta 1080p a 30 fps, con una pequeña marca en una esquina. Pro es un único pago, nunca una suscripción: quita la marca y añade 4K, 60 fps, HDR y todos los estilos.
 
 CÓDIGO ABIERTO
 OpenCaptions es de código abierto (AGPL-3.0). Lee el código, compílalo tú mismo o aloja la versión web con Docker: github.com/leogaudin/opencaptions
@@ -135,7 +135,7 @@ PRIVAT VON GRUND AUF
 Kein Konto. Keine Analyse. Keine Cloud. Deine Videos bleiben auf deinem Gerät. Betreibst du einen eigenen OpenCaptions-Server, kann die App das Audio dorthin senden, aber nur, wenn du es einrichtest.
 
 KOSTENLOS, UND PRO FÜR MEHR
-Die kostenlose App hat alles, um ein Video zu untertiteln und bis 1080p mit 30 Bildern/s zu sichern, mit einer kleinen Marke in der Ecke. Pro ist ein Einmalkauf, nie ein Abo: Es entfernt die Marke und bringt 4K, 60 Bilder/s, HDR, alle Stile und das genaueste Sprachmodell.
+Die kostenlose App hat alles, um ein Video zu untertiteln und bis 1080p mit 30 Bildern/s zu sichern, mit einer kleinen Marke in der Ecke. Pro ist ein Einmalkauf, nie ein Abo: Es entfernt die Marke und bringt 4K, 60 Bilder/s, HDR und alle Stile.
 
 OPEN SOURCE
 OpenCaptions ist Open Source (AGPL-3.0). Lies den Code, baue ihn selbst oder hoste die Web-Version mit Docker: github.com/leogaudin/opencaptions
@@ -169,7 +169,7 @@ PRYWATNOŚĆ OD PODSTAW
 Bez konta. Bez analityki. Bez chmury. Filmy zostają na urządzeniu. Jeśli masz własny serwer OpenCaptions, aplikacja może wysłać do niego dźwięk, ale tylko po Twojej konfiguracji.
 
 ZA DARMO, A PRO GDY CHCESZ WIĘCEJ
-Darmowa aplikacja ma wszystko, by dodać napisy do filmu i zapisać go do 1080p przy 30 kl./s, z małym znakiem w rogu. Pro to jednorazowy zakup, nigdy subskrypcja: usuwa znak i dodaje 4K, 60 kl./s, HDR, wszystkie style i najdokładniejszy model mowy.
+Darmowa aplikacja ma wszystko, by dodać napisy do filmu i zapisać go do 1080p przy 30 kl./s, z małym znakiem w rogu. Pro to jednorazowy zakup, nigdy subskrypcja: usuwa znak i dodaje 4K, 60 kl./s, HDR i wszystkie style.
 
 OPEN SOURCE
 OpenCaptions jest open source (AGPL-3.0). Czytaj kod, zbuduj go sam albo uruchom wersję webową w Dockerze: github.com/leogaudin/opencaptions
@@ -203,7 +203,7 @@ PRIVADO DESDE O PROJETO
 Sem conta. Sem análises. Sem nuvem. Seus vídeos ficam no seu aparelho. Se você tem seu próprio servidor OpenCaptions, o app pode enviar o áudio a ele, mas só se você configurar.
 
 GRÁTIS, E PRO QUANDO QUISER MAIS
-O app gratuito tem tudo para legendar um vídeo e salvá-lo até 1080p a 30 qps, com uma pequena marca no canto. O Pro é uma compra única, nunca assinatura: remove a marca e traz 4K, 60 qps, HDR, todos os estilos e o modelo de fala mais preciso.
+O app gratuito tem tudo para legendar um vídeo e salvá-lo até 1080p a 30 qps, com uma pequena marca no canto. O Pro é uma compra única, nunca assinatura: remove a marca e traz 4K, 60 qps, HDR e todos os estilos.
 
 CÓDIGO ABERTO
 O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo ou hospede a versão web com Docker: github.com/leogaudin/opencaptions
@@ -237,7 +237,7 @@ PRIVATO PER PROGETTO
 Nessun account. Nessuna analisi. Nessun cloud. I tuoi video restano sul dispositivo. Se hai un tuo server OpenCaptions, l’app può inviargli l’audio, ma solo se lo configuri.
 
 GRATIS, E PRO QUANDO VUOI DI PIÙ
-L’app gratuita ha tutto per sottotitolare un video e salvarlo fino a 1080p a 30 fps, con un piccolo marchio nell’angolo. Pro è un acquisto unico, mai un abbonamento: toglie il marchio e aggiunge 4K, 60 fps, HDR, tutti gli stili e il modello vocale più accurato.
+L’app gratuita ha tutto per sottotitolare un video e salvarlo fino a 1080p a 30 fps, con un piccolo marchio nell’angolo. Pro è un acquisto unico, mai un abbonamento: toglie il marchio e aggiunge 4K, 60 fps, HDR e tutti gli stili.
 
 OPEN SOURCE
 OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o ospita la versione web con Docker: github.com/leogaudin/opencaptions
@@ -271,7 +271,7 @@ OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o osp
 Без аккаунта. Без аналитики. Без облака. Ваши видео остаются на устройстве. Если у вас есть собственный сервер OpenCaptions, приложение может отправлять звук на него, но только если вы это настроите.
 
 БЕСПЛАТНО, А PRO — КОГДА НУЖНО БОЛЬШЕ
-В бесплатном приложении есть всё, чтобы добавить субтитры и сохранить видео до 1080p при 30 к/с с небольшой отметкой в углу. Pro — разовая покупка, никакой подписки: убирает отметку и добавляет 4K, 60 к/с, HDR, все стили и самую точную модель распознавания.
+В бесплатном приложении есть всё, чтобы добавить субтитры и сохранить видео до 1080p при 30 к/с с небольшой отметкой в углу. Pro — разовая покупка, никакой подписки: убирает отметку и добавляет 4K, 60 к/с, HDR и все стили.
 
 ОТКРЫТЫЙ КОД
 OpenCaptions — проект с открытым кодом (AGPL-3.0). Читайте код, соберите сами или разверните веб-версию в Docker: github.com/leogaudin/opencaptions
@@ -305,7 +305,7 @@ TASARIMDAN GİZLİ
 Hesap yok. Analiz yok. Bulut yok. Videolarınız cihazınızda kalır. Kendi OpenCaptions sunucunuz varsa uygulama sesi oraya gönderebilir, ama yalnızca siz kurarsanız.
 
 ÜCRETSİZ, DAHASI İÇİN PRO
-Ücretsiz uygulama, bir videoya altyazı ekleyip 1080p ve 30 fps'ye kadar kaydetmek için gereken her şeye sahiptir; köşede küçük bir işaret bulunur. Pro tek seferlik bir satın almadır, asla abonelik değil: işareti kaldırır, 4K, 60 fps, HDR, tüm stiller ve en doğru konuşma modelini ekler.
+Ücretsiz uygulama, bir videoya altyazı ekleyip 1080p ve 30 fps'ye kadar kaydetmek için gereken her şeye sahiptir; köşede küçük bir işaret bulunur. Pro tek seferlik bir satın almadır, asla abonelik değil: işareti kaldırır, 4K, 60 fps, HDR ve tüm stilleri ekler.
 
 AÇIK KAYNAK
 OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin veya web sürümünü Docker ile barındırın: github.com/leogaudin/opencaptions
@@ -339,7 +339,7 @@ OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin vey
 アカウント不要。解析なし。クラウドなし。動画は端末に残ります。自分のOpenCaptionsサーバーがあれば、設定した場合に限り、音声をそこへ送ることもできます。
 
 無料で使えて、もっと使いたいときはPro
-無料版でも、動画に字幕を付けて1080p・30fpsまで保存できます（隅に小さなマークが入ります）。Proは買い切りで、サブスクはありません。マークを消し、4K、60fps、HDR、すべてのスタイル、最も高精度な音声モデルが使えます。
+無料版でも、動画に字幕を付けて1080p・30fpsまで保存できます（隅に小さなマークが入ります）。Proは買い切りで、サブスクはありません。マークを消し、4K、60fps、HDR、すべてのスタイルが使えます。
 
 オープンソース
 OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、自分でビルドする、Dockerでウェブ版を動かすこともできます：github.com/leogaudin/opencaptions
@@ -373,7 +373,7 @@ OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、
 계정 없음. 분석 없음. 클라우드 없음. 동영상은 기기에 남습니다. 자신의 OpenCaptions 서버가 있다면 설정한 경우에만 오디오를 그곳으로 보낼 수 있습니다.
 
 무료로 쓰고, 더 필요하면 Pro
-무료 앱으로도 동영상에 자막을 넣고 1080p, 30fps까지 저장할 수 있습니다(모서리에 작은 표시가 들어갑니다). Pro는 한 번만 결제하며 구독은 없습니다. 표시를 없애고 4K, 60fps, HDR, 모든 스타일, 가장 정확한 음성 모델을 추가합니다.
+무료 앱으로도 동영상에 자막을 넣고 1080p, 30fps까지 저장할 수 있습니다(모서리에 작은 표시가 들어갑니다). Pro는 한 번만 결제하며 구독은 없습니다. 표시를 없애고 4K, 60fps, HDR, 모든 스타일을 추가합니다.
 
 오픈 소스
 OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌드하거나 Docker로 웹 버전을 운영할 수 있습니다: github.com/leogaudin/opencaptions
@@ -407,7 +407,7 @@ OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌�
 无需账号。无统计分析。无云端。视频留在你的设备上。如果你有自己的 OpenCaptions 服务器，应用可以把音频发送到那里，但仅在你自行设置后才会发生。
 
 免费使用，需要更多时升级 Pro
-免费版已包含为视频添加字幕，并保存至 1080p、30 帧/秒所需的一切，角落带有一个小标记。Pro 是一次性购买，绝不订阅：去除标记，并加入 4K、60 帧/秒、HDR、全部样式和最精准的语音模型。
+免费版已包含为视频添加字幕，并保存至 1080p、30 帧/秒所需的一切，角落带有一个小标记。Pro 是一次性购买，绝不订阅：去除标记，并加入 4K、60 帧/秒、HDR 和全部样式。
 
 开源
 OpenCaptions 是开源软件（AGPL-3.0）。你可以阅读代码、自行构建，或用 Docker 部署网页版：github.com/leogaudin/opencaptions
@@ -441,7 +441,7 @@ PRIVAT SEJAK RANCANGAN
 Tanpa akun. Tanpa analitik. Tanpa cloud. Videomu tetap di perangkatmu. Jika kamu punya server OpenCaptions sendiri, aplikasi dapat mengirim audio ke sana, tetapi hanya jika kamu mengaturnya.
 
 GRATIS, DAN PRO SAAT BUTUH LEBIH
-Aplikasi gratis punya semua yang dibutuhkan untuk memberi teks pada video dan menyimpannya hingga 1080p pada 30 fps, dengan tanda kecil di sudut. Pro adalah pembelian sekali bayar, tidak pernah langganan: menghapus tanda dan menambahkan 4K, 60 fps, HDR, semua gaya, serta model ucapan paling akurat.
+Aplikasi gratis punya semua yang dibutuhkan untuk memberi teks pada video dan menyimpannya hingga 1080p pada 30 fps, dengan tanda kecil di sudut. Pro adalah pembelian sekali bayar, tidak pernah langganan: menghapus tanda dan menambahkan 4K, 60 fps, HDR, serta semua gaya.
 
 SUMBER TERBUKA
 OpenCaptions adalah perangkat lunak sumber terbuka (AGPL-3.0). Baca kodenya, bangun sendiri, atau host versi web dengan Docker: github.com/leogaudin/opencaptions
