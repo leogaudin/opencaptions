@@ -40,7 +40,7 @@ GPU_IMAGE="opencaptions-ci-gpu:local"
 # GB of CUDA libraries), so it is built when one of these differs from origin/main.
 GPU_INPUTS="apps/api/Dockerfile apps/api/pyproject.toml apps/api/uv.lock"
 # How much Docker build cache may stay after a run, so the next run is fast but disk is bounded.
-KEEP_BUILD_CACHE="6GB"
+KEEP_BUILD_CACHE="2GB"
 
 # Pinned toolchain, matching ci.yml and the Dockerfiles.
 NODE_IMAGE="node:26-bookworm"
@@ -71,13 +71,17 @@ fail() { printf '\033[1;31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
 
 command -v docker >/dev/null || fail "docker is required"
 docker compose version >/dev/null 2>&1 || fail "docker compose v2 is required"
-command -v python3 >/dev/null || fail "python3 is required (to read the lockfile)"
 
-# Derived from the lockfile: the image ships exactly the browser build its own
-# @playwright/test expects.
-PLAYWRIGHT_VERSION="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['packages']['node_modules/@playwright/test']['version'])" "$REPO_ROOT/apps/web/package-lock.json" 2>/dev/null || true)"
-[ -n "$PLAYWRIGHT_VERSION" ] || fail "could not read @playwright/test version from apps/web/package-lock.json"
-PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble"
+# A run builds several GB of images and, on Docker Desktop, grows its disk file on the host (the file never
+# shrinks): a host with little room does not fail cleanly, it corrupts the build halfway ("read-only file
+# system"). Stop before starting instead. OC_CI_MIN_FREE_GB=0 turns the check off.
+MIN_FREE_GB="${OC_CI_MIN_FREE_GB:-8}"
+FREE_GB=$(( $(df -Pk "${TMPDIR:-/tmp}" | awk 'NR==2 {print $4}') / 1048576 ))
+if [ "$FREE_GB" -lt "$MIN_FREE_GB" ]; then
+  fail "only ${FREE_GB} GB free on this disk, a run needs ${MIN_FREE_GB}. Free space first (Xcode's DerivedData, \
+Rust target/ folders, unused simulators, 'docker system prune -a'), and if Docker Desktop's disk file is much \
+larger than its images, lower its disk limit in Settings > Resources"
+fi
 
 WORKTREE="$(mktemp -d "${TMPDIR:-/tmp}/oc-ci-XXXXXX")"
 # mktemp gives 0700; some pinned images (actionlint, playwright) run as a
@@ -269,14 +273,15 @@ compose_ci up -d --wait --wait-timeout 240 || {
 }
 STACK_UP=1
 
-# Run the SNAPSHOT's specs in the Playwright image matching the locked
-# @playwright/test version (browsers preinstalled). --network host is what lets
-# the suite reach the isolated stack's off-default port.
+# Run the SNAPSHOT's specs in the toolchain image, with Chromium installed beside the locked
+# @playwright/test, as ci.yml does: the Playwright image is a multi-GB pull for three browsers
+# when only Chromium is used. The browser lives in a named volume, so a rerun downloads nothing.
+# --network host is what lets the suite reach the isolated stack's off-default port.
 docker run --rm --network host \
-  -v "$WORKTREE":/w -w /w/apps/web \
-  -e BASE_URL="$WEB_BASE_URL" -e HOME=/tmp \
-  "$PLAYWRIGHT_IMAGE" \
-  sh -euc 'npm ci --no-audit --no-fund >/dev/null && npm run test:e2e' \
+  -v "$WORKTREE":/w -w /w/apps/web -v opencaptions-ci-playwright:/pw \
+  -e BASE_URL="$WEB_BASE_URL" -e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/pw \
+  "$TOOLS_IMAGE" \
+  sh -euc 'npm ci --no-audit --no-fund >/dev/null && npx playwright install --with-deps chromium >/dev/null && npm run test:e2e' \
   || fail "end-to-end tests failed"
 
 bold $'\n✓ Full local CI passed, this commit is expected to pass GitHub CI'

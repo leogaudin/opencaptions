@@ -17,7 +17,9 @@ snapshot of committed source in pinned containers, and its end-to-end stack runs
 under its own project name on an off-default port, so none of your volumes are
 reachable from it. It builds the api, engine and web images once (tagged `ci-local`, never
 over a live stack's `latest`), starts the e2e stack from them, and removes them at the end,
-keeping at most a few GB of build cache. The GPU image is the slowest build and only what
+keeping at most 2 GB of build cache. It refuses to start with under 8 GB free on the host
+(`OC_CI_MIN_FREE_GB` changes that): on Docker Desktop the disk file only grows, and a full host
+fails mid-build with a misleading "read-only file system". Free space first, never retry through it. The GPU image is the slowest build and only what
 the publish job pushes, so it is built when `apps/api/Dockerfile`, `pyproject.toml` or
 `uv.lock` differ from `origin/main`; `scripts/ci-local.sh --gpu` builds it regardless.
 
