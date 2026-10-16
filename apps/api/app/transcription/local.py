@@ -214,6 +214,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             segments=segments,
         )
 
+
 # A stretch of audio this long with no word in it is worth a line in the log: it is either
 # silence or speech that was skipped, and from the transcript alone they look the same.
 SILENT_STRETCH_S = 15.0

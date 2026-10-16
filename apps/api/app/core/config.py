@@ -56,7 +56,6 @@ class Settings(BaseSettings):
     transcription_result_ttl_h: int = 24
     transcription_max_concurrent: int = 2
 
-
     # ----- Limits -----
     max_upload_size_mb: int = 2048
     max_video_duration_s: int = 3600
