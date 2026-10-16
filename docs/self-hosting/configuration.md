@@ -74,8 +74,8 @@ Password reset by email turns on when a host is set. See [Accounts](./accounts.m
 | `TRANSCRIPTION_RESULT_TTL_H` | `24` | Hours a finished transcript is kept for a client to fetch. |
 | `TRANSCRIPTION_MAX_CONCURRENT` | `2` | Transcription jobs one user may have running at once through the transcription API. |
 
-The `WHISPER_*` tuning settings (voice filter, hallucination guard, second look) are explained in
-[Speech models and providers](./speech-models.md#tuning-whisper).
+Whisper has no tuning settings: how it is run is explained in
+[Speech models and providers](./speech-models.md#how-whisper-is-run).
 
 ## Limits
 

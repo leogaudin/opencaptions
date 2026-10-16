@@ -113,9 +113,8 @@ at a time, large-v3-turbo:
 | **Voice filter off + hallucination guard (the default)** | **6** | 4.2x |
 
 The voice filter (Silero) takes shouting and speech over a loud music bed for non-speech, and what it
-drops is never decoded, whatever the threshold. So it is off by default. Decoding everything costs about
-twice the CPU on this clip (less on talking-head recordings with long silences), and
-`VAD_FILTER` in `transcription/local.py` switches the filter back on. Beam 5 stays: greedy decoding triggers more
+drops is never decoded, whatever the threshold. So it is not used. Decoding everything costs about
+twice the CPU on this clip (less on talking-head recordings with long silences). Beam 5 stays: greedy decoding triggers more
 temperature fallbacks and was slower (2.8x against 4.2x), with repeated words.
 
 Parakeet, given the same audio in 20 s windows, found four of the six lines. A window that comes back
@@ -130,9 +129,9 @@ empty. It is how faster-whisper's long-form loop moves on: when a 30 s window's 
 timestamp ("no speech after the last timestamp"), it advances the whole window, so audio the model judged
 not to be speech after that point is never decoded.
 
-### The second look (off by default)
+### The second look (tried on the server, not kept)
 
-`chunking.second_look` (`FILL_GAPS` in `transcription/local.py`, off) decodes each long empty stretch that is not quiet again
+The server's second look decoded each long empty stretch that is not quiet again
 alone, twice with the window shifted 0.9 s, and keeps only the words both readings give within 1.5 s.
 Invented text differs between the two readings; speech comes out of both. Listening to the film's 18 long
 empty stretches gave the reference (12 held real words or interjections, 5 held nothing):
@@ -145,7 +144,7 @@ empty stretches gave the reference (12 held real words or interjections, 5 held 
 | Qwen3-ASR 1.7B | 29 | 40 |
 | Parakeet v3 | 2 | 6 |
 
-It stays opt-in because of what it costs and what it cannot do:
+It was removed from the server because of what it costs and what it cannot do (the phone keeps its own):
 
 - **Cost.** The film went from 188 s to 976 s (3.4x to 0.6x real time): Whisper's temperature fallback
   retries hard over music and noise, 15 to 20 s per stretch.

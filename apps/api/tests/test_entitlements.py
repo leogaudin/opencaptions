@@ -104,8 +104,6 @@ async def test_transcription_denied_surfaces_403_not_500(
     seed_project: Any,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from app.core.config import settings
-
     register(_DenyAllPolicy())
     monkeypatch.setattr("app.services.entitlements.ACTIVE_POLICY", "deny-all-test")
 
@@ -125,7 +123,6 @@ async def test_render_denied_surfaces_403_not_500(
     seed_project: Any,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from app.core.config import settings
     from app.storage import s3
 
     # Force a cache MISS so the request reaches the enqueue path (and the check).

@@ -9,13 +9,11 @@ started without that flag. Reports progress via the supplied callback as segment
 from __future__ import annotations
 
 import logging
-import wave
 from threading import Lock
 from typing import Any
 
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
-from app.transcription import chunking
 from app.transcription.base import ProgressCallback, TranscriptionProvider, register
 from app.transcription.device import resolve_compute_type, resolve_device
 from app.transcription.fetch_progress import FetchPlan
@@ -23,31 +21,16 @@ from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
 
-# Voice-activity filtering is off: it decides what is speech with a model that takes shouting or speech over
-# loud music for non-speech, and what it drops is never decoded, so whole lines go missing (on a test film it
-# lost five of six lines that decoding everything found, whatever the threshold). Decoding everything costs
-# more CPU on content with long silences, which is the price of finding all the speech.
-VAD_FILTER = False
-# faster-whisper moves on from a 30 s window when the model says "no speech after here", and never decodes
-# what the window still holds: shouting or singing over music can come back as a long empty stretch. The
-# second look decodes each empty stretch of FILL_GAP_S seconds that is not quiet again alone, twice with the
-# window shifted, and keeps only the words both readings give (text invented over music differs between the
-# two). Off: on a 10-minute film it costs about five times the transcription time for a dozen words.
-FILL_GAPS = False
 # What the transcription is tuned to, measured (docs/project/speech-model-benchmarks.md) and not
 # something an operator should have to guess at: the defaults find all the speech, not the fastest run.
-# The voice-activity threshold, when VAD_FILTER is on.
-VAD_THRESHOLD = 0.5
+# Everything is decoded: Whisper's own voice-activity filter is never used, because it takes shouting or
+# speech over loud music for non-speech and what it drops is never decoded (whole lines go missing).
 # A window whose no-speech probability exceeds this, and whose average log probability is below the
 # floor, is treated as silence and skipped. Raising it makes the decoder keep more marginal audio.
 NO_SPEECH_THRESHOLD = 0.6
 # With word timings on, Whisper looping over silence or music is cut where a silence this long
 # (seconds) follows a suspect segment: what keeps invented text out of the quiet stretches.
 HALLUCINATION_SILENCE_S = 2.0
-# The second look (FILL_GAPS): an empty stretch at least this long (seconds) that is not
-# quiet is decoded again, and the second look examines at most FILL_BUDGET of the recording.
-FILL_GAP_S = 5.0
-FILL_BUDGET = 0.5
 
 
 class LocalWhisperProvider(TranscriptionProvider):
@@ -138,10 +121,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             audio_path,
             language=whisper_lang,
             word_timestamps=True,
-            vad_filter=VAD_FILTER,
-            vad_parameters={"threshold": VAD_THRESHOLD}
-            if VAD_FILTER
-            else None,
+            vad_filter=False,
             no_speech_threshold=NO_SPEECH_THRESHOLD,
             hallucination_silence_threshold=HALLUCINATION_SILENCE_S,
             beam_size=5,
@@ -156,8 +136,6 @@ class LocalWhisperProvider(TranscriptionProvider):
         duration: float = float(info.duration or 0.0)
         was_auto = whisper_lang is None
 
-        # The first pass reports up to this share; the second look, when it runs, the rest.
-        first_pass_share = _first_pass_share()
         segments: list[TranscriptSegment] = []
         dropped_alignments = 0
         for seg in segments_iter:
@@ -183,7 +161,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             seg_obj = segment_of(words)
             segments.append(seg_obj)
             if on_progress and duration > 0:
-                fraction = min(1.0, max(0.0, seg_obj.end / duration)) * first_pass_share
+                fraction = min(1.0, max(0.0, seg_obj.end / duration))
                 on_progress(fraction, f"Transcribed {seg_obj.end:.1f}s / {duration:.1f}s")
 
         if dropped_alignments:
@@ -191,10 +169,6 @@ class LocalWhisperProvider(TranscriptionProvider):
                 "word alignment failed on %d segment(s); timings interpolated across each span",
                 dropped_alignments,
             )
-
-        segments = self._second_look(
-            whisper, audio_path, segments, detected_lang, duration, on_progress
-        )
 
         # A transcript that covers only the start of a video is the one failure
         # users actually report, and it is invisible from the output alone. Say how
@@ -204,14 +178,12 @@ class LocalWhisperProvider(TranscriptionProvider):
         spoken = sum(seg.end - seg.start for seg in segments)
         logger.info(
             "transcribed %.1fs of audio: %d segments, %d words, last word at %.1fs "
-            "(%.0f%% of duration covered, vad_filter=%s threshold=%.2f model=%s)",
+            "(%.0f%% of duration covered, model=%s)",
             duration,
             len(segments),
             sum(len(seg.words) for seg in segments),
             last_word_end,
             100.0 * spoken / duration if duration else 0.0,
-            VAD_FILTER,
-            VAD_THRESHOLD,
             model_name,
         )
         silent = _silent_stretches(segments, duration)
@@ -242,91 +214,6 @@ class LocalWhisperProvider(TranscriptionProvider):
             segments=segments,
         )
 
-    @staticmethod
-    def _second_look(
-        whisper: Any,
-        audio_path: str,
-        segments: list[TranscriptSegment],
-        language: str,
-        duration: float,
-        on_progress: ProgressCallback | None,
-    ) -> list[TranscriptSegment]:
-        """The segments, plus whatever a second look finds in the long stretches with no words.
-
-        See `chunking.second_look` for why a stretch can be empty though someone speaks in it.
-        A recording that cannot be read again is returned as it was, and so is any when the
-        second look is off.
-        """
-        if not FILL_GAPS or duration <= 0:
-            return segments
-        gaps = chunking.long_gaps(
-            [(w.start, w.end) for seg in segments for w in seg.words],
-            duration,
-            FILL_GAP_S,
-        )
-        if not gaps:
-            return segments
-        try:
-            samples = chunking.read_wav(audio_path)
-        except (OSError, EOFError, wave.Error):
-            logger.warning(
-                "second look skipped: %s could not be read again as a WAV file", audio_path
-            )
-            return segments
-        if on_progress:
-            on_progress(0.9, "Looking again at long stretches with no words")
-
-        def decode(window: Any) -> chunking.Words:
-            found, _ = whisper.transcribe(
-                window,
-                language=language,
-                word_timestamps=True,
-                vad_filter=False,
-                no_speech_threshold=NO_SPEECH_THRESHOLD,
-                hallucination_silence_threshold=HALLUCINATION_SILENCE_S,
-                beam_size=5,
-                condition_on_previous_text=False,
-            )
-            return [
-                (
-                    (w.word or "").strip(),
-                    float(w.start or 0.0),
-                    float(w.end or 0.0),
-                    float(getattr(w, "probability", 1.0) or 1.0),
-                )
-                for seg in found
-                for w in seg.words or []
-                if (w.word or "").strip()
-            ]
-
-        kept = chunking.second_look(
-            decode, samples, gaps, budget_s=duration * FILL_BUDGET
-        )
-        logger.info(
-            "second look at %d stretch(es) with no words: %d word(s) found", len(gaps), len(kept)
-        )
-        added: list[TranscriptSegment] = []
-        for gap_start, gap_end in gaps:
-            words = [
-                Word(
-                    text=text,
-                    start=max(gap_start, start),
-                    end=min(gap_end, max(end, start)),
-                    confidence=min(1.0, max(0.0, confidence)),
-                )
-                for text, start, end, confidence in kept
-                if gap_start - 0.05 <= start < gap_end
-            ]
-            if words:
-                added.append(segment_of(words))
-        return sorted(segments + added, key=lambda seg: seg.start)
-
-
-def _first_pass_share() -> float:
-    """The share of the progress bar the first pass fills; the second look has the rest."""
-    return 0.9 if FILL_GAPS else 1.0
-
-
 # A stretch of audio this long with no word in it is worth a line in the log: it is either
 # silence or speech that was skipped, and from the transcript alone they look the same.
 SILENT_STRETCH_S = 15.0
@@ -346,13 +233,9 @@ def _silent_stretches(
 
 def _skipped_hint() -> str:
     """Where speech missing from a stretch usually went, for the log line naming the stretch."""
-    if VAD_FILTER:
-        return (
-            "Real speech there was skipped by voice detection or by the no-speech check; music or noise under it is the usual cause"
-        )
     return (
-        "Everything was decoded, so Whisper heard no speech there; if there is some, music or "
-        "noise under it is the usual cause (or try a larger model)"
+        "Whisper heard no speech there; if there is some, music or noise under it is the usual "
+        "cause (or try a larger model)"
     )
 
 

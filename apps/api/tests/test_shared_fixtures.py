@@ -1,8 +1,8 @@
 """The Python and the Swift transcript logic are held to the same sample data.
 
-`sherpa.words_from_tokens` and `chunking.agreed_in_gap` here, `TokenMapping.words` and
-`TranscriptGaps.kept` in the iOS app, each read the files in the iOS tests' `Fixtures`: a case
-added there must pass in both languages.
+`sherpa.words_from_tokens` here and `TokenMapping.words` in the iOS app each read the files in the iOS tests'
+`Fixtures`: a case added there must pass in both languages. (`second-look.json` is the iPhone's alone: the
+server does not take a second look.)
 """
 
 from __future__ import annotations
@@ -15,7 +15,6 @@ from typing import Any
 import pytest
 
 from app.models.schemas import Word
-from app.transcription.chunking import agreed_in_gap
 from app.transcription.sherpa import _separate, words_from_tokens
 
 _FIXTURES = (
@@ -54,13 +53,3 @@ def test_tokens_make_the_words_the_shared_cases_say(case: dict[str, Any]) -> Non
         assert got.start == pytest.approx(expected["start"], abs=1e-4)
         assert got.end == pytest.approx(expected["end"], abs=1e-4)
         assert got.confidence == pytest.approx(expected["confidence"], abs=1e-4)
-
-
-@pytest.mark.parametrize("case", _cases("second-look.json"), ids=lambda c: c["name"])
-def test_two_readings_of_a_gap_agree_as_the_shared_cases_say(case: dict[str, Any]) -> None:
-    def words(readings: list[dict[str, Any]]) -> list[tuple[str, float, float, float]]:
-        return [(w["text"], w["start"], w["start"] + 0.5, 1.0) for w in readings]
-
-    start, end = case["gap"]
-    kept = agreed_in_gap(words(case["first"]), words(case["second"]), start, end)
-    assert [w[0] for w in kept] == case["kept"]

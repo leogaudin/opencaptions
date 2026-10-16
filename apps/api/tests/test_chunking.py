@@ -9,8 +9,6 @@ from app.transcription.chunking import (
     Words,
     decode_window,
     is_quiet,
-    long_gaps,
-    second_look,
     windows,
 )
 
@@ -114,67 +112,3 @@ def test_retry_can_be_switched_off() -> None:
 
     decode_window(decode, _tone(16), retry=False)
     assert len(calls) == 1
-
-
-def test_long_gaps_are_the_stretches_no_word_covers() -> None:
-    spans = [(1.0, 2.0), (10.0, 11.0), (10.5, 12.0)]
-    assert long_gaps(spans, 20.0, 5.0) == [(2.0, 10.0), (12.0, 20.0)]
-    assert long_gaps(spans, 20.0, 9.0) == []
-    assert long_gaps([], 20.0, 5.0) == [(0.0, 20.0)]
-    assert long_gaps([(0.0, 20.0)], 20.0, 5.0) == []
-
-
-def _readings(*readings: Words) -> tuple[list[int], object]:
-    """A decoder that gives each reading in turn, and a list of the lengths it was shown."""
-    shown: list[int] = []
-    queue = list(readings)
-
-    def decode(samples: np.ndarray) -> Words:
-        shown.append(len(samples))
-        return queue.pop(0) if queue else []
-
-    return shown, decode
-
-
-def test_only_words_both_readings_give_are_kept() -> None:
-    audio = _tone(30.0)
-    # The gap is 5 s to 25 s. The first reading's window starts 0.3 s before it (4.7 s), the second's
-    # 0.9 s after it begins (5.9 s), so a word at 8.0 s is 3.3 s into the first and 2.1 s into the second.
-    first: Words = [("hello", 3.3, 3.8, 0.9), ("zzz", 5.3, 5.8, 0.9)]
-    second: Words = [("Hello!", 2.1, 2.6, 0.9)]
-    shown, decode = _readings(first, second)
-    kept = second_look(decode, audio, [(5.0, 25.0)])  # type: ignore[arg-type]
-    assert [w[0] for w in kept] == ["hello"], (
-        "the word both readings give, not the one only one gave"
-    )
-    assert abs(kept[0][1] - 8.0) < 1e-6, "its time is from the start of the recording"
-    assert len(shown) == 2
-
-
-def test_a_reading_that_differs_from_the_other_keeps_nothing() -> None:
-    audio = _tone(30.0)
-    _, decode = _readings([("boom", 0.7, 1.2, 0.9)], [("love", 0.0, 0.5, 0.9)])
-    assert second_look(decode, audio, [(5.0, 25.0)]) == []  # type: ignore[arg-type]
-
-
-def test_words_outside_the_gap_are_left_to_the_first_pass() -> None:
-    audio = _tone(30.0)
-    # 4.8 s is the word before the gap that the padded window also covers.
-    _, decode = _readings([("before", 0.1, 0.4, 0.9)], [("before", 0.0, 0.3, 0.9)])
-    assert second_look(decode, audio, [(5.0, 25.0)]) == []  # type: ignore[arg-type]
-
-
-def test_a_quiet_gap_is_not_looked_at() -> None:
-    audio = np.concatenate([_tone(5.0), _silence(20.0), _tone(5.0)])
-    shown, decode = _readings([("x", 1.0, 1.5, 0.9)])
-    assert second_look(decode, audio, [(5.0, 25.0)]) == []  # type: ignore[arg-type]
-    assert shown == [], "silence is expected to be empty"
-
-
-def test_the_budget_bounds_how_much_audio_is_looked_at() -> None:
-    audio = _tone(80.0)
-    shown, decode = _readings()
-    second_look(decode, audio, [(5.0, 25.0), (30.0, 50.0), (55.0, 75.0)], budget_s=30.0)  # type: ignore[arg-type]
-    assert len(shown) == 1, (
-        "one gap fits the budget; each takes a single decode when nothing is found"
-    )

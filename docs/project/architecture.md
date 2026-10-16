@@ -283,9 +283,9 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
     and speech over loud music for non-speech and what it drops is never transcribed. The
     no-speech check and a hallucination guard stay on. faster-whisper still
     moves on from a window when the model says "no speech after here", leaving some loud
-    stretches empty; the server could decode each long empty stretch again, twice,
-    keeping only the words both readings give (`chunking.second_look`), and does not: it
-    costs several times the transcription time on action content ([measurements](./speech-model-benchmarks.md)).
+    stretches empty. The server does not read them a second time (the phone does): it costs
+    several times the transcription time for a few words ([measurements](./speech-model-benchmarks.md)); a
+    model that does not do this, Parakeet Ultra, is the default.
   - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet Ultra is the first. It
     cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
     for being "not speech", and decodes a window again in halves when it comes back empty
@@ -532,7 +532,7 @@ disk.
   on either side. After the main pass, every stretch of 6 s or more without words that is not quiet
   (at most 12) is decoded twice without that judgement, the second window shifted, and only the
   words both readings give are kept (`TranscriptGaps`; text invented over music differs between the
-  two). On by default on the phone; the server's version is switched off in the code (`FILL_GAPS`, see the
+  two). The server tried it and does not keep it (see the
   [benchmarks](./speech-model-benchmarks.md)).
 - **On a server.** Settings → "Where to transcribe" switches between this phone and "My server":
   another OpenCaptions backend, connected by pasting the link the web app makes (or typing the
