@@ -38,6 +38,27 @@ it again, about 30 s for Parakeet Ultra on an M1 Mac and minutes on a phone. Whe
 transcription, use the second launch of one build. See "Loading" in `docs/project/architecture.md`. (`OC_RESET=1`
 in the debug launch switches also wipes the app's projects each launch: it is for screenshots.)
 
+## Debug launch switches
+
+Environment variables the app reads **in Debug builds only** (each use is under `#if DEBUG`, so a release or App
+Store build ignores them). They exist for the UI tests and for `AppStore/screenshots/`, to put the app on a
+screen without tapping there; on a simulator pass them as `SIMCTL_CHILD_<NAME>=…`. They are not configuration
+and nothing outside this repository's tests should depend on them.
+
+| Switch | Does |
+|---|---|
+| `OC_RESET` | Deletes every project at launch, so a test starts from nothing. |
+| `OC_SEED_VIDEO=<file>` | Makes a project from this video if there is none; `OC_SEED_TRANSCRIPT=<json>` gives it a transcript. |
+| `OC_OPEN_FIRST` | Opens the first project; `OC_SEEK=<seconds>` moves the playhead there. |
+| `OC_TIER=free\|pro` | Starts with the free or the Pro limits. |
+| `OC_TAB=settings` | Opens on Settings. |
+| `OC_SHOW_STYLE`, `OC_STYLE_TAB=<tab>`, `OC_SHOW_FONTS` | Opens the style panel, on a tab, or the font picker. |
+| `OC_SHOW_TRANSCRIBE`, `OC_LANGUAGE_STEP` | Opens the transcription sheet, or its language list. |
+| `OC_SHOW_SAVE`, `OC_SHOW_IMPORT=<video>` | Opens the save options, or the import confirmation for a video. |
+| `OC_SHOW_CONNECT` | Opens the "transcribe on a server" sheet. |
+| `OC_EDIT_WORD` | Opens the editor on the second word. |
+| `OC_WHISPER_MODELS=<dir>` | Tests only: keeps the model the Whisper end-to-end test downloads. |
+
 Transcription runs on the phone by default. Settings → "Where to transcribe" can point it at
 another OpenCaptions server instead (paste the link the web app's Account page makes when you
 create a key); see "Transcribing on a server" in `docs/project/architecture.md`.

@@ -92,7 +92,7 @@ def test_a_long_stretch_with_no_words_is_named_in_the_log(monkeypatch: Any, capl
     assert "1s-60s" in caplog.text
     # Nothing was filtered out, so the log does not send anyone to tune a filter.
     assert "Everything was decoded" in caplog.text
-    assert "WHISPER_VAD_THRESHOLD" not in caplog.text
+    assert "WHISPER_VAD_FILTER" not in caplog.text
 
 
 def test_a_long_stretch_names_the_voice_filter_when_it_is_on(monkeypatch: Any, caplog: Any) -> None:

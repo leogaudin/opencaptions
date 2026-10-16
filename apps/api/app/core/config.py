@@ -64,27 +64,16 @@ class Settings(BaseSettings):
     # everything costs more CPU on content with long silences; turn the filter on
     # (WHISPER_VAD_FILTER=true) for talking-head recordings where that matters.
     whisper_vad_filter: bool = False
-    whisper_vad_threshold: float = 0.5
-    # A window whose no-speech probability exceeds this, and whose average log
-    # probability is below the log-prob floor, is treated as silence and skipped.
-    # Raising it makes the decoder keep more marginal audio.
-    whisper_no_speech_threshold: float = 0.6
-    # With word timings on, Whisper looping over silence or music is cut where a
-    # silence this long (seconds) follows a suspect segment. Without the voice filter
-    # this is what keeps invented text out of the quiet stretches.
-    whisper_hallucination_silence_s: float = 2.0
     # faster-whisper moves on from a 30 s window when the model says "no speech after
     # here", and never decodes what the window still holds: shouting or singing over
     # music can come back as a long empty stretch. With this on, each empty stretch of
-    # whisper_fill_gap_s seconds that is not quiet is decoded again alone, twice with
+    # FILL_GAP_S seconds (app.transcription.local) that is not quiet is decoded again alone, twice with
     # the window shifted, and only words both readings give are kept (text invented over
     # music differs between the two). Off by default: on a 10-minute film it costs about
     # five times the transcription time (Whisper retries hard over non-speech) for a
-    # dozen words, and the second look examines at most whisper_fill_budget of the
+    # dozen words, and the second look examines at most FILL_BUDGET of the
     # recording. WHISPER_FILL_GAPS=true to try it on your own recordings.
     whisper_fill_gaps: bool = False
-    whisper_fill_gap_s: float = 5.0
-    whisper_fill_budget: float = 0.5
 
     # ----- Entitlements -----
     # Policy name registered in app.services.entitlements; 'unlimited' never denies.

@@ -23,6 +23,21 @@ from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
 
+# What the transcription is tuned to, measured (docs/project/speech-model-benchmarks.md) and not
+# something an operator should have to guess at: the defaults find all the speech, not the fastest run.
+# The voice-activity threshold, when WHISPER_VAD_FILTER is on.
+VAD_THRESHOLD = 0.5
+# A window whose no-speech probability exceeds this, and whose average log probability is below the
+# floor, is treated as silence and skipped. Raising it makes the decoder keep more marginal audio.
+NO_SPEECH_THRESHOLD = 0.6
+# With word timings on, Whisper looping over silence or music is cut where a silence this long
+# (seconds) follows a suspect segment: what keeps invented text out of the quiet stretches.
+HALLUCINATION_SILENCE_S = 2.0
+# The second look (WHISPER_FILL_GAPS): an empty stretch at least this long (seconds) that is not
+# quiet is decoded again, and the second look examines at most FILL_BUDGET of the recording.
+FILL_GAP_S = 5.0
+FILL_BUDGET = 0.5
+
 
 class LocalWhisperProvider(TranscriptionProvider):
     """faster-whisper backed local transcription."""
@@ -113,11 +128,11 @@ class LocalWhisperProvider(TranscriptionProvider):
             language=whisper_lang,
             word_timestamps=True,
             vad_filter=settings.whisper_vad_filter,
-            vad_parameters={"threshold": settings.whisper_vad_threshold}
+            vad_parameters={"threshold": VAD_THRESHOLD}
             if settings.whisper_vad_filter
             else None,
-            no_speech_threshold=settings.whisper_no_speech_threshold,
-            hallucination_silence_threshold=settings.whisper_hallucination_silence_s,
+            no_speech_threshold=NO_SPEECH_THRESHOLD,
+            hallucination_silence_threshold=HALLUCINATION_SILENCE_S,
             beam_size=5,
             # Whisper otherwise feeds its own previous output back as context, and
             # once that drifts it can stay drifted, emitting near-empty output for
@@ -185,7 +200,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             last_word_end,
             100.0 * spoken / duration if duration else 0.0,
             settings.whisper_vad_filter,
-            settings.whisper_vad_threshold,
+            VAD_THRESHOLD,
             model_name,
         )
         silent = _silent_stretches(segments, duration)
@@ -200,7 +215,7 @@ class LocalWhisperProvider(TranscriptionProvider):
         if duration > 0 and last_word_end < duration * 0.75:
             logger.warning(
                 "transcript stops at %.1fs of %.1fs, the tail produced no words. If there is "
-                "speech there, try a larger model or a lower WHISPER_NO_SPEECH_THRESHOLD%s",
+                "speech there, try a larger model%s",
                 last_word_end,
                 duration,
                 ", or WHISPER_VAD_FILTER=false" if settings.whisper_vad_filter else "",
@@ -237,7 +252,7 @@ class LocalWhisperProvider(TranscriptionProvider):
         gaps = chunking.long_gaps(
             [(w.start, w.end) for seg in segments for w in seg.words],
             duration,
-            settings.whisper_fill_gap_s,
+            FILL_GAP_S,
         )
         if not gaps:
             return segments
@@ -257,8 +272,8 @@ class LocalWhisperProvider(TranscriptionProvider):
                 language=language,
                 word_timestamps=True,
                 vad_filter=False,
-                no_speech_threshold=settings.whisper_no_speech_threshold,
-                hallucination_silence_threshold=settings.whisper_hallucination_silence_s,
+                no_speech_threshold=NO_SPEECH_THRESHOLD,
+                hallucination_silence_threshold=HALLUCINATION_SILENCE_S,
                 beam_size=5,
                 condition_on_previous_text=False,
             )
@@ -275,7 +290,7 @@ class LocalWhisperProvider(TranscriptionProvider):
             ]
 
         kept = chunking.second_look(
-            decode, samples, gaps, budget_s=duration * settings.whisper_fill_budget
+            decode, samples, gaps, budget_s=duration * FILL_BUDGET
         )
         logger.info(
             "second look at %d stretch(es) with no words: %d word(s) found", len(gaps), len(kept)
@@ -324,12 +339,11 @@ def _skipped_hint() -> str:
     if settings.whisper_vad_filter:
         return (
             "Real speech there was skipped by voice detection (WHISPER_VAD_FILTER=false decodes "
-            "everything; WHISPER_VAD_THRESHOLD tunes it) or by the no-speech check "
-            "(WHISPER_NO_SPEECH_THRESHOLD); music or noise under it is the usual cause"
+            "everything) or by the no-speech check; music or noise under it is the usual cause"
         )
     return (
         "Everything was decoded, so Whisper heard no speech there; if there is some, music or "
-        "noise under it is the usual cause (WHISPER_NO_SPEECH_THRESHOLD, or a larger model)"
+        "noise under it is the usual cause (or try a larger model)"
     )
 
 

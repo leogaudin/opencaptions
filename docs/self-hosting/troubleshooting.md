@@ -51,8 +51,8 @@ memory figures in [Speech models](./speech-models.md#local-models).
 [Tuning Whisper](./speech-models.md#tuning-whisper): `WHISPER_FILL_GAPS` re-reads them at a cost in time. The
 iPhone app does this on its own.
 
-**Words are invented over music or silence.** The same settings guard against it
-(`WHISPER_HALLUCINATION_SILENCE_S`).
+**Words are invented over music or silence.** Whisper cuts a suspect segment that is followed by a long silence;
+a larger model also hallucinates less.
 
 **The transcript is empty.** The model found no speech. Try another model, or check that the video's sound
 is not silent.

@@ -67,10 +67,8 @@ The defaults are chosen to find all the speech, not to be fast:
 | Setting | Default | What it does |
 |---|---|---|
 | `WHISPER_VAD_FILTER` | `false` | A voice-detection filter that skips non-speech. It is off because it takes shouting, or speech over loud music, for non-speech, and what it drops is never transcribed, so whole lines go missing. Turn it on for talking-head recordings with long silences, to save processor time. |
-| `WHISPER_VAD_THRESHOLD` | `0.5` | The filter's threshold, when it is on. |
-| `WHISPER_NO_SPEECH_THRESHOLD` | `0.6` | A window whose no-speech probability is above this, and whose average log probability is low, is treated as silence. Raising it keeps more marginal audio. |
-| `WHISPER_HALLUCINATION_SILENCE_S` | `2.0` | Cuts a suspect segment where a silence this long follows it. This is what keeps invented text out of quiet stretches. |
-| `WHISPER_FILL_GAPS` | `false` | A second look: each empty stretch of `WHISPER_FILL_GAP_S` seconds (5) that is not quiet is decoded again, twice with the window shifted, and only the words both readings give are kept. Off by default: on a 10-minute film it costs about five times the transcription time for a dozen words. |
-| `WHISPER_FILL_BUDGET` | `0.5` | The most of the recording the second look examines. |
+| `WHISPER_FILL_GAPS` | `false` | A second look: each empty stretch of 5 seconds or more that is not quiet is decoded again, twice with the window shifted, and only the words both readings give are kept. Off by default: on a 10-minute film it costs about five times the transcription time for a dozen words. |
 
-[Why these defaults](../project/speech-model-benchmarks.md) has the measurements behind them.
+The other thresholds (the voice filter's, the no-speech check, the hallucination cut, how much the second look
+examines) are fixed in the code at the values the measurements chose, so there is nothing else to tune. [Why these
+defaults](../project/speech-model-benchmarks.md) has the measurements behind them.
