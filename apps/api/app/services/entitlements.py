@@ -77,11 +77,14 @@ def available_policies() -> list[str]:
     return sorted(_REGISTRY.keys())
 
 
+# The policy in force. The core registers one ("unlimited"); another build registers its own and names it
+# here. It is code and not a setting: an operator of a self-hosted instance has nothing to choose.
+ACTIVE_POLICY = "unlimited"
+
+
 def resolve_policy() -> EntitlementPolicy:
     """Return the configured policy, falling back to 'unlimited'."""
-    from app.core.config import settings
-
-    return get_policy(settings.entitlement_provider)
+    return get_policy(ACTIVE_POLICY)
 
 
 # Register the core's only implementation, selected by default. See module docstring.

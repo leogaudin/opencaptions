@@ -47,9 +47,8 @@ copy a `models` folder from a machine that has downloaded the model.
 **It runs out of memory and the job fails.** The model is too big for the machine. Pick a smaller one: see the
 memory figures in [Speech models](./speech-models.md#local-models).
 
-**Words are missing in a loud or musical stretch.** The speech models sometimes skip loud stretches. See
-[Tuning Whisper](./speech-models.md#tuning-whisper): `WHISPER_FILL_GAPS` re-reads them at a cost in time. The
-iPhone app does this on its own.
+**Words are missing in a loud or musical stretch.** The speech models sometimes skip loud stretches. Try a
+larger model. The iPhone app also reads such stretches a second time on its own.
 
 **Words are invented over music or silence.** Whisper cuts a suspect segment that is followed by a long silence;
 a larger model also hallucinates less.

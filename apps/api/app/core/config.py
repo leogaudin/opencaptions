@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     postgres_password: str = "opencaptions"
     postgres_db: str = "opencaptions"
     postgres_host: str = "postgres"
-    postgres_port: int = 5432
 
     # ----- Redis -----
     redis_url: str = "redis://redis:6379/0"
@@ -57,27 +56,6 @@ class Settings(BaseSettings):
     transcription_result_ttl_h: int = 24
     transcription_max_concurrent: int = 2
 
-    # Voice-activity filtering is off: it decides what is speech with a model that
-    # takes shouting or speech over loud music for non-speech, and what it drops is
-    # never decoded, so whole lines go missing (on a test film it lost five of six
-    # lines that decoding everything found, whatever the threshold). Decoding
-    # everything costs more CPU on content with long silences; turn the filter on
-    # (WHISPER_VAD_FILTER=true) for talking-head recordings where that matters.
-    whisper_vad_filter: bool = False
-    # faster-whisper moves on from a 30 s window when the model says "no speech after
-    # here", and never decodes what the window still holds: shouting or singing over
-    # music can come back as a long empty stretch. With this on, each empty stretch of
-    # FILL_GAP_S seconds (app.transcription.local) that is not quiet is decoded again alone, twice with
-    # the window shifted, and only words both readings give are kept (text invented over
-    # music differs between the two). Off by default: on a 10-minute film it costs about
-    # five times the transcription time (Whisper retries hard over non-speech) for a
-    # dozen words, and the second look examines at most FILL_BUDGET of the
-    # recording. WHISPER_FILL_GAPS=true to try it on your own recordings.
-    whisper_fill_gaps: bool = False
-
-    # ----- Entitlements -----
-    # Policy name registered in app.services.entitlements; 'unlimited' never denies.
-    entitlement_provider: str = "unlimited"
 
     # ----- Limits -----
     max_upload_size_mb: int = 2048
@@ -125,7 +103,6 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
 
     # ----- Rendering -----
-    engine_url: str = "http://engine:3001"
     engine_token: str = "opencaptions-dev-engine-token-change-me-for-any-exposed-host"
     # Where renders run. 'local' posts to the engine above, the only backend the
     # core ships; see app.services.render_backend for registering another.
@@ -139,7 +116,7 @@ class Settings(BaseSettings):
         """SQLAlchemy async DSN for asyncpg."""
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            f"@{self.postgres_host}:5432/{self.postgres_db}"
         )
 
     @property
@@ -147,7 +124,7 @@ class Settings(BaseSettings):
         """Sync DSN for alembic."""
         return (
             f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            f"@{self.postgres_host}:5432/{self.postgres_db}"
         )
 
     # Credentials the shipped defaults name: public in this repository, so not secrets.

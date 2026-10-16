@@ -23,6 +23,8 @@ from app.storage import s3
 
 logger = logging.getLogger(__name__)
 
+# The render server, by its name in the compose network: where it is is the stack's topology, not a setting.
+ENGINE_URL = "http://engine:3001"
 # Rendering a long video takes minutes; the ceiling is generous on purpose.
 RENDER_TIMEOUT = httpx.Timeout(float(RENDER_REQUEST_TIMEOUT_S), connect=30.0)
 # The upload happens at the end of the render, so the grant outlives the ceiling.
@@ -63,7 +65,7 @@ class EngineRenderBackend(RenderBackend):
     name = "local"
 
     def render(self, request: dict[str, Any]) -> RenderResult:
-        url = f"{settings.engine_url}/render"
+        url = f"{ENGINE_URL}/render"
         output_url = s3.presigned_url(
             request["output_key"], expires_in=UPLOAD_GRANT_S, method="put_object"
         )
@@ -75,7 +77,7 @@ class EngineRenderBackend(RenderBackend):
                     headers={"x-engine-token": settings.engine_token},
                 )
         except httpx.RequestError as e:
-            raise RuntimeError(f"Engine unreachable at {settings.engine_url}: {e}") from e
+            raise RuntimeError(f"Engine unreachable at {ENGINE_URL}: {e}") from e
 
         if resp.status_code != 200:
             raise RuntimeError(f"Engine returned {resp.status_code}: {resp.text[:500]}")

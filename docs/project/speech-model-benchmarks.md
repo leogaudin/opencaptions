@@ -115,7 +115,7 @@ at a time, large-v3-turbo:
 The voice filter (Silero) takes shouting and speech over a loud music bed for non-speech, and what it
 drops is never decoded, whatever the threshold. So it is off by default. Decoding everything costs about
 twice the CPU on this clip (less on talking-head recordings with long silences), and
-`WHISPER_VAD_FILTER=true` switches the filter back on. Beam 5 stays: greedy decoding triggers more
+`VAD_FILTER` in `transcription/local.py` switches the filter back on. Beam 5 stays: greedy decoding triggers more
 temperature fallbacks and was slower (2.8x against 4.2x), with repeated words.
 
 Parakeet, given the same audio in 20 s windows, found four of the six lines. A window that comes back
@@ -132,7 +132,7 @@ not to be speech after that point is never decoded.
 
 ### The second look (off by default)
 
-`chunking.second_look` (`WHISPER_FILL_GAPS=true`) decodes each long empty stretch that is not quiet again
+`chunking.second_look` (`FILL_GAPS` in `transcription/local.py`, off) decodes each long empty stretch that is not quiet again
 alone, twice with the window shifted 0.9 s, and keeps only the words both readings give within 1.5 s.
 Invented text differs between the two readings; speech comes out of both. Listening to the film's 18 long
 empty stretches gave the reference (12 held real words or interjections, 5 held nothing):

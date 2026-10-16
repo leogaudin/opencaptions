@@ -90,20 +90,20 @@ def test_a_long_stretch_with_no_words_is_named_in_the_log(monkeypatch: Any, capl
     with caplog.at_level("WARNING", logger="app.transcription.local"):
         _transcribe_with(monkeypatch, spoken, duration=61.0)
     assert "1s-60s" in caplog.text
-    # Nothing was filtered out, so the log does not send anyone to tune a filter.
+    # Nothing was filtered out, so the log does not blame a filter.
     assert "Everything was decoded" in caplog.text
-    assert "WHISPER_VAD_FILTER" not in caplog.text
+    assert "voice detection" not in caplog.text
 
 
 def test_a_long_stretch_names_the_voice_filter_when_it_is_on(monkeypatch: Any, caplog: Any) -> None:
-    monkeypatch.setattr("app.transcription.local.settings.whisper_vad_filter", True)
+    monkeypatch.setattr("app.transcription.local.VAD_FILTER", True)
     spoken = [
         _segment("hello", 0.0, 1.0, [_fake_word(" hello", 0.0, 1.0)]),
         _segment("again", 60.0, 61.0, [_fake_word(" again", 60.0, 61.0)]),
     ]
     with caplog.at_level("WARNING", logger="app.transcription.local"):
         _transcribe_with(monkeypatch, spoken, duration=61.0)
-    assert "WHISPER_VAD_FILTER=false" in caplog.text
+    assert "voice detection" in caplog.text
 
 
 def test_everything_is_decoded_by_default(monkeypatch: Any) -> None:
@@ -134,7 +134,7 @@ def _provider_with_second_look(
     """A provider whose model gives `first_pass` for the file and `readings` for the windows after."""
     import numpy as np
 
-    monkeypatch.setattr("app.transcription.local.settings.whisper_fill_gaps", True)
+    monkeypatch.setattr("app.transcription.local.FILL_GAPS", True)
     provider = LocalWhisperProvider()
     windows_seen: list[Any] = []
     queue = list(readings)
@@ -180,7 +180,7 @@ def test_a_long_empty_stretch_gets_a_second_look(monkeypatch: Any) -> None:
 
 def test_the_second_look_is_off_by_default(monkeypatch: Any) -> None:
     provider, seen = _provider_with_second_look(monkeypatch, _SPOKEN, [])
-    monkeypatch.setattr("app.transcription.local.settings.whisper_fill_gaps", False)
+    monkeypatch.setattr("app.transcription.local.FILL_GAPS", False)
     transcript = provider.transcribe("/tmp/whatever.wav")
     assert [s.text for s in transcript.segments] == ["hello", "again"]
     assert seen == []

@@ -279,12 +279,12 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
   - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small and Large v3 (the Turbo
     build), the phone's; another size runs when named by an API client or by `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
     Everything is decoded: the voice-detection
-    filter is off by default (`WHISPER_VAD_FILTER`), because it takes shouting
+    filter is off, because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The
-    no-speech check and a hallucination guard (`WHISPER_*`) stay on. faster-whisper still
+    no-speech check and a hallucination guard stay on. faster-whisper still
     moves on from a window when the model says "no speech after here", leaving some loud
-    stretches empty; `WHISPER_FILL_GAPS=true` decodes each long empty stretch again, twice,
-    keeping only the words both readings give (`chunking.second_look`). Off by default: it
+    stretches empty; the server could decode each long empty stretch again, twice,
+    keeping only the words both readings give (`chunking.second_look`), and does not: it
     costs several times the transcription time on action content ([measurements](./speech-model-benchmarks.md)).
   - **sherpa-onnx** (ONNX Runtime, CPU) runs the other models; Parakeet Ultra is the first. It
     cuts the audio into windows at the quietest point (`chunking.py`), never skipping a stretch
@@ -532,7 +532,7 @@ disk.
   on either side. After the main pass, every stretch of 6 s or more without words that is not quiet
   (at most 12) is decoded twice without that judgement, the second window shifted, and only the
   words both readings give are kept (`TranscriptGaps`; text invented over music differs between the
-  two). On by default on the phone; the server's version is opt-in (`WHISPER_FILL_GAPS`, see the
+  two). On by default on the phone; the server's version is switched off in the code (`FILL_GAPS`, see the
   [benchmarks](./speech-model-benchmarks.md)).
 - **On a server.** Settings → "Where to transcribe" switches between this phone and "My server":
   another OpenCaptions backend, connected by pasting the link the web app makes (or typing the

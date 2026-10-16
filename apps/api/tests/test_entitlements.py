@@ -2,7 +2,7 @@
 
 The core ships only the Unlimited policy (never denies), selected by default, so
 self-hosted behaviour is unchanged. A hosted deployment substitutes a policy via
-ENTITLEMENT_PROVIDER; a denial must surface as a clean 403, not a 500, with its
+the active policy; a denial must surface as a clean 403, not a 500, with its
 reason. The deny tests substitute a denying policy the same way a hosted edition
 would (register + config), never touching the running stack's default.
 """
@@ -43,10 +43,10 @@ class _DenyAllPolicy(EntitlementPolicy):
 
 
 def test_unlimited_registered_and_default() -> None:
-    from app.core.config import settings
+    from app.services import entitlements
 
     assert "unlimited" in available_policies()
-    assert settings.entitlement_provider == "unlimited"
+    assert entitlements.ACTIVE_POLICY == "unlimited"
     assert isinstance(resolve_policy(), UnlimitedEntitlementPolicy)
 
 
@@ -107,7 +107,7 @@ async def test_transcription_denied_surfaces_403_not_500(
     from app.core.config import settings
 
     register(_DenyAllPolicy())
-    monkeypatch.setattr(settings, "entitlement_provider", "deny-all-test")
+    monkeypatch.setattr("app.services.entitlements.ACTIVE_POLICY", "deny-all-test")
 
     client_a, owner_a = user_a
     project_id = await seed_project(owner_a)
@@ -132,7 +132,7 @@ async def test_render_denied_surfaces_403_not_500(
     monkeypatch.setattr(s3, "object_exists", lambda key: False)
 
     register(_DenyAllPolicy())
-    monkeypatch.setattr(settings, "entitlement_provider", "deny-all-test")
+    monkeypatch.setattr("app.services.entitlements.ACTIVE_POLICY", "deny-all-test")
 
     client_a, owner_a = user_a
     project_id = await seed_project(owner_a)  # has transcript + video

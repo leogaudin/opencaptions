@@ -60,15 +60,11 @@ that is itself forwarding refuses a request that was already forwarded.
 
 The same API is what the [iPhone app](../guides/iphone-app.md#use-your-own-server-instead) uses.
 
-## Tuning Whisper
+## How Whisper is run
 
-The defaults are chosen to find all the speech, not to be fast:
-
-| Setting | Default | What it does |
-|---|---|---|
-| `WHISPER_VAD_FILTER` | `false` | A voice-detection filter that skips non-speech. It is off because it takes shouting, or speech over loud music, for non-speech, and what it drops is never transcribed, so whole lines go missing. Turn it on for talking-head recordings with long silences, to save processor time. |
-| `WHISPER_FILL_GAPS` | `false` | A second look: each empty stretch of 5 seconds or more that is not quiet is decoded again, twice with the window shifted, and only the words both readings give are kept. Off by default: on a 10-minute film it costs about five times the transcription time for a dozen words. |
-
-The other thresholds (the voice filter's, the no-speech check, the hallucination cut, how much the second look
-examines) are fixed in the code at the values the measurements chose, so there is nothing else to tune. [Why these
+Whisper is run to find all the speech, not to be fast, and there is nothing to tune: the voice-detection filter is
+off (it takes shouting, or speech over loud music, for non-speech, and what it drops is never transcribed, so
+whole lines go missing), the no-speech check and a cut for text invented over silence are on, and the beam is 5.
+Each value is fixed in the code at what the measurements chose. [Why these
+defaults](../project/speech-model-benchmarks.md) has them.
 defaults](../project/speech-model-benchmarks.md) has the measurements behind them.
