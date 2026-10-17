@@ -1797,3 +1797,38 @@ const GOLDEN: &[(&str, u64)] = &[
     ("highlight_box+stack", 0x7215adeb165d3e2e),
     ("watermark", 0xe22c164ced6e9dd5),
 ];
+
+#[test]
+fn a_glow_lies_under_the_extrusion_and_surrounds_it() {
+    let frame = |glow: bool| {
+        let mut patch = serde_json::json!({
+            "font_size": 120, "shadow_color": "#FFA305FF", "shadow_offset_y": 40, "shadow_blur": 0
+        });
+        if glow {
+            patch["glow_blur"] = 16.into();
+            patch["glow_color"] = "#000000FF".into();
+        }
+        let scene = Scene::new(
+            &book(),
+            styled("word_highlight", &[("hello", 0.0, 1.0)], patch),
+        );
+        let mut renderer = Renderer::new(scene);
+        renderer.render(0.5);
+        let reach = extent(&renderer, 1080).unwrap();
+        (renderer.rgba().to_vec(), reach)
+    };
+    let (bare, bare_reach) = frame(false);
+    let (lit, lit_reach) = frame(true);
+    // Whatever the letters and the extrusion cover is theirs alone: the halo is beneath it.
+    for (i, (a, b)) in bare.chunks(4).zip(lit.chunks(4)).enumerate() {
+        assert!(
+            a[3] < 255 || a == b,
+            "pixel {i} of the letters or extrusion is dimmed by the glow"
+        );
+    }
+    // And the halo is made from the extrusion too, so it reaches past its far end.
+    assert!(
+        lit_reach.3 >= bare_reach.3 + 6,
+        "the halo surrounds the extrusion"
+    );
+}

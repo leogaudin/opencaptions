@@ -72,7 +72,7 @@ Each tile shows the animation on your own caption.
 
 **Stroke width** for the outline around the letters, a **Shadow** (blur, and how far down and to the
 right it falls) and a **Glow** with its own colour. With a shadow that falls but is not blurred (a solid, 3D look),
-**Extrusion shading** darkens it with depth.
+**Extrusion shading** darkens it with depth. The glow is drawn beneath the shadow, so with both it surrounds the extrusion too.
 
 ## Timing
 

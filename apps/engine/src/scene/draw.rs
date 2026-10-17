@@ -150,8 +150,10 @@ impl Scene {
         };
         let halo_key = layer_key(index, states, self.style.animation, still);
         painter.backdrops(canvas, guide);
-        painter.shadow(canvas, &mut cache.shadow, &key);
+        // The glow goes under the shadow, which is under the words: the soft dark halo of a style
+        // that also has an extrusion surrounds the whole of it, the extrusion included.
         painter.glow(canvas, &mut cache.halo, &halo_key);
+        painter.shadow(canvas, &mut cache.shadow, &key);
         painter.words(canvas);
         painter.bar(canvas, guide);
     }
@@ -375,7 +377,7 @@ impl<'a> LinePainter<'a> {
         }
         if slot.as_ref().is_none_or(|(k, _)| k != key) {
             *slot = self.layer().map(|mut shadow| {
-                self.extrusion(&mut shadow);
+                self.extrusion(&mut shadow, None);
                 if s.shadow_blur > 0.0 {
                     blur(&mut shadow, s.shadow_blur / 2.0);
                 }
@@ -403,13 +405,14 @@ impl<'a> LinePainter<'a> {
         (self.line.bounds.x(), self.line.bounds.y())
     }
 
-    /// Lays every word's shadow (stamps from the face towards the back) onto `shadow`.
-    fn extrusion(&self, shadow: &mut Pixmap) {
+    /// Lays every word's shadow (stamps from the face towards the back) onto `shadow`. With `flat`,
+    /// the stamps are that one colour, unshaded: the shape the glow is made from.
+    fn extrusion(&self, shadow: &mut Pixmap, flat: Option<Rgba>) {
         let s = self.style;
-        let base = solid(s.shadow_color);
+        let base = flat.unwrap_or_else(|| solid(s.shadow_color));
         let back = s.extrude_back.0;
         let graded = back[3] > 0 && self.extruded;
-        let shaded = (s.extrude_shade > 0.0 || graded) && self.extruded;
+        let shaded = (s.extrude_shade > 0.0 || graded) && self.extruded && flat.is_none();
         for (w, st) in self.line.words.iter().zip(self.states) {
             let letters = parts(w, st, s.font_size * w.size, self.rising);
             let reach = self.reach(st);
@@ -490,6 +493,10 @@ impl<'a> LinePainter<'a> {
                         let at = Transform::from_translate(0.0, down).post_concat(flat.face(w, st));
                         self.ink(&mut halo, path, c, c, self.local(at), w.size);
                     }
+                }
+                if self.extruded {
+                    // The halo surrounds the extrusion as well as the letters.
+                    flat.extrusion(&mut halo, Some(solid(s.glow_color)));
                 }
                 blur(&mut halo, s.glow_blur / 2.0);
                 if drifting {

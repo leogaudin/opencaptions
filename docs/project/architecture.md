@@ -99,7 +99,7 @@ build produces byte-identical frames. Nothing else may draw captions.
 
 The drawing is `src/scene/`: `layout.rs` places the words, `anim.rs` says what each is doing at a time `t`
 (with the tuning constants and shared types in `mod.rs`, and the easing in `ease.rs`), `draw.rs` paints a line
-in passes (backdrops, shadow, glow, words, bar), `pixels.rs` holds the blur and the pixel helpers,
+in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and the pixel helpers,
 `text.rs` the shaping, and `renderer.rs` the frame loop and its caches.
 
 - **Scene.** `set_scene` lays out the transcript once for a style and a frame
