@@ -44,7 +44,7 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 **Subtitle:** Sous-titres privés, sur iPhone
 
-**Promotional text:** Des sous-titres animés pour vos vidéos, créés sur votre téléphone. Rien n’est envoyé. Pro en achat unique, sans abonnement.
+**Promotional text:** Des sous-titres animés pour vos vidéos, créés sur votre téléphone. Rien n'est envoyé. Pro en achat unique, sans abonnement.
 
 **Keywords:** sous-titres,légendes,transcription,reels,tiktok,shorts,parole en texte,hors ligne,privé,whisper
 
@@ -52,22 +52,22 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 **Description:**
 
-Ajoutez des sous-titres animés à n’importe quelle vidéo en une minute, en toute confidentialité : OpenCaptions écoute votre vidéo sur votre iPhone, écrit les mots avec leur minutage et ne l’envoie nulle part.
+Ajoutez des sous-titres animés à n'importe quelle vidéo en une minute, en toute confidentialité : OpenCaptions écoute votre vidéo sur votre iPhone, écrit les mots avec leur minutage et ne l'envoie nulle part.
 
 CE QUE VOUS OBTENEZ
 • Des sous-titres automatiques dans une centaine de langues, créés sur votre téléphone avec Whisper
 • Mot par mot en surbrillance, avec des styles du plus discret au plus percutant
 • Vos polices : choisissez dans la bibliothèque Google Fonts
 • Une frise chronologique pour corriger un mot, déplacer un sous-titre ou le recaler
-• Glissez et pincez pour placer et dimensionner les sous-titres directement dans l’aperçu
-• Export en H.264 ou HEVC, avec la taille et la fréquence d’images de votre choix
+• Glissez et pincez pour placer et dimensionner les sous-titres directement dans l'aperçu
+• Export en H.264 ou HEVC, avec la taille et la fréquence d'images de votre choix
 • Les vidéos HDR restent en HDR
 
 CONFIDENTIEL PAR CONCEPTION
-Pas de compte. Pas de statistiques. Pas de cloud. Vos vidéos restent sur votre appareil. Si vous avez votre propre serveur OpenCaptions, l’app peut lui envoyer l’audio, mais seulement si vous le configurez.
+Pas de compte. Pas de statistiques. Pas de cloud. Vos vidéos restent sur votre appareil. Si vous avez votre propre serveur OpenCaptions, l'app peut lui envoyer l'audio, mais seulement si vous le configurez.
 
 GRATUIT, ET PRO POUR ALLER PLUS LOIN
-L’app gratuite contient tout pour sous-titrer une vidéo et l’enregistrer jusqu’en 1080p à 30 i/s, avec une petite marque dans un coin. Pro est un achat unique, jamais d’abonnement : il retire la marque et ajoute la 4K, 60 i/s, le HDR et tous les styles.
+L'app gratuite contient tout pour sous-titrer une vidéo et l'enregistrer jusqu'en 1080p à 30 i/s, avec une petite marque dans un coin. Pro est un achat unique, jamais d'abonnement : il retire la marque et ajoute la 4K, 60 i/s, le HDR et tous les styles.
 
 OPEN SOURCE
 OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même ou hébergez la version web avec Docker : github.com/leogaudin/opencaptions
@@ -222,22 +222,22 @@ O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo
 
 **Description:**
 
-Aggiungi sottotitoli animati a qualsiasi video in un minuto, in privato: OpenCaptions ascolta il tuo video sull’iPhone, scrive le parole con i loro tempi e non le invia da nessuna parte.
+Aggiungi sottotitoli animati a qualsiasi video in un minuto, in privato: OpenCaptions ascolta il tuo video sull'iPhone, scrive le parole con i loro tempi e non le invia da nessuna parte.
 
 COSA OTTIENI
 • Sottotitoli automatici in circa 100 lingue, creati sul telefono con Whisper
-• Evidenziazione parola per parola, con stili dal discreto all’audace
+• Evidenziazione parola per parola, con stili dal discreto all'audace
 • I tuoi font: scegli dalla libreria Google Fonts
 • Una timeline per correggere una parola, spostare un sottotitolo o cambiarne i tempi
-• Trascina e pizzica per posizionare e ridimensionare i sottotitoli nell’anteprima
+• Trascina e pizzica per posizionare e ridimensionare i sottotitoli nell'anteprima
 • Salva in H.264 o HEVC, con dimensione e frequenza fotogrammi a scelta
 • I video HDR restano HDR
 
 PRIVATO PER PROGETTO
-Nessun account. Nessuna analisi. Nessun cloud. I tuoi video restano sul dispositivo. Se hai un tuo server OpenCaptions, l’app può inviargli l’audio, ma solo se lo configuri.
+Nessun account. Nessuna analisi. Nessun cloud. I tuoi video restano sul dispositivo. Se hai un tuo server OpenCaptions, l'app può inviargli l'audio, ma solo se lo configuri.
 
 GRATIS, E PRO QUANDO VUOI DI PIÙ
-L’app gratuita ha tutto per sottotitolare un video e salvarlo fino a 1080p a 30 fps, con un piccolo marchio nell’angolo. Pro è un acquisto unico, mai un abbonamento: toglie il marchio e aggiunge 4K, 60 fps, HDR e tutti gli stili.
+L'app gratuita ha tutto per sottotitolare un video e salvarlo fino a 1080p a 30 fps, con un piccolo marchio nell'angolo. Pro è un acquisto unico, mai un abbonamento: toglie il marchio e aggiunge 4K, 60 fps, HDR e tutti gli stili.
 
 OPEN SOURCE
 OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o ospita la versione web con Docker: github.com/leogaudin/opencaptions

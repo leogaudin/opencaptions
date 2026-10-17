@@ -7,7 +7,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ n’a pas pu être supprimé : %@"
+            "value": "%@ n'a pas pu être supprimé : %@"
           }
         },
         "es": {
@@ -84,7 +84,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ n’a pas pu être téléchargé : %@"
+            "value": "%@ n'a pas pu être téléchargé : %@"
           }
         },
         "es": {
@@ -1091,7 +1091,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajout des sous-titres à votre vidéo. Gardez OpenCaptions ouvert jusqu’à la fin."
+            "value": "Ajout des sous-titres à votre vidéo. Gardez OpenCaptions ouvert jusqu'à la fin."
           }
         },
         "es": {
@@ -1168,7 +1168,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajout des sous-titres à votre vidéo. Vous pouvez quitter OpenCaptions : la progression s’affiche sur l’écran verrouillé."
+            "value": "Ajout des sous-titres à votre vidéo. Vous pouvez quitter OpenCaptions : la progression s'affiche sur l'écran verrouillé."
           }
         },
         "es": {
@@ -1198,7 +1198,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiunta dei sottotitoli al video. Puoi uscire da OpenCaptions: l’avanzamento appare nella schermata di blocco."
+            "value": "Aggiunta dei sottotitoli al video. Puoi uscire da OpenCaptions: l'avanzamento appare nella schermata di blocco."
           }
         },
         "ru": {
@@ -1210,7 +1210,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Altyazılar videonuza ekleniyor. OpenCaptions’tan çıkabilirsiniz: ilerleme kilit ekranında görünür."
+            "value": "Altyazılar videonuza ekleniyor. OpenCaptions'tan çıkabilirsiniz: ilerleme kilit ekranında görünür."
           }
         },
         "ja": {
@@ -1328,7 +1328,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une vidéo ordinaire qui s’affiche bien partout, y compris là où le HDR n’est pas pris en charge."
+            "value": "Une vidéo ordinaire qui s'affiche bien partout, y compris là où le HDR n'est pas pris en charge."
           }
         },
         "es": {
@@ -1358,7 +1358,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un video normale che si vede bene ovunque, anche dove l’HDR non è supportato."
+            "value": "Un video normale che si vede bene ovunque, anche dove l'HDR non è supportato."
           }
         },
         "ru": {
@@ -1559,7 +1559,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Celui d’Apple, intégré à iOS"
+            "value": "Celui d'Apple, intégré à iOS"
           }
         },
         "es": {
@@ -1601,7 +1601,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple’ın kendi modeli, iOS’a yerleşik"
+            "value": "Apple'ın kendi modeli, iOS'a yerleşik"
           }
         },
         "ja": {
@@ -2300,7 +2300,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iOS’a yerleşik"
+            "value": "iOS'a yerleşik"
           }
         },
         "ja": {
@@ -2335,7 +2335,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Intégré à iOS. Apple télécharge chaque langue la première fois qu’elle est utilisée, et il faut choisir une langue."
+            "value": "Intégré à iOS. Apple télécharge chaque langue la première fois qu'elle est utilisée, et il faut choisir une langue."
           }
         },
         "es": {
@@ -2377,7 +2377,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iOS’a yerleşiktir. Apple her dili ilk kullanımda indirir ve bir dil seçilmelidir."
+            "value": "iOS'a yerleşiktir. Apple her dili ilk kullanımda indirir ve bir dil seçilmelidir."
           }
         },
         "ja": {
@@ -2720,7 +2720,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des sous-titres animés, créés sur votre téléphone. Rien n’est envoyé : la parole est transcrite sur cet appareil."
+            "value": "Des sous-titres animés, créés sur votre téléphone. Rien n'est envoyé : la parole est transcrite sur cet appareil."
           }
         },
         "es": {
@@ -3028,7 +3028,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez « Serveur distant » pour transcrire sur un autre serveur OpenCaptions, plus rapide sur un ordinateur doté d’une carte graphique."
+            "value": "Choisissez « Serveur distant » pour transcrire sur un autre serveur OpenCaptions, plus rapide sur un ordinateur doté d'une carte graphique."
           }
         },
         "es": {
@@ -3644,7 +3644,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d’importer cette vidéo : %@"
+            "value": "Impossible d'importer cette vidéo : %@"
           }
         },
         "es": {
@@ -5723,7 +5723,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ombrage de l’extrusion"
+            "value": "Ombrage de l'extrusion"
           }
         },
         "es": {
@@ -5753,7 +5753,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ombreggiatura dell’estrusione"
+            "value": "Ombreggiatura dell'estrusione"
           }
         },
         "ru": {
@@ -5877,7 +5877,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Moins d’images : un fichier plus petit."
+            "value": "Moins d'images : un fichier plus petit."
           }
         },
         "es": {
@@ -6345,7 +6345,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cadence d’images"
+            "value": "Cadence d'images"
           }
         },
         "es": {
@@ -6606,7 +6606,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Colore dell’alone"
+            "value": "Colore dell'alone"
           }
         },
         "ru": {
@@ -7500,7 +7500,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans l’app web du serveur, ouvrez Compte et créez une clé : elle est fournie avec un lien. Collez le lien ici, ou saisissez l’adresse et la clé."
+            "value": "Dans l'app web du serveur, ouvrez Compte et créez une clé : elle est fournie avec un lien. Collez le lien ici, ou saisissez l'adresse et la clé."
           }
         },
         "es": {
@@ -7530,7 +7530,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nell’app web del server apri Account e crea una chiave: viene fornita con un link. Incolla qui il link, oppure inserisci l’indirizzo e la chiave."
+            "value": "Nell'app web del server apri Account e crea una chiave: viene fornita con un link. Incolla qui il link, oppure inserisci l'indirizzo e la chiave."
           }
         },
         "ru": {
@@ -7577,7 +7577,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’enregistrement a échoué"
+            "value": "L'enregistrement a échoué"
           }
         },
         "es": {
@@ -8039,7 +8039,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardez OpenCaptions ouvert jusqu’à l’envoi de l’audio."
+            "value": "Gardez OpenCaptions ouvert jusqu'à l'envoi de l'audio."
           }
         },
         "es": {
@@ -8069,7 +8069,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tieni OpenCaptions aperto fino all’invio dell’audio."
+            "value": "Tieni OpenCaptions aperto fino all'invio dell'audio."
           }
         },
         "ru": {
@@ -8116,7 +8116,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardez OpenCaptions ouvert jusqu’à la fin."
+            "value": "Gardez OpenCaptions ouvert jusqu'à la fin."
           }
         },
         "es": {
@@ -8270,7 +8270,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conserve toute la luminosité et les couleurs de l’original. Enregistré en HEVC."
+            "value": "Conserve toute la luminosité et les couleurs de l'original. Enregistré en HEVC."
           }
         },
         "es": {
@@ -8300,7 +8300,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mantiene tutta la luminosità e i colori dell’originale. Salvato in HEVC."
+            "value": "Mantiene tutta la luminosità e i colori dell'originale. Salvato in HEVC."
           }
         },
         "ru": {
@@ -8809,7 +8809,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les modèles sont téléchargés une fois et fonctionnent sur cet appareil. Supprimez ceux que vous n’utilisez pas pour libérer de l’espace."
+            "value": "Les modèles sont téléchargés une fois et fonctionnent sur cet appareil. Supprimez ceux que vous n'utilisez pas pour libérer de l'espace."
           }
         },
         "es": {
@@ -9040,7 +9040,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décale tous les sous-titres par rapport à l’audio, sans retranscrire."
+            "value": "Décale tous les sous-titres par rapport à l'audio, sans retranscrire."
           }
         },
         "es": {
@@ -9070,7 +9070,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sposta tutti i sottotitoli rispetto all’audio, senza trascrivere di nuovo."
+            "value": "Sposta tutti i sottotitoli rispetto all'audio, senza trascrivere di nuovo."
           }
         },
         "ru": {
@@ -9455,7 +9455,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sem marca d’água nos seus vídeos"
+            "value": "Sem marca d'água nos seus vídeos"
           }
         },
         "it": {
@@ -9816,7 +9816,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rien n’est envoyé : la transcription se fait sur votre appareil."
+            "value": "Rien n'est envoyé : la transcription se fait sur votre appareil."
           }
         },
         "es": {
@@ -9935,7 +9935,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "NVIDIA’nın varsayılan, daha büyük modeli"
+            "value": "NVIDIA'nın varsayılan, daha büyük modeli"
           }
         },
         "ja": {
@@ -10018,7 +10018,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "NVIDIA’nın daha küçük, daha az doğru modeli"
+            "value": "NVIDIA'nın daha küçük, daha az doğru modeli"
           }
         },
         "ja": {
@@ -10290,7 +10290,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seul l’audio est envoyé, à %@, qui le supprime une fois terminé."
+            "value": "Seul l'audio est envoyé, à %@, qui le supprime une fois terminé."
           }
         },
         "es": {
@@ -10320,7 +10320,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Viene inviato solo l’audio, a %@, che lo elimina al termine."
+            "value": "Viene inviato solo l'audio, a %@, che lo elimina al termine."
           }
         },
         "ru": {
@@ -10598,7 +10598,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le modèle par défaut d’OpenAI, plus grand"
+            "value": "Le modèle par défaut d'OpenAI, plus grand"
           }
         },
         "es": {
@@ -10640,7 +10640,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "OpenAI’nin varsayılan, daha büyük modeli"
+            "value": "OpenAI'nin varsayılan, daha büyük modeli"
           }
         },
         "ja": {
@@ -10681,7 +10681,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le modèle d’OpenAI, plus petit et moins précis"
+            "value": "Le modèle d'OpenAI, plus petit et moins précis"
           }
         },
         "es": {
@@ -10723,7 +10723,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "OpenAI’nin daha küçük, daha az doğru modeli"
+            "value": "OpenAI'nin daha küçük, daha az doğru modeli"
           }
         },
         "ja": {
@@ -10841,7 +10841,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "OpenCaptions a besoin de l’autorisation d’ajouter à Photos. Vous pouvez l’accorder dans Réglages."
+            "value": "OpenCaptions a besoin de l'autorisation d'ajouter à Photos. Vous pouvez l'accorder dans Réglages."
           }
         },
         "es": {
@@ -13151,7 +13151,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l’enregistrement : %@"
+            "value": "Échec de l'enregistrement : %@"
           }
         },
         "es": {
@@ -13927,7 +13927,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couleur de l’ombre"
+            "value": "Couleur de l'ombre"
           }
         },
         "es": {
@@ -13957,7 +13957,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Colore dell’ombra"
+            "value": "Colore dell'ombra"
           }
         },
         "ru": {
@@ -14697,7 +14697,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une erreur s’est produite"
+            "value": "Une erreur s'est produite"
           }
         },
         "es": {
@@ -15929,7 +15929,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette vidéo n’a pas pu être lue."
+            "value": "Cette vidéo n'a pas pu être lue."
           }
         },
         "es": {
@@ -16006,7 +16006,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’audio d’une vidéo est envoyé à %@ pour être transcrit, puis supprimé là-bas."
+            "value": "L'audio d'une vidéo est envoyé à %@ pour être transcrit, puis supprimé là-bas."
           }
         },
         "es": {
@@ -16036,7 +16036,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’audio di un video viene inviato a %@ per la trascrizione e poi eliminato lì."
+            "value": "L'audio di un video viene inviato a %@ per la trascrizione e poi eliminato lì."
           }
         },
         "ru": {
@@ -16083,7 +16083,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’audio de vos vidéos sera envoyé à %@ pour y être transcrit. Ne continuez que si vous lui faites confiance."
+            "value": "L'audio de vos vidéos sera envoyé à %@ pour y être transcrit. Ne continuez que si vous lui faites confiance."
           }
         },
         "es": {
@@ -16113,7 +16113,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’audio dei tuoi video verrà inviato a %@ per essere trascritto lì. Continua solo se ti fidi."
+            "value": "L'audio dei tuoi video verrà inviato a %@ per essere trascritto lì. Continua solo se ti fidi."
           }
         },
         "ru": {
@@ -16237,7 +16237,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La liste des polices n’a pas pu être chargée."
+            "value": "La liste des polices n'a pas pu être chargée."
           }
         },
         "es": {
@@ -16267,7 +16267,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossibile caricare l’elenco dei caratteri."
+            "value": "Impossibile caricare l'elenco dei caratteri."
           }
         },
         "ru": {
@@ -16314,7 +16314,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le modèle n’a pas pu être téléchargé : %@"
+            "value": "Le modèle n'a pas pu être téléchargé : %@"
           }
         },
         "es": {
@@ -16391,7 +16391,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’image reste telle que filmée ; les sous-titres s’animent à %lld i/s, plus fluides."
+            "value": "L'image reste telle que filmée ; les sous-titres s'animent à %lld i/s, plus fluides."
           }
         },
         "es": {
@@ -16421,7 +16421,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’immagine resta come girata; i sottotitoli si animano a %lld fps, più fluidi."
+            "value": "L'immagine resta come girata; i sottotitoli si animano a %lld fps, più fluidi."
           }
         },
         "ru": {
@@ -16468,7 +16468,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’achat n’a pas pu être vérifié."
+            "value": "L'achat n'a pas pu être vérifié."
           }
         },
         "es": {
@@ -16498,7 +16498,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossibile verificare l’acquisto."
+            "value": "Impossibile verificare l'acquisto."
           }
         },
         "ru": {
@@ -16545,7 +16545,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’enregistrement s’est arrêté car OpenCaptions a quitté l’écran. Gardez l’app ouverte pendant l’enregistrement, puis réessayez."
+            "value": "L'enregistrement s'est arrêté car OpenCaptions a quitté l'écran. Gardez l'app ouverte pendant l'enregistrement, puis réessayez."
           }
         },
         "es": {
@@ -16575,7 +16575,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il salvataggio si è interrotto perché OpenCaptions ha lasciato lo schermo. Tieni l’app aperta durante il salvataggio e riprova."
+            "value": "Il salvataggio si è interrotto perché OpenCaptions ha lasciato lo schermo. Tieni l'app aperta durante il salvataggio e riprova."
           }
         },
         "ru": {
@@ -16930,7 +16930,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il n’y a pas assez de place : il faut environ %@ et le téléphone dispose de %@. Choisissez une taille ou une cadence plus petite, ou libérez de l’espace."
+            "value": "Il n'y a pas assez de place : il faut environ %@ et le téléphone dispose de %@. Choisissez une taille ou une cadence plus petite, ou libérez de l'espace."
           }
         },
         "es": {
@@ -19163,7 +19163,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vous êtes en données mobiles ou sur un point d’accès. Une connexion Wi‑Fi éviterait d’utiliser vos données."
+            "value": "Vous êtes en données mobiles ou sur un point d'accès. Une connexion Wi‑Fi éviterait d'utiliser vos données."
           }
         },
         "es": {
@@ -20206,7 +20206,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bir videoyu çevirin, biçimlendirin ve **kaydedin**, hepsi bu Mac’te."
+            "value": "Bir videoyu çevirin, biçimlendirin ve **kaydedin**, hepsi bu Mac'te."
           }
         },
         "ja": {
@@ -20241,7 +20241,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des sous-titres animés, créés sur votre Mac. Rien n’est envoyé : la parole est transcrite sur cet appareil."
+            "value": "Des sous-titres animés, créés sur votre Mac. Rien n'est envoyé : la parole est transcrite sur cet appareil."
           }
         },
         "es": {
@@ -20283,7 +20283,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mac’inizde yapılan hareketli altyazılar. Hiçbir şey yüklenmez: konuşma bu cihazda çevrilir."
+            "value": "Mac'inizde yapılan hareketli altyazılar. Hiçbir şey yüklenmez: konuşma bu cihazda çevrilir."
           }
         },
         "ja": {
@@ -20360,7 +20360,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu Mac’te"
+            "value": "Bu Mac'te"
           }
         },
         "ja": {
@@ -20395,7 +20395,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il n’y a pas assez de place : il faut environ %@ et le Mac dispose de %@. Choisissez une taille ou une cadence plus petite, ou libérez de l’espace."
+            "value": "Il n'y a pas assez de place : il faut environ %@ et le Mac dispose de %@. Choisissez une taille ou une cadence plus petite, ou libérez de l'espace."
           }
         },
         "es": {
@@ -20437,7 +20437,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yeterli yer yok: yaklaşık %@ gerekiyor, Mac’te %@ boş. Daha küçük bir boyut veya kare hızı seçin ya da yer açın."
+            "value": "Yeterli yer yok: yaklaşık %@ gerekiyor, Mac'te %@ boş. Daha küçük bir boyut veya kare hızı seçin ya da yer açın."
           }
         },
         "ja": {
@@ -20745,7 +20745,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fotoğraflar’dan İçe Aktar"
+            "value": "Fotoğraflar'dan İçe Aktar"
           }
         },
         "ja": {

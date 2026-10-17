@@ -67,7 +67,7 @@ import Testing
     }
 
     @Test func withNoLanguageTheTextSaysWhichOneAmongTheOnesTheModelCovers() {
-        let french = "Bonjour à tous, nous sommes réunis aujourd’hui pour parler de la forêt."
+        let french = "Bonjour à tous, nous sommes réunis aujourd'hui pour parler de la forêt."
             .split(separator: " ").enumerated().map { token(" " + $1, Double($0), Double($0) + 0.5) }
         let transcript = TokenMapping.transcript(
             from: french, duration: 12, requestedLanguage: "auto", languages: SpeechModels.parakeetLanguages)
@@ -77,7 +77,7 @@ import Testing
 
     @Test func textInALanguageTheModelDoesNotCoverIsNotLabelledWithIt() {
         // Whatever the text is recognised as, the answer is one of the languages offered.
-        let language = TokenMapping.language(of: "Bonjour à tous, nous sommes réunis aujourd’hui.", among: ["de"])
+        let language = TokenMapping.language(of: "Bonjour à tous, nous sommes réunis aujourd'hui.", among: ["de"])
         #expect(language == nil || language == "de")
     }
 }

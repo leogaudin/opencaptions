@@ -167,7 +167,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de joindre %@. Vérifiez l’adresse et votre connexion."
+            "value": "Impossible de joindre %@. Vérifiez l'adresse et votre connexion."
           }
         },
         "es": {
@@ -197,7 +197,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossibile raggiungere %@. Controlla l’indirizzo e la connessione."
+            "value": "Impossibile raggiungere %@. Controlla l'indirizzo e la connessione."
           }
         },
         "ru": {
@@ -363,7 +363,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dil Apple’dan indiriliyor…"
+            "value": "Dil Apple'dan indiriliyor…"
           }
         },
         "ja": {
@@ -398,7 +398,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’opération ne progressait plus, elle a donc été arrêtée. Veuillez réessayer."
+            "value": "L'opération ne progressait plus, elle a donc été arrêtée. Veuillez réessayer."
           }
         },
         "es": {
@@ -475,7 +475,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune parole n’a été trouvée dans cette vidéo."
+            "value": "Aucune parole n'a été trouvée dans cette vidéo."
           }
         },
         "es": {
@@ -552,7 +552,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Préparation de l’audio…"
+            "value": "Préparation de l'audio…"
           }
         },
         "es": {
@@ -582,7 +582,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparazione dell’audio…"
+            "value": "Preparazione dell'audio…"
           }
         },
         "ru": {
@@ -629,7 +629,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lecture de l’audio…"
+            "value": "Lecture de l'audio…"
           }
         },
         "es": {
@@ -659,7 +659,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lettura dell’audio…"
+            "value": "Lettura dell'audio…"
           }
         },
         "ru": {
@@ -783,7 +783,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le modèle %@ n’a pas été téléchargé."
+            "value": "Le modèle %@ n'a pas été téléchargé."
           }
         },
         "es": {
@@ -860,7 +860,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le serveur n’a pas pu le transcrire : %@"
+            "value": "Le serveur n'a pas pu le transcrire : %@"
           }
         },
         "es": {
@@ -937,7 +937,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le serveur n’a pas accepté la clé. Elle a peut-être été révoquée : créez-en une nouvelle."
+            "value": "Le serveur n'a pas accepté la clé. Elle a peut-être été révoquée : créez-en une nouvelle."
           }
         },
         "es": {
@@ -1091,7 +1091,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La vidéo n’a pas pu être enregistrée : %@"
+            "value": "La vidéo n'a pas pu être enregistrée : %@"
           }
         },
         "es": {
@@ -1168,7 +1168,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il n’y a pas encore de sous-titres à ajouter."
+            "value": "Il n'y a pas encore de sous-titres à ajouter."
           }
         },
         "es": {
@@ -1322,7 +1322,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce projet n’a pas de vidéo."
+            "value": "Ce projet n'a pas de vidéo."
           }
         },
         "es": {
@@ -1399,7 +1399,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette vidéo n’a pas d’audio à transcrire."
+            "value": "Cette vidéo n'a pas d'audio à transcrire."
           }
         },
         "es": {
@@ -1784,7 +1784,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optimisation pour cet appareil et cette version d’OpenCaptions… Cela peut prendre quelques minutes, et ne se reproduit qu’après une mise à jour."
+            "value": "Optimisation pour cet appareil et cette version d'OpenCaptions… Cela peut prendre quelques minutes, et ne se reproduit qu'après une mise à jour."
           }
         },
         "es": {
@@ -1838,7 +1838,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu cihaz ve OpenCaptions’ın bu sürümü için optimize ediliyor… Birkaç dakika sürebilir ve yalnızca bir güncellemeden sonra yeniden yapılır."
+            "value": "Bu cihaz ve OpenCaptions'ın bu sürümü için optimize ediliyor… Birkaç dakika sürebilir ve yalnızca bir güncellemeden sonra yeniden yapılır."
           }
         },
         "id": {
