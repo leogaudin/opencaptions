@@ -71,6 +71,26 @@ extension EngineSuites {
             #expect(try #require(mixed[0]).rgba != (try #require(plain[0])).rgba, "the looks are drawn")
         }
 
+        @Test func anAccentWordIsInTheHighlightColourWhateverItIs() async throws {
+            try await engine.registerBundledFonts(in: Repo.fonts)
+            let editorial = try #require(try Presets.load(from: Repo.presets).first { $0.id == "builtin:editorial" })
+            let accent = try #require(editorial.config.variants.firstIndex { $0.accent == true })
+            var blue = editorial.config
+            blue.highlightColors = ["#0000FF"]
+            func count(_ style: StyleConfig, red: Bool) async throws -> Int {
+                let frames = await engine.samples(
+                    of: [style], words: ["Make", "it", "pop"], variants: [accent, accent, accent], width: 600, height: 300)
+                let rgba = try #require(frames[0]).rgba
+                return stride(from: 0, to: rgba.count, by: 4).filter { i in
+                    let (r, b) = (rgba[i], rgba[i + 2])
+                    return rgba[i + 3] > 200 && (red ? r > 150 && b < 90 : b > 150 && r < 90)
+                }.count
+            }
+            #expect(try await count(editorial.config, red: true) > 200, "the preset's own highlight is red")
+            #expect(try await count(blue, red: true) == 0, "a blue highlight leaves no red word")
+            #expect(try await count(blue, red: false) > 200, "the accent word is blue")
+        }
+
         @Test func aWatermarkIsDrawnByTheEngineInTheTopRightOfEveryFrame() async throws {
             try await engine.registerBundledFonts(in: Repo.fonts)
             let style = try Repo.defaultStyle()
