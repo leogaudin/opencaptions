@@ -57,10 +57,10 @@ struct RenderRequest {
     output_key: String,
     /// The style's font, when it is not bundled.
     font_url: Option<String>,
-    /// The fallback families the scene names (`fallback_fonts`) that are not bundled, each with
-    /// where to read it.
-    #[serde(default)]
-    fallback_font_urls: std::collections::HashMap<String, String>,
+    /// Where the API serves a font by family (`{font_base_url}/{family}`), read with the job's
+    /// token (`progress_token`): the families the transcript's scripts need, which this server works
+    /// out itself (`scripts::fallback_families`), when they are not bundled.
+    font_base_url: Option<String>,
     #[serde(flatten)]
     scene: SceneInput,
     fps: u32,
@@ -419,9 +419,24 @@ impl Colour {
 /// The largest font file a render will download; CJK faces run to ~20 MB.
 const MAX_FONT_BYTES: u64 = 32 << 20;
 
-fn fetch_font(url: &str) -> Result<Vec<u8>, String> {
-    ureq::get(url)
-        .config()
+/// A family name as one path segment of a URL.
+fn percent_encode(text: &str) -> String {
+    text.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                (b as char).to_string()
+            }
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
+fn fetch_font(url: &str, token: Option<&str>) -> Result<Vec<u8>, String> {
+    let mut call = ureq::get(url);
+    if let Some(token) = token {
+        call = call.header("x-job-token", token);
+    }
+    call.config()
         .timeout_global(Some(Duration::from_secs(60)))
         .build()
         .call()
@@ -443,18 +458,22 @@ fn render(
     // Borrowed for this render only: the bundled faces are shared, the request's
     // own font lives in `font` and is dropped with it.
     let font = match &req.font_url {
-        Some(url) if !book.has(&req.scene.style.font) => Some(fetch_font(url)?),
+        Some(url) if !book.has(&req.scene.style.font) => Some(fetch_font(url, None)?),
         _ => None,
     };
-    // The families the transcript's scripts need, in the order the scene names them. One that
-    // cannot be fetched is left out and its letters are drawn as far as the other faces can.
+    // The families the transcript's scripts need (Chinese, Japanese, Korean...), in the order the
+    // scene names them. One that cannot be fetched is left out and its letters are drawn as far as
+    // the other faces can.
+    let mut scene = req.scene.clone();
+    let families = scene.transcript.fallback_families();
     let mut fallbacks: Vec<(&String, Vec<u8>)> = Vec::new();
-    for family in &req.scene.fallback_fonts {
+    for family in &families {
         if book.has(family) {
             continue;
         }
-        if let Some(url) = req.fallback_font_urls.get(family) {
-            match fetch_font(url) {
+        if let Some(base) = &req.font_base_url {
+            let url = format!("{}/{}", base.trim_end_matches('/'), percent_encode(family));
+            match fetch_font(&url, req.progress_token.as_deref()) {
                 Ok(data) => fallbacks.push((family, data)),
                 Err(e) => log(
                     "fallback_font_failed",
@@ -463,6 +482,7 @@ fn render(
             }
         }
     }
+    scene.fallback_fonts = families.clone();
     let mut book = book.clone();
     if let Some(data) = &font
         && !book.add_requested(&req.scene.style.font, data)
@@ -477,7 +497,7 @@ fn render(
             log("fallback_font_rejected", json!({ "family": family }));
         }
     }
-    let renderer = Renderer::new(Scene::new(&book, req.scene.clone()));
+    let renderer = Renderer::new(Scene::new(&book, scene));
     let (w, h) = (renderer.scene().width(), renderer.scene().height());
     // Only the box the captions can ever be in is sent for each frame, and laid over the
     // video where it belongs: at 1080x1920 that is a few hundred rows of a frame, not all of it.
@@ -681,11 +701,11 @@ fn validate(req: &RenderRequest) -> Result<Encoding, String> {
         Some(&req.video_url),
         Some(&req.output_url),
         req.font_url.as_ref(),
+        req.font_base_url.as_ref(),
         req.progress_url.as_ref(),
     ]
     .into_iter()
-    .flatten()
-    .chain(req.fallback_font_urls.values());
+    .flatten();
     for url in urls {
         if !(url.starts_with("http://") || url.starts_with("https://")) {
             return Err("every url must be http or https".into());
@@ -1081,6 +1101,64 @@ mod tests {
     }
 
     #[test]
+    fn a_family_name_is_one_path_segment() {
+        assert_eq!(percent_encode("Noto Sans JP"), "Noto%20Sans%20JP");
+        assert_eq!(percent_encode("A/b?c"), "A%2Fb%3Fc");
+        assert_eq!(percent_encode("Inter-1.0_x~"), "Inter-1.0_x~");
+    }
+
+    /// A one-request stand-in for the API's font endpoint: records the path and token it was asked
+    /// with, and answers with `body` (a font file, to the engine).
+    fn stub_font_endpoint(
+        body: &'static [u8],
+    ) -> (String, std::sync::mpsc::Receiver<(String, String)>) {
+        let server = Server::http("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", server.server_addr().to_ip().unwrap());
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            for request in server.incoming_requests() {
+                let token = request
+                    .headers()
+                    .iter()
+                    .find(|h| h.field.equiv("x-job-token"))
+                    .map(|h| h.value.to_string())
+                    .unwrap_or_default();
+                tx.send((request.url().to_string(), token)).unwrap();
+                let _ = request.respond(Response::from_data(body));
+            }
+        });
+        (base, rx)
+    }
+
+    #[test]
+    fn the_server_fetches_the_fonts_its_transcripts_scripts_need_with_the_jobs_token() {
+        let (base, asked) = stub_font_endpoint(include_bytes!("../fonts/Inter.ttf"));
+        let mut req = request(json!({
+            "font_base_url": format!("{base}/api/v1/jobs/j1/fonts"),
+            "progress_token": "secret",
+        }))
+        .unwrap();
+        req.scene.transcript = serde_json::from_value(json!({
+            "language": "ja", "duration": 1.0,
+            "segments": [{ "words": [{ "text": "こんにちは", "start": 0.0, "end": 0.5 }] }]
+        }))
+        .unwrap();
+        let families = req.scene.transcript.fallback_families();
+        assert_eq!(families, vec!["Noto Sans JP".to_string()]);
+        // Only the fetching is under test here: the scene and the font book are not rendered.
+        let url = format!(
+            "{}/{}",
+            req.font_base_url.as_deref().unwrap(),
+            percent_encode(&families[0])
+        );
+        let data = fetch_font(&url, req.progress_token.as_deref()).unwrap();
+        assert!(!data.is_empty());
+        let (path, token) = asked.recv().unwrap();
+        assert_eq!(path, "/api/v1/jobs/j1/fonts/Noto%20Sans%20JP");
+        assert_eq!(token, "secret");
+    }
+
+    #[test]
     fn an_address_that_is_not_http_is_refused_wherever_it_appears() {
         assert!(validate(&request(json!({})).unwrap()).is_ok());
         for patch in [
@@ -1088,7 +1166,7 @@ mod tests {
             json!({ "output_url": "ftp://host/x" }),
             json!({ "font_url": "concat:/etc/passwd" }),
             json!({ "progress_url": "gopher://x" }),
-            json!({ "fallback_font_urls": { "Noto": "file:///x" } }),
+            json!({ "font_base_url": "file:///x" }),
         ] {
             let err = validate(&request(patch.clone()).unwrap()).err().unwrap();
             assert!(err.contains("http"), "{patch}: {err}");

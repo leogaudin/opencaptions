@@ -2,21 +2,27 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import db_session, get_owned_job, require_job_token
+from app.api.deps import db_session, get_owned_job, http_error, require_job_token
 from app.core.celery_app import celery_app
 from app.core.events import publish as publish_project_event
 from app.models import Job
-from app.models.schemas import _404_JOB, JobStatus
+from app.models.schemas import _404_JOB, JobStatus, _err
+from app.services import fonts
 from app.services.progress import RENDERING
+from app.storage import s3
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+_404_FONT = _err(404, "Unknown family, or Google Fonts unreachable (`error: font_unavailable`)")
 
 
 class ProgressUpdate(BaseModel):
@@ -52,6 +58,27 @@ async def cancel_job(
 
     job.status = "cancelled"
     await session.flush()
+
+
+@router.get(
+    "/{job_id}/fonts/{family}",
+    response_class=Response,
+    dependencies=[Depends(require_job_token)],
+    responses={200: {"content": {fonts.FONT_TYPE: {}}}, **_404_FONT},
+    summary="Read a font for a render (internal)",
+)
+async def job_font(family: Annotated[str, Path(max_length=100)]) -> Response:
+    """Internal endpoint: the engine reads the fallback fonts its transcript's scripts need.
+
+    Authorized by the job's token, like the progress callback; the same files `GET /fonts/{family}/file`
+    gives a signed-in user.
+    """
+    try:
+        key = await asyncio.to_thread(fonts.file_key, family)
+        body = await asyncio.to_thread(s3.get_object_bytes, key)
+    except fonts.FontUnavailableError as e:
+        raise http_error(404, "font_unavailable", str(e)) from e
+    return Response(body, media_type=fonts.FONT_TYPE)
 
 
 @router.post(

@@ -351,15 +351,7 @@ mod abi {
     /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
     #[unsafe(no_mangle)]
     pub unsafe extern "C" fn oc_fallback_fonts(ptr: *mut u8, len: usize) -> u32 {
-        respond(unsafe { read_transcript(ptr, len) }.map(|t| {
-            let language = t
-                .rest
-                .get("language")
-                .and_then(|l| l.as_str())
-                .unwrap_or("")
-                .to_string();
-            crate::scripts::fallback_families(t.words().map(|w| w.text.as_str()), &language)
-        }))
+        respond(unsafe { read_transcript(ptr, len) }.map(|t| t.fallback_families()))
     }
 
     /// The bundled script faces a transcript (JSON) needs, as a JSON array of `{file, family}`

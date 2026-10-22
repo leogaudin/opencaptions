@@ -153,6 +153,16 @@ def test_render_request_carries_the_stored_transcript_and_the_offset(
     assert expected != _expected_hash(0)
 
 
+def test_render_request_names_where_the_engine_reads_its_fallback_fonts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The engine works the families out itself: the request only says where to read them."""
+    body = _run_render_video(monkeypatch, 0)
+    assert "/api/v1/jobs/" in body["font_base_url"] and body["font_base_url"].endswith("/fonts")
+    assert body["progress_token"] == "tok"
+    assert "fallback_fonts" not in body and "fallback_font_urls" not in body
+
+
 def test_render_request_zero_offset(monkeypatch: pytest.MonkeyPatch) -> None:
     body = _run_render_video(monkeypatch, 0)
     assert body["caption_offset_ms"] == 0

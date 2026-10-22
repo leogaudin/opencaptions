@@ -266,6 +266,17 @@ pub struct Transcript {
 }
 
 impl Transcript {
+    /// The families the words' scripts need that are not bundled, by the transcript's language
+    /// (see `scripts::fallback_families`): the host fetches and registers them.
+    pub fn fallback_families(&self) -> Vec<String> {
+        let language = self
+            .rest
+            .get("language")
+            .and_then(|l| l.as_str())
+            .unwrap_or("");
+        crate::scripts::fallback_families(self.words().map(|w| w.text.as_str()), language)
+    }
+
     /// Every word in reading order, across segments: the sequence captions are cut from.
     pub fn words(&self) -> impl Iterator<Item = &Word> {
         self.segments.iter().flat_map(|s| &s.words)

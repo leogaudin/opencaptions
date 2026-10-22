@@ -508,6 +508,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{job_id}/fonts/{family}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a font for a render (internal)
+         * @description Internal endpoint: the engine reads the fallback fonts its transcript's scripts need.
+         *
+         *     Authorized by the job's token, like the progress callback; the same files `GET /fonts/{family}/file`
+         *     gives a signed-in user.
+         */
+        get: operations["job_font_api_v1_jobs__job_id__fonts__family__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{job_id}/progress": {
         parameters: {
             query?: never;
@@ -3000,6 +3023,49 @@ export interface operations {
                 content?: never;
             };
             /** @description Job not found (`error: job_not_found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    job_font_api_v1_jobs__job_id__fonts__family__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-job-token"?: string | null;
+            };
+            path: {
+                family: string;
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "font/ttf": unknown;
+                };
+            };
+            /** @description Unknown family, or Google Fonts unreachable (`error: font_unavailable`) */
             404: {
                 headers: {
                     [name: string]: unknown;

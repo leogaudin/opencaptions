@@ -382,9 +382,10 @@ Sans faces for Arabic, Hebrew, Devanagari and Thai. Chinese, Japanese, Korean an
 scripts need fonts too large to bundle, so the engine says which families a transcript needs
 (`scripts.rs`, `oc_fallback_fonts`: Han is drawn in the Japanese, Korean or Chinese face by the
 kana, hangul or language) and the host fetches them from Google Fonts as it does a style's own
-font, naming them in the scene's `fallback_fonts`. The render server gets them from the API, which
-holds a Python copy of the rule held to the same cases (`testdata/script_fonts.json`). Adding a
-language means a file or a column of translations in each of those, and its code in the list.
+font, naming them in the scene's `fallback_fonts`. The render server works the families out itself
+(`Transcript::fallback_families`) and reads each from the API (`GET /jobs/{id}/fonts/{family}`, authorised by the job's token
+the engine already holds for progress; a font it cannot read is left out), so no host has a copy of the rule; its cases are
+`testdata/script_fonts.json`. Adding a language means its code in the list and a column of translations.
 
 The browser does not fetch the four bundled script faces with the engine (about 1.8 MB of the 3 MB
 of fonts): `fonts.json` lists them apart (the files named `NotoSans*`, which `scripts.rs` holds to

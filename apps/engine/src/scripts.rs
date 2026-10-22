@@ -3,7 +3,7 @@
 //! scripts' fonts are too large to ship, so a host fetches the families named here (from Google
 //! Fonts, as it does for a style's own font) and registers them. One rule for every host: the
 //! preview, the phone and the render server ask the same function. `testdata/script_fonts.json`
-//! holds its cases, which the API's Python copy of the rule is tested against too.
+//! holds its cases.
 
 /// A script's letters, and the family that draws them.
 struct Script {
