@@ -10,15 +10,14 @@ from fastapi import APIRouter, Depends, Path
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.api.deps import get_current_user, http_error
+from app.api.deps import get_current_user
+from app.api.errors import ApiError
 from app.models import User
-from app.models.schemas import _err
 from app.services import fonts
 from app.storage import s3
 
 router = APIRouter(prefix="/fonts", tags=["fonts"])
 
-_404_FONT = _err(404, "Unknown family, or Google Fonts unreachable (`error: font_unavailable`)")
 # Bytes for a family never change once stored, so the browser may keep them.
 _IMMUTABLE = {"Cache-Control": "private, max-age=31536000, immutable"}
 
@@ -34,10 +33,15 @@ async def _resolve[T](fn: Callable[[], T]) -> T:
     try:
         return await asyncio.to_thread(fn)
     except fonts.FontUnavailableError as e:
-        raise http_error(404, "font_unavailable", str(e)) from e
+        raise ApiError.FONT_UNAVAILABLE.exc(str(e)) from e
 
 
-@router.get("", response_model=list[FontFamily], responses={**_404_FONT}, summary="List fonts")
+@router.get(
+    "",
+    response_model=list[FontFamily],
+    responses={**ApiError.docs(ApiError.FONT_UNAVAILABLE)},
+    summary="List fonts",
+)
 async def list_fonts(_user: Annotated[User, Depends(get_current_user)]) -> list[FontFamily]:
     """Every Google Fonts family, most popular first."""
     families = await _resolve(fonts.catalog)
@@ -55,7 +59,7 @@ _FAMILY = Annotated[str, Path(max_length=100)]
 @router.get(
     "/{family}/file",
     response_class=Response,
-    responses={200: {"content": {fonts.FONT_TYPE: {}}}, **_404_FONT},
+    responses={200: {"content": {fonts.FONT_TYPE: {}}}, **ApiError.docs(ApiError.FONT_UNAVAILABLE)},
     summary="Font file",
 )
 async def font_file(family: _FAMILY, _user: Annotated[User, Depends(get_current_user)]) -> Response:
@@ -66,7 +70,7 @@ async def font_file(family: _FAMILY, _user: Annotated[User, Depends(get_current_
 @router.get(
     "/{family}/sample",
     response_class=Response,
-    responses={200: {"content": {fonts.FONT_TYPE: {}}}, **_404_FONT},
+    responses={200: {"content": {fonts.FONT_TYPE: {}}}, **ApiError.docs(ApiError.FONT_UNAVAILABLE)},
     summary="Font name preview",
 )
 async def font_sample(

@@ -11,18 +11,18 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, Path, Request, status
+from fastapi import Depends, Header, HTTPException, Path, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import defer
 
+from app.api.errors import ApiError
 from app.core import sessions
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.job_tokens import verify_job_token
 from app.models import ApiKey, Job, Project, User
-from app.models.schemas import ErrorResponse
 from app.services import asr_models
 from app.services.api_keys import hash_key
 
@@ -46,36 +46,21 @@ def require_listed_model(provider: str, model: str | None) -> None:
     instance it forwards to)."""
     local = provider == "local" and model and model != settings.default_model
     if local and model and not asr_models.is_listed(model):
-        raise http_error(400, "unknown_model", f"Unknown transcription model: '{model}'.")
-
-
-def http_error(
-    status_code: int, error: str, detail: str, *, field: str | None = None
-) -> HTTPException:
-    """Build a response in the standard error shape.
-
-    ``code`` is derived from ``status_code`` so the two cannot drift apart.
-    """
-    return HTTPException(
-        status_code=status_code,
-        detail=ErrorResponse(
-            error=error, detail=detail, code=status_code, field=field
-        ).model_dump(),
-    )
+        raise ApiError.UNKNOWN_MODEL.exc(f"Unknown transcription model: '{model}'.")
 
 
 def _unauthenticated() -> HTTPException:
-    return http_error(status.HTTP_401_UNAUTHORIZED, "not_authenticated", "Authentication required")
+    return ApiError.NOT_AUTHENTICATED.exc()
 
 
 def _project_not_found() -> HTTPException:
     # 404 (not 403) for a project the caller does not own: a 403 would confirm
     # the id names a real project, leaking which project ids exist across users.
-    return http_error(status.HTTP_404_NOT_FOUND, "project_not_found", "No such project")
+    return ApiError.PROJECT_NOT_FOUND.exc()
 
 
 def _job_not_found() -> HTTPException:
-    return http_error(status.HTTP_404_NOT_FOUND, "job_not_found", "No such job")
+    return ApiError.JOB_NOT_FOUND.exc()
 
 
 async def get_session_user(
@@ -206,9 +191,7 @@ async def require_job_token(
     short-lived, so there is no shared secret to configure.
     """
     if not await verify_job_token(str(job_id), x_job_token):
-        raise http_error(
-            status.HTTP_401_UNAUTHORIZED, "not_authenticated", "Invalid or missing job token"
-        )
+        raise ApiError.INVALID_JOB_TOKEN.exc()
 
 
 __all__ = [

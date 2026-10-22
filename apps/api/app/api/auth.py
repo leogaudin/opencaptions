@@ -18,18 +18,13 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SESSION_COOKIE_NAME, db_session, get_session_user, http_error
+from app.api.deps import SESSION_COOKIE_NAME, db_session, get_session_user
+from app.api.errors import ApiError
 from app.core import reset_tokens, security, sessions, throttle
 from app.core.config import settings
 from app.core.sessions import ABSOLUTE_TTL_SECONDS
 from app.models import Project, User
 from app.models.schemas import (
-    _400_INVALID_RESET_TOKEN,
-    _401_UNAUTHENTICATED,
-    _403_FORBIDDEN,
-    _404_RESET_UNAVAILABLE,
-    _409_EMAIL_TAKEN,
-    _429_RATE_LIMITED,
     AuthResponse,
     AuthStatus,
     ChangeEmailRequest,
@@ -81,9 +76,7 @@ async def _user_count(session: AsyncSession) -> int:
 
 
 def _invalid_credentials() -> HTTPException:
-    return http_error(
-        status.HTTP_401_UNAUTHORIZED, "invalid_credentials", "Invalid email or password"
-    )
+    return ApiError.INVALID_CREDENTIALS.exc()
 
 
 # Only genuine credential-guessing feeds the failure counter, and that lives
@@ -95,11 +88,7 @@ _LOGIN_SCOPE = "login"
 def _rate_limited() -> HTTPException:
     # Applied identically whether or not the email names an account, and checked
     # before the lookup, so it is no existence or throttle oracle.
-    return http_error(
-        status.HTTP_429_TOO_MANY_REQUESTS,
-        "rate_limited",
-        "Too many attempts. Please try again later.",
-    )
+    return ApiError.RATE_LIMITED.exc()
 
 
 # Separate from _LOGIN_SCOPE: a per-source ceiling on the two endpoints that each
@@ -168,7 +157,9 @@ async def auth_status(
     "/register",
     response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
-    responses={**_403_FORBIDDEN, **_409_EMAIL_TAKEN, **_429_RATE_LIMITED},
+    responses={
+        **ApiError.docs(ApiError.REGISTRATION_DISABLED, ApiError.EMAIL_TAKEN, ApiError.RATE_LIMITED)
+    },
     summary="Register an account",
 )
 async def register(
@@ -190,15 +181,11 @@ async def register(
 
     is_first = (await _user_count(session)) == 0
     if not is_first and not settings.registration_enabled:
-        raise http_error(
-            status.HTTP_403_FORBIDDEN,
-            "registration_disabled",
-            "Self-service registration is disabled",
-        )
+        raise ApiError.REGISTRATION_DISABLED.exc()
 
     existing = await session.scalar(select(User).where(User.email == body.email))
     if existing is not None:
-        raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered")
+        raise ApiError.EMAIL_TAKEN.exc()
 
     user = User(
         email=body.email,
@@ -210,7 +197,7 @@ async def register(
         await session.flush()
     except IntegrityError as e:
         # Two registrations of one address raced past the check above.
-        raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered") from e
+        raise ApiError.EMAIL_TAKEN.exc() from e
 
     # Session fixation: drop any pre-existing session id before issuing a new one.
     old = request.cookies.get(SESSION_COOKIE_NAME)
@@ -225,7 +212,11 @@ async def register(
 @router.post(
     "/login",
     response_model=AuthResponse,
-    responses={**_401_UNAUTHENTICATED, **_429_RATE_LIMITED},
+    responses={
+        **ApiError.docs(
+            ApiError.NOT_AUTHENTICATED, ApiError.INVALID_CREDENTIALS, ApiError.RATE_LIMITED
+        )
+    },
     summary="Log in",
 )
 async def login(
@@ -290,7 +281,7 @@ async def logout(
 @router.get(
     "/me",
     response_model=AuthResponse,
-    responses={**_401_UNAUTHENTICATED},
+    responses={**ApiError.docs(ApiError.NOT_AUTHENTICATED, ApiError.INVALID_CREDENTIALS)},
     summary="Current user",
 )
 async def me(
@@ -306,7 +297,7 @@ async def me(
     "/me/usage",
     response_model=UsageRead,
     summary="Work this account has had done",
-    responses={**_401_UNAUTHENTICATED},
+    responses={**ApiError.docs(ApiError.NOT_AUTHENTICATED, ApiError.INVALID_CREDENTIALS)},
 )
 async def my_usage(
     user: Annotated[User, Depends(get_session_user)],
@@ -329,7 +320,11 @@ async def my_usage(
     "/me/email",
     response_model=UserRead,
     summary="Change the account's email",
-    responses={**_401_UNAUTHENTICATED, **_409_EMAIL_TAKEN},
+    responses={
+        **ApiError.docs(
+            ApiError.NOT_AUTHENTICATED, ApiError.INVALID_CREDENTIALS, ApiError.EMAIL_TAKEN
+        )
+    },
 )
 async def change_email(
     body: ChangeEmailRequest,
@@ -348,12 +343,12 @@ async def change_email(
     if body.email != user.email:
         taken = await session.scalar(select(User).where(User.email == body.email))
         if taken is not None:
-            raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered")
+            raise ApiError.EMAIL_TAKEN.exc()
     user.email = body.email
     try:
         await session.flush()
     except IntegrityError as e:
-        raise http_error(status.HTTP_409_CONFLICT, "email_taken", "Email already registered") from e
+        raise ApiError.EMAIL_TAKEN.exc() from e
     logger.info("email changed for user id=%s", user.id)
     return UserRead.model_validate(user)
 
@@ -362,7 +357,7 @@ async def change_email(
     "/me/password",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Change the account's password",
-    responses={**_401_UNAUTHENTICATED},
+    responses={**ApiError.docs(ApiError.NOT_AUTHENTICATED, ApiError.INVALID_CREDENTIALS)},
 )
 async def change_password(
     body: ChangePasswordRequest,
@@ -394,21 +389,13 @@ async def change_password(
 def _reset_unavailable() -> HTTPException:
     # Uniform refusal when SMTP is unconfigured. Independent of any email, so it
     # is never an enumeration oracle.
-    return http_error(
-        status.HTTP_404_NOT_FOUND,
-        "reset_unavailable",
-        "Password reset is not available on this instance",
-    )
+    return ApiError.RESET_UNAVAILABLE.exc()
 
 
 def _invalid_reset_token() -> HTTPException:
     # One generic failure for every bad-token case (unknown, expired, already
     # used, malformed, or naming a vanished account) so none is distinguishable.
-    return http_error(
-        status.HTTP_400_BAD_REQUEST,
-        "invalid_reset_token",
-        "This password reset link is invalid or has expired",
-    )
+    return ApiError.INVALID_RESET_TOKEN.exc()
 
 
 _RESET_EMAIL_SUBJECT = "Reset your OpenCaptions password"
@@ -440,7 +427,7 @@ def _send_reset_email(to: str, link: str) -> None:
 @router.post(
     "/password-reset",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={**_404_RESET_UNAVAILABLE, **_429_RATE_LIMITED},
+    responses={**ApiError.docs(ApiError.RESET_UNAVAILABLE, ApiError.RATE_LIMITED)},
     summary="Request a password reset link",
 )
 async def request_password_reset(
@@ -472,7 +459,11 @@ async def request_password_reset(
 @router.post(
     "/password-reset/confirm",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={**_404_RESET_UNAVAILABLE, **_400_INVALID_RESET_TOKEN, **_429_RATE_LIMITED},
+    responses={
+        **ApiError.docs(
+            ApiError.RESET_UNAVAILABLE, ApiError.INVALID_RESET_TOKEN, ApiError.RATE_LIMITED
+        )
+    },
     summary="Set a new password from a reset token",
 )
 async def confirm_password_reset(

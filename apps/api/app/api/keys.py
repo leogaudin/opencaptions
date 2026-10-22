@@ -13,14 +13,13 @@ from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import db_session, get_session_user, http_error
+from app.api.deps import db_session, get_session_user
+from app.api.errors import ApiError
 from app.models import ApiKey, User
-from app.models.schemas import ApiKeyCreate, ApiKeyCreated, ApiKeyRead, _err
+from app.models.schemas import ApiKeyCreate, ApiKeyCreated, ApiKeyRead
 from app.services import api_keys
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
-
-_404_KEY = _err(404, "No such key (`error: api_key_not_found`)")
 
 
 @router.get("", response_model=list[ApiKeyRead], summary="List API keys")
@@ -56,7 +55,7 @@ async def create_key(
 @router.delete(
     "/{key_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={**_404_KEY},
+    responses={**ApiError.docs(ApiError.API_KEY_NOT_FOUND)},
     summary="Revoke an API key",
 )
 async def revoke_key(
@@ -67,5 +66,5 @@ async def revoke_key(
     row = await session.get(ApiKey, key_id)
     # Another user's key is answered exactly like a missing one.
     if row is None or row.user_id != user.id:
-        raise http_error(404, "api_key_not_found", "No such key")
+        raise ApiError.API_KEY_NOT_FOUND.exc()
     await session.delete(row)

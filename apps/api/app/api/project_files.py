@@ -19,17 +19,10 @@ from app.api.deps import (
     get_current_user,
     get_owned_project,
     get_owned_project_light,
-    http_error,
 )
+from app.api.errors import ApiError
 from app.models import Job, Project, User
 from app.models.schemas import (
-    _400_NO_TRANSCRIPT,
-    _400_NO_VIDEO,
-    _400_UNKNOWN_FORMAT,
-    _404_NOT_RENDERED,
-    _404_PROJECT,
-    _404_PROJECT_OR_THUMBNAIL,
-    _503_ENGINE,
     DownloadResponse,
     ErrorResponse,
     ExportChoices,
@@ -67,10 +60,12 @@ router = APIRouter(prefix="/projects", tags=["projects"])
             "model": DownloadResponse,
             "description": "Render job queued, `ready` is false, `job_id` is populated",
         },
-        **_404_PROJECT,
-        **_400_UNKNOWN_FORMAT,
-        **_400_NO_VIDEO,
-        **_400_NO_TRANSCRIPT,
+        **ApiError.docs(
+            ApiError.PROJECT_NOT_FOUND,
+            ApiError.UNKNOWN_FORMAT,
+            ApiError.NO_VIDEO,
+            ApiError.NO_TRANSCRIPT,
+        ),
     },
     summary="Request video download",
 )
@@ -91,19 +86,17 @@ async def request_download(
     # Validate format
     fmt = get_format(body.format)
     if fmt is None:
-        raise http_error(
-            400,
-            "unknown_format",
-            f"Unknown format '{body.format}'. Valid formats: {[f.id for f in all_formats()]}",
+        raise ApiError.UNKNOWN_FORMAT.exc(
+            f"Unknown format '{body.format}'. Valid formats: {[f.id for f in all_formats()]}"
         )
 
     # Must have a video
     if not proj.video_storage_key:
-        raise http_error(400, "no_video", "Project has no uploaded video")
+        raise ApiError.NO_VIDEO.exc()
 
     # Must have a transcript
     if proj.transcript is None:
-        raise http_error(400, "no_transcript", "Cannot render: project has no transcript yet")
+        raise ApiError.NO_TRANSCRIPT.exc("Cannot render: project has no transcript yet")
 
     # Compute the content-addressed hash for this render configuration
     options = RenderOptions.model_validate(body.model_dump(exclude={"format"}))
@@ -147,7 +140,7 @@ async def request_download(
     )
     decision = resolve_policy().check(user, KIND_RENDER, estimated_frames)
     if not decision.allowed:
-        raise http_error(status.HTTP_403_FORBIDDEN, "not_entitled", decision.reason)
+        raise ApiError.NOT_ENTITLED.exc(decision.reason)
 
     # Cache MISS: enqueue a new render job.
     job = Job(
@@ -182,8 +175,9 @@ async def request_download(
     response_class=StreamingResponse,
     responses={
         200: {"content": {"video/*": {}}},
-        **_404_NOT_RENDERED,
-        **_404_PROJECT,
+        **ApiError.docs(
+            ApiError.NOT_RENDERED, ApiError.FORMAT_NOT_FOUND, ApiError.PROJECT_NOT_FOUND
+        ),
     },
     summary="Download rendered video",
 )
@@ -201,10 +195,10 @@ async def download_render(
     project_id = proj.id
     fmt = get_format(format_id)
     if fmt is None:
-        raise http_error(404, "unknown_format", f"Unknown format '{format_id}'")
+        raise ApiError.FORMAT_NOT_FOUND.exc(f"Unknown format '{format_id}'")
 
     if proj.transcript is None:
-        raise http_error(404, "not_rendered", "No transcript, cannot have a render")
+        raise ApiError.NOT_RENDERED.exc("No transcript, cannot have a render")
 
     render_hash = resolve_render_inputs(proj, options).hash_for(fmt.id)
 
@@ -214,10 +208,8 @@ async def download_render(
     try:
         response = await _stream_s3_object(output_key, range_header)
     except s3.ObjectNotFoundError:
-        raise http_error(
-            404,
-            "not_rendered",
-            f"Render not available for format '{format_id}' with current content",
+        raise ApiError.NOT_RENDERED.exc(
+            f"Render not available for format '{format_id}' with current content"
         ) from None
     response.headers["Content-Disposition"] = (
         f'attachment; filename="opencaptions-{project_id}{fmt.extension}"'
@@ -252,12 +244,12 @@ async def get_project_source(
     `<video>` element can seek without downloading the whole file.
     """
     if not proj.video_storage_key:
-        raise http_error(404, "no_video", "Project has no source video")
+        raise ApiError.SOURCE_VIDEO_MISSING.exc()
 
     try:
         return await _stream_s3_object(proj.video_storage_key, request.headers.get("range"))
     except s3.ObjectNotFoundError:
-        raise http_error(404, "no_video", "Project has no source video") from None
+        raise ApiError.SOURCE_VIDEO_MISSING.exc() from None
 
 
 @router.get(
@@ -265,7 +257,7 @@ async def get_project_source(
     response_class=Response,
     responses={
         200: {"content": {"image/jpeg": {}}, "description": "Project poster frame (JPEG)"},
-        **_404_PROJECT_OR_THUMBNAIL,
+        **ApiError.docs(ApiError.PROJECT_NOT_FOUND, ApiError.NO_THUMBNAIL),
     },
     summary="Get project thumbnail",
 )
@@ -277,7 +269,7 @@ async def get_project_thumbnail(
     try:
         data = await asyncio.to_thread(s3.get_object_bytes, key)
     except s3.ObjectNotFoundError:
-        raise http_error(404, "no_thumbnail", "Project has no thumbnail") from None
+        raise ApiError.NO_THUMBNAIL.exc() from None
     return Response(
         content=data,
         media_type="image/jpeg",
@@ -288,7 +280,7 @@ async def get_project_thumbnail(
 @router.get(
     "/{project_id}/exports",
     response_model=ExportsResponse,
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT},
+    responses={**ApiError.docs(ApiError.PROJECT_NOT_FOUND, ApiError.NO_TRANSCRIPT)},
     summary="List export options",
 )
 async def get_project_exports(
@@ -301,7 +293,7 @@ async def get_project_exports(
     """
     project_id = proj.id
     if proj.transcript is None:
-        raise http_error(400, "no_transcript", "Project has no transcript yet")
+        raise ApiError.NO_TRANSCRIPT.exc()
 
     base = f"/api/v1/projects/{project_id}"
 
@@ -343,7 +335,11 @@ async def get_project_exports(
 @router.get(
     "/{project_id}/export.srt",
     response_class=PlainTextResponse,
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT, **_503_ENGINE},
+    responses={
+        **ApiError.docs(
+            ApiError.PROJECT_NOT_FOUND, ApiError.NO_TRANSCRIPT, ApiError.ENGINE_UNAVAILABLE
+        )
+    },
     summary="Export SRT subtitles",
 )
 async def export_srt(
@@ -356,7 +352,11 @@ async def export_srt(
 @router.get(
     "/{project_id}/export.vtt",
     response_class=PlainTextResponse,
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT, **_503_ENGINE},
+    responses={
+        **ApiError.docs(
+            ApiError.PROJECT_NOT_FOUND, ApiError.NO_TRANSCRIPT, ApiError.ENGINE_UNAVAILABLE
+        )
+    },
     summary="Export VTT subtitles",
 )
 async def export_vtt(
@@ -368,7 +368,7 @@ async def export_vtt(
 
 @router.get(
     "/{project_id}/export.json",
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT},
+    responses={**ApiError.docs(ApiError.PROJECT_NOT_FOUND, ApiError.NO_TRANSCRIPT)},
     summary="Export JSON transcript",
 )
 async def export_json(
@@ -399,8 +399,8 @@ async def _subtitle_file(
         )
     except subtitles.EngineUnavailableError as e:
         logger.error("subtitles: %s", e)
-        raise http_error(
-            503, "engine_unavailable", "The caption engine did not answer; try again."
+        raise ApiError.ENGINE_UNAVAILABLE.exc(
+            "The caption engine did not answer; try again."
         ) from e
     return Response(
         content=body,
@@ -412,7 +412,7 @@ async def _subtitle_file(
 def _require_transcript(proj: Project) -> Transcript:
     """The project's transcript, as stored."""
     if proj.transcript is None:
-        raise http_error(400, "no_transcript", "Project has no transcript yet")
+        raise ApiError.NO_TRANSCRIPT.exc()
     return Transcript.model_validate(dict(proj.transcript))
 
 
@@ -425,7 +425,7 @@ async def _stream_s3_object(key: str, range_header: str | None) -> StreamingResp
     try:
         obj = await asyncio.to_thread(s3.open_object, key, range_header)
     except s3.RangeNotSatisfiableError:
-        raise http_error(416, "range_not_satisfiable", "Requested range not satisfiable") from None
+        raise ApiError.RANGE_NOT_SATISFIABLE.exc() from None
 
     body = obj["Body"]
     content_type = obj.get("ContentType") or "application/octet-stream"

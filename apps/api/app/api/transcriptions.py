@@ -35,16 +35,13 @@ from app.api.deps import (
     db_session,
     get_current_user,
     get_owned_job,
-    http_error,
     require_listed_model,
 )
+from app.api.errors import ApiError
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.models import Job, User
 from app.models.schemas import (
-    _400_UNKNOWN_MODEL,
-    _400_UNSUPPORTED_LANGUAGE,
-    _404_JOB,
     ErrorResponse,
     LanguageOption,
     ModelOption,
@@ -150,17 +147,15 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
 
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     if audio.size and audio.size > max_bytes:
-        raise http_error(
-            413, "upload_too_large", f"Upload exceeds {settings.max_upload_size_mb} MB"
-        )
+        raise ApiError.UPLOAD_TOO_LARGE.exc(f"Upload exceeds {settings.max_upload_size_mb} MB")
     fd, path = tempfile.mkstemp(prefix="opencaptions-transcription-")
     os.close(fd)
     try:
         try:
             await asyncio.to_thread(copy_capped, audio.file, path, max_bytes)
         except UploadTooLargeError:
-            raise http_error(
-                413, "upload_too_large", f"Upload exceeds {settings.max_upload_size_mb} MB"
+            raise ApiError.UPLOAD_TOO_LARGE.exc(
+                f"Upload exceeds {settings.max_upload_size_mb} MB"
             ) from None
         try:
             duration: float | None = await asyncio.to_thread(probe_duration, path)
@@ -176,7 +171,7 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
     "/transcriptions",
     response_model=TranscriptionCreated,
     status_code=status.HTTP_202_ACCEPTED,
-    responses={**_400_UNKNOWN_MODEL, **_400_UNSUPPORTED_LANGUAGE},
+    responses={**ApiError.docs(ApiError.UNKNOWN_MODEL, ApiError.UNSUPPORTED_LANGUAGE)},
     summary="Transcribe an audio or video file",
 )
 async def create_transcription(
@@ -190,24 +185,16 @@ async def create_transcription(
     """Queue a transcription; watch it at ``GET /jobs/{job_id}``, fetch the result at
     ``GET /transcriptions/{job_id}``."""
     if language != "auto" and not is_valid_language(language):
-        raise http_error(
-            400,
-            "unsupported_language",
-            f"Unsupported language code: '{language}'. Use 'auto' or a valid ISO 639-1 code.",
+        raise ApiError.UNSUPPORTED_LANGUAGE.exc(
+            f"Unsupported language code: '{language}'. Use 'auto' or a valid ISO 639-1 code."
         )
     if hop and settings.transcription_provider == "opencaptions":
-        raise http_error(
-            status.HTTP_508_LOOP_DETECTED,
-            "transcription_loop",
+        raise ApiError.TRANSCRIPTION_LOOP.exc(
             "This instance forwards transcription elsewhere, and the request came from a "
-            "forwarding instance: it would go round in a circle.",
+            "forwarding instance: it would go round in a circle."
         )
     if settings.hosted_mode and model and model != settings.default_model:
-        raise http_error(
-            status.HTTP_403_FORBIDDEN,
-            "transcription_choice_disabled",
-            "This instance runs a fixed transcription provider and model.",
-        )
+        raise ApiError.TRANSCRIPTION_CHOICE_DISABLED.exc()
 
     require_listed_model(settings.transcription_provider, model)
 
@@ -223,11 +210,9 @@ async def create_transcription(
         )
     )
     if (running or 0) >= settings.transcription_max_concurrent:
-        raise http_error(
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            "too_many_transcriptions",
+        raise ApiError.TOO_MANY_TRANSCRIPTIONS.exc(
             f"{settings.transcription_max_concurrent} transcriptions are already running; "
-            "wait for one to finish.",
+            "wait for one to finish."
         )
 
     # Receiving the audio lasts as long as the transfer: end the transaction signing in
@@ -236,17 +221,15 @@ async def create_transcription(
     path, duration = await _stage_upload(audio)
     try:
         if duration and duration > settings.max_video_duration_s:
-            raise http_error(
-                400,
-                "video_too_long",
+            raise ApiError.VIDEO_TOO_LONG.exc(
                 f"The audio is {duration / 60:.1f} min; this instance accepts up to "
-                f"{settings.max_video_duration_s / 60:.0f} min",
+                f"{settings.max_video_duration_s / 60:.0f} min"
             )
         from app.services.entitlements import KIND_TRANSCRIPTION, resolve_policy
 
         decision = resolve_policy().check(user, KIND_TRANSCRIPTION, float(duration or 0.0))
         if not decision.allowed:
-            raise http_error(status.HTTP_403_FORBIDDEN, "not_entitled", decision.reason)
+            raise ApiError.NOT_ENTITLED.exc(decision.reason)
 
         job = Job(user_id=user.id, type="transcription", status="pending")
         session.add(job)
@@ -280,7 +263,7 @@ async def create_transcription(
 @router.get(
     "/transcriptions/{job_id}",
     responses={
-        **_404_JOB,
+        **ApiError.docs(ApiError.JOB_NOT_FOUND),
         409: {
             "description": "Not finished (`transcription_not_ready`) or failed (`transcription_failed`)"
         },
@@ -293,15 +276,13 @@ async def get_transcription(
 ) -> Response:
     """The Transcript JSON (the schema of ``project.transcript``) of a completed job."""
     if not _is_api_job(job):
-        raise http_error(404, "job_not_found", "Job not found")
+        raise ApiError.JOB_NOT_FOUND.exc("Job not found")
     if job.status in _ACTIVE:
-        raise http_error(409, "transcription_not_ready", "The transcription is not finished")
+        raise ApiError.TRANSCRIPTION_NOT_READY.exc()
     if job.status == "deleted":
         return _expired()
     if job.status != "completed":
-        raise http_error(
-            409, "transcription_failed", job.error or f"The transcription {job.status}"
-        )
+        raise ApiError.TRANSCRIPTION_FAILED.exc(job.error or f"The transcription {job.status}")
     age = datetime.now(UTC) - job.updated_at.replace(tzinfo=job.updated_at.tzinfo or UTC)
     if age > timedelta(hours=settings.transcription_result_ttl_h):
         await _delete_everything(job, session)
@@ -339,7 +320,7 @@ async def _delete_everything(job: Job, session: AsyncSession) -> None:
 @router.delete(
     "/transcriptions/{job_id}",
     status_code=204,
-    responses={**_404_JOB},
+    responses={**ApiError.docs(ApiError.JOB_NOT_FOUND)},
     summary="Cancel a transcription and delete its audio and result",
 )
 async def delete_transcription(
@@ -347,7 +328,7 @@ async def delete_transcription(
     session: Annotated[AsyncSession, Depends(db_session)],
 ) -> None:
     if not _is_api_job(job):
-        raise http_error(404, "job_not_found", "Job not found")
+        raise ApiError.JOB_NOT_FOUND.exc("Job not found")
     if job.status in _ACTIVE and job.celery_task_id:
         celery_app.control.revoke(job.celery_task_id, terminate=True)
     await _delete_everything(job, session)

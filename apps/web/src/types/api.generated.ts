@@ -1921,7 +1921,7 @@ export interface operations {
                     "application/json": components["schemas"]["AuthResponse"];
                 };
             };
-            /** @description Insufficient privileges or disabled (`error: forbidden` / `registration_disabled`) */
+            /** @description Self-service registration is disabled (`error: registration_disabled`) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1948,7 +1948,7 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Too many attempts; try again later (`error: rate_limited`) */
+            /** @description Too many attempts. Please try again later. (`error: rate_limited`) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -1981,7 +1981,7 @@ export interface operations {
                     "application/json": components["schemas"]["AuthResponse"];
                 };
             };
-            /** @description Not authenticated (`error: not_authenticated` / `invalid_credentials`) */
+            /** @description Authentication required (`error: not_authenticated`); Invalid email or password (`error: invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1999,7 +1999,7 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Too many attempts; try again later (`error: rate_limited`) */
+            /** @description Too many attempts. Please try again later. (`error: rate_limited`) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2046,7 +2046,7 @@ export interface operations {
                     "application/json": components["schemas"]["AuthResponse"];
                 };
             };
-            /** @description Not authenticated (`error: not_authenticated` / `invalid_credentials`) */
+            /** @description Authentication required (`error: not_authenticated`); Invalid email or password (`error: invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2075,7 +2075,7 @@ export interface operations {
                     "application/json": components["schemas"]["UsageRead"];
                 };
             };
-            /** @description Not authenticated (`error: not_authenticated` / `invalid_credentials`) */
+            /** @description Authentication required (`error: not_authenticated`); Invalid email or password (`error: invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2108,7 +2108,7 @@ export interface operations {
                     "application/json": components["schemas"]["UserRead"];
                 };
             };
-            /** @description Not authenticated (`error: not_authenticated` / `invalid_credentials`) */
+            /** @description Authentication required (`error: not_authenticated`); Invalid email or password (`error: invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2157,7 +2157,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not authenticated (`error: not_authenticated` / `invalid_credentials`) */
+            /** @description Authentication required (`error: not_authenticated`); Invalid email or password (`error: invalid_credentials`) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2197,7 +2197,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Password reset is not available. SMTP is not configured (`error: reset_unavailable`) */
+            /** @description Password reset is not available on this instance (`error: reset_unavailable`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2215,7 +2215,7 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Too many attempts; try again later (`error: rate_limited`) */
+            /** @description Too many attempts. Please try again later. (`error: rate_limited`) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2246,7 +2246,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Reset token is invalid, expired, or already used (`error: invalid_reset_token`) */
+            /** @description This password reset link is invalid or has expired (`error: invalid_reset_token`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2255,7 +2255,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Password reset is not available. SMTP is not configured (`error: reset_unavailable`) */
+            /** @description Password reset is not available on this instance (`error: reset_unavailable`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2273,7 +2273,7 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Too many attempts; try again later (`error: rate_limited`) */
+            /** @description Too many attempts. Please try again later. (`error: rate_limited`) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2338,7 +2338,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectStatus"];
                 };
             };
-            /** @description Video is longer than MAX_VIDEO_DURATION_S (`error: video_too_long`) */
+            /** @description Provide either a file upload (video) or a video_url, not both or neither (`error: missing_video_source`); Video URL rejected (not a safe http(s) address) (`error: invalid_video_url`); Failed to fetch the video from its URL (`error: video_fetch_failed`); The video is longer than this instance accepts (`error: video_too_long`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2347,7 +2347,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Upload exceeds max size (`error: upload_too_large`) */
+            /** @description Upload exceeds the maximum size (`error: upload_too_large`) */
             413: {
                 headers: {
                     [name: string]: unknown;
@@ -2356,7 +2356,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description URL points to unsupported media type (`error: unsupported_media`) */
+            /** @description The URL points to an unsupported media type (`error: unsupported_media`) */
             415: {
                 headers: {
                     [name: string]: unknown;
@@ -2396,7 +2396,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectStatus"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2434,7 +2434,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2478,7 +2478,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectStatus"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2522,7 +2522,7 @@ export interface operations {
                     "application/json": components["schemas"]["JobStatus"];
                 };
             };
-            /** @description The model is not one this instance lists (`error: unknown_model`) */
+            /** @description Project has no uploaded video (`error: no_video`); Language code not recognized: use 'auto' or an ISO 639-1 code (`error: unsupported_language`); The model is not one this instance lists (`error: unknown_model`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2531,7 +2531,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Work refused: the entitlement policy denied it (`error: not_entitled`), or the instance runs in hosted mode and the request named a provider or model other than the deployment defaults (`error: transcription_choice_disabled`) */
+            /** @description The entitlement policy denied the work (`error: not_entitled`); This instance runs a fixed transcription provider and model. (`error: transcription_choice_disabled`) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2540,7 +2540,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2593,7 +2593,7 @@ export interface operations {
                     "application/json": components["schemas"]["DownloadResponse"];
                 };
             };
-            /** @description Project has no transcript yet (`error: no_transcript`) */
+            /** @description Unknown render format (`error: unknown_format`); Project has no uploaded video (`error: no_video`); Project has no transcript yet (`error: no_transcript`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2602,7 +2602,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2650,7 +2650,7 @@ export interface operations {
                     "video/*": unknown;
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description Render not available for this format and content (`error: not_rendered`); Unknown render format (`error: unknown_format`); No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2730,7 +2730,7 @@ export interface operations {
                     "image/jpeg": unknown;
                 };
             };
-            /** @description Project not found or has no thumbnail (`error: project_not_found` / `no_thumbnail`) */
+            /** @description No such project (`error: project_not_found`); Project has no thumbnail (`error: no_thumbnail`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2779,7 +2779,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2828,7 +2828,7 @@ export interface operations {
                     "text/plain": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2886,7 +2886,7 @@ export interface operations {
                     "text/plain": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2944,7 +2944,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Project not found (`error: project_not_found`) */
+            /** @description No such project (`error: project_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2984,7 +2984,7 @@ export interface operations {
                     "application/json": components["schemas"]["JobStatus"];
                 };
             };
-            /** @description Job not found (`error: job_not_found`) */
+            /** @description No such job (`error: job_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -3022,7 +3022,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Job not found (`error: job_not_found`) */
+            /** @description No such job (`error: job_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -3164,7 +3164,7 @@ export interface operations {
                     "application/json": components["schemas"]["TranscriptionCreated"];
                 };
             };
-            /** @description Language code not recognized (`error: unsupported_language`) */
+            /** @description The model is not one this instance lists (`error: unknown_model`); Language code not recognized: use 'auto' or an ISO 639-1 code (`error: unsupported_language`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3204,7 +3204,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Job not found (`error: job_not_found`) */
+            /** @description No such job (`error: job_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -3249,7 +3249,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Job not found (`error: job_not_found`) */
+            /** @description No such job (`error: job_not_found`) */
             404: {
                 headers: {
                     [name: string]: unknown;

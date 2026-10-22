@@ -21,24 +21,13 @@ from app.api.deps import (
     get_current_user,
     get_owned_project,
     get_owned_project_light,
-    http_error,
     require_listed_model,
 )
+from app.api.errors import ApiError
 from app.api.ingest import ingest_remote_url, ingest_uploaded_file, reject_ambiguous_source
 from app.core.config import settings
 from app.models import Job, Project, User
 from app.models.schemas import (
-    _400_INVALID_VIDEO_URL,
-    _400_MISSING_VIDEO_SOURCE,
-    _400_NO_VIDEO,
-    _400_UNKNOWN_MODEL,
-    _400_UNSUPPORTED_LANGUAGE,
-    _400_VIDEO_FETCH_FAILED,
-    _400_VIDEO_TOO_LONG,
-    _403_TRANSCRIPTION_CHOICE,
-    _404_PROJECT,
-    _413_UPLOAD_TOO_LARGE,
-    _415_UNSUPPORTED_MEDIA,
     JobStatus,
     ProjectList,
     ProjectListItem,
@@ -125,12 +114,14 @@ async def list_projects(
     response_model=ProjectStatus,
     status_code=status.HTTP_201_CREATED,
     responses={
-        **_400_MISSING_VIDEO_SOURCE,
-        **_400_INVALID_VIDEO_URL,
-        **_400_VIDEO_FETCH_FAILED,
-        **_400_VIDEO_TOO_LONG,
-        **_413_UPLOAD_TOO_LARGE,
-        **_415_UNSUPPORTED_MEDIA,
+        **ApiError.docs(
+            ApiError.MISSING_VIDEO_SOURCE,
+            ApiError.INVALID_VIDEO_URL,
+            ApiError.VIDEO_FETCH_FAILED,
+            ApiError.VIDEO_TOO_LONG,
+            ApiError.UPLOAD_TOO_LARGE,
+            ApiError.UNSUPPORTED_MEDIA,
+        ),
     },
     summary="Create project",
 )
@@ -168,7 +159,10 @@ async def create_project(
 
 
 @router.get(
-    "/{project_id}", response_model=ProjectStatus, responses={**_404_PROJECT}, summary="Get project"
+    "/{project_id}",
+    response_model=ProjectStatus,
+    responses={**ApiError.docs(ApiError.PROJECT_NOT_FOUND)},
+    summary="Get project",
 )
 async def get_project(
     proj: Annotated[Project, Depends(get_owned_project)],
@@ -181,7 +175,7 @@ async def get_project(
 @router.patch(
     "/{project_id}",
     response_model=ProjectStatus,
-    responses={**_404_PROJECT},
+    responses={**ApiError.docs(ApiError.PROJECT_NOT_FOUND)},
     summary="Update project",
 )
 async def update_project(
@@ -203,7 +197,10 @@ async def update_project(
 
 
 @router.delete(
-    "/{project_id}", status_code=204, responses={**_404_PROJECT}, summary="Delete project"
+    "/{project_id}",
+    status_code=204,
+    responses={**ApiError.docs(ApiError.PROJECT_NOT_FOUND)},
+    summary="Delete project",
 )
 async def delete_project(
     proj: Annotated[Project, Depends(get_owned_project_light)],
@@ -234,11 +231,14 @@ async def delete_project(
     response_model=JobStatus,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
-        **_404_PROJECT,
-        **_400_NO_VIDEO,
-        **_400_UNSUPPORTED_LANGUAGE,
-        **_400_UNKNOWN_MODEL,
-        **_403_TRANSCRIPTION_CHOICE,
+        **ApiError.docs(
+            ApiError.PROJECT_NOT_FOUND,
+            ApiError.NO_VIDEO,
+            ApiError.UNSUPPORTED_LANGUAGE,
+            ApiError.UNKNOWN_MODEL,
+            ApiError.NOT_ENTITLED,
+            ApiError.TRANSCRIPTION_CHOICE_DISABLED,
+        ),
     },
     summary="Start transcription",
 )
@@ -250,15 +250,13 @@ async def start_transcription(
 ) -> JobStatus:
     """Enqueue a transcription job."""
     if proj.video_storage_key is None:
-        raise http_error(400, "no_video", "Project has no uploaded video")
+        raise ApiError.NO_VIDEO.exc()
 
     # Validate language: accept "auto" or any known Whisper language code.
     if body.language != "auto" and not is_valid_language(body.language):
-        raise http_error(
-            400,
-            "unsupported_language",
+        raise ApiError.UNSUPPORTED_LANGUAGE.exc(
             f"Unsupported language code: '{body.language}'. "
-            "Use 'auto' for automatic detection or a valid ISO 639-1 code.",
+            "Use 'auto' for automatic detection or a valid ISO 639-1 code."
         )
 
     # Hosted posture: the operator pays for compute and answers for where audio
@@ -270,11 +268,7 @@ async def start_transcription(
         provider_override = body.provider and body.provider != settings.transcription_provider
         model_override = body.model and body.model != settings.default_model
         if provider_override or model_override:
-            raise http_error(
-                status.HTTP_403_FORBIDDEN,
-                "transcription_choice_disabled",
-                "This instance runs a fixed transcription provider and model.",
-            )
+            raise ApiError.TRANSCRIPTION_CHOICE_DISABLED.exc()
 
     require_listed_model(body.provider or settings.transcription_provider, body.model)
 
@@ -284,7 +278,7 @@ async def start_transcription(
 
     decision = resolve_policy().check(user, KIND_TRANSCRIPTION, float(proj.video_duration or 0.0))
     if not decision.allowed:
-        raise http_error(status.HTTP_403_FORBIDDEN, "not_entitled", decision.reason)
+        raise ApiError.NOT_ENTITLED.exc(decision.reason)
 
     job = Job(project_id=proj.id, user_id=user.id, type="transcription", status="pending")
     session.add(job)

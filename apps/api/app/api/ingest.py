@@ -14,7 +14,7 @@ import tempfile
 
 from fastapi import UploadFile
 
-from app.api.deps import http_error
+from app.api.errors import ApiError
 from app.core.config import settings
 from app.models import Project
 from app.services.upload import UploadTooLargeError, copy_capped
@@ -61,11 +61,9 @@ async def ingest_video(
     # duration could not be probed is admitted rather than guessed at.
     duration = project.video_duration
     if duration and duration > settings.max_video_duration_s:
-        raise http_error(
-            400,
-            "video_too_long",
+        raise ApiError.VIDEO_TOO_LONG.exc(
             f"Video is {duration / 60:.1f} min; this instance accepts up to "
-            f"{settings.max_video_duration_s / 60:.0f} min",
+            f"{settings.max_video_duration_s / 60:.0f} min"
         )
 
     # The poster is cut from the local file while it is still here, beside the upload
@@ -108,7 +106,7 @@ def reject_ambiguous_source(has_video: bool, has_url: bool) -> None:
             if has_video
             else "Provide either a file upload (video) or a video_url"
         )
-        raise http_error(400, "missing_video_source", detail)
+        raise ApiError.MISSING_VIDEO_SOURCE.exc(detail)
 
 
 async def ingest_uploaded_file(project: Project, video: UploadFile) -> None:
@@ -118,9 +116,7 @@ async def ingest_uploaded_file(project: Project, video: UploadFile) -> None:
     double-write cost is bounded by MAX_UPLOAD_SIZE_MB.
     """
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
-    too_large = http_error(
-        413, "upload_too_large", f"Upload exceeds {settings.max_upload_size_mb} MB"
-    )
+    too_large = ApiError.UPLOAD_TOO_LARGE.exc(f"Upload exceeds {settings.max_upload_size_mb} MB")
     if video.size and video.size > max_bytes:
         raise too_large
 
@@ -150,22 +146,20 @@ async def ingest_remote_url(project: Project, video_url: str) -> None:
 
     # Each fetch failure maps to one client-visible error; the guard's own
     # message is surfaced verbatim so a rejected URL explains itself.
-    error_map: list[tuple[type[Exception], int, str]] = [
-        (UnsafeURLError, 400, "invalid_video_url"),
-        (FetchFailedError, 400, "video_fetch_failed"),
-        (UnsupportedMediaError, 415, "unsupported_media"),
-        (FileTooLargeError, 413, "upload_too_large"),
+    error_map: list[tuple[type[Exception], ApiError]] = [
+        (UnsafeURLError, ApiError.INVALID_VIDEO_URL),
+        (FetchFailedError, ApiError.VIDEO_FETCH_FAILED),
+        (UnsupportedMediaError, ApiError.UNSUPPORTED_MEDIA),
+        (FileTooLargeError, ApiError.UPLOAD_TOO_LARGE),
     ]
 
     url = video_url.strip()
     try:
         tmp_path, ext = await asyncio.to_thread(fetch_video_to_tempfile, url)
-    except tuple(exc for exc, _, _ in error_map) as e:
-        status_code, error = next(
-            (code, name) for exc, code, name in error_map if isinstance(e, exc)
-        )
-        logger.warning("video_url rejected (%s): %s, %s", error, url, e)
-        raise http_error(status_code, error, str(e)) from e
+    except tuple(exc for exc, _ in error_map) as e:
+        error = next(error for exc, error in error_map if isinstance(e, exc))
+        logger.warning("video_url rejected (%s): %s, %s", error.code, url, e)
+        raise error.exc(str(e)) from e
 
     try:
         # Content-Type is not reliably known from the remote, pass None and
