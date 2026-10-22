@@ -104,8 +104,8 @@ The drawing is `src/scene/`: `layout.rs` places the words, `anim.rs` says what e
 in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and the pixel helpers,
 `text.rs` the shaping, and `renderer.rs` the frame loop and its caches.
 
-- **Scene.** `set_scene` lays out the transcript once for a style and a frame
-  size. `render(t)` then draws one frame, redrawing only the area that changed,
+- **Scene.** `oc_scene_new` lays out the transcript once for a style and a frame
+  size and returns a handle (`oc_scene_free` releases it). `render(t)` then draws one frame, redrawing only the area that changed,
   and reports the band of rows it changed (`oc_changed_top`/`_bottom`; the whole
   frame after a new scene), so the web preview copies and draws just that band
   while a video plays.
@@ -202,7 +202,7 @@ in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and 
   - *Tiles.* The preset tiles, and the choices in the Background and Animation tabs, are drawn by
     the engine (`CaptionEngine.samples`: the same drawing as the preview and the export, in a
     phone-shaped frame, cropped to the band around the caption), so each shows its real font,
-    colours and highlight; the scene in use is put back after. A background with no opacity is
+    colours and highlight, each in a scene of its own, so the preview's is not disturbed. A background with no opacity is
     given a visible one when chosen.
 - **Fonts.** Inter, Poppins (ExtraBold, the default preset's) and Montserrat (Black, the Bold
   preset's) and Nimbus Roman (Bold, the Title Card's: a clone of Times Bold, AGPL with URW's font exception) are bundled; Inter is the glyph fallback, so an offline install still draws. Any
@@ -217,7 +217,8 @@ in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and 
 - **ABI.** One C ABI for every caller, prefixed `oc_` and declared in
   `include/opencaptions_engine.h`. A test keeps the header and the exports in
   step. Inputs are byte buffers from `oc_alloc`; outputs land in a result buffer.
-  State is per process, so calls may come from any thread (a Swift actor hops
+  Fonts are one book per process and a scene is a handle, so a preview, the tiles and the word card (one
+  WebAssembly module on the web page) each hold their own. Calls may come from any thread (a Swift actor hops
   between them) but the caller serializes them.
 - **Render server.** `POST /render` takes a presigned read URL for the source and
   a presigned write URL for the output, valid for that render only, so the
@@ -453,7 +454,7 @@ section.
 
 | Piece | iOS |
 |---|---|
-| Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. Only the `oc_*` functions leave the library (`build-apple.sh` makes the rest private), since FluidAudio's own Rust library is linked beside it and a name in both stops the linker. One Swift actor, `CaptionEngine`, makes every call: the engine keeps one scene per process and allows its calls from any thread if they are serialized, which an actor guarantees. |
+| Caption drawing and edits | The same engine crate, as a static library in `OpenCaptionsEngine.xcframework` (device, Apple-silicon simulator, macOS: `apps/engine/scripts/build-apple.sh`). Swift imports the C header through a module map. Only the `oc_*` functions leave the library (`build-apple.sh` makes the rest private), since FluidAudio's own Rust library is linked beside it and a name in both stops the linker. One Swift actor, `CaptionEngine`, makes every call: the engine's fonts are one book per process and a scene is a handle; it allows its calls from any thread if they are serialized, which an actor guarantees. |
 | Transcription | [WhisperKit](https://github.com/argmaxinc/WhisperKit) and [FluidAudio](https://github.com/FluidInference/FluidAudio) (Parakeet) (Core ML, Neural Engine), pinned, in their own SwiftPM target so the core tests do not build them; iOS 26's `SpeechTranscriber` beside them. Its result is mapped to the same `Transcript` shape the way the server's local provider does, so transcripts are interchangeable. A `Transcriber` protocol sits in front, so a hosted endpoint can be a second conformance later. |
 | Decode, composite, encode | AVAssetReader decodes, the engine draws each overlay, Core Image composites, AVAssetWriter encodes (H.264, or 10-bit HEVC for HDR) with the audio re-encoded as AAC. The picture is baked upright at the size it is shown. |
 

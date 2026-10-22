@@ -3,8 +3,8 @@
  * compiled to WebAssembly, drawing the editor preview. Same code and same fonts,
  * so what the preview shows is what the export contains.
  *
- * The module and fonts are fetched once; each preview gets its own instance,
- * since an instance holds one scene and the editor mounts more than one preview.
+ * The module and fonts are fetched once and one instance serves the whole page: each preview, the
+ * tiles and the word card hold a scene of their own in it (a handle), so none disturbs another.
  */
 import { useEffect, useState } from "react";
 import { type FontManifest, parseFontManifest } from "@/lib/fontManifest";
@@ -22,16 +22,17 @@ interface Exports {
   oc_script_fonts(ptr: number, len: number): number;
   oc_has_font(ptr: number, len: number): number;
   oc_add_requested_font(namePtr: number, nameLen: number, ptr: number, len: number): number;
-  oc_set_scene(ptr: number, len: number): number;
-  oc_render(t: number): number;
-  oc_frame_ptr(): number;
-  oc_frame_width(): number;
-  oc_frame_height(): number;
-  oc_changed_top(): number;
-  oc_changed_bottom(): number;
-  oc_active_index(): number;
-  oc_active_bounds(): number;
-  oc_active_word_rects(): number;
+  oc_scene_new(ptr: number, len: number): number;
+  oc_scene_free(scene: number): void;
+  oc_render(scene: number, t: number): number;
+  oc_frame_ptr(scene: number): number;
+  oc_frame_width(scene: number): number;
+  oc_frame_height(scene: number): number;
+  oc_changed_top(scene: number): number;
+  oc_changed_bottom(scene: number): number;
+  oc_active_index(scene: number): number;
+  oc_active_bounds(scene: number): number;
+  oc_active_word_rects(scene: number): number;
   oc_snap_axis(
     position: number,
     extent: number,
@@ -39,7 +40,8 @@ interface Exports {
     size: number,
     threshold: number,
     margin: number,
-  ): number;
+    out: number,
+  ): void;
   oc_fallback_fonts(ptr: number, len: number): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
   oc_subtitles(
@@ -143,12 +145,7 @@ export interface CaptionEditor {
    */
   lines(t: Transcript, wordsPerLine: number, offsetMs: number): CaptionLine[];
   /** The transcript as a subtitle file whose cues are those lines, times as shown. */
-  subtitles(
-    t: Transcript,
-    wordsPerLine: number,
-    offsetMs: number,
-    format: "srt" | "vtt",
-  ): string;
+  subtitles(t: Transcript, wordsPerLine: number, offsetMs: number, format: "srt" | "vtt"): string;
   /**
    * Moves one edge of a word to `time` as shown, stopping at its neighbours. The
    * returned transcript has unshifted times.
@@ -203,6 +200,8 @@ export interface CaptionRenderer {
   activeIndex(): number;
   /** The caption showing now, in frame pixels, or null when none shows. */
   activeCaption(): ActiveCaption | null;
+  /** Releases the scene this renderer holds. Call it when the renderer is no longer used. */
+  dispose(): void;
 }
 
 interface Assets {
@@ -300,7 +299,16 @@ function resultFloats(x: Exports): number[] {
   return Array.from(new Float32Array(bytes.buffer));
 }
 
-let families: Promise<string[]> | undefined;
+/** The engine of this page: one module instance with every bundled font registered. */
+interface Engine {
+  x: Exports;
+  assets: Assets;
+  /** The bundled families, as declared by the font files, and those of the script faces not fetched yet. */
+  families: string[];
+  scriptFamilies: Map<string, ScriptFace>;
+}
+
+let engineOnce: Promise<Engine> | undefined;
 
 /** The script faces a transcript needs, or all of them for none (the engine's rule). */
 function scriptFacesFor(x: Exports, transcript?: Transcript): ScriptFace[] {
@@ -311,16 +319,27 @@ function scriptFacesFor(x: Exports, transcript?: Transcript): ScriptFace[] {
   return JSON.parse(result(x)) as ScriptFace[];
 }
 
-async function instantiate(): Promise<{ x: Exports; families: string[]; assets: Assets }> {
-  const loaded = await loadAssets();
-  const x = (await WebAssembly.instantiate(loaded.module)).exports as unknown as Exports;
-  const names = loaded.fonts.flatMap((f) =>
-    x.oc_add_font_at(...copyIn(x, f.bytes), f.rank) ? [result(x)] : [],
-  );
-  // The script faces are listed though not fetched: they are bundled, just not here yet.
-  const lazy = scriptFacesFor(x).map((face) => face.family);
-  families ??= Promise.resolve([...new Set([...names, ...lazy])].sort());
-  return { x, families: names, assets: loaded };
+function engine(): Promise<Engine> {
+  engineOnce ??= (async () => {
+    const loaded = await loadAssets();
+    const x = (await WebAssembly.instantiate(loaded.module)).exports as unknown as Exports;
+    const names = loaded.fonts.flatMap((f) =>
+      x.oc_add_font_at(...copyIn(x, f.bytes), f.rank) ? [result(x)] : [],
+    );
+    // The script faces are listed though not fetched: they are bundled, just not here yet.
+    const scripts = scriptFacesFor(x);
+    return {
+      x,
+      assets: loaded,
+      families: [...new Set([...names, ...scripts.map((face) => face.family)])].sort(),
+      scriptFamilies: new Map(scripts.map((face) => [face.family.toLowerCase(), face] as const)),
+    };
+  })();
+  // A failed load must not poison every later preview.
+  engineOnce.catch(() => {
+    engineOnce = undefined;
+  });
+  return engineOnce;
 }
 
 /** A font file fetched through this instance, shared by every preview on the page. */
@@ -339,11 +358,12 @@ function requestedFont(family: string): Promise<Uint8Array | null> {
   return font;
 }
 
-export async function createCaptionRenderer(): Promise<CaptionRenderer> {
-  const { x, assets: loaded } = await instantiate();
-  const scriptFamilies = new Map(
-    scriptFacesFor(x).map((face) => [face.family.toLowerCase(), face] as const),
-  );
+/** Fonts are the page's, not a scene's: shared by every renderer. */
+function fontLoader({
+  x,
+  assets: loaded,
+  scriptFamilies,
+}: Engine): Pick<CaptionRenderer, "loadFont" | "loadFallbackFonts"> {
   /** Registers a script face at its place among the bundled ones, unless it is there already. */
   const addScriptFace = async (face: ScriptFace): Promise<void> => {
     const has = (): boolean => x.oc_has_font(...copyIn(x, encoder.encode(face.family))) !== 0;
@@ -355,19 +375,20 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
   // The families a transcript needs depend on its words alone, and a style change (a
   // drag, a slider) rebuilds the scene with the same transcript: ask the engine once.
   const fallbackFor = new WeakMap<Transcript, Promise<string[]>>();
-  const renderer: CaptionRenderer = {
-    async loadFont(family) {
-      const name = encoder.encode(family);
-      if (x.oc_has_font(...copyIn(x, name))) return;
-      // A bundled script face comes from the engine's own files, not from the font catalog.
-      const bundled = scriptFamilies.get(family.toLowerCase());
-      if (bundled) return addScriptFace(bundled);
-      const font = await requestedFont(family);
-      // Checked again: another call may have added it while this one waited.
-      if (font && !x.oc_has_font(...copyIn(x, name))) {
-        x.oc_add_requested_font(...copyIn(x, name), ...copyIn(x, font));
-      }
-    },
+  const loadFont = async (family: string): Promise<void> => {
+    const name = encoder.encode(family);
+    if (x.oc_has_font(...copyIn(x, name))) return;
+    // A bundled script face comes from the engine's own files, not from the font catalog.
+    const bundled = scriptFamilies.get(family.toLowerCase());
+    if (bundled) return addScriptFace(bundled);
+    const font = await requestedFont(family);
+    // Checked again: another call may have added it while this one waited.
+    if (font && !x.oc_has_font(...copyIn(x, name))) {
+      x.oc_add_requested_font(...copyIn(x, name), ...copyIn(x, font));
+    }
+  };
+  return {
+    loadFont,
     loadFallbackFonts(transcript) {
       let families = fallbackFor.get(transcript);
       if (!families) {
@@ -379,10 +400,7 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
           // The bundled script faces the words need come with them (an Arabic caption's), apart
           // from the families the scene names.
           const scripts = scriptFacesFor(x, transcript);
-          await Promise.all([
-            ...scripts.map(addScriptFace),
-            ...needed.map((family) => renderer.loadFont(family)),
-          ]);
+          await Promise.all([...scripts.map(addScriptFace), ...needed.map(loadFont)]);
           return needed;
         })();
         families.catch(() => fallbackFor.delete(transcript));
@@ -390,29 +408,43 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
       }
       return families;
     },
+  };
+}
+
+let fonts: Pick<CaptionRenderer, "loadFont" | "loadFallbackFonts"> | undefined;
+
+/** A renderer: a scene of its own in the page's engine. */
+export async function createCaptionRenderer(): Promise<CaptionRenderer> {
+  const e = await engine();
+  const { x } = e;
+  fonts ??= fontLoader(e);
+  let scene = 0;
+  return {
+    ...fonts,
     setScene(input) {
-      if (!x.oc_set_scene(...copyIn(x, encoder.encode(JSON.stringify(input))))) {
-        throw new Error(`caption engine rejected the scene: ${result(x)}`);
-      }
+      const next = x.oc_scene_new(...copyIn(x, encoder.encode(JSON.stringify(input))));
+      if (!next) throw new Error(`caption engine rejected the scene: ${result(x)}`);
+      if (scene) x.oc_scene_free(scene);
+      scene = next;
     },
     render(t) {
-      if (!x.oc_render(t)) return null;
-      const w = x.oc_frame_width();
-      const [top, bottom] = [x.oc_changed_top(), x.oc_changed_bottom()];
+      if (!scene || !x.oc_render(scene, t)) return null;
+      const w = x.oc_frame_width(scene);
+      const [top, bottom] = [x.oc_changed_top(scene), x.oc_changed_bottom(scene)];
       if (bottom <= top) return null;
       // Copied out: the view would detach if the engine's memory grew. Only the changed
       // rows: a whole frame per screen refresh was most of what playing cost.
-      const start = x.oc_frame_ptr() + top * w * 4;
+      const start = x.oc_frame_ptr(scene) + top * w * 4;
       const pixels = new Uint8ClampedArray(x.memory.buffer, start, (bottom - top) * w * 4).slice();
       return { image: new ImageData(pixels, w, bottom - top), top };
     },
-    activeIndex: () => x.oc_active_index(),
+    activeIndex: () => (scene ? x.oc_active_index(scene) : -1),
     activeCaption() {
-      const index = x.oc_active_index();
+      const index = scene ? x.oc_active_index(scene) : -1;
       if (index < 0) return null;
-      if (!x.oc_active_bounds()) return null;
+      if (!x.oc_active_bounds(scene)) return null;
       const [bx, by, bw, bh] = resultFloats(x);
-      x.oc_active_word_rects();
+      x.oc_active_word_rects(scene);
       const flat = resultFloats(x);
       const words: Rect[] = [];
       for (let i = 0; i + 3 < flat.length; i += 4) {
@@ -420,30 +452,30 @@ export async function createCaptionRenderer(): Promise<CaptionRenderer> {
       }
       return { bounds: { x: bx!, y: by!, w: bw!, h: bh! }, index, words };
     },
+    dispose() {
+      if (scene) x.oc_scene_free(scene);
+      scene = 0;
+    },
   };
-  return renderer;
 }
 
 /** The bundled families, as declared by the font files themselves. */
 export function engineFamilies(): Promise<string[]> {
-  families ??= instantiate().then((r) => [...new Set(r.families)].sort());
-  return families;
+  return engine().then((e) => e.families);
 }
 
 let editor: Promise<CaptionEditor> | undefined;
 
-/**
- * The caption editor, on an engine instance of its own shared by the page: edits
- * never disturb a preview's scene. It draws nothing, so it registers no fonts.
- */
+/** The caption editor, in the page's engine. It draws nothing, so it keeps no scene. */
 export function loadCaptionEditor(): Promise<CaptionEditor> {
-  editor ??= loadAssets().then(async ({ module }) => {
-    const x = (await WebAssembly.instantiate(module)).exports as unknown as Exports;
+  editor ??= engine().then(({ x }) => {
     const json = (t: Transcript): [number, number] => copyIn(x, encoder.encode(JSON.stringify(t)));
     const parse = <T>(ok: number): T => {
       if (!ok) throw new Error(`caption engine rejected the edit: ${result(x)}`);
       return JSON.parse(result(x)) as T;
     };
+    // Where `oc_snap_axis` writes its two floats; kept for the life of the page.
+    const snapOut = x.oc_alloc(8);
     return {
       lines: (t, wordsPerLine, offsetMs) =>
         parse(x.oc_caption_lines(...json(t), wordsPerLine, offsetMs)),
@@ -456,8 +488,8 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
       setVariant: (t, index, variant) => parse(x.oc_set_variant(...json(t), index, variant ?? -1)),
       shuffleVariants: (t, count, seed) => parse(x.oc_shuffle_variants(...json(t), count, seed)),
       snapAxis: (position, extent, anchor, size, threshold, margin) => {
-        x.oc_snap_axis(position, extent, anchor, size, threshold, margin);
-        const [snapped, line] = resultFloats(x);
+        x.oc_snap_axis(position, extent, anchor, size, threshold, margin, snapOut);
+        const [snapped, line] = new Float32Array(x.memory.buffer, snapOut, 2);
         return { position: snapped!, line: line! < 0 ? null : line! };
       },
     };

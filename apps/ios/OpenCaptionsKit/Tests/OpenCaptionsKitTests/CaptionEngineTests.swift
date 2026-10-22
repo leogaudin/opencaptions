@@ -30,9 +30,11 @@ extension EngineSuites {
             #expect(a.width == 600 && a.height == 300)
             #expect(a.rgba != b.rgba, "different styles draw differently")
             #expect(a.rgba.contains { $0 != 0 }, "something is drawn")
-            // The editor's scene is back: drawing the same time gives the frame it gave before.
-            let after = try #require(await engine.render(at: 1.0))
-            #expect(after == before)
+            // The editor's scene was never touched: the same time is unchanged since its last frame,
+            // and it still has its caption showing.
+            #expect(await engine.render(at: 1.0) == nil)
+            #expect(await engine.activeCaption() != nil)
+            #expect(before.width == 270)
         }
 
         @Test func aSampleOfALeftAlignedLookIsDrawnCentredInItsFrame() async throws {

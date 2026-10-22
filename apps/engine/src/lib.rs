@@ -28,12 +28,15 @@ pub use scene::{Renderer, Scene};
 ///
 /// Inputs are copied into buffers from `oc_alloc` and owned by the call they are
 /// passed to. Calls that produce bytes leave them in a result buffer, read
-/// through `oc_result_ptr`/`oc_result_len` and valid until the next call. State
-/// (fonts, the scene) is per process, behind locks that make each call atomic:
+/// through `oc_result_ptr`/`oc_result_len` and valid until the next call. Fonts
+/// are one book for the process and a scene is a handle (`oc_scene_new`), so a preview, a tile and an
+/// export each hold their own; both are behind locks that make each call atomic:
 /// calls may come from any thread, but a caller must serialize them, because the
 /// result and frame buffers belong to the last call. (A Swift actor is the iOS
 /// caller; actors do not stay on one thread.)
 mod abi {
+    use std::collections::BTreeMap;
+    use std::sync::atomic::{AtomicU32, Ordering};
     use std::sync::{Mutex, MutexGuard};
 
     use serde::Serialize;
@@ -43,7 +46,9 @@ mod abi {
     use crate::{FontBook, Renderer, Scene, SceneInput};
 
     static BOOK: Mutex<FontBook<'static>> = Mutex::new(FontBook::new());
-    static RENDERER: Mutex<Option<Renderer>> = Mutex::new(None);
+    /// The scenes laid out and not yet freed, by handle. Handles start at 1: 0 is a failure.
+    static SCENES: Mutex<BTreeMap<u32, Renderer>> = Mutex::new(BTreeMap::new());
+    static NEXT_SCENE: AtomicU32 = AtomicU32::new(1);
     static RESULT: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 
     /// No call holds two locks at once, so they cannot deadlock. A poisoned lock
@@ -54,6 +59,24 @@ mod abi {
 
     fn set_result(bytes: Vec<u8>) {
         *lock(&RESULT) = bytes;
+    }
+
+    /// Runs `f` on the scene behind `handle`; None for a handle nothing holds.
+    fn with_scene<T>(handle: u32, f: impl FnOnce(&mut Renderer) -> T) -> Option<T> {
+        lock(&SCENES).get_mut(&handle).map(f)
+    }
+
+    /// Little-endian f32s, the way geometry is left in the result buffer.
+    fn pack(values: &[f32]) -> Vec<u8> {
+        values.iter().flat_map(|v| v.to_le_bytes()).collect()
+    }
+
+    /// Leaves one rectangle (x, y, w, h) in the result buffer; 1 if there is one.
+    fn rect_result(rect: Option<(f32, f32, f32, f32)>) -> u32 {
+        rect.map_or(0, |(x, y, w, h)| {
+            set_result(pack(&[x, y, w, h]));
+            1
+        })
     }
 
     /// # Safety
@@ -150,12 +173,13 @@ mod abi {
         u32::from(lock(&BOOK).add_requested(&name, data))
     }
 
-    /// Lay out a scene from JSON. Returns 0 on failure with the reason in the result buffer.
+    /// Lay out a scene from JSON and return its handle (the other scene calls take it). Returns 0 on
+    /// failure with the reason in the result buffer.
     ///
     /// # Safety
     /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn oc_set_scene(ptr: *mut u8, len: usize) -> u32 {
+    pub unsafe extern "C" fn oc_scene_new(ptr: *mut u8, len: usize) -> u32 {
         let json = unsafe { take(ptr, len) };
         let refuse = |reason: Vec<u8>| {
             set_result(reason);
@@ -168,94 +192,56 @@ mod abi {
                 Ok(()) if lock(&BOOK).is_empty() => refuse(b"no fonts registered".to_vec()),
                 Ok(()) => {
                     let scene = Scene::new(&lock(&BOOK), input);
-                    *lock(&RENDERER) = Some(Renderer::new(scene));
-                    1
+                    let handle = NEXT_SCENE.fetch_add(1, Ordering::Relaxed);
+                    lock(&SCENES).insert(handle, Renderer::new(scene));
+                    handle
                 }
             },
         }
     }
 
-    /// Draw the frame at `t` seconds. Returns 1 if it changed since the last call.
+    /// Release a scene. A handle nothing holds is ignored.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_render(t: f32) -> u32 {
-        lock(&RENDERER)
-            .as_mut()
-            .map_or(0, |r| u32::from(r.render(t)))
+    pub extern "C" fn oc_scene_free(scene: u32) {
+        lock(&SCENES).remove(&scene);
     }
 
-    /// The current frame: width × height × 4 bytes of straight-alpha RGBA.
+    /// Draw the frame of `scene` at `t` seconds. Returns 1 if it changed since the last call.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_frame_ptr() -> *const u8 {
-        lock(&RENDERER)
-            .as_ref()
-            .map_or(std::ptr::null(), |r| r.rgba().as_ptr())
+    pub extern "C" fn oc_render(scene: u32, t: f32) -> u32 {
+        with_scene(scene, |r| u32::from(r.render(t))).unwrap_or(0)
+    }
+
+    /// The scene's current frame: width × height × 4 bytes of straight-alpha RGBA. It stays where it
+    /// is until the scene is freed.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_frame_ptr(scene: u32) -> *const u8 {
+        with_scene(scene, |r| r.rgba().as_ptr()).unwrap_or(std::ptr::null())
     }
 
     /// The active caption block as four little-endian f32 (x, y, w, h) in frame
     /// pixels, left in the result buffer. Returns 0 when no caption shows.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_active_bounds() -> u32 {
-        let bounds = lock(&RENDERER).as_ref().and_then(|r| r.active_bounds());
-        match bounds {
-            Some((x, y, w, h)) => {
-                let mut out = Vec::with_capacity(16);
-                for v in [x, y, w, h] {
-                    out.extend_from_slice(&v.to_le_bytes());
-                }
-                set_result(out);
-                1
-            }
-            None => 0,
-        }
+    pub extern "C" fn oc_active_bounds(scene: u32) -> u32 {
+        rect_result(with_scene(scene, |r| r.active_bounds()).flatten())
     }
 
     /// The watermark's rectangle as four little-endian f32 (x, y, w, h) in frame pixels,
     /// left in the result buffer. Returns 0 when there is no watermark.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_watermark_rect() -> u32 {
-        let rect = lock(&RENDERER).as_ref().and_then(|r| r.watermark_rect());
-        match rect {
-            Some((x, y, w, h)) => {
-                let mut out = Vec::with_capacity(16);
-                for v in [x, y, w, h] {
-                    out.extend_from_slice(&v.to_le_bytes());
-                }
-                set_result(out);
-                1
-            }
-            None => 0,
-        }
+    pub extern "C" fn oc_watermark_rect(scene: u32) -> u32 {
+        rect_result(with_scene(scene, |r| r.watermark_rect()).flatten())
     }
 
     /// Magnetism for dragging the caption block along one axis: `edit::snap_axis`, which pulls the block's
-    /// start, middle and end to the frame's near margin, centre and far margin. Leaves two little-endian
-    /// f32 in the result buffer: the snapped position, then the line it is on (a share of the axis), or -1
-    /// when it is free.
-    #[unsafe(no_mangle)]
-    pub extern "C" fn oc_snap_axis(
-        position: f32,
-        extent: f32,
-        anchor: f32,
-        size: f32,
-        threshold: f32,
-        margin: f32,
-    ) -> u32 {
-        let s = edit::snap_axis(position, extent, anchor, size, threshold, margin);
-        let mut out = Vec::with_capacity(8);
-        for v in [s.position, s.line.unwrap_or(-1.0)] {
-            out.extend_from_slice(&v.to_le_bytes());
-        }
-        set_result(out);
-        1
-    }
-
-    /// `oc_snap_axis`, with the two f32 written to `out` instead of the result buffer. It touches no state
-    /// the engine holds, so a caller may ask from any thread at any moment, as a drag does on every touch.
+    /// start, middle and end to the frame's near margin, centre and far margin. Writes two f32 to `out`: the
+    /// snapped position, then the line it is on (a share of the axis), or -1 when it is free. It touches no
+    /// state the engine holds, so a caller may ask from any thread at any moment, as a drag does on every touch.
     ///
     /// # Safety
     /// `out` must point to room for two f32.
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn oc_snap_axis_into(
+    pub unsafe extern "C" fn oc_snap_axis(
         position: f32,
         extent: f32,
         anchor: f32,
@@ -274,52 +260,46 @@ mod abi {
     /// Flat index of the active line's first word (word N of the line is transcript word
     /// `index + N`), or -1 when no caption shows.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_active_index() -> i32 {
-        lock(&RENDERER)
-            .as_ref()
-            .and_then(|r| r.active_first_word())
+    pub extern "C" fn oc_active_index(scene: u32) -> i32 {
+        with_scene(scene, |r| r.active_first_word())
+            .flatten()
             .map_or(-1, |i| i as i32)
     }
 
     /// Each active word's slot as four little-endian f32 (x, y, w, h), left in the
     /// result buffer in line order. Returns the word count.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_active_word_rects() -> u32 {
-        let rects = lock(&RENDERER)
-            .as_ref()
-            .map(|r| r.active_word_rects())
-            .unwrap_or_default();
-        let mut out = Vec::with_capacity(rects.len() * 16);
-        for (x, y, w, h) in &rects {
-            for v in [x, y, w, h] {
-                out.extend_from_slice(&v.to_le_bytes());
-            }
-        }
-        set_result(out);
+    pub extern "C" fn oc_active_word_rects(scene: u32) -> u32 {
+        let rects = with_scene(scene, |r| r.active_word_rects()).unwrap_or_default();
+        let flat: Vec<f32> = rects
+            .iter()
+            .flat_map(|&(x, y, w, h)| [x, y, w, h])
+            .collect();
+        set_result(pack(&flat));
         rects.len() as u32
     }
 
     /// The first row the last changed frame changed; with `oc_changed_bottom`, the band of
     /// the frame a viewer needs to copy (the whole frame after a new scene).
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_changed_top() -> u32 {
-        lock(&RENDERER).as_ref().map_or(0, |r| r.changed_rows().0)
+    pub extern "C" fn oc_changed_top(scene: u32) -> u32 {
+        with_scene(scene, |r| r.changed_rows().0).unwrap_or(0)
     }
 
     /// One past the last row the last changed frame changed.
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_changed_bottom() -> u32 {
-        lock(&RENDERER).as_ref().map_or(0, |r| r.changed_rows().1)
+    pub extern "C" fn oc_changed_bottom(scene: u32) -> u32 {
+        with_scene(scene, |r| r.changed_rows().1).unwrap_or(0)
     }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_frame_width() -> u32 {
-        lock(&RENDERER).as_ref().map_or(0, |r| r.scene().width())
+    pub extern "C" fn oc_frame_width(scene: u32) -> u32 {
+        with_scene(scene, |r| r.scene().width()).unwrap_or(0)
     }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn oc_frame_height() -> u32 {
-        lock(&RENDERER).as_ref().map_or(0, |r| r.scene().height())
+    pub extern "C" fn oc_frame_height(scene: u32) -> u32 {
+        with_scene(scene, |r| r.scene().height()).unwrap_or(0)
     }
 
     /// # Safety
@@ -525,40 +505,86 @@ mod tests {
         (ptr, bytes.len())
     }
 
-    /// The contract callers rely on (a Swift actor hops between threads): state
-    /// set by one call is there for the next, whichever thread makes it.
-    #[test]
-    fn state_set_on_one_thread_is_used_from_another() {
-        use super::abi::*;
-        let scene = br##"{
+    fn scene_json(text: &str) -> String {
+        format!(
+            r##"{{
             "width": 270, "height": 480,
-            "transcript": { "duration": 2.0, "segments": [{ "words": [
-                { "text": "hello", "start": 0.0, "end": 1.0 }] }] },
-            "style": {
+            "transcript": {{ "duration": 2.0, "segments": [{{ "words": [
+                {{ "text": "{text}", "start": 0.0, "end": 1.0 }}] }}] }},
+            "style": {{
                 "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
                 "highlight_colors": ["#7C3AED"], "background": "none",
                 "background_color": "#000000", "background_opacity": 0.0,
                 "position_x": 0.5, "position_y": 0.84, "animation": "word_highlight",
                 "words_per_line": 3, "stroke_width": 0, "stroke_color": "#000000",
                 "shadow_blur": 0, "shadow_color": "#00000080"
-            }
-        }"##;
-        std::thread::spawn(move || {
+            }}
+        }}"##
+        )
+    }
+
+    /// The contract callers rely on (a Swift actor hops between threads): state
+    /// set by one call is there for the next, whichever thread makes it.
+    #[test]
+    fn state_set_on_one_thread_is_used_from_another() {
+        use super::abi::*;
+        let scene = scene_json("hello");
+        let handle = std::thread::spawn(move || {
             let (p, n) = put(include_bytes!("../fonts/Inter.ttf"));
             assert_eq!(unsafe { oc_add_font(p, n) }, 1);
-            let (p, n) = put(scene);
-            assert_eq!(unsafe { oc_set_scene(p, n) }, 1);
+            let (p, n) = put(scene.as_bytes());
+            let handle = unsafe { oc_scene_new(p, n) };
+            assert_ne!(handle, 0);
+            handle
         })
         .join()
         .unwrap();
-        std::thread::spawn(|| {
-            assert_eq!(oc_render(0.5), 1, "the scene is there");
-            assert_eq!((oc_frame_width(), oc_frame_height()), (270, 480));
-            assert_eq!(oc_active_index(), 0);
-            assert!(!oc_frame_ptr().is_null());
+        std::thread::spawn(move || {
+            assert_eq!(oc_render(handle, 0.5), 1, "the scene is there");
+            assert_eq!(
+                (oc_frame_width(handle), oc_frame_height(handle)),
+                (270, 480)
+            );
+            assert_eq!(oc_active_index(handle), 0);
+            assert!(!oc_frame_ptr(handle).is_null());
+            oc_scene_free(handle);
+            assert_eq!(oc_render(handle, 0.5), 0, "a freed scene is gone");
+            assert!(oc_frame_ptr(handle).is_null());
         })
         .join()
         .unwrap();
+    }
+
+    /// Scenes do not touch each other: drawn alternately they give the frames each gives alone.
+    #[test]
+    fn two_scenes_drawn_alternately_give_the_frames_each_gives_alone() {
+        use super::abi::*;
+        let (p, n) = put(include_bytes!("../fonts/Inter.ttf"));
+        assert_eq!(unsafe { oc_add_font(p, n) }, 1);
+        let new = |text: &str| {
+            let (p, n) = put(scene_json(text).as_bytes());
+            let handle = unsafe { oc_scene_new(p, n) };
+            assert_ne!(handle, 0);
+            handle
+        };
+        let frame = |handle: u32, t: f32| {
+            // Whether it changed does not matter: the frame is there either way.
+            oc_render(handle, t);
+            let len = (oc_frame_width(handle) * oc_frame_height(handle) * 4) as usize;
+            unsafe { std::slice::from_raw_parts(oc_frame_ptr(handle), len) }.to_vec()
+        };
+        let (a, b) = (new("alpha"), new("bravo"));
+        assert_ne!(a, b);
+        let (alone_a, alone_b) = (frame(a, 0.5), frame(b, 0.5));
+        assert_ne!(alone_a, alone_b, "the two draw different words");
+        let c = new("alpha");
+        let (mixed_b, mixed_c) = (frame(b, 0.7), frame(c, 0.5));
+        assert_eq!(mixed_c, alone_a);
+        assert_eq!(frame(a, 0.5), alone_a, "a scene is unchanged by the others");
+        assert_ne!(mixed_b, mixed_c);
+        for handle in [a, b, c] {
+            oc_scene_free(handle);
+        }
     }
 
     /// The markers are escaped, so this test's own source never matches them; the

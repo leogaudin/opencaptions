@@ -39,33 +39,34 @@ uint32_t oc_add_font_at(uint8_t *ptr, size_t len, uint32_t rank);
 uint32_t oc_has_font(uint8_t *name_ptr, size_t name_len);
 uint32_t oc_add_requested_font(uint8_t *name_ptr, size_t name_len, uint8_t *ptr, size_t len);
 
-/* Drawing. oc_set_scene returns 0 with the reason in the result buffer. */
-uint32_t oc_set_scene(uint8_t *json_ptr, size_t json_len);
-/* Draws the frame at t seconds; 1 if it changed since the last call. */
-uint32_t oc_render(float t);
-/* frame_width x frame_height x 4 bytes of straight-alpha RGBA. */
-const uint8_t *oc_frame_ptr(void);
-uint32_t oc_frame_width(void);
-uint32_t oc_frame_height(void);
+/* Drawing. A scene is a handle: oc_scene_new lays one out from JSON and returns it, or 0 with the reason
+ * in the result buffer, so a preview, a tile and an export each hold their own. The scene calls below take
+ * it. Fonts are one book for the process. */
+uint32_t oc_scene_new(uint8_t *json_ptr, size_t json_len);
+void oc_scene_free(uint32_t scene);
+/* Draws the scene's frame at t seconds; 1 if it changed since the last call. */
+uint32_t oc_render(uint32_t scene, float t);
+/* frame_width x frame_height x 4 bytes of straight-alpha RGBA, valid until the scene is freed. */
+const uint8_t *oc_frame_ptr(uint32_t scene);
+uint32_t oc_frame_width(uint32_t scene);
+uint32_t oc_frame_height(uint32_t scene);
 /* The rows top..bottom the last changed frame changed (all of them after a new scene). */
-uint32_t oc_changed_top(void);
-uint32_t oc_changed_bottom(void);
+uint32_t oc_changed_top(uint32_t scene);
+uint32_t oc_changed_bottom(uint32_t scene);
 
 /* The caption showing at the last rendered time. */
-int32_t oc_active_index(void);      /* flat index of the line's first word (word N of it is transcript word index + N), or -1 */
-uint32_t oc_active_bounds(void);    /* one quad; 0 when none shows */
-uint32_t oc_watermark_rect(void);   /* one quad; 0 without a watermark */
-uint32_t oc_active_word_rects(void); /* one quad per word; returns the count */
+int32_t oc_active_index(uint32_t scene);      /* flat index of the line's first word (word N of it is transcript word index + N), or -1 */
+uint32_t oc_active_bounds(uint32_t scene);    /* one quad; 0 when none shows */
+uint32_t oc_watermark_rect(uint32_t scene);   /* one quad; 0 without a watermark */
+uint32_t oc_active_word_rects(uint32_t scene); /* one quad per word; returns the count */
 
 /* Dragging the caption along one axis: the block's start, middle and end are pulled to the frame's near
  * margin, centre and far margin when within threshold of them. position is where the block is held (a
  * share of the axis) and anchor which part of it that is (0 start, 0.5 middle, 1 end); extent is its length
- * as a share of the axis; size and threshold are in pixels; margin is a share of the axis. Leaves two f32:
- * the snapped position, then the line it is on (a share of the axis), or -1 when free. */
-/* The same, written to out (two floats) rather than the result buffer; touches no engine state,
- * so it is safe to call from any thread at any time. */
-void oc_snap_axis_into(float position, float extent, float anchor, float size, float threshold, float margin, float *out);
-uint32_t oc_snap_axis(float position, float extent, float anchor, float size, float threshold, float margin);
+ * as a share of the axis; size and threshold are in pixels; margin is a share of the axis. Writes two f32 to
+ * out: the snapped position, then the line it is on (a share of the axis), or -1 when free. Touches no
+ * engine state, so it is safe to call from any thread at any time. */
+void oc_snap_axis(float position, float extent, float anchor, float size, float threshold, float margin, float *out);
 
 /* The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese, Korean, other
  * Asian scripts), as a JSON array of Google Fonts names. The host fetches them, registers each with

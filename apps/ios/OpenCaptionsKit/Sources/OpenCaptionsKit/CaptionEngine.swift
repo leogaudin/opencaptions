@@ -59,17 +59,19 @@ public enum CaptionEdge: Int32, Sendable {
 
 /// The caption engine: the same Rust library the server and the browser draw with.
 ///
-/// The only code that calls `oc_*`. The engine keeps one scene for the whole
-/// process and allows its calls from any thread if they are serialized, which an
+/// The only code that calls `oc_*`. The engine's fonts are one book for the whole
+/// process, and its calls are allowed from any thread if they are serialized, which an
 /// actor guarantees: every method here is synchronous inside the actor, so a result
 /// or a frame is copied out before the next call can run. Hence one shared instance:
-/// two would not give two engines, only two callers of one.
+/// two would not give two engines, only two callers of one. A scene is a handle of its
+/// own: the one the preview and the export draw (`setScene`) and the short-lived ones
+/// of a tile do not disturb each other.
 public actor CaptionEngine {
     public static let shared = CaptionEngine()
 
     private var bundledFamilies: [String]?
-    /// The scene last set, so a sample can be drawn and the real scene put back.
-    private var scene: SceneInput?
+    /// The engine's handle for the scene last set (0 for none).
+    private var scene: UInt32 = 0
     /// When a font family could not be fetched, so it is not asked for again at every change of
     /// the scene: offline, each would repeat the whole failed round trip before the caption drew.
     private var missingFonts: [String: Date] = [:]
@@ -183,22 +185,28 @@ public actor CaptionEngine {
         try apply(input)
     }
 
-    private func apply(_ input: SceneInput) throws {
+    /// Lays the scene out and returns its handle; the caller frees it (`oc_scene_free`) or keeps it.
+    private func newScene(_ input: SceneInput) throws -> UInt32 {
         let (ptr, len) = try put(json: input)
-        guard oc_set_scene(ptr, len) == 1 else { throw failure() }
-        scene = input
+        let handle = oc_scene_new(ptr, len)
+        guard handle != 0 else { throw failure() }
+        return handle
+    }
+
+    private func apply(_ input: SceneInput) throws {
+        let next = try newScene(input)
+        if scene != 0 { oc_scene_free(scene) }
+        scene = next
     }
 
     /// One frame per style of `words`, as they look while the middle word is spoken: what a style
     /// picker shows. The same drawing as the preview and the export, so a tile cannot disagree with
-    /// the result. The scene in use is put back before returning, so a preview open at the same
-    /// time carries on unaffected. Fonts must have been made available (`ensureFont`) already.
+    /// the result. Each is drawn in a scene of its own, so a preview open at the same time carries on
+    /// unaffected. Fonts must have been made available (`ensureFont`) already.
     /// `variants` gives the word at each place its look (nil, or no entry, is the style's own).
     public func samples(
         of styles: [StyleConfig], words: [String], variants: [Int?] = [], width: Int, height: Int
     ) -> [CaptionFrame?] {
-        let previous = scene
-        defer { if let previous { try? apply(previous) } }
         let step = 0.4
         let spoken = words.enumerated().map { i, text in
             Word(
@@ -221,29 +229,32 @@ public actor CaptionEngine {
             // start at the middle of it and run off the side.
             if style.align != .justify { style.align = .center }
             style.wordsPerLine = max(style.wordsPerLine, words.count)
-            do {
-                try apply(
+            guard
+                let tile = try? newScene(
                     SceneInput(
                         transcript: transcript, style: style, width: width, height: height, captionOffsetMs: 0,
                         watermark: nil))
-            } catch { return nil }
-            return render(at: middle)
+            else { return nil }
+            defer { oc_scene_free(tile) }
+            return frame(of: tile, at: middle)
         }
     }
 
     /// The overlay at `t` seconds, or nil when it is unchanged since the last call.
-    public func render(at t: Double) -> CaptionFrame? {
-        guard oc_render(Float(t)) == 1, let pixels = oc_frame_ptr() else { return nil }
-        let (w, h) = (Int(oc_frame_width()), Int(oc_frame_height()))
+    public func render(at t: Double) -> CaptionFrame? { frame(of: scene, at: t) }
+
+    private func frame(of scene: UInt32, at t: Double) -> CaptionFrame? {
+        guard oc_render(scene, Float(t)) == 1, let pixels = oc_frame_ptr(scene) else { return nil }
+        let (w, h) = (Int(oc_frame_width(scene)), Int(oc_frame_height(scene)))
         return CaptionFrame(width: w, height: h, rgba: Data(bytes: pixels, count: w * h * 4))
     }
 
     /// The caption showing at the last rendered time, or nil when none shows.
     public func activeCaption() -> ActiveCaption? {
-        let index = oc_active_index()
-        guard index >= 0, oc_active_bounds() == 1 else { return nil }
+        let index = oc_active_index(scene)
+        guard index >= 0, oc_active_bounds(scene) == 1 else { return nil }
         let box = floats(result())
-        _ = oc_active_word_rects()
+        _ = oc_active_word_rects(scene)
         let flat = floats(result())
         guard box.count == 4 else { return nil }
         let words = stride(from: 0, to: flat.count - 3, by: 4).map {
@@ -257,12 +268,12 @@ public actor CaptionEngine {
 
     /// Where the watermark sits in the frame, or nil without one.
     public func watermarkRect() -> FrameRect? {
-        guard oc_watermark_rect() == 1 else { return nil }
+        guard oc_watermark_rect(scene) == 1 else { return nil }
         let f = floats(result())
         return f.count == 4 ? FrameRect(x: f[0], y: f[1], width: f[2], height: f[3]) : nil
     }
 
-    /// Magnetism for dragging the caption along one axis (`oc_snap_axis_into`): the block's start, middle and
+    /// Magnetism for dragging the caption along one axis (`oc_snap_axis`): the block's start, middle and
     /// end are pulled to the frame's near margin, centre and far margin. `position` is where the block is held
     /// (a share of the axis) and `anchor` which part of it that is; `extent` its length and `margin` the
     /// margins, shares of the axis; `size` the axis as shown and `threshold` the pull, both in points.
@@ -270,7 +281,7 @@ public actor CaptionEngine {
         position: Double, extent: Double, anchor: BlockAnchor, size: Double, threshold: Double, margin: Double
     ) -> SnappedAxis {
         var v = [Float](repeating: 0, count: 2)
-        oc_snap_axis_into(
+        oc_snap_axis(
             Float(position), Float(extent), Float(anchor.fraction), Float(size), Float(threshold), Float(margin), &v)
         return SnappedAxis(position: Double(v[0]), line: v[1] < 0 ? nil : Double(v[1]))
     }

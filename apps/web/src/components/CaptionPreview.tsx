@@ -116,12 +116,19 @@ function CaptionCanvas({
 
   useEffect(() => {
     let live = true;
+    let made: CaptionRenderer | null = null;
     createCaptionRenderer().then(
-      (r) => live && setRenderer(r),
+      (r) => {
+        // Its scene is released with it: the engine is the page's, and outlives a preview.
+        if (!live) return r.dispose();
+        made = r;
+        setRenderer(r);
+      },
       (e: unknown) => console.error("caption engine failed to load", e),
     );
     return () => {
       live = false;
+      made?.dispose();
     };
   }, []);
 
