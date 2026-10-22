@@ -25,7 +25,7 @@ import httpx
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services.audio import EXTRACT_TIMEOUT_S
-from app.transcription.base import ProgressCallback, TranscriptionProvider, register
+from app.transcription.base import ProgressCallback, TranscriptionProvider
 from app.transcription.words import segment_of
 
 logger = logging.getLogger(__name__)
@@ -294,7 +294,3 @@ _LANG_MAP = {
     "danish": "da",
     "finnish": "fi",
 }
-
-
-# Register at import time.
-register(OpenAIWhisperProvider())

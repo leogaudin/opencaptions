@@ -22,7 +22,7 @@ import httpx
 from app.core.config import settings
 from app.models.schemas import Transcript
 from app.services.video_fetch import UnsafeURLError, validate_url
-from app.transcription.base import ProgressCallback, TranscriptionProvider, register
+from app.transcription.base import ProgressCallback, TranscriptionProvider
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +191,3 @@ class OpenCaptionsRemoteProvider(TranscriptionProvider):
             if time.monotonic() > deadline:
                 raise RemoteTranscriptionError("The remote transcription took too long; gave up.")
             time.sleep(POLL_SECONDS)
-
-
-register(OpenCaptionsRemoteProvider())

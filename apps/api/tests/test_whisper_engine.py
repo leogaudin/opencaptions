@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from app.transcription.local import LocalWhisperProvider
+from app.transcription.whisper import WhisperEngine
 
 
 def _fake_word(word: str, start: float, end: float) -> Any:
@@ -27,7 +27,7 @@ def _transcribe_with(
     duration: float = 100.0,
     captured: dict[str, Any] | None = None,
 ) -> Any:
-    provider = LocalWhisperProvider()
+    provider = WhisperEngine()
     monkeypatch.setattr(provider, "_load_model", lambda _name: object())
 
     def fake_transcribe(_self: Any, _audio: str, **_kwargs: Any) -> Any:
@@ -36,7 +36,7 @@ def _transcribe_with(
     monkeypatch.setattr(
         type(provider),
         "transcribe",
-        LocalWhisperProvider.transcribe,
+        WhisperEngine.transcribe,
         raising=True,
     )
     monkeypatch.setattr(
@@ -87,7 +87,7 @@ def test_a_long_stretch_with_no_words_is_named_in_the_log(monkeypatch: Any, capl
         _segment("hello", 0.0, 1.0, [_fake_word(" hello", 0.0, 1.0)]),
         _segment("again", 60.0, 61.0, [_fake_word(" again", 60.0, 61.0)]),
     ]
-    with caplog.at_level("WARNING", logger="app.transcription.local"):
+    with caplog.at_level("WARNING", logger="app.transcription.whisper"):
         _transcribe_with(monkeypatch, spoken, duration=61.0)
     assert "1s-60s" in caplog.text
     assert "Whisper heard no speech there" in caplog.text
@@ -109,6 +109,6 @@ def test_continuous_speech_logs_no_stretch(monkeypatch: Any, caplog: Any) -> Non
         _segment("a", 0.0, 10.0, [_fake_word(" a", 0.0, 10.0)]),
         _segment("b", 12.0, 20.0, [_fake_word(" b", 12.0, 20.0)]),
     ]
-    with caplog.at_level("WARNING", logger="app.transcription.local"):
+    with caplog.at_level("WARNING", logger="app.transcription.whisper"):
         _transcribe_with(monkeypatch, spoken, duration=20.0)
     assert "no words for" not in caplog.text

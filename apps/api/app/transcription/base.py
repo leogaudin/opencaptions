@@ -1,4 +1,4 @@
-"""TranscriptionProvider abstract base + provider registry."""
+"""TranscriptionProvider: what a provider implements, and the registry that finds one by name."""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ class ProgressCallback(Protocol):
 class TranscriptionProvider(ABC):
     """Abstract interface for any transcription backend.
 
-    Implementations: LocalWhisperProvider (faster-whisper) and
-    OpenAIWhisperProvider.
+    Implementations: `LocalProvider` (`local`: it runs a WhisperEngine or a SherpaEngine),
+    `OpenAIWhisperProvider` (`openai`) and `OpenCaptionsRemoteProvider` (`opencaptions`).
     """
 
     name: str
@@ -78,6 +78,10 @@ def register(provider: TranscriptionProvider) -> TranscriptionProvider:
 
 def get_provider(name: str) -> TranscriptionProvider:
     """Resolve a registered provider by name."""
+    if not _REGISTRY:
+        from app.transcription.providers import register_defaults
+
+        register_defaults()
     if name not in _REGISTRY:
         raise ValueError(f"Unknown transcription provider: {name!r}. Registered: {list(_REGISTRY)}")
     return _REGISTRY[name]

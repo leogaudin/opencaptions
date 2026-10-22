@@ -55,8 +55,6 @@ def _transcribe_audio(
     The one place that happens, for a project's video and for audio sent through the
     transcription API alike.
     """
-    # Providers register themselves on import.
-    import app.transcription  # noqa: F401
     from app.transcription.base import get_provider
 
     transcription_provider = get_provider(provider)

@@ -10,7 +10,8 @@ import pytest
 
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services import asr_models
-from app.transcription import language_id, router, sherpa
+from app.transcription import language_id, sherpa
+from app.transcription import local as router
 from app.transcription.base import ProgressCallback, TranscriptionProvider
 from app.transcription.sherpa import segments_from_words, words_from_tokens
 
@@ -140,7 +141,7 @@ def engines(monkeypatch: pytest.MonkeyPatch) -> dict[str, _FakeEngine]:
         "faster-whisper": _FakeEngine("faster-whisper"),
         "sherpa-onnx": _FakeEngine("sherpa-onnx"),
     }
-    monkeypatch.setattr(router, "get_provider", lambda name: fakes[name])
+    monkeypatch.setattr(router, "ENGINES", fakes)
     monkeypatch.setattr(router, "read_wav", lambda _p: np.zeros(16000, dtype=np.float32))
     return fakes
 

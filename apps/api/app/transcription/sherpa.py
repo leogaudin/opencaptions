@@ -1,4 +1,4 @@
-"""SherpaProvider: speech models other than Whisper, run with sherpa-onnx on the CPU.
+"""SherpaEngine: speech models other than Whisper, run with sherpa-onnx on the CPU.
 
 The model sits behind `Recognizer`, which turns a window of audio into timed words. This
 provider owns what every such model needs: fetching its files, cutting the audio into
@@ -19,7 +19,7 @@ import numpy as np
 from app.core.config import settings
 from app.models.schemas import Transcript, TranscriptSegment, Word
 from app.services import asr_models
-from app.transcription.base import ProgressCallback, TranscriptionProvider, register
+from app.transcription.base import ProgressCallback, TranscriptionProvider
 from app.transcription.chunking import SAMPLE_RATE, Words, decode_window, read_wav, windows
 from app.transcription.fetch_progress import FetchPlan
 from app.transcription.words import segment_of
@@ -116,7 +116,7 @@ def _snapshot(model: asr_models.AsrModelInfo, *, local_only: bool) -> str:
     )
 
 
-class SherpaProvider(TranscriptionProvider):
+class SherpaEngine(TranscriptionProvider):
     """sherpa-onnx backed local transcription for the models `asr_models` lists for it."""
 
     name = "sherpa-onnx"
@@ -233,7 +233,3 @@ def _separate(words: list[Word]) -> None:
     for word, following in zip(words, words[1:], strict=False):
         if word.end > following.start:
             word.end = max(word.start, following.start)
-
-
-# Registered so the router can reach it by engine name; it is not a provider to pick.
-register(SherpaProvider())
