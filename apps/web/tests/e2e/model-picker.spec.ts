@@ -129,9 +129,33 @@ test.describe("Local Whisper model selection", () => {
     const settings = await (await page.request.get("/api/v1/settings")).json();
     const changedModel = settings.transcription.model === "small" ? "large-v3-turbo" : "small";
     await page.getByTestId("retranscribe").click();
-    await page.getByTestId("retranscribe-model-select").selectOption(changedModel);
+    await page.getByTestId(`model-${changedModel}`).click();
     await page.getByTestId("retranscribe-confirm").click();
     await expect.poll(() => bodies.length).toBe(2);
     expect(bodies[1]).toEqual({ provider: "local", model: changedModel });
+  });
+  test("re-transcribing offers the choices a new project does", async ({ page }) => {
+    await mockTranscribedProject(page, "Same choices");
+    const bodies: Record<string, unknown>[] = [];
+    await page.route(`**/api/v1/projects/${PROJECT_ID}/transcribe`, async (route) => {
+      bodies.push(route.request().postDataJSON() as Record<string, unknown>);
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify(completedTranscriptionJob()),
+      });
+    });
+
+    await page.goto(`/projects/${PROJECT_ID}`);
+    await page.getByTestId("retranscribe").click();
+    // The provider, the models and the languages, as on the upload page.
+    await expect(page.locator("select#provider")).toBeVisible();
+    await expect(page.getByTestId("model-list")).toBeVisible();
+    await expect(page.getByTestId("language-list")).toBeVisible();
+    await expect(page.getByTestId("language-en").locator("input")).toBeChecked();
+    await page.getByTestId("language-fr").click();
+    await page.getByTestId("retranscribe-confirm").click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]).toEqual({ language: "fr" });
   });
 });

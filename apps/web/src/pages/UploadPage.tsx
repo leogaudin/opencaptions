@@ -13,27 +13,18 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LanguageList } from "@/components/LanguageList";
-import { ModelList } from "@/components/ModelList";
+import { TranscriptionEngine } from "@/components/TranscriptionEngine";
 import { VideoDropzone } from "@/components/VideoDropzone";
 import { useT } from "@/lib/i18n";
 import { startProjectFromFile, startProjectFromUrl } from "@/lib/projectActions";
-import { languagesForModel, startingLanguage } from "@/lib/transcriptionLanguages";
-import { useTranscriptionSettings } from "@/lib/useTranscriptionSettings";
+import {
+  rememberedLanguage,
+  rememberLanguage,
+  useTranscriptionChoice,
+} from "@/lib/useTranscriptionChoice";
 import { stripExt } from "@/lib/utils";
-import type { TranscriptionProvider } from "@/types";
 
-type Provider = TranscriptionProvider;
 type InputMode = "file" | "url";
-
-/** The language last used here: someone who transcribes Spanish once is probably doing it again. */
-const LANGUAGE_KEY = "transcribeLanguage";
-function rememberedLanguage(): string | null {
-  try {
-    return localStorage.getItem(LANGUAGE_KEY);
-  } catch {
-    return null;
-  }
-}
 
 export function UploadPage() {
   const t = useT();
@@ -43,29 +34,8 @@ export function UploadPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
   const [step, setStep] = useState<1 | 2>(1);
-  const [languageChoice, setLanguageChoice] = useState<string | null>(rememberedLanguage);
-  const {
-    settings,
-    languages: supportedLanguages,
-    models: availableModels,
-    defaultModel,
-  } = useTranscriptionSettings();
-  const openaiConfigured = settings?.transcription.openai_configured ?? false;
-  const remoteConfigured = settings?.transcription.remote_configured ?? false;
-  const remoteHost = hostOf(settings?.transcription.remote_url);
-  const hostedMode = settings?.hosted_mode ?? false;
-  const defaultProvider = (settings?.transcription.provider ?? "local") as Provider;
-  // Null until the user picks, so the choice tracks the deployment default.
-  const [providerChoice, setProvider] = useState<Provider | null>(null);
-  const [modelChoice, setModel] = useState<string | null>(null);
-  const provider = providerChoice ?? defaultProvider;
-  const model = modelChoice ?? defaultModel;
-  // The languages follow the model (a provider with no model of ours offers them all).
-  const offered =
-    provider === "local"
-      ? languagesForModel(supportedLanguages, availableModels, model)
-      : supportedLanguages;
-  const language = startingLanguage(offered, languageChoice, navigator.languages ?? []);
+  const choice = useTranscriptionChoice(rememberedLanguage());
+  const { provider, model, language } = choice;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Bytes sent of the file, 0 to 1; null before the first report. */
@@ -147,11 +117,7 @@ export function UploadPage() {
         setSubmitting(false);
         return;
       }
-      try {
-        localStorage.setItem(LANGUAGE_KEY, language);
-      } catch {
-        // The choice just is not remembered.
-      }
+      rememberLanguage(language);
       nav(`/projects/${project.id}`);
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError((e as Error).message);
@@ -246,63 +212,15 @@ export function UploadPage() {
               />
             </div>
 
-            {/* In hosted mode the provider is fixed by the operator, so there is
-                nothing to choose. The privacy disclosure is kept regardless: if the
-                audio leaves the machine the user is told, whoever decided that. */}
-            {hostedMode ? (
-              provider !== "local" && <PrivacyDisclosure provider={provider} host={remoteHost} />
-            ) : (
-              <div>
-                <label className="mb-1 block text-sm font-medium" htmlFor="provider">
-                  {t("Transcription provider")}
-                </label>
-                <select
-                  id="provider"
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value as Provider)}
-                  className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm"
-                >
-                  <option value="local">{t("Local (faster-whisper, no upload)")}</option>
-                  <option value="openai" disabled={!openaiConfigured}>
-                    OpenAI Whisper API{!openaiConfigured && `, ${t("set OPENAI_API_KEY first")}`}
-                  </option>
-                  <option value="opencaptions" disabled={!remoteConfigured}>
-                    {remoteConfigured
-                      ? t("Another OpenCaptions server ({host})", { host: remoteHost })
-                      : t("Another OpenCaptions server, set TRANSCRIPTION_REMOTE_URL first")}
-                  </option>
-                </select>
-                {provider !== "local" && (
-                  <PrivacyDisclosure provider={provider} host={remoteHost} />
-                )}
-                {defaultProvider !== provider && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Server default: {defaultProvider}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {provider === "local" && availableModels.length > 0 && (
-              <div>
-                <div className="mb-2 text-sm font-medium">{t("Speech model")}</div>
-                <ModelList
-                  models={availableModels}
-                  value={model}
-                  onChange={setModel}
-                  defaultModel={defaultModel}
-                  testId="model-list"
-                />
-              </div>
-            )}
+            <TranscriptionEngine choice={choice} />
           </>
         )}
 
         {step === 2 && (
           <LanguageList
-            languages={offered}
+            languages={choice.languages}
             value={language}
-            onChange={setLanguageChoice}
+            onChange={choice.setLanguage}
             testId="language-list"
           />
         )}
@@ -385,46 +303,6 @@ export function UploadPage() {
           )}
         </div>
       </form>
-    </div>
-  );
-}
-
-/** The host of a URL, or an empty string for none or a malformed one. */
-function hostOf(url: string | null | undefined): string {
-  if (!url) return "";
-  try {
-    return new URL(url).host;
-  } catch {
-    return "";
-  }
-}
-
-function PrivacyDisclosure({ provider, host }: { provider: Provider; host: string }) {
-  const t = useT();
-  if (provider === "opencaptions") {
-    return (
-      <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
-        <strong>{t("Privacy notice:")}</strong>{" "}
-        {t(
-          "your audio will be sent to {host}, which transcribes it and deletes the audio when it is done. This server keeps the result.",
-          { host: host || t("the remote server") },
-        )}
-      </div>
-    );
-  }
-  return (
-    <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
-      <strong>{t("Privacy notice:")}</strong>{" "}
-      {t("selecting the OpenAI provider will upload your audio to OpenAI's servers.")}{" "}
-      <a
-        href="https://openai.com/policies/api-data-usage-policies/"
-        target="_blank"
-        rel="noreferrer"
-        className="underline"
-      >
-        {t("Their data usage policy applies.")}
-      </a>{" "}
-      {t("The local provider keeps everything on this machine.")}
     </div>
   );
 }

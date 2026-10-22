@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "(otomatik algılandı)",
-  "(current)": "(geçerli)",
   "API keys": "API anahtarları",
   "API reference": "API başvurusu",
   "API version:": "API sürümü:",
@@ -97,7 +96,6 @@
   "Search languages": "Dil ara",
   "Speech model": "Konuşma modeli",
   "Spoken language": "Konuşulan dil",
-  "Larger models use more memory. Weights download on first use.": "Büyük modeller daha fazla bellek kullanır. Ağırlıklar ilk kullanımda indirilir.",
   "Licence:": "Lisans:",
   "Loading Google Fonts…": "Google Fonts yükleniyor…",
   "Loading health info…": "Sunucu durumu yükleniyor…",
@@ -105,8 +103,6 @@
   "Loading project…": "Proje yükleniyor…",
   "Loading…": "Yükleniyor…",
   "Local (faster-whisper, no upload)": "Yerel (faster-whisper, yükleme yok)",
-  "Local Whisper model": "Yerel Whisper modeli",
-  "Model": "Model",
   "More fonts · Google Fonts": "Daha fazla yazı tipi · Google Fonts",
   "Move caption; double-click a word to edit": "Altyazıyı taşı; düzenlemek için bir kelimeye çift tıklayın",
   "Word look": "Kelime stili",

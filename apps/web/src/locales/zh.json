@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "（自动检测）",
-  "(current)": "（当前）",
   "API keys": "API 密钥",
   "API reference": "API 文档",
   "API version:": "API 版本：",
@@ -97,7 +96,6 @@
   "Search languages": "搜索语言",
   "Speech model": "语音模型",
   "Spoken language": "说话的语言",
-  "Larger models use more memory. Weights download on first use.": "模型越大占用内存越多。权重在首次使用时下载。",
   "Licence:": "许可证：",
   "Loading Google Fonts…": "正在加载 Google Fonts…",
   "Loading health info…": "正在加载服务器状态…",
@@ -105,8 +103,6 @@
   "Loading project…": "正在加载项目…",
   "Loading…": "加载中…",
   "Local (faster-whisper, no upload)": "本地（faster-whisper，不上传）",
-  "Local Whisper model": "本地 Whisper 模型",
-  "Model": "模型",
   "More fonts · Google Fonts": "更多字体 · Google Fonts",
   "Move caption; double-click a word to edit": "移动字幕；双击单词进行编辑",
   "Word look": "单词样式",

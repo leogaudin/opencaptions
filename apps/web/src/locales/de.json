@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "(automatisch erkannt)",
-  "(current)": "(aktuell)",
   "API keys": "API-Schlüssel",
   "API reference": "API-Referenz",
   "API version:": "API-Version:",
@@ -97,7 +96,6 @@
   "Search languages": "Sprachen suchen",
   "Speech model": "Sprachmodell",
   "Spoken language": "Gesprochene Sprache",
-  "Larger models use more memory. Weights download on first use.": "Größere Modelle brauchen mehr Speicher. Die Gewichte werden bei der ersten Nutzung geladen.",
   "Licence:": "Lizenz:",
   "Loading Google Fonts…": "Google Fonts werden geladen …",
   "Loading health info…": "Serverstatus wird geladen …",
@@ -105,8 +103,6 @@
   "Loading project…": "Projekt wird geladen …",
   "Loading…": "Wird geladen …",
   "Local (faster-whisper, no upload)": "Lokal (faster-whisper, kein Upload)",
-  "Local Whisper model": "Lokales Whisper-Modell",
-  "Model": "Modell",
   "More fonts · Google Fonts": "Weitere Schriften · Google Fonts",
   "Move caption; double-click a word to edit": "Untertitel verschieben; Doppelklick auf ein Wort zum Bearbeiten",
   "Word look": "Wortstil",

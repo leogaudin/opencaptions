@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "（自動検出）",
-  "(current)": "（現在）",
   "API keys": "APIキー",
   "API reference": "APIリファレンス",
   "API version:": "APIバージョン：",
@@ -97,7 +96,6 @@
   "Search languages": "言語を検索",
   "Speech model": "音声認識モデル",
   "Spoken language": "話されている言語",
-  "Larger models use more memory. Weights download on first use.": "大きなモデルほどメモリを使います。重みは初回使用時にダウンロードされます。",
   "Licence:": "ライセンス：",
   "Loading Google Fonts…": "Google Fontsを読み込み中…",
   "Loading health info…": "サーバーの状態を読み込み中…",
@@ -105,8 +103,6 @@
   "Loading project…": "プロジェクトを読み込み中…",
   "Loading…": "読み込み中…",
   "Local (faster-whisper, no upload)": "ローカル（faster-whisper、アップロードなし）",
-  "Local Whisper model": "ローカルWhisperモデル",
-  "Model": "モデル",
   "More fonts · Google Fonts": "その他のフォント · Google Fonts",
   "Move caption; double-click a word to edit": "字幕を移動；単語をダブルクリックして編集",
   "Word look": "単語のスタイル",

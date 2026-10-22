@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "(определён автоматически)",
-  "(current)": "(текущий)",
   "API keys": "Ключи API",
   "API reference": "Справочник API",
   "API version:": "Версия API:",
@@ -97,7 +96,6 @@
   "Search languages": "Поиск языков",
   "Speech model": "Модель речи",
   "Spoken language": "Язык речи",
-  "Larger models use more memory. Weights download on first use.": "Большие модели требуют больше памяти. Веса загружаются при первом использовании.",
   "Licence:": "Лицензия:",
   "Loading Google Fonts…": "Загрузка Google Fonts…",
   "Loading health info…": "Загрузка состояния сервера…",
@@ -105,8 +103,6 @@
   "Loading project…": "Загрузка проекта…",
   "Loading…": "Загрузка…",
   "Local (faster-whisper, no upload)": "Локально (faster-whisper, без загрузки)",
-  "Local Whisper model": "Локальная модель Whisper",
-  "Model": "Модель",
   "More fonts · Google Fonts": "Другие шрифты · Google Fonts",
   "Move caption; double-click a word to edit": "Переместить субтитр; дважды щёлкните слово, чтобы изменить",
   "Word look": "Стиль слова",

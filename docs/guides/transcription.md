@@ -71,7 +71,7 @@ If a transcript comes back empty, the app says that no speech was found.
 
 ## Transcribe again, or bring your own
 
-- **Re-transcribe** (in the editor's toolbar) runs a project again with another model or language. It
-  replaces the transcript, so **your word edits are discarded**.
+- **Re-transcribe** (in the editor's toolbar) runs a project again with the choices a new project offers: where
+  it runs, the model and the language. It replaces the transcript, so **your word edits are discarded**.
 - **Edit as text** opens the transcript as JSON, and **imports a subtitle file** (SRT, WebVTT, with or
   without per-word times, or OpenCaptions JSON). See [Editing](./editing.md#edit-as-text-and-import-subtitles).

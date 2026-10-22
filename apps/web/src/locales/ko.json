@@ -1,6 +1,5 @@
 {
   "(auto-detected)": "(자동 감지)",
-  "(current)": "(현재)",
   "API keys": "API 키",
   "API reference": "API 문서",
   "API version:": "API 버전:",
@@ -97,7 +96,6 @@
   "Search languages": "언어 검색",
   "Speech model": "음성 인식 모델",
   "Spoken language": "음성 언어",
-  "Larger models use more memory. Weights download on first use.": "큰 모델은 메모리를 더 사용합니다. 가중치는 처음 사용할 때 다운로드됩니다.",
   "Licence:": "라이선스:",
   "Loading Google Fonts…": "Google Fonts 불러오는 중…",
   "Loading health info…": "서버 상태를 불러오는 중…",
@@ -105,8 +103,6 @@
   "Loading project…": "프로젝트 불러오는 중…",
   "Loading…": "불러오는 중…",
   "Local (faster-whisper, no upload)": "로컬 (faster-whisper, 업로드 없음)",
-  "Local Whisper model": "로컬 Whisper 모델",
-  "Model": "모델",
   "More fonts · Google Fonts": "더 많은 글꼴 · Google Fonts",
   "Move caption; double-click a word to edit": "자막 이동; 단어를 두 번 클릭해 편집",
   "Word look": "단어 스타일",

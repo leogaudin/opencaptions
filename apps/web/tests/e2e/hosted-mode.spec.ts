@@ -61,6 +61,7 @@ test.describe("Hosted mode", () => {
     await expect(page.getByTestId("caption-offset-control")).toBeVisible();
     await page.getByTestId("retranscribe").click();
     await expect(page.getByTestId("retranscribe-dialog")).toBeVisible();
-    await expect(page.getByTestId("retranscribe-model-select")).toHaveCount(0);
+    await expect(page.getByTestId("model-list")).toHaveCount(0);
+    await expect(page.locator("select#provider")).toHaveCount(0);
   });
 });
