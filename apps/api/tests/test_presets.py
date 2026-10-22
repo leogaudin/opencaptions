@@ -81,12 +81,14 @@ def test_the_editorial_preset_mixes_looks_with_fonts_the_engine_ships() -> None:
     variants = config["variants"]
     assert isinstance(variants, list) and len(variants) == 5
     families = {config["font"], *(v["font"] for v in variants)}
-    shipped = {"Instrument Serif", "Inter", "Poppins"}
+    shipped = {"Instrument Serif", "Inter", "Poppins", "Barlow Condensed"}
     assert families == shipped
     for name in (
         "InstrumentSerif-Regular.ttf",
         "InstrumentSerif-Italic.ttf",
         "InstrumentSerif-OFL.txt",
+        "BarlowCondensed-MediumItalic.ttf",
+        "BarlowCondensed-OFL.txt",
     ):
         assert (fonts / name).is_file(), name
     # Its tile shows the base look and two of the looks, each an index the preset defines.

@@ -13,6 +13,7 @@ respective owners. This file summarises the significant ones.
 | Poppins (ExtraBold) | Default caption font (the default style) | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
 | Montserrat (Black) | The Bold preset's caption font | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
 | Instrument Serif (Regular, Italic) | The Editorial preset's caption font | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
+| Barlow Condensed (Medium Italic) | The Editorial preset's small words | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with its licence file |
 | Nimbus Roman (Bold) | The Evangelion preset's caption font: a metric clone of Times Bold | AGPL-3.0 with URW++'s font exception (for PostScript and PDF documents) | Shipped in `apps/engine/fonts` with its licence file |
 | Noto Sans (Arabic, Hebrew, Devanagari, Thai) | Glyph fallback for those scripts | SIL OFL 1.1 | Shipped in `apps/engine/fonts` with their licence files |
 | Google Fonts families | Caption fonts chosen in the editor | Predominantly SIL OFL 1.1 | Fetched from Google on first use and kept in object storage, not shipped |

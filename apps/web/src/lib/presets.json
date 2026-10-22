@@ -711,7 +711,7 @@
       "letter_spacing": 0,
       "stretch": 1,
       "variants": [
-        { "font": "Inter", "italic": true, "scale": 0.42, "stretch": 0.88 },
+        { "font": "Barlow Condensed", "italic": true, "scale": 0.5 },
         { "font": "Instrument Serif", "italic": true, "scale": 1.15 },
         { "font": "Poppins", "scale": 1.05 },
         { "font": "Poppins", "scale": 1.05, "text_color": "#E0241B" },

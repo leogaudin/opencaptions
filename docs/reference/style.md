@@ -15,7 +15,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 
 | Field | Type and range | Default | |
 |---|---|---|---|
-| `font` | A font family name | `Poppins` | Inter, Poppins, Montserrat and Nimbus Roman are bundled. Any other Google Fonts family is fetched once by the server. |
+| `font` | A font family name | `Poppins` | Inter, Poppins, Montserrat, Nimbus Roman, Instrument Serif and Barlow Condensed are bundled. Any other Google Fonts family is fetched once by the server. |
 | `font_size` | Integer, 12 to 300 | `64` | The size of the text. |
 | `text_color` | Colour | `#FFFFFF` | |
 | `highlight_colors` | 1 to 4 colours | `["#7C3AED"]` | What the animation paints with. The first is the main one. See [Styling](../guides/styling.md#text). |
