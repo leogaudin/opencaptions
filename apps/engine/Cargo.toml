@@ -14,10 +14,17 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tiny-skia = { version = "0.12", default-features = false, features = ["std"] }
 
-# The render server only; the WASM and iOS builds are the library alone.
-[target.'cfg(not(any(target_arch = "wasm32", target_os = "ios")))'.dependencies]
-tiny_http = "0.12"
-ureq = { version = "3", features = ["json"] }
+# The render server only: the library the browser and the apps use does not carry its HTTP stack.
+tiny_http = { version = "0.12", optional = true }
+ureq = { version = "3", features = ["json"], optional = true }
+
+[features]
+server = ["dep:tiny_http", "dep:ureq"]
+
+[[bin]]
+name = "opencaptions-engine"
+path = "src/main.rs"
+required-features = ["server"]
 
 [profile.release]
 lto = true

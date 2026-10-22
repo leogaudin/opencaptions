@@ -220,7 +220,7 @@ in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and 
   Fonts are one book per process and a scene is a handle, so a preview, the tiles and the word card (one
   WebAssembly module on the web page) each hold their own. Calls may come from any thread (a Swift actor hops
   between them) but the caller serializes them.
-- **Render server.** `POST /render` takes a presigned read URL for the source and
+- **Render server.** It is the `opencaptions-engine` binary, built with the crate's `server` feature (`tiny_http`, `ureq`), so the library the browser and the apps link does not carry its HTTP stack; its code is `main.rs` and the modules `http` (routes), `render` (a job), `ffmpeg`, `colour`, `upload` and `progress`. `POST /render` takes a presigned read URL for the source and
   a presigned write URL for the output, valid for that render only, so the
   engine holds no storage credentials. The render worker sends `x-engine-token`
   (`ENGINE_TOKEN`, a credential the two share like the storage keys) and the engine

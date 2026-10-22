@@ -84,12 +84,12 @@ test-backend:        ## Run pytest
 
 lint-engine:         ## Engine format and clippy (server, WebAssembly, iOS)
 	@$(ENGINE) sh -euc 'cargo fmt --check \
-	 && cargo clippy --locked --all-targets -q -- -D warnings \
+	 && cargo clippy --locked --all-targets --features server -q -- -D warnings \
 	 && cargo clippy --locked --lib --target wasm32-unknown-unknown -q -- -D warnings \
 	 && cargo clippy --locked --lib --target aarch64-apple-ios -q -- -D warnings'
 
 test-engine:         ## Run the engine's tests
-	@$(ENGINE) cargo test --locked -q
+	@$(ENGINE) cargo test --locked --features server -q
 
 typegen-check:       ## Regenerate the TypeScript API types and fail if the committed file is stale
 	@./scripts/ci-shell.sh tools . '(cd apps/api && $(UV_SYNC)) && (cd apps/web && $(NPM_CI)) && bash scripts/generate-api-types.sh'
