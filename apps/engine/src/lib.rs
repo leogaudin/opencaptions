@@ -12,6 +12,12 @@ pub mod scene;
 pub mod scripts;
 
 pub use fonts::FontBook;
+
+/// A number bumped with every change that alters the frames the engine draws (the golden test
+/// says when). The API puts it in the name of every render it caches, so a look drawn
+/// differently is not served from a file drawn the old way. `testdata/render_revision.txt` is the
+/// one place it is written; the API holds its own copy equal to it with a test.
+pub const RENDER_REVISION: &str = include_str!("../testdata/render_revision.txt");
 pub use model::SceneInput;
 pub use scene::{Renderer, Scene};
 

@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
+import pytest
+
+from app.services import render_formats
 from app.services.render_formats import (
+    ENGINE_RENDER_REVISION,
     FORMATS,
     RenderInputs,
     all_formats,
@@ -179,23 +184,22 @@ class TestRenderObjectKey:
         ]
 
 
-def _original_hash(**inputs: Any) -> str:
-    """The hash as it was first written: one dict, serialized whole. Cached renders in
-    storage are named by it, so the faster version must never differ by a byte."""
+def _expected_hash(**inputs: Any) -> str:
+    """The hash written out by hand: one JSON object with sorted keys, hashed."""
     import hashlib
     import json
 
     fmt = get_format(inputs["format_id"])
     encoder = {"crf": fmt.crf, "pro_res_profile": fmt.pro_res_profile} if fmt else {}
     canonical = json.dumps(
-        {**inputs, "encoder": encoder},
+        {**inputs, "encoder": encoder, "engine_revision": ENGINE_RENDER_REVISION},
         sort_keys=True,
         separators=(",", ":"),
     )
     return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
-def test_the_hash_is_byte_for_byte_the_one_cached_renders_are_named_by() -> None:
+def test_the_hash_is_the_digest_of_one_sorted_json_object() -> None:
     transcript = {
         "language": "fr",
         "segments": [
@@ -216,7 +220,7 @@ def test_the_hash_is_byte_for_byte_the_one_cached_renders_are_named_by() -> None
                 "fps": 30,
                 "green_screen": green_screen,
             }
-            expected = _original_hash(**inputs)
+            expected = _expected_hash(**inputs)
             assert compute_render_hash(**inputs) == expected
             shared = RenderInputs(
                 transcript=transcript,
@@ -227,6 +231,20 @@ def test_the_hash_is_byte_for_byte_the_one_cached_renders_are_named_by() -> None
                 fps=30,
                 green_screen=green_screen,
             )
-            # Twice: the second answer comes from the serialization kept by the first.
             assert shared.hash_for(format_id) == expected
-            assert shared.hash_for(format_id) == expected
+
+
+def test_a_different_engine_revision_gives_a_different_hash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    before = compute_render_hash(**_BASE_INPUTS)
+    monkeypatch.setattr(render_formats, "ENGINE_RENDER_REVISION", "another")
+    assert compute_render_hash(**_BASE_INPUTS) != before
+
+
+_REVISION = Path(__file__).resolve().parents[2] / "engine" / "testdata" / "render_revision.txt"
+
+
+@pytest.mark.skipif(not _REVISION.is_file(), reason="needs the engine's sources (a full checkout)")
+def test_the_revision_is_the_engines() -> None:
+    assert _REVISION.read_text().strip() == ENGINE_RENDER_REVISION

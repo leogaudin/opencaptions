@@ -62,7 +62,9 @@ process (`core/events.py`).
    the transcript.
 4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate, green_screen}`
    computes a hash of everything that decides the output (transcript, timing offset, style,
-   format and its encoder settings, size, fps). If `projects/{id}/renders/{format}/{hash}.<ext>` exists
+   format and its encoder settings, size, fps, and the engine's render revision: a number in
+   `apps/engine/testdata/render_revision.txt` bumped with any change to what the engine draws, which the golden-frame test
+   asks for, so a cached file is never from an older drawing than the preview; the engine's `/health` reports it). If `projects/{id}/renders/{format}/{hash}.<ext>` exists
    it is ready at once (each format has a folder, so a render prunes only its own format's older files); otherwise a render job is queued and the SPA polls the job. The cache
    needs no database state: readiness is an existence check. `GET /projects/{id}/exports`
    lists the sizes and rates a project offers (with `source_resolution` and `source_fps`).

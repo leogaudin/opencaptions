@@ -704,7 +704,12 @@ fn handle(book: &FontBook<'static>, token: &str, slots: &Slots, mut request: Req
     let (status, body) = match (request.method(), request.url()) {
         (Method::Get, "/health") => (
             200,
-            json!({ "status": "ok", "version": env!("CARGO_PKG_VERSION"), "service": "engine" }),
+            json!({
+                "status": "ok",
+                "version": env!("CARGO_PKG_VERSION"),
+                "render_revision": opencaptions_engine::RENDER_REVISION.trim(),
+                "service": "engine",
+            }),
         ),
         (Method::Post, "/render") if !authorised(&request, token) => error(
             401,

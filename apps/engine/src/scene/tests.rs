@@ -1613,8 +1613,18 @@ fn frames_are_byte_for_byte_what_they_were() {
         "the looks covered changed: update GOLDEN"
     );
     for ((name, h), (_, expected)) in got.iter().zip(want) {
-        assert_eq!(*h, *expected, "{name}: the drawn frames changed");
+        assert_eq!(
+            *h, *expected,
+            "{name}: the drawn frames changed. If that is meant, update GOLDEN and bump \
+             testdata/render_revision.txt (and the API's ENGINE_RENDER_REVISION), so a render \
+             cached with the old drawing is not served"
+        );
     }
+}
+
+#[test]
+fn the_render_revision_is_a_whole_number() {
+    assert!(crate::RENDER_REVISION.trim().parse::<u32>().is_ok());
 }
 
 /// The blur as it was first written: every pixel, every pass, a column at a time.
