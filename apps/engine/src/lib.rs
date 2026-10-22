@@ -458,6 +458,22 @@ mod abi {
                 .and_then(|t| edit::set_variant(&t, index as usize, variant)),
         )
     }
+
+    /// Deals each word one of `count` looks (or none) from `seed`: a new transcript, as `oc_set_variant`.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_shuffle_variants(
+        ptr: *mut u8,
+        len: usize,
+        count: u32,
+        seed: u32,
+    ) -> u32 {
+        respond(
+            unsafe { read_transcript(ptr, len) }.map(|t| edit::shuffle_variants(&t, count, seed)),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -533,7 +549,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 26);
+        assert_eq!(exported.len(), 27);
         assert_eq!(exported, declared);
     }
 }

@@ -95,6 +95,10 @@ uint32_t oc_set_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint8_t
 /* Gives one word the look `variant` of the style (an index into its variants), or the style's own
  * with -1, keeping its text and timing. Leaves the edited transcript. */
 uint32_t oc_set_variant(uint8_t *json_ptr, size_t json_len, uint32_t index, int32_t variant);
+/* Deals every word one of the style's `count` looks, or its own, at random from `seed`: the same
+ * seed gives the same looks, another seed deals again. Text and timing stay. Leaves the edited
+ * transcript. */
+uint32_t oc_shuffle_variants(uint8_t *json_ptr, size_t json_len, uint32_t count, uint32_t seed);
 
 #ifdef __cplusplus
 }

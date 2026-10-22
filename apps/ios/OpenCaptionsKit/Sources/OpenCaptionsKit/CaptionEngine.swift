@@ -308,6 +308,13 @@ public actor CaptionEngine {
         return try decoded(oc_set_variant(ptr, len, UInt32(index), Int32(variant ?? -1)), as: Transcript.self)
     }
 
+    /// Deals every word one of the style's `count` looks, or its own, at random from `seed`: the same
+    /// seed gives the same looks, another seed deals again. Text and timing stay.
+    public func shuffleVariants(_ t: Transcript, count: Int, seed: UInt32) throws -> Transcript {
+        let (ptr, len) = try put(json: t)
+        return try decoded(oc_shuffle_variants(ptr, len, UInt32(count), seed), as: Transcript.self)
+    }
+
 }
 
 extension CaptionEngine {

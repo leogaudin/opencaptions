@@ -7,9 +7,10 @@ import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CaptionPreview } from "@/components/CaptionPreview";
 import { PresetStrip } from "@/components/PresetStrip";
+import { useApplyPreset } from "@/lib/applyPreset";
 import { useT } from "@/lib/i18n";
 import { PlaybackProvider, useVideo } from "@/lib/playback";
-import { BUILTIN_PRESETS, presetLook, presetMatches } from "@/lib/presets";
+import { BUILTIN_PRESETS, presetMatches } from "@/lib/presets";
 import { useEditorStore } from "@/store/editorStore";
 import { type Clip, loadClip, loadManifest } from "./clips";
 import { demoFrameClass, external, Page, playerBoxClass } from "./Landing";
@@ -94,7 +95,7 @@ function Demo() {
   const [clipId, setClipId] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const style = useEditorStore((s) => s.style);
-  const setStyle = useEditorStore((s) => s.setStyle);
+  const { apply } = useApplyPreset();
   const loaded = useEditorStore((s) => s.project !== null);
   const active = BUILTIN_PRESETS.find((p) => presetMatches(p.config, style));
 
@@ -163,7 +164,7 @@ function Demo() {
           </p>
           <PresetStrip
             activeId={active?.id}
-            onPick={(config) => setStyle(presetLook(config, style))}
+            onPick={apply}
             className="flex gap-2.5 overflow-x-auto p-1 md:grid md:grid-cols-3 md:overflow-visible"
             tileClassName="w-32 shrink-0 md:w-auto"
           />

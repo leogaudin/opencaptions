@@ -173,7 +173,7 @@ in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and 
     line box on that baseline. A word's `size` is its row's scale times its look's `scale`, so every effect (outline, shadow,
     glow, extrusion) grows with it. A family with an italic file (`FontBook::styled`) draws that face, and a family without one
     is leaned (sheared) as before; a transcript with no looks lays out and draws byte for byte as it did. The editors only
-    choose: `set_variant` (`oc_set_variant`) sets or clears one word's look, `set_word` and `retime` keep it, and the word
+    choose: `set_variant` (`oc_set_variant`) sets or clears one word's look, `shuffle_variants` (`oc_shuffle_variants`) deals the looks to every word at random from a seed (half the words keep the style's own look, the rest take the looks evenly, never one twice in a row; the same seed deals the same, SplitMix64, so it is identical on every platform) and is what picking a preset with looks, and the Shuffle looks button, call, `set_word` and `retime` keep it, and the word
     card shows the word drawn by the engine in each look. The `blur_in` animation is Drift's entrance alone (0.12 s, no line
     motion, no glow).
   - *Justify layout.* `align: "justify"` cuts rows at 0.55 of the usual width, then scales each row up to the widest row's natural width, at most three times, and

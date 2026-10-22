@@ -259,6 +259,22 @@ final class Counter { var value = 0 }
         #expect(model.transcript?.words[1].variant == nil)
     }
 
+    @Test func aStyleWithLooksDealsThemAndOneWithoutLeavesTheWords() async throws {
+        let (model, _) = try make()
+        model.setVariant(index: 1, variant: 0)
+        model.shuffleLooks(seed: 3)
+        await model.settled()
+        #expect(model.transcript?.words[1].variant == 0, "no looks, nothing dealt")
+        model.updateStyle { $0.variants = [WordVariant(), WordVariant(), WordVariant()] }
+        model.shuffleLooks(seed: 3)
+        await model.settled()
+        let first = model.transcript?.words.map(\.variant)
+        #expect(first?.allSatisfy { ($0 ?? 0) < 3 } == true)
+        model.shuffleLooks(seed: 3)
+        await model.settled()
+        #expect(model.transcript?.words.map(\.variant) == first, "the same seed deals the same")
+    }
+
     @Test func savingDoesNotMoveTheStampThePreviewReadsAsAnEdit() async throws {
         let (model, store) = try make()
         model.setPosition(x: 0.3, y: 0.2)

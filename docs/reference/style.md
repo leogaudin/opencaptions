@@ -83,9 +83,10 @@ every field is optional: what a look leaves out is the style's own.
 | `box_color` | Colour | A square box of this colour behind the word, like a name label. |
 
 A `variant` past the end of the style's looks draws as the style's own and is kept, so switching to a
-preset with fewer looks and back loses nothing. A look is picked on a word in the editors (double-click a
-word, or tap it on the phone); the style panel does not edit them, they come with a preset such as
-**Editorial**.
+preset with fewer looks and back loses nothing. Picking a preset that has looks (such as **Editorial**) deals them to the words at random: about half the
+words keep the style's own look and the rest take the looks in turn. **Shuffle looks** deals again. A look
+can be changed on a word in the editors (double-click a word, or tap it on the phone); the style panel does
+not edit the looks themselves, they come with the preset.
 
 ## Timing offset
 

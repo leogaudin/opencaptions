@@ -175,4 +175,22 @@ test.describe("Giving a word a look", () => {
     await page.getByTestId("word-look-base").click();
     await expect.poll(firstLook).toBe(null);
   });
+  test("shuffling deals the looks to the words, and it is saved", async ({ page }) => {
+    const saved = await mockTranscribedProject(page, "Shuffle test", {
+      transcript: TRANSCRIPT,
+      styleConfig: editorial,
+    });
+    await page.goto(`/projects/${MOCK_PROJECT_ID}`);
+    const dealt = () =>
+      (saved().transcript as Transcript).segments
+        .flatMap((s) => s.words)
+        .filter((w) => w.variant != null).length;
+    // Each word has an even chance of keeping the style's own look, so ask again until one is dealt.
+    await expect
+      .poll(async () => {
+        await page.getByTestId("shuffle-looks").click();
+        return dealt();
+      })
+      .toBeGreaterThan(0);
+  });
 });

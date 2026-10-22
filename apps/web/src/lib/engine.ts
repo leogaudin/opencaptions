@@ -52,6 +52,7 @@ interface Exports {
   ): number;
   oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
   oc_set_variant(ptr: number, len: number, index: number, variant: number): number;
+  oc_shuffle_variants(ptr: number, len: number, count: number, seed: number): number;
 }
 
 /** The rows of the overlay that changed, from `top`, the frame's width. */
@@ -155,6 +156,11 @@ export interface CaptionEditor {
    * with null, keeping its text and timing.
    */
   setVariant(t: Transcript, index: number, variant: number | null): Transcript;
+  /**
+   * Deals every word one of `count` looks (or the style's own) at random from `seed`: the same seed
+   * gives the same looks, another seed deals again. Text and timing stay.
+   */
+  shuffleVariants(t: Transcript, count: number, seed: number): Transcript;
 }
 
 export interface CaptionRenderer {
@@ -432,6 +438,7 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
       setWord: (t, index, text) =>
         parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
       setVariant: (t, index, variant) => parse(x.oc_set_variant(...json(t), index, variant ?? -1)),
+      shuffleVariants: (t, count, seed) => parse(x.oc_shuffle_variants(...json(t), count, seed)),
       snapAxis: (position, extent, anchor, size, threshold, margin) => {
         x.oc_snap_axis(position, extent, anchor, size, threshold, margin);
         const [snapped, line] = resultFloats(x);

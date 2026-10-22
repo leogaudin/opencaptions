@@ -8,7 +8,7 @@
  * Discrete controls dispatch immediately: there is nothing to coalesce.
  */
 
-import { Clock, PenLine, Sparkles, Square, Type, Wand2 } from "lucide-react";
+import { Clock, PenLine, Shuffle, Sparkles, Square, Type, Wand2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { CaptionOffsetControl } from "@/components/CaptionOffsetControl";
 import { FontPicker } from "@/components/FontPicker";
@@ -20,9 +20,10 @@ import {
   Segmented,
   SliderField,
 } from "@/components/StyleFields";
+import { useApplyPreset } from "@/lib/applyPreset";
 import { msg, useT } from "@/lib/i18n";
 import { useLookPreviews } from "@/lib/presetPreviews";
-import { BUILTIN_PRESETS, positionOnAlign, presetLook, presetMatches } from "@/lib/presets";
+import { BUILTIN_PRESETS, positionOnAlign, presetMatches } from "@/lib/presets";
 import {
   ANIMATION_NAMES,
   ANIMATIONS,
@@ -53,6 +54,7 @@ export function StyleControls() {
   const setStyle = useEditorStore((s) => s.setStyle);
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
   const [tab, setTab] = useState<TabId>("presets");
+  const { apply, shuffle } = useApplyPreset();
 
   // The active preset is whichever built-in's config matches the current style,
   // so the picked one can be highlighted in the strip.
@@ -84,10 +86,20 @@ export function StyleControls() {
       </div>
 
       {tab === "presets" && (
-        <PresetStrip
-          activeId={activePresetId}
-          onPick={(config) => setStyle(presetLook(config, style))}
-        />
+        <>
+          <PresetStrip activeId={activePresetId} onPick={apply} />
+          {style.variants?.length ? (
+            <button
+              type="button"
+              data-testid="shuffle-looks"
+              onClick={shuffle}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+            >
+              <Shuffle className="h-3.5 w-3.5" aria-hidden />
+              {t("Shuffle looks")}
+            </button>
+          ) : null}
+        </>
       )}
       {tab === "text" && (
         <TextPanel style={style} setStyle={setStyle} throttled={setStyleThrottled} />

@@ -28,7 +28,7 @@ Pause the video and **double-click** a word in the preview. Type the correction 
 - A word is edited one at a time and keeps its timing.
 - Spaces inside it stay, and it is still one word.
 - Clearing the word and pressing Enter **deletes** it.
-- With a preset that has several looks (**Editorial**), a row of tiles under the word shows it in each look. Pick one to set that word apart; pick the first to put it back. The look is saved with the word and survives renaming it.
+- With a preset that has several looks (**Editorial**), a row of tiles under the word shows it in each look. Applying such a preset gives words their looks at random (**Shuffle looks** in the Presets tab deals again). Pick a look on the card to change that word; pick the first to put it back. The look is saved with the word and survives renaming it.
 
 ## Move the caption
 

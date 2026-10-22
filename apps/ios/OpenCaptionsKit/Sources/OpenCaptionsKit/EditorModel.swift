@@ -200,6 +200,14 @@ public final class EditorModel {
         enqueue { try await engine.setVariant($0, index: index, variant: variant) }
     }
 
+    /// Deals the style's looks to the words at random, in the engine: another seed each time, so asking
+    /// again deals again. A style with no looks leaves the words as they are.
+    public func shuffleLooks(seed: UInt32 = .random(in: .min ... .max)) {
+        let (engine, count) = (engine, project.styleConfig.variants.count)
+        guard count > 0 else { return }
+        enqueue { try await engine.shuffleVariants($0, count: count, seed: seed) }
+    }
+
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours.
     public func retime(index: Int, edge: CaptionEdge, time: Double) {
         let (engine, offset) = (engine, project.captionOffsetMs)
@@ -255,6 +263,8 @@ public final class EditorModel {
             $0 = preset.config
             ($0.positionX, $0.positionY, $0.fontSize, $0.wordsPerLine) = (x, y, size, words)
         }
+        // A preset with looks is for mixing them: the words get theirs at random, and can be changed.
+        shuffleLooks()
     }
 
     /// Changes how the rows sit in the block, moving the block to its edge or back to the middle when that is

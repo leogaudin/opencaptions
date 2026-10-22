@@ -78,6 +78,12 @@ struct StylePanel: View {
                 PresetStrip(presets: presets, active: { style.matches($0) }, apply: { preset in
                     if app.entitlements.locks(preset: preset) { showPro = true } else { model.apply(preset) }
                 })
+                if !style.variants.isEmpty {
+                    Button { model.shuffleLooks() } label: {
+                        Label("Shuffle looks", systemImage: "shuffle")
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         case .text:
             section {

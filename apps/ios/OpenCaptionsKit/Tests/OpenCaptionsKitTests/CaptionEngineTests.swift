@@ -226,6 +226,21 @@ extension EngineSuites {
             }
         }
 
+        @Test func looksAreDealtFromASeedAndAnotherSeedDealsAgain() async throws {
+            let t = try Repo.transcript()
+            let a = try await engine.shuffleVariants(t, count: 5, seed: 7)
+            let again = try await engine.shuffleVariants(t, count: 5, seed: 7)
+            #expect(a.words.map(\.variant) == again.words.map(\.variant))
+            #expect(a.words.map(\.text) == t.words.map(\.text), "the text stays")
+            #expect(a.words.allSatisfy { ($0.variant ?? 0) < 5 })
+            var differs = false
+            for seed in UInt32(0)..<40 {
+                let other = try await engine.shuffleVariants(t, count: 5, seed: seed)
+                differs = differs || other.words.map(\.variant) != a.words.map(\.variant)
+            }
+            #expect(differs)
+        }
+
         @Test func aFrameBecomesAPremultipliedCoreImageImage() throws {
             // One straight-alpha pixel: (200, 100, 50) at alpha 128.
             let frame = CaptionFrame(width: 1, height: 1, rgba: Data([200, 100, 50, 128]))

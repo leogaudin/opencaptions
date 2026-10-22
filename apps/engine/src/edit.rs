@@ -177,6 +177,39 @@ pub fn set_variant(
     Ok(rebuild(t, entries))
 }
 
+/// Hands every word one of the style's `count` looks, or its own, at random: half the words keep the
+/// style's own look and the rest take the looks evenly, never the same one twice in a row. The same
+/// `seed` gives the same words the same looks, so what the preview shows is what is exported, and
+/// another seed deals again. Text, timing and every other field stay.
+pub fn shuffle_variants(t: &Transcript, count: u32, seed: u32) -> Transcript {
+    let mut entries = flatten(t);
+    let mut state = u64::from(seed);
+    let mut last = None;
+    for (_, word) in &mut entries {
+        let roll = splitmix(&mut state);
+        let mut pick = None;
+        if count > 0 && roll & 1 == 1 {
+            let mut look = ((roll >> 1) % u64::from(count)) as u32;
+            if count > 1 && Some(look) == last {
+                look = (look + 1) % count;
+            }
+            pick = Some(look);
+        }
+        word.variant = pick;
+        last = pick.or(last);
+    }
+    rebuild(t, entries)
+}
+
+/// The next number of a SplitMix64 sequence: small, and the same on every platform.
+fn splitmix(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
 /// Each word paired with the index of the segment it belongs to.
 fn flatten(t: &Transcript) -> Vec<(usize, Word)> {
     t.segments
@@ -528,6 +561,53 @@ mod tests {
             "a cleared look leaves the words as they were"
         );
         assert!(set_variant(&transcript(), 4, Some(0)).is_err());
+    }
+
+    #[test]
+    fn shuffle_deals_the_same_looks_for_a_seed_and_others_for_another() {
+        let looks = |t: &Transcript| t.words().map(|w| w.variant).collect::<Vec<_>>();
+        let a = shuffle_variants(&transcript(), 5, 7);
+        assert_eq!(looks(&a), looks(&shuffle_variants(&transcript(), 5, 7)));
+        assert!((0..40).any(|s| looks(&shuffle_variants(&transcript(), 5, s)) != looks(&a)));
+        assert_eq!(words(&a), words(&transcript()), "text and timing kept");
+    }
+
+    #[test]
+    fn shuffle_keeps_half_the_words_plain_and_never_repeats_a_look_in_a_row() {
+        let many = Transcript {
+            segments: vec![Segment {
+                words: (0..400)
+                    .map(|i| Word {
+                        text: "w".into(),
+                        start: i as f32,
+                        end: i as f32 + 1.0,
+                        variant: None,
+                        rest: Default::default(),
+                    })
+                    .collect(),
+                rest: Default::default(),
+            }],
+            ..transcript()
+        };
+        let t = shuffle_variants(&many, 4, 99);
+        let looks: Vec<_> = t.words().map(|w| w.variant).collect();
+        let plain = looks.iter().filter(|v| v.is_none()).count();
+        assert!((140..260).contains(&plain), "{plain} of 400 plain");
+        assert!(looks.iter().flatten().all(|&v| v < 4));
+        let dealt: Vec<_> = looks.iter().flatten().collect();
+        assert!(dealt.windows(2).all(|w| w[0] != w[1]));
+        let seen: std::collections::BTreeSet<_> = dealt.into_iter().collect();
+        assert_eq!(seen.len(), 4, "every look is used");
+    }
+
+    #[test]
+    fn shuffle_with_no_looks_clears_them() {
+        let with = set_variant(&transcript(), 1, Some(2)).unwrap();
+        assert!(
+            shuffle_variants(&with, 0, 3)
+                .words()
+                .all(|w| w.variant.is_none())
+        );
     }
 
     #[test]
