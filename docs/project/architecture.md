@@ -62,8 +62,8 @@ process (`core/events.py`).
    the transcript.
 4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate, green_screen}`
    computes a hash of everything that decides the output (transcript, timing offset, style,
-   format and its encoder settings, size, fps). If `projects/{id}/renders/{hash}.<ext>` exists
-   it is ready at once; otherwise a render job is queued and the SPA polls the job. The cache
+   format and its encoder settings, size, fps). If `projects/{id}/renders/{format}/{hash}.<ext>` exists
+   it is ready at once (each format has a folder, so a render prunes only its own format's older files); otherwise a render job is queued and the SPA polls the job. The cache
    needs no database state: readiness is an existence check. `GET /projects/{id}/exports`
    lists the sizes and rates a project offers (with `source_resolution` and `source_fps`).
    - **Size and rate.** A short side (2160, 1080, 720) and a frame rate (30 or 60, the cap),

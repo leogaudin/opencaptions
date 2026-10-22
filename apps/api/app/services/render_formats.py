@@ -175,12 +175,34 @@ def _digest(
     return digest
 
 
-def render_object_key(project_id: str, render_hash: str, extension: str) -> str:
+def renders_prefix(project_id: str) -> str:
+    """Where every render of a project is stored."""
+    return f"projects/{project_id}/renders/"
+
+
+def render_object_key(project_id: str, format_id: str, render_hash: str, extension: str) -> str:
     """Build the content-addressed storage key for a render output.
 
-    Pattern: projects/{project_id}/renders/{hash}{extension}
+    Pattern: projects/{project_id}/renders/{format_id}/{hash}{extension}. A format has a folder
+    of its own because two formats can share an extension (H.264 and H.265 are both .mp4), and
+    pruning one format's old renders must not take another format's.
     """
-    return f"projects/{project_id}/renders/{render_hash}{extension}"
+    return f"{renders_prefix(project_id)}{format_id}/{render_hash}{extension}"
+
+
+def stale_render_keys(
+    project_id: str, format_id: str, extension: str, keys: list[str], keep: str
+) -> list[str]:
+    """The stored renders a new render of this format replaces: its other renders, and the
+    earlier layout's loose files of the same extension (named by hash alone, no format folder)."""
+    prefix = renders_prefix(project_id)
+    own = f"{prefix}{format_id}/"
+    return [
+        k
+        for k in keys
+        if k != keep
+        and (k.startswith(own) or ("/" not in k.removeprefix(prefix) and k.endswith(extension)))
+    ]
 
 
 # Every caller needing a render hash must derive the same geometry, style and
@@ -247,7 +269,7 @@ class RenderInputs:
         )
 
     def object_key_for(self, project_id: str, fmt: RenderFormat) -> str:
-        return render_object_key(project_id, self.hash_for(fmt.id), fmt.extension)
+        return render_object_key(project_id, fmt.id, self.hash_for(fmt.id), fmt.extension)
 
 
 _SHORT_SIDES = {"2160": 2160, "1080": 1080, "720": 720}

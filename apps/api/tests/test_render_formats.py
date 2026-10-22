@@ -146,12 +146,37 @@ class TestRenderHash:
 
 class TestRenderObjectKey:
     def test_key_format(self) -> None:
-        key = render_object_key("abc-123", "deadbeef01234567", ".mp4")
-        assert key == "projects/abc-123/renders/deadbeef01234567.mp4"
+        key = render_object_key("abc-123", "mp4", "deadbeef01234567", ".mp4")
+        assert key == "projects/abc-123/renders/mp4/deadbeef01234567.mp4"
 
     def test_webm_extension(self) -> None:
-        key = render_object_key("proj-1", "1234567890abcdef", ".webm")
-        assert key == "projects/proj-1/renders/1234567890abcdef.webm"
+        key = render_object_key("proj-1", "webm", "1234567890abcdef", ".webm")
+        assert key == "projects/proj-1/renders/webm/1234567890abcdef.webm"
+
+    def test_formats_sharing_an_extension_have_different_keys(self) -> None:
+        assert render_object_key("p", "mp4", "h", ".mp4") != render_object_key(
+            "p", "mp4-hevc", "h", ".mp4"
+        )
+
+    def test_a_new_render_prunes_only_its_own_format(self) -> None:
+        p = "projects/p/renders/"
+        keys = [
+            f"{p}mp4/old.mp4",
+            f"{p}mp4/new.mp4",
+            f"{p}mp4-hevc/other.mp4",
+            f"{p}webm/other.webm",
+            f"{p}loose.mp4",
+            f"{p}loose.webm",
+        ]
+        from app.services.render_formats import stale_render_keys
+
+        assert stale_render_keys("p", "mp4", ".mp4", keys, f"{p}mp4/new.mp4") == [
+            f"{p}mp4/old.mp4",
+            f"{p}loose.mp4",
+        ]
+        assert stale_render_keys("p", "mp4-hevc", ".mp4", keys, f"{p}mp4-hevc/other.mp4") == [
+            f"{p}loose.mp4"
+        ]
 
 
 def _original_hash(**inputs: Any) -> str:

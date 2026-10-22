@@ -47,6 +47,7 @@ from app.services.render_formats import (
     available_resolutions,
     get_format,
     render_object_key,
+    renders_prefix,
     resolve_render_inputs,
     source_short_side,
 )
@@ -108,7 +109,7 @@ async def request_download(
     inputs = resolve_render_inputs(proj, options)
     render_hash = inputs.hash_for(fmt.id)
 
-    output_key = render_object_key(str(project_id), render_hash, fmt.extension)
+    output_key = render_object_key(str(project_id), fmt.id, render_hash, fmt.extension)
 
     # Cache HIT: the content-addressed object already exists in storage.
     exists = await asyncio.to_thread(s3.object_exists, output_key)
@@ -206,7 +207,7 @@ async def download_render(
 
     render_hash = resolve_render_inputs(proj, options).hash_for(fmt.id)
 
-    output_key = render_object_key(str(project_id), render_hash, fmt.extension)
+    output_key = render_object_key(str(project_id), fmt.id, render_hash, fmt.extension)
 
     range_header = request.headers.get("range")
     try:
@@ -308,7 +309,7 @@ async def get_project_exports(
 
     # What is ready: one listing of the project's renders (pruning keeps about one per
     # format), not a request per format.
-    stored = set(await asyncio.to_thread(s3.list_prefix, f"projects/{project_id}/renders/"))
+    stored = set(await asyncio.to_thread(s3.list_prefix, renders_prefix(str(project_id))))
     video_exports = []
     for fmt in all_formats():
         exists = render_inputs.object_key_for(str(project_id), fmt) in stored

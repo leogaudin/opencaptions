@@ -71,7 +71,13 @@ def render_video(  # noqa: C901
     logger.info("render_video starting job=%s project=%s format=%s", job_id, project_id, format_id)
 
     from app.models.schemas import RenderOptions
-    from app.services.render_formats import get_format, render_object_key, resolve_render_inputs
+    from app.services.render_formats import (
+        get_format,
+        render_object_key,
+        renders_prefix,
+        resolve_render_inputs,
+        stale_render_keys,
+    )
     from app.storage import s3
 
     session_local = _sync_session_factory()
@@ -110,7 +116,7 @@ def render_video(  # noqa: C901
             session.commit()
 
         render_hash = inputs.hash_for(fmt.id)
-        output_key = render_object_key(project_id, render_hash, fmt.extension)
+        output_key = render_object_key(project_id, fmt.id, render_hash, fmt.extension)
         logger.info("content-addressed output_key=%s (hash=%s)", output_key, render_hash)
 
         task.set_job_status("running", celery_task_id=self.request.id, progress=0.0)
@@ -173,16 +179,17 @@ def render_video(  # noqa: C901
             rendered_key,
         )
 
-        # Step 5: PRUNE stale renders, delete any object under
-        # projects/{id}/renders/ that has the SAME format extension but a
-        # different hash. This prevents unbounded storage growth as users
-        # iterate on their transcript/style.
-        renders_prefix = f"projects/{project_id}/renders/"
-        existing_keys = s3.list_prefix(renders_prefix)
-        for key in existing_keys:
-            if key.endswith(fmt.extension) and key != rendered_key:
-                logger.info("pruning stale render: %s", key)
-                s3.delete_object(key)
+        # Step 5: PRUNE this format's older renders, which keeps storage from growing as users
+        # iterate on their transcript and style. Other formats' renders are left alone.
+        for key in stale_render_keys(
+            project_id,
+            fmt.id,
+            fmt.extension,
+            s3.list_prefix(renders_prefix(project_id)),
+            rendered_key,
+        ):
+            logger.info("pruning stale render: %s", key)
+            s3.delete_object(key)
 
         # Mark project status as done (no rendered_storage_key column, the
         # content-addressed object in storage IS the source of truth).
