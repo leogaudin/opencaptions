@@ -63,7 +63,7 @@ process (`core/events.py`).
 4. **Render.** `POST /projects/{id}/download {format, resolution, frame_rate, green_screen}`
    computes a hash of everything that decides the output (transcript, timing offset, style,
    format and its encoder settings, size, fps, and the engine's render revision: a number in
-   `apps/engine/testdata/render_revision.txt` bumped with any change to what the engine draws, which the golden-frame test
+   `apps/engine/src/render_revision.txt` bumped with any change to what the engine draws, which the golden-frame test
    asks for, so a cached file is never from an older drawing than the preview; the engine's `/health` reports it). If `projects/{id}/renders/{format}/{hash}.<ext>` exists
    it is ready at once (each format has a folder, so a render prunes only its own format's older files); otherwise a render job is queued and the SPA polls the job. The cache
    needs no database state: readiness is an existence check. `GET /projects/{id}/exports`
@@ -84,7 +84,7 @@ process (`core/events.py`).
    - The web editor has one Download button that opens a dialog (format, size, frame rate,
      background), as the iOS Save sheet does.
 5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…&green_screen=…`.
-   Subtitles (SRT, VTT, JSON) are generated from the transcript, without rendering.
+   Subtitles are not rendered: the API asks the engine (`POST /subtitles`, behind the same token) for SRT and VTT, whose cues are the caption lines (`edit::lines`) with the caption offset applied (`engine/src/subtitles.rs`, also `oc_subtitles` for the apps), and JSON is the transcript as stored.
 
 ## The caption engine
 
@@ -512,8 +512,8 @@ holds:
   the server's hash), excluded from backup.
 
 Writes are atomic (a temporary file, then a rename). The project list is a scan of the folder, and
-an unreadable project is hidden rather than failing the list. Subtitle files (SRT, VTT) are only
-exported by the Docker product. Fonts are the same as the server's: Inter, Poppins, Montserrat and Nimbus Roman
+an unreadable project is hidden rather than failing the list. Subtitle files (SRT, VTT) are
+written by the engine, as the server's are (`oc_subtitles`), and shared from the Save sheet. Fonts are the same as the server's: Inter, Poppins, Montserrat and Nimbus Roman
 are bundled with the engine's other fonts, in the same order the server loads them, and a style that
 names another Google Fonts family fetches it once (TrueType, the weight nearest 800) and keeps it on
 disk.

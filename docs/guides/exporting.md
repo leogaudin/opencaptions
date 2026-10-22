@@ -45,14 +45,15 @@ H.264 for it.
 
 The **Download subtitles** button gives:
 
-- **SRT**, one cue for each caption segment, the format nearly every player and platform reads. It has no
-  word timing.
+- **SRT**, the format nearly every player and platform reads. Each cue is one caption, the lines you see on
+  the video and in the timeline (so the **Words per line** setting decides them), and the timing carries the
+  caption offset. It has no word timing.
 - **VTT** (WebVTT), the same cues with the timing of every word inside them, for players that can highlight
   the word being said.
 - **JSON**, the full transcript with the timing and confidence of every word. See
   [Transcript format](../reference/transcript-format.md).
 
-These come straight from the transcript, with no processing.
+The caption engine writes the SRT and VTT files, the same code that cuts the captions on the video, so they line up with it. On the iPhone and the Mac, the Save sheet has an SRT and a VTT button that share the same files.
 
 ## From a script
 

@@ -683,6 +683,8 @@ def _err(status: int, description: str) -> dict[int | str, dict[str, Any]]:
     return {status: {"model": ErrorResponse, "description": description}}
 
 
+_503_ENGINE = _err(503, "The caption engine did not answer (`error: engine_unavailable`)")
+
 _404_PROJECT = _err(404, "Project not found (`error: project_not_found`)")
 
 _401_UNAUTHENTICATED = _err(

@@ -93,6 +93,7 @@ struct EditorView: View {
         .sheet(isPresented: $showSaveOptions) {
             SaveOptionsSheet(
                 project: model.project,
+                subtitles: { [model] format in try await model.subtitleFile(format) },
                 save: { options in
                     showSaveOptions = false
                     Task { await saveVideo(options) }

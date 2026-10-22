@@ -1616,7 +1616,7 @@ fn frames_are_byte_for_byte_what_they_were() {
         assert_eq!(
             *h, *expected,
             "{name}: the drawn frames changed. If that is meant, update GOLDEN and bump \
-             testdata/render_revision.txt (and the API's ENGINE_RENDER_REVISION), so a render \
+             src/render_revision.txt (and the API's ENGINE_RENDER_REVISION), so a render \
              cached with the old drawing is not served"
         );
     }

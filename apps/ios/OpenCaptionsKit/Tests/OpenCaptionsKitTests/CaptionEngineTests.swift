@@ -241,6 +241,19 @@ extension EngineSuites {
             #expect(differs)
         }
 
+        @Test func subtitlesAreTheCaptionLinesWithTheOffset() async throws {
+            let t = try Repo.transcript()
+            let srt = try await engine.subtitles(t, wordsPerLine: 2, offsetMs: 0, format: .srt)
+            let lines = try await engine.lines(t, wordsPerLine: 2, offsetMs: 0)
+            #expect(srt.hasPrefix("1\n00:00:"))
+            #expect(srt.components(separatedBy: "\n\n").filter { !$0.isEmpty }.count == lines.count)
+            for line in lines { #expect(srt.contains(line.text)) }
+            let vtt = try await engine.subtitles(t, wordsPerLine: 2, offsetMs: 1000, format: .vtt)
+            #expect(vtt.hasPrefix("WEBVTT\n\n"))
+            #expect(vtt.contains("<00:00:0"), "each word is tagged with its time")
+            #expect(vtt != (try await engine.subtitles(t, wordsPerLine: 2, offsetMs: 0, format: .vtt)))
+        }
+
         @Test func aFrameBecomesAPremultipliedCoreImageImage() throws {
             // One straight-alpha pixel: (200, 100, 50) at alpha 128.
             let frame = CaptionFrame(width: 1, height: 1, rgba: Data([200, 100, 50, 128]))

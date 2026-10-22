@@ -10,14 +10,15 @@ pub mod fonts;
 pub mod model;
 pub mod scene;
 pub mod scripts;
+pub mod subtitles;
 
 pub use fonts::FontBook;
 
 /// A number bumped with every change that alters the frames the engine draws (the golden test
 /// says when). The API puts it in the name of every render it caches, so a look drawn
-/// differently is not served from a file drawn the old way. `testdata/render_revision.txt` is the
+/// differently is not served from a file drawn the old way. `src/render_revision.txt` is the
 /// one place it is written; the API holds its own copy equal to it with a test.
-pub const RENDER_REVISION: &str = include_str!("../testdata/render_revision.txt");
+pub const RENDER_REVISION: &str = include_str!("render_revision.txt");
 pub use model::SceneInput;
 pub use scene::{Renderer, Scene};
 
@@ -402,6 +403,31 @@ mod abi {
         )
     }
 
+    /// The transcript as a subtitle file, left in the result buffer as a JSON string: SubRip for
+    /// `format` 0 and WebVTT for 1. Its cues are the caption lines (as `oc_caption_lines`) with
+    /// the caption offset applied. Returns 0 on failure with the reason.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_subtitles(
+        ptr: *mut u8,
+        len: usize,
+        words_per_line: u32,
+        offset_ms: i32,
+        format: u32,
+    ) -> u32 {
+        let format = match format {
+            0 => Ok(crate::subtitles::Format::Srt),
+            1 => Ok(crate::subtitles::Format::Vtt),
+            other => Err(format!("unknown subtitle format {other}")),
+        };
+        respond(format.and_then(|format| {
+            unsafe { read_transcript(ptr, len) }
+                .map(|t| crate::subtitles::subtitles(&t, words_per_line, offset_ms, format))
+        }))
+    }
+
     /// Moves the start (`edge` 0) or end (1) of word `index` to `time` as shown
     /// with `offset_ms`; the edited transcript, in unshifted times, is left as
     /// JSON. Returns 0 on failure with the reason.
@@ -555,7 +581,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 27);
+        assert_eq!(exported.len(), 28);
         assert_eq!(exported, declared);
     }
 }

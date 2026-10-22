@@ -242,7 +242,7 @@ def test_a_different_engine_revision_gives_a_different_hash(
     assert compute_render_hash(**_BASE_INPUTS) != before
 
 
-_REVISION = Path(__file__).resolve().parents[2] / "engine" / "testdata" / "render_revision.txt"
+_REVISION = Path(__file__).resolve().parents[2] / "engine" / "src" / "render_revision.txt"
 
 
 @pytest.mark.skipif(not _REVISION.is_file(), reason="needs the engine's sources (a full checkout)")

@@ -1,12 +1,10 @@
 """Tests for the global caption timing offset.
 
-Covers the things the offset must guarantee:
-  1. The pure transform (used for the subtitle files) shifts/clamps correctly
-     and is byte-identical at 0. The engine applies the same rule to what it
-     draws, so a render sends the transcript as stored plus the offset.
-  2. The content-addressed render cache key changes with the offset (so a
+Covers the things the offset must guarantee (the engine applies it, to what it draws and to
+the subtitle files: `shifted` in apps/engine/src/model.rs, tested there):
+  1. The content-addressed render cache key changes with the offset (so a
      changed offset never serves a stale render).
-  3. The offset reaches the actual engine request body + output key, and the
+  2. The offset reaches the actual engine request body + output key, and the
      API round-trips + range-validates the field.
 """
 
@@ -23,12 +21,6 @@ from sqlalchemy.pool import StaticPool
 
 from app.models import Base, Job, Project, User
 from app.models.schemas import StyleConfig
-from app.services.caption_offset import (
-    CAPTION_OFFSET_MAX_MS,
-    CAPTION_OFFSET_MIN_MS,
-    apply_caption_offset,
-    clamp_caption_offset_ms,
-)
 from app.services.render_backend import RenderResult
 from app.services.render_formats import compute_render_hash
 
@@ -50,48 +42,6 @@ _TRANSCRIPT: dict[str, Any] = {
         }
     ],
 }
-
-
-# 1. Pure transform
-
-
-class TestApplyCaptionOffset:
-    def test_zero_offset_returns_same_object(self) -> None:
-        """offset 0 is the identity: same object, so hashing is byte-identical."""
-        assert apply_caption_offset(_TRANSCRIPT, 0) is _TRANSCRIPT
-
-    def test_positive_offset_delays_captions(self) -> None:
-        shifted = apply_caption_offset(_TRANSCRIPT, 1000)
-        w0, w1 = shifted["segments"][0]["words"]
-        assert (w0["start"], w0["end"]) == (2.0, 2.5)
-        assert (w1["start"], w1["end"]) == (2.5, 3.0)
-        assert shifted["segments"][0]["start"] == 2.0
-        assert shifted["segments"][0]["end"] == 3.0
-
-    def test_negative_offset_advances_and_clamps_at_zero(self) -> None:
-        shifted = apply_caption_offset(_TRANSCRIPT, -1200)
-        w0 = shifted["segments"][0]["words"][0]
-        # 1.0 - 1.2 = -0.2 -> clamped to 0.0
-        assert w0["start"] == 0.0
-        # 1.5 - 1.2 = 0.3 (not clamped)
-        assert w0["end"] == pytest.approx(0.3)
-
-    def test_duration_and_text_preserved(self) -> None:
-        shifted = apply_caption_offset(_TRANSCRIPT, 500)
-        assert shifted["duration"] == 5.0
-        assert shifted["language"] == "fr"
-        assert shifted["segments"][0]["text"] == "bonjour monde"
-        assert shifted["segments"][0]["words"][0]["text"] == "bonjour"
-
-    def test_input_not_mutated(self) -> None:
-        before = copy.deepcopy(_TRANSCRIPT)
-        apply_caption_offset(_TRANSCRIPT, 1000)
-        assert before == _TRANSCRIPT
-
-    def test_clamp_range(self) -> None:
-        assert clamp_caption_offset_ms(9999) == CAPTION_OFFSET_MAX_MS
-        assert clamp_caption_offset_ms(-9999) == CAPTION_OFFSET_MIN_MS
-        assert clamp_caption_offset_ms(250) == 250
 
 
 # 2. Cache key invalidation
@@ -296,19 +246,31 @@ async def test_offset_changes_export_readiness_key(
 
 
 @pytest.mark.asyncio
-async def test_subtitle_files_carry_the_offset_and_the_json_export_does_not(
+async def test_subtitle_files_are_asked_of_the_engine_with_the_offset_and_the_json_export_is_raw(
     user_a: tuple[AsyncClient, Any],
     seed_project: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The video shows captions shifted, so SRT and VTT must too; the JSON export
-    is the transcript as stored."""
+    """The video shows captions shifted, and the engine shifts the file by the same rule, so it
+    is told the offset; the JSON export is the transcript as stored."""
+    asked: list[dict[str, Any]] = []
+
+    async def fake(transcript: dict[str, Any], **kw: Any) -> str:
+        asked.append({"first": transcript["segments"][0]["words"][0]["start"], **kw})
+        return f"a {kw['format']} file\n"
+
+    monkeypatch.setattr("app.api.project_files.subtitles.subtitles", fake)
     client, owner = user_a
     pid = await seed_project(owner)  # one word, "hi", 0.0 to 0.5 s
     await client.patch(f"/api/v1/projects/{pid}", json={"caption_offset_ms": 1000})
 
     srt = await client.get(f"/api/v1/projects/{pid}/export.srt")
-    assert "00:00:01,000 --> 00:00:01,500" in srt.text
+    assert srt.text == "a srt file\n"
     vtt = await client.get(f"/api/v1/projects/{pid}/export.vtt")
-    assert "00:00:01.000 --> 00:00:01.500" in vtt.text
+    assert vtt.text == "a vtt file\n"
+    assert asked == [
+        {"first": 0.0, "words_per_line": 3, "caption_offset_ms": 1000, "format": "srt"},
+        {"first": 0.0, "words_per_line": 3, "caption_offset_ms": 1000, "format": "vtt"},
+    ]
     raw = await client.get(f"/api/v1/projects/{pid}/export.json")
     assert raw.json()["segments"][0]["words"][0]["start"] == 0.0

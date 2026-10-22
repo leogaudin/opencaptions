@@ -19,6 +19,37 @@ use serde::Deserialize;
 use serde_json::json;
 use tiny_http::{Header, Method, Request, Response, Server};
 
+/// `POST /subtitles`: a transcript as a subtitle file, cut and shifted as the captions are.
+#[derive(Deserialize)]
+struct SubtitlesRequest {
+    transcript: opencaptions_engine::model::Transcript,
+    words_per_line: u32,
+    #[serde(default)]
+    caption_offset_ms: i32,
+    format: String,
+}
+
+fn subtitles(raw: &[u8]) -> (u16, serde_json::Value) {
+    let req = match serde_json::from_slice::<SubtitlesRequest>(raw) {
+        Ok(req) => req,
+        Err(e) => return error(422, "validation_error", e.to_string()),
+    };
+    let Some(format) = opencaptions_engine::subtitles::Format::parse(&req.format) else {
+        return error(
+            422,
+            "validation_error",
+            format!("unknown subtitle format '{}'", req.format),
+        );
+    };
+    let text = opencaptions_engine::subtitles::subtitles(
+        &req.transcript,
+        req.words_per_line,
+        req.caption_offset_ms,
+        format,
+    );
+    (200, json!({ "text": text }))
+}
+
 #[derive(Deserialize)]
 struct RenderRequest {
     video_url: String,
@@ -716,6 +747,18 @@ fn handle(book: &FontBook<'static>, token: &str, slots: &Slots, mut request: Req
             "unauthorised",
             "missing or wrong x-engine-token".into(),
         ),
+        (Method::Post, "/subtitles") if !authorised(&request, token) => error(
+            401,
+            "unauthorised",
+            "missing or wrong x-engine-token".into(),
+        ),
+        (Method::Post, "/subtitles") => {
+            let mut raw = Vec::new();
+            match request.as_reader().take(64 << 20).read_to_end(&mut raw) {
+                Err(e) => error(400, "bad_request", e.to_string()),
+                Ok(_) => subtitles(&raw),
+            }
+        }
         (Method::Post, "/render") => {
             let mut raw = Vec::new();
             match request.as_reader().take(64 << 20).read_to_end(&mut raw) {
@@ -829,6 +872,27 @@ mod tests {
         let mut b = FontBook::new();
         b.add(include_bytes!("../fonts/Inter.ttf")).unwrap();
         b
+    }
+
+    #[test]
+    fn the_subtitles_route_answers_with_the_file() {
+        let body = |format: &str| {
+            json!({
+                "transcript": { "duration": 2.0, "segments": [{ "words": [
+                    { "text": "bonjour", "start": 0.5, "end": 1.0 },
+                    { "text": "monde", "start": 1.0, "end": 1.5 }] }] },
+                "words_per_line": 3, "caption_offset_ms": 500, "format": format
+            })
+            .to_string()
+        };
+        let (status, out) = subtitles(body("srt").as_bytes());
+        assert_eq!(status, 200);
+        assert_eq!(
+            out["text"],
+            "1\n00:00:01,000 --> 00:00:02,000\nbonjour monde\n"
+        );
+        assert_eq!(subtitles(body("ass").as_bytes()).0, 422);
+        assert_eq!(subtitles(b"{}").0, 422);
     }
 
     fn scene() -> SceneInput {

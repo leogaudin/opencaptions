@@ -83,6 +83,10 @@ uint32_t oc_script_fonts(uint8_t *json_ptr, size_t json_len);
  * (the caption offset) applied. */
 uint32_t oc_caption_lines(uint8_t *json_ptr, size_t json_len, uint32_t words_per_line,
                           int32_t offset_ms);
+/* The transcript as a subtitle file, left as a JSON string: format 0 is SubRip, 1 is WebVTT. The cues
+ * are the caption lines of oc_caption_lines, with the caption offset applied. */
+uint32_t oc_subtitles(uint8_t *json_ptr, size_t json_len, uint32_t words_per_line, int32_t offset_ms,
+                      uint32_t format);
 /* edge 0 = start, 1 = end. time is as shown (with offset_ms); the edited transcript
  * is left with unshifted times. */
 uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint32_t edge,

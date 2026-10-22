@@ -42,6 +42,13 @@ interface Exports {
   ): number;
   oc_fallback_fonts(ptr: number, len: number): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
+  oc_subtitles(
+    ptr: number,
+    len: number,
+    wordsPerLine: number,
+    offsetMs: number,
+    format: number,
+  ): number;
   oc_retime_word(
     ptr: number,
     len: number,
@@ -135,6 +142,13 @@ export interface CaptionEditor {
    * cuts them, with times as shown (the caption offset applied).
    */
   lines(t: Transcript, wordsPerLine: number, offsetMs: number): CaptionLine[];
+  /** The transcript as a subtitle file whose cues are those lines, times as shown. */
+  subtitles(
+    t: Transcript,
+    wordsPerLine: number,
+    offsetMs: number,
+    format: "srt" | "vtt",
+  ): string;
   /**
    * Moves one edge of a word to `time` as shown, stopping at its neighbours. The
    * returned transcript has unshifted times.
@@ -433,6 +447,8 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
     return {
       lines: (t, wordsPerLine, offsetMs) =>
         parse(x.oc_caption_lines(...json(t), wordsPerLine, offsetMs)),
+      subtitles: (t, wordsPerLine, offsetMs, format) =>
+        parse(x.oc_subtitles(...json(t), wordsPerLine, offsetMs, format === "srt" ? 0 : 1)),
       retimeWord: (t, index, edge, time, offsetMs) =>
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       setWord: (t, index, text) =>

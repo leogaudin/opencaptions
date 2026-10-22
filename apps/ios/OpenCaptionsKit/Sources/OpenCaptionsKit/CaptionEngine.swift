@@ -28,6 +28,14 @@ public struct ActiveCaption: Equatable, Sendable {
     public var words: [FrameRect]
 }
 
+/// A subtitle file format; the raw value is the engine's.
+public enum SubtitleFormat: UInt32, Sendable {
+    case srt = 0
+    case vtt = 1
+
+    public var fileExtension: String { self == .srt ? "srt" : "vtt" }
+}
+
 /// One caption as the viewer sees it: words `from`..<`from + count` in reading order.
 public struct CaptionLine: Codable, Equatable, Sendable {
     public var from: Int
@@ -280,6 +288,17 @@ public actor CaptionEngine {
         let (ptr, len) = try put(json: t)
         return try decoded(
             oc_caption_lines(ptr, len, UInt32(wordsPerLine), Int32(offsetMs)), as: [CaptionLine].self)
+    }
+
+    /// The transcript as a subtitle file, whose cues are those same caption lines with the caption
+    /// offset applied: the engine writes SubRip and WebVTT, as the server does.
+    public func subtitles(
+        _ t: Transcript, wordsPerLine: Int, offsetMs: Int, format: SubtitleFormat
+    ) throws -> String {
+        let (ptr, len) = try put(json: t)
+        return try decoded(
+            oc_subtitles(ptr, len, UInt32(wordsPerLine), Int32(offsetMs), format.rawValue),
+            as: String.self)
     }
 
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours. The

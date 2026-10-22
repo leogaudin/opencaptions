@@ -5,6 +5,8 @@ import SwiftUI
 /// HDR video whether it stays HDR. The choice is remembered.
 struct SaveOptionsSheet: View {
     let project: Project
+    /// Writes the captions as a subtitle file, for the share sheet.
+    let subtitles: @Sendable (SubtitleFormat) async throws -> URL
     let save: (ExportOptions) -> Void
     let cancel: () -> Void
 
@@ -38,6 +40,7 @@ struct SaveOptionsSheet: View {
             sizeSection
             if rates.count > 1 { frameRateSection }
             backgroundSection
+            subtitlesSection
             estimate
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -74,6 +77,22 @@ struct SaveOptionsSheet: View {
     private var backgroundSection: some View {
         section("Background", note: greenScreen ? "Only the captions, on green, to key out in your editor." : "The video, with the captions on it.") {
             SegmentedPills(options: [false, true], selection: $greenScreen, label: { $0 ? "Green screen" : "Video" })
+        }
+    }
+
+    private var subtitlesSection: some View {
+        section("Subtitles", note: "Text files for a player or an editor: each line is a caption, as on the video.") {
+            HStack(spacing: 10) {
+                ForEach([SubtitleFormat.srt, .vtt], id: \.rawValue) { format in
+                    let name = format == .srt ? "SRT" : "VTT"
+                    ShareLink(
+                        item: SubtitleFile(format: format, write: subtitles), preview: SharePreview(name)
+                    ) {
+                        Label { Text(verbatim: name) } icon: { Image(systemName: "captions.bubble") }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+            }
         }
     }
 

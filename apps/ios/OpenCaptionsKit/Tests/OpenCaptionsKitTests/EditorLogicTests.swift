@@ -275,6 +275,15 @@ final class Counter { var value = 0 }
         #expect(model.transcript?.words.map(\.variant) == first, "the same seed deals the same")
     }
 
+    @Test func subtitlesAreWrittenToAFileNamedAfterTheProject() async throws {
+        let (model, _) = try make()
+        let url = try await model.subtitleFile(.srt)
+        #expect(url.pathExtension == "srt")
+        let text = try String(contentsOf: url, encoding: .utf8)
+        #expect(text.hasPrefix("1\n00:00:"))
+        #expect(url.deletingPathExtension().lastPathComponent == model.project.title.replacingOccurrences(of: "/", with: "-"))
+    }
+
     @Test func savingDoesNotMoveTheStampThePreviewReadsAsAnEdit() async throws {
         let (model, store) = try make()
         model.setPosition(x: 0.3, y: 0.2)

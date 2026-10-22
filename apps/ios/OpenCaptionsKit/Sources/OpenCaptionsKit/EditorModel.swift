@@ -208,6 +208,21 @@ public final class EditorModel {
         enqueue { try await engine.shuffleVariants($0, count: count, seed: seed) }
     }
 
+    /// The captions as a subtitle file in a temporary folder, named after the project: the cues are the
+    /// caption lines on the video, with the caption offset, written by the engine as the server's are.
+    public func subtitleFile(_ format: SubtitleFormat) async throws -> URL {
+        guard let transcript else { throw CocoaError(.fileNoSuchFile) }
+        let text = try await engine.subtitles(
+            transcript, wordsPerLine: project.styleConfig.wordsPerLine,
+            offsetMs: project.captionOffsetMs, format: format)
+        let name = project.title.replacingOccurrences(of: "[/:\\]", with: "-", options: .regularExpression)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("\(name.isEmpty ? "captions" : name).\(format.fileExtension)")
+        try text.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
+
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours.
     public func retime(index: Int, edge: CaptionEdge, time: Double) {
         let (engine, offset) = (engine, project.captionOffsetMs)

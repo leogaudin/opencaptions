@@ -430,7 +430,7 @@ export interface paths {
         };
         /**
          * Export SRT subtitles
-         * @description Download the transcript as an SRT subtitle file.
+         * @description Download the captions as an SRT subtitle file.
          */
         get: operations["export_srt_api_v1_projects__project_id__export_srt_get"];
         put?: never;
@@ -450,7 +450,7 @@ export interface paths {
         };
         /**
          * Export VTT subtitles
-         * @description Download the transcript as a WebVTT subtitle file.
+         * @description Download the captions as a WebVTT subtitle file.
          */
         get: operations["export_vtt_api_v1_projects__project_id__export_vtt_get"];
         put?: never;
@@ -2823,6 +2823,15 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description The caption engine did not answer (`error: engine_unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     export_vtt_api_v1_projects__project_id__export_vtt_get: {
@@ -2870,6 +2879,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The caption engine did not answer (`error: engine_unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorResponse"];
                 };
             };
         };

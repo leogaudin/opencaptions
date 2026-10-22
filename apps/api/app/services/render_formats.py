@@ -107,7 +107,7 @@ def all_formats() -> list[RenderFormat]:
 # This eliminates the need for `rendered_at` / `updated_at` comparisons.
 
 
-# The engine's own number for the pictures it draws (`apps/engine/testdata/render_revision.txt`,
+# The engine's own number for the pictures it draws (`apps/engine/src/render_revision.txt`,
 # which a test holds this equal to). It is bumped with any change that alters frames, so a render
 # cached with the old drawing is not served beside a preview drawn the new way.
 ENGINE_RENDER_REVISION = "1"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from collections.abc import Iterator
 from typing import Annotated
@@ -28,6 +29,7 @@ from app.models.schemas import (
     _404_NOT_RENDERED,
     _404_PROJECT,
     _404_PROJECT_OR_THUMBNAIL,
+    _503_ENGINE,
     DownloadResponse,
     ErrorResponse,
     ExportChoices,
@@ -38,8 +40,7 @@ from app.models.schemas import (
     Transcript,
     VideoExportOption,
 )
-from app.services import captions_export
-from app.services.caption_offset import apply_caption_offset
+from app.services import subtitles
 from app.services.entitlements import KIND_RENDER, resolve_policy
 from app.services.render_formats import (
     all_formats,
@@ -342,39 +343,27 @@ async def get_project_exports(
 @router.get(
     "/{project_id}/export.srt",
     response_class=PlainTextResponse,
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT},
+    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT, **_503_ENGINE},
     summary="Export SRT subtitles",
 )
 async def export_srt(
     proj: Annotated[Project, Depends(get_owned_project)],
 ) -> Response:
-    """Download the transcript as an SRT subtitle file."""
-    transcript = _require_transcript(proj, with_offset=True)
-    body = captions_export.to_srt(transcript)
-    return Response(
-        content=body,
-        media_type="application/x-subrip",
-        headers={"Content-Disposition": f'attachment; filename="captions-{proj.id}.srt"'},
-    )
+    """Download the captions as an SRT subtitle file."""
+    return await _subtitle_file(proj, "srt", "application/x-subrip")
 
 
 @router.get(
     "/{project_id}/export.vtt",
     response_class=PlainTextResponse,
-    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT},
+    responses={**_404_PROJECT, **_400_NO_TRANSCRIPT, **_503_ENGINE},
     summary="Export VTT subtitles",
 )
 async def export_vtt(
     proj: Annotated[Project, Depends(get_owned_project)],
 ) -> Response:
-    """Download the transcript as a WebVTT subtitle file."""
-    transcript = _require_transcript(proj, with_offset=True)
-    body = captions_export.to_vtt(transcript)
-    return Response(
-        content=body,
-        media_type="text/vtt",
-        headers={"Content-Disposition": f'attachment; filename="captions-{proj.id}.vtt"'},
-    )
+    """Download the captions as a WebVTT subtitle file."""
+    return await _subtitle_file(proj, "vtt", "text/vtt")
 
 
 @router.get(
@@ -387,7 +376,7 @@ async def export_json(
 ) -> Response:
     """Download the full transcript as a structured JSON file."""
     transcript = _require_transcript(proj)
-    body = captions_export.to_json(transcript)
+    body = json.dumps(transcript.model_dump(), indent=2, ensure_ascii=False) + "\n"
     return Response(
         content=body,
         media_type="application/json",
@@ -395,18 +384,36 @@ async def export_json(
     )
 
 
-def _require_transcript(proj: Project, *, with_offset: bool = False) -> Transcript:
-    """The project's transcript; `with_offset` shifts every time by the caption offset.
+async def _subtitle_file(
+    proj: Project, format: subtitles.SubtitleFormat, media_type: str
+) -> Response:
+    """The captions as the engine writes them: the lines the video shows, shifted by the offset."""
+    transcript = _require_transcript(proj)
+    words_per_line = int((proj.style_config or {}).get("words_per_line") or 3)
+    try:
+        body = await subtitles.subtitles(
+            transcript.model_dump(),
+            words_per_line=words_per_line,
+            caption_offset_ms=proj.caption_offset_ms,
+            format=format,
+        )
+    except subtitles.EngineUnavailableError as e:
+        logger.error("subtitles: %s", e)
+        raise http_error(
+            503, "engine_unavailable", "The caption engine did not answer; try again."
+        ) from e
+    return Response(
+        content=body,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="captions-{proj.id}.{format}"'},
+    )
 
-    Timed files (SRT, VTT) take the offset so they line up with the video, which
-    the engine shifts the same way. The JSON export is the data and stays as stored.
-    """
+
+def _require_transcript(proj: Project) -> Transcript:
+    """The project's transcript, as stored."""
     if proj.transcript is None:
         raise http_error(400, "no_transcript", "Project has no transcript yet")
-    stored = dict(proj.transcript)
-    if with_offset:
-        stored = apply_caption_offset(stored, proj.caption_offset_ms)
-    return Transcript.model_validate(stored)
+    return Transcript.model_validate(dict(proj.transcript))
 
 
 async def _stream_s3_object(key: str, range_header: str | None) -> StreamingResponse:
