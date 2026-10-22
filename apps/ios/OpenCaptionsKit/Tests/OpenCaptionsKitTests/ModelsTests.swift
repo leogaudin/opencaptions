@@ -3,6 +3,11 @@ import Testing
 @testable import OpenCaptionsKit
 
 @Suite struct ModelsTests {
+    @Test func theAnimationsAndParakeetsLanguagesAreTheSharedLists() throws {
+        #expect(CaptionAnimation.allCases.map(\.rawValue) == (try Repo.shared("animations.json", as: [String].self)))
+        #expect(SpeechModels.parakeetLanguages == Set(try Repo.shared("parakeet-languages.json", as: [String].self)))
+    }
+
     @Test func theFixtureDecodesAndRoundTrips() throws {
         let t = try Repo.transcript()
         #expect(t.segments.count == 2)

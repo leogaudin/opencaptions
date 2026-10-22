@@ -11,6 +11,11 @@ enum Repo {
     }()
     static let fonts = root.appendingPathComponent("apps/engine/fonts")
     static let presets = root.appendingPathComponent("apps/web/src/lib/presets.json")
+    /// Lists every side holds, written once in the engine's testdata.
+    static func shared<T: Decodable>(_ name: String, as type: T.Type = T.self) throws -> T {
+        let url = root.appendingPathComponent("apps/engine/testdata/\(name)")
+        return try JSONDecoder().decode(T.self, from: Data(contentsOf: url))
+    }
 
     static func transcript() throws -> Transcript {
         let url = Bundle.module.url(forResource: "transcript", withExtension: "json", subdirectory: "Fixtures")!

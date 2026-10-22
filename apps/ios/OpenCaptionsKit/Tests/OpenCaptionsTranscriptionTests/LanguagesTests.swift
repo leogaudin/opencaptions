@@ -4,6 +4,18 @@ import Testing
 @testable import OpenCaptionsTranscription
 
 @Suite struct LanguagesTests {
+    /// The countries flags stand for, written once in the engine's testdata and held by every side.
+    @Test func aLanguagesFlagIsItsSharedCountrys() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<6 { root.deleteLastPathComponent() }
+        let url = root.appendingPathComponent("apps/engine/testdata/language-regions.json")
+        let regions = try JSONDecoder().decode([String: String].self, from: Data(contentsOf: url))
+        for (code, region) in regions where code != "cy" {
+            let flag = String(String.UnicodeScalarView(region.unicodeScalars.compactMap { UnicodeScalar(0x1F1E6 + $0.value - 0x41) }))
+            #expect(TranscriptionLanguages.flag(for: code) == flag, "\(code)")
+        }
+    }
+
     @Test func aLanguageHasAFlagAndTheOnesWithoutACountryAGlobe() {
         #expect(TranscriptionLanguages.flag(for: "fr") == "\u{1F1EB}\u{1F1F7}")
         #expect(TranscriptionLanguages.flag(for: "ja") == "\u{1F1EF}\u{1F1F5}")

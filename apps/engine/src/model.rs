@@ -435,6 +435,19 @@ impl SceneInput {
 mod tests {
     use super::*;
 
+    /// `testdata/animations.json` holds the ids once for every side: the API's schema, the web's and the
+    /// iPhone's lists are each tested against it.
+    #[test]
+    fn the_animations_are_the_shared_list() {
+        let shared: Vec<String> =
+            serde_json::from_str(include_str!("../testdata/animations.json")).unwrap();
+        let ours: Vec<String> = Animation::ALL
+            .into_iter()
+            .map(|a| serde_json::from_value(serde_json::to_value(a).unwrap()).unwrap())
+            .collect();
+        assert_eq!(ours, shared);
+    }
+
     #[test]
     fn every_animation_is_in_the_list_once_and_in_order() {
         // An exhaustive match: a new animation does not compile until it is placed here, and
