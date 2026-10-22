@@ -134,7 +134,7 @@ images, which is what an end user does.
 | `apps/ios/` | The iPhone/iPad/Mac app (one multiplatform target): SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
 | `scripts/` | `ci-local.sh` (acceptance gate), `ci-shell.sh` and `engine-shell.sh` (a check's pinned container), `e2e.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
-| `docs/` | The documentation, plain Markdown (guides, self-hosting, reference), built into the site in `apps/docs/`. `docs/project/architecture.md` is the design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
+| `docs/` | The documentation, plain Markdown (guides, self-hosting, reference), built into the site in `apps/docs/`. `docs/project/architecture.md` is the design (the engine's detail is `docs/project/engine.md`): services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
 | `apps/docs/` | The documentation site (Starlight). It owns no content: the pages are `docs/`. A broken link fails its build, which `make ci` runs. |
 | `Makefile` | All lifecycle targets (`up`, `watch`, `test`, `lint`, `generate-types`, etc). |
 

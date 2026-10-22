@@ -2,7 +2,7 @@
 title: "Speech model benchmarks"
 description: "Which speech models OpenCaptions measured, how they compare on accuracy and speed across 13 languages, and why Whisper Large v3 Turbo is the default with Parakeet as the fast option."
 sidebar:
-  order: 3
+  order: 4
 ---
 
 # Speech model benchmarks
