@@ -2499,7 +2499,7 @@ export interface operations {
                     "application/json": components["schemas"]["JobStatus"];
                 };
             };
-            /** @description Language code not recognized (`error: unsupported_language`) */
+            /** @description The model is not one this instance lists (`error: unknown_model`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3078,6 +3078,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TranscriptionCreated"];
+                };
+            };
+            /** @description Language code not recognized (`error: unsupported_language`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */

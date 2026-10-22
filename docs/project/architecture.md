@@ -289,7 +289,7 @@ A provider seam (`app/transcription/`) takes audio and returns a `Transcript`:
 - `local`: a model on this machine, run by the engine its entry in `app/services/asr_models.py`
   names. Models download on first use into `models/`.
   - **faster-whisper** (CPU or CUDA) runs the Whisper sizes. The list offers Small and Large v3 (the Turbo
-    build), the phone's; another size runs when named by an API client or by `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
+    build), the phone's; another listed Whisper size runs when an API client names it (any other name is refused with `unknown_model`: faster-whisper would fetch a `repo/name` from Hugging Face), as does `DEFAULT_MODEL`, which (Parakeet Ultra) is what a request that names none gets.
     Everything is decoded: the voice-detection
     filter is off, because it takes shouting
     and speech over loud music for non-speech and what it drops is never transcribed. The

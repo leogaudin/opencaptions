@@ -31,11 +31,19 @@ from fastapi.responses import JSONResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import db_session, get_current_user, get_owned_job, http_error
+from app.api.deps import (
+    db_session,
+    get_current_user,
+    get_owned_job,
+    http_error,
+    require_listed_model,
+)
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.models import Job, User
 from app.models.schemas import (
+    _400_UNKNOWN_MODEL,
+    _400_UNSUPPORTED_LANGUAGE,
     _404_JOB,
     ErrorResponse,
     LanguageOption,
@@ -168,6 +176,7 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
     "/transcriptions",
     response_model=TranscriptionCreated,
     status_code=status.HTTP_202_ACCEPTED,
+    responses={**_400_UNKNOWN_MODEL, **_400_UNSUPPORTED_LANGUAGE},
     summary="Transcribe an audio or video file",
 )
 async def create_transcription(
@@ -199,6 +208,8 @@ async def create_transcription(
             "transcription_choice_disabled",
             "This instance runs a fixed transcription provider and model.",
         )
+
+    require_listed_model(settings.transcription_provider, model)
 
     await _sweep_expired(session)
     running = await session.scalar(

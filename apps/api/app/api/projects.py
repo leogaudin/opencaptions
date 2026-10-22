@@ -22,6 +22,7 @@ from app.api.deps import (
     get_owned_project,
     get_owned_project_light,
     http_error,
+    require_listed_model,
 )
 from app.api.ingest import ingest_remote_url, ingest_uploaded_file, reject_ambiguous_source
 from app.core.config import settings
@@ -30,6 +31,7 @@ from app.models.schemas import (
     _400_INVALID_VIDEO_URL,
     _400_MISSING_VIDEO_SOURCE,
     _400_NO_VIDEO,
+    _400_UNKNOWN_MODEL,
     _400_UNSUPPORTED_LANGUAGE,
     _400_VIDEO_FETCH_FAILED,
     _400_VIDEO_TOO_LONG,
@@ -235,6 +237,7 @@ async def delete_project(
         **_404_PROJECT,
         **_400_NO_VIDEO,
         **_400_UNSUPPORTED_LANGUAGE,
+        **_400_UNKNOWN_MODEL,
         **_403_TRANSCRIPTION_CHOICE,
     },
     summary="Start transcription",
@@ -272,6 +275,8 @@ async def start_transcription(
                 "transcription_choice_disabled",
                 "This instance runs a fixed transcription provider and model.",
             )
+
+    require_listed_model(body.provider or settings.transcription_provider, body.model)
 
     # Checked before the work is enqueued. The default policy never denies, so
     # self-hosted behaviour is unchanged.

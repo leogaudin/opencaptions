@@ -730,6 +730,8 @@ _400_UNSUPPORTED_LANGUAGE = _err(
     400, "Language code not recognized (`error: unsupported_language`)"
 )
 
+_400_UNKNOWN_MODEL = _err(400, "The model is not one this instance lists (`error: unknown_model`)")
+
 _403_TRANSCRIPTION_CHOICE = _err(
     403,
     "Work refused: the entitlement policy denied it (`error: not_entitled`), "

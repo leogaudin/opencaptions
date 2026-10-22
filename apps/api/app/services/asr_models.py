@@ -86,6 +86,13 @@ def all_models() -> list[AsrModelInfo]:
     return ASR_MODELS
 
 
+def is_listed(model_id: str) -> bool:
+    """Whether the local provider may be asked for this model: one of the offered models or a
+    faster-whisper size. Anything else (a `repo/name`, a path) would be fetched or read by
+    faster-whisper as the name of a Hugging Face repository or a directory."""
+    return model_id in {m.id for m in ASR_MODELS} or model_id in {m.id for m in WHISPER_MODELS}
+
+
 def find(model_id: str | None) -> AsrModelInfo | None:
     """The model with this id; None for an id nothing lists (faster-whisper may still take it)."""
     return next((m for m in ASR_MODELS if m.id == model_id), None)

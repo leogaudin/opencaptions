@@ -18,10 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import defer
 
 from app.core import sessions
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.job_tokens import verify_job_token
 from app.models import ApiKey, Job, Project, User
 from app.models.schemas import ErrorResponse
+from app.services import asr_models
 from app.services.api_keys import hash_key
 
 # httpOnly session cookie; the Secure attribute is config-driven (see auth.py)
@@ -34,6 +36,17 @@ async def db_session() -> AsyncIterator[AsyncSession]:
     """Re-export of get_db for clearer router imports."""
     async for session in get_db():
         yield session
+
+
+def require_listed_model(provider: str, model: str | None) -> None:
+    """Refuse a model the local provider does not list. The model is a client's input, and
+    the local provider passes it to faster-whisper, which downloads a name with a `/` from
+    Hugging Face and reads a path that exists. The instance's own default is trusted, and
+    another provider names its own models (a forwarding instance's are checked by the
+    instance it forwards to)."""
+    local = provider == "local" and model and model != settings.default_model
+    if local and model and not asr_models.is_listed(model):
+        raise http_error(400, "unknown_model", f"Unknown transcription model: '{model}'.")
 
 
 def http_error(
