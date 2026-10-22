@@ -192,5 +192,5 @@ def health_check() -> bool:
     try:
         _client.head_bucket(Bucket=settings.s3_bucket)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001, whatever the failure, the answer is "not reachable"
         return False

@@ -25,7 +25,7 @@ async def _check_db() -> bool:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001, whatever the failure, the answer is "not healthy"
         logger.warning("DB health check failed: %s", e)
         return False
 
@@ -37,7 +37,7 @@ async def _check_redis() -> bool:
             return bool(await client.ping())
         finally:
             await client.aclose()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001, whatever the failure, the answer is "not healthy"
         logger.warning("Redis health check failed: %s", e)
         return False
 
@@ -46,7 +46,7 @@ async def _check_storage() -> bool:
     try:
         # Run sync boto3 in thread to avoid blocking the event loop.
         return await asyncio.to_thread(s3.health_check)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001, whatever the failure, the answer is "not healthy"
         logger.warning("Storage health check failed: %s", e)
         return False
 

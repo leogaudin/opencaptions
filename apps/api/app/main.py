@@ -80,7 +80,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         from app.storage import s3
 
         s3.ensure_bucket()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001, a boot step that cannot run must not stop the API
         logger.warning("Bucket bootstrap skipped: %s", e)
 
     # Fail the jobs nothing could still be working on (see services/recovery.py).
@@ -93,7 +93,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             await db.commit()
         if count:
             logger.info("Failed %d abandoned job(s) at startup", count)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001, a boot step that cannot run must not stop the API
         logger.warning("Orphan job recovery skipped: %s", e)
 
     yield

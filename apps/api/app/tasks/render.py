@@ -51,7 +51,7 @@ def _font_url(family: str) -> str | None:
 # The suppression is load-bearing: this is a linear render pipeline whose steps
 # share too much local state to split without passing a bag of variables around.
 # It sits on the `def` line because that is where ruff anchors C901.
-def render_video(  # noqa: C901
+def render_video(
     self: celery.Task,
     job_id: str,
     project_id: str,
@@ -216,7 +216,7 @@ def render_video(  # noqa: C901
             "duration_ms": duration_ms,
         }
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("render_video failed")
         reason = str(e)[:500]
         task.mark_failed(reason, "Render failed", STAGE)

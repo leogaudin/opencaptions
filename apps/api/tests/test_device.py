@@ -33,7 +33,7 @@ def _clear_caches() -> None:
 
 
 class TestResolveDeviceExplicitCpu:
-    def test_explicit_cpu_returns_cpu(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_explicit_cpu_returns_cpu(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cpu")
@@ -45,7 +45,7 @@ class TestResolveDeviceExplicitCpu:
 
 
 class TestResolveDeviceAuto:
-    def test_auto_with_gpu_resolves_to_cuda(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_auto_with_gpu_resolves_to_cuda(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "auto")
@@ -55,7 +55,7 @@ class TestResolveDeviceAuto:
         assert result.requested == "auto"
         assert result.reason is None
 
-    def test_auto_with_no_gpu_resolves_to_cpu(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_auto_with_no_gpu_resolves_to_cpu(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "auto")
@@ -65,7 +65,7 @@ class TestResolveDeviceAuto:
         assert result.requested == "auto"
         assert result.reason is None
 
-    def test_auto_with_multiple_gpus_uses_first(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_auto_with_multiple_gpus_uses_first(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "auto")
@@ -75,7 +75,7 @@ class TestResolveDeviceAuto:
 
 
 class TestResolveDeviceExplicitCuda:
-    def test_explicit_cuda_with_gpu_honoured(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_explicit_cuda_with_gpu_honoured(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cuda")
@@ -85,7 +85,7 @@ class TestResolveDeviceExplicitCuda:
         assert result.requested == "cuda"
         assert result.reason is None
 
-    def test_explicit_cuda_index_with_gpu_honoured(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_explicit_cuda_index_with_gpu_honoured(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cuda:1")
@@ -95,7 +95,7 @@ class TestResolveDeviceExplicitCuda:
         assert result.requested == "cuda:1"
         assert result.reason is None
 
-    def test_explicit_cuda_no_gpu_falls_back_to_cpu(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_explicit_cuda_no_gpu_falls_back_to_cpu(self, monkeypatch) -> None:
         """The critical bug fix: explicit cuda without a device must not crash."""
         from app.core import config as cfg
 
@@ -107,7 +107,7 @@ class TestResolveDeviceExplicitCuda:
         assert result.reason is not None
         assert "No CUDA devices visible" in result.reason
 
-    def test_explicit_cuda_index_no_gpu_falls_back(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_explicit_cuda_index_no_gpu_falls_back(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cuda:0")
@@ -118,7 +118,7 @@ class TestResolveDeviceExplicitCuda:
 
 
 class TestResolveDeviceUnknown:
-    def test_unknown_value_falls_back_to_cpu(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_unknown_value_falls_back_to_cpu(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "mps")
@@ -132,7 +132,7 @@ class TestResolveDeviceUnknown:
 
 
 class TestResolveComputeType:
-    def test_valid_compute_type_on_cpu(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_valid_compute_type_on_cpu(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cpu")
@@ -150,7 +150,7 @@ class TestResolveComputeType:
         assert result.requested == "int8"
         assert result.reason is None
 
-    def test_float16_on_cpu_falls_back(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_float16_on_cpu_falls_back(self, monkeypatch) -> None:
         """float16 is not supported on CPU: must fall back."""
         from app.core import config as cfg
 
@@ -169,7 +169,7 @@ class TestResolveComputeType:
         assert result.reason is not None
         assert "not supported" in result.reason
 
-    def test_valid_compute_type_on_cuda(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_valid_compute_type_on_cuda(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cuda")
@@ -185,7 +185,7 @@ class TestResolveComputeType:
         assert result.resolved == "float16"
         assert result.reason is None
 
-    def test_unsupported_type_on_cuda_falls_back_to_float16(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_unsupported_type_on_cuda_falls_back_to_float16(self, monkeypatch) -> None:
         from app.core import config as cfg
 
         monkeypatch.setattr(cfg.settings, "whisper_device", "cuda")
@@ -202,7 +202,7 @@ class TestResolveComputeType:
         assert result.requested == "int8_bfloat16"
         assert result.reason is not None
 
-    def test_cuda_query_failure_falls_back_to_cpu_types(self, monkeypatch) -> None:  # noqa: ANN001
+    def test_cuda_query_failure_falls_back_to_cpu_types(self, monkeypatch) -> None:
         """If CUDA type query raises (broken libs), use CPU types as safety net."""
         from app.core import config as cfg
 

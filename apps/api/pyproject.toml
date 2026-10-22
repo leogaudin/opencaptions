@@ -67,9 +67,10 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-# C90 (mccabe) is deliberately selected: without it the `# noqa: C901` markers
-# in this codebase are inert and complexity can regress unnoticed.
-select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "C90", "SIM"]
+# A rule must be selected for its `# noqa` markers to mean anything: C90 (mccabe) so complexity cannot
+# regress unnoticed, BLE so a broad `except` is a decision written down where it is made, and RUF100 so
+# a marker that suppresses nothing fails the lint instead of lingering.
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "C90", "SIM", "BLE", "RUF100"]
 ignore = ["E501"]
 
 [tool.ruff.lint.mccabe]

@@ -22,7 +22,7 @@ if config.config_file_name is not None:
 # Target metadata for autogenerate.
 target_metadata = None
 try:
-    from app.models import Base  # noqa: F401
+    from app.models import Base
 
     target_metadata = Base.metadata
 except ImportError:

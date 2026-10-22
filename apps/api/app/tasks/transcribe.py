@@ -200,7 +200,7 @@ def transcribe_video(
         )
         return {"status": "completed", "segments": str(len(transcript.segments))}
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("transcribe_video failed")
         reason = str(e)[:500]
         task.mark_failed(reason, "Transcription failed", STAGE)
@@ -258,7 +258,7 @@ def transcribe_upload(
 
         task.record_usage(UNIT_TRANSCRIPTION_SECONDS, float(duration))
         return {"status": "completed", "segments": str(len(transcript.segments))}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("transcribe_upload failed")
         reason = str(e)[:500]
         task.mark_failed(reason, "Transcription failed", STAGE)
