@@ -32,7 +32,7 @@ import Testing
     }
 
     @Test func aStylesLooksKeepTheirSnakeCaseAndOnlyWhatTheySet() throws {
-        let json = #"{"font":"Inter","scale":0.42,"italic":true,"box_color":"#000000","text_case":"upper"}"#
+        let json = ##"{"font":"Inter","scale":0.42,"italic":true,"box_color":"#000000","text_case":"upper"}"##
         let look = try JSONDecoder().decode(WordVariant.self, from: Data(json.utf8))
         #expect(look.font == "Inter" && look.scale == 0.42 && look.italic == true)
         #expect(look.boxColor == "#000000" && look.textCase == .upper && look.stretch == nil)
