@@ -629,9 +629,6 @@ class DownloadResponse(BaseModel):
     )
 
 
-# Errors (RFC 9457 Problem Details)
-
-
 class ChangeEmailRequest(BaseModel):
     """PATCH /auth/me/email. The current password is required, so a hijacked
     session cannot move the account to an address the attacker controls."""

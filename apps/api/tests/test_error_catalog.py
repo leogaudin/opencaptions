@@ -48,3 +48,15 @@ async def test_the_documented_errors_are_what_the_routes_answer(client: AsyncCli
     assert response.status_code == ApiError.NOT_AUTHENTICATED.status
     assert response.json()["error"] == ApiError.NOT_AUTHENTICATED.code
     assert response.json()["code"] == ApiError.NOT_AUTHENTICATED.status
+
+
+def test_every_tag_a_route_uses_is_described() -> None:
+    schema = app.openapi()
+    described = {tag["name"] for tag in schema.get("tags", [])}
+    used = {
+        tag
+        for methods in schema["paths"].values()
+        for op in methods.values()
+        for tag in op.get("tags", [])
+    }
+    assert used <= described, f"routes tagged but not described: {sorted(used - described)}"

@@ -144,6 +144,10 @@ def create_app() -> FastAPI:
                 "description": "Google Fonts, fetched once and served from this instance.",
             },
             {
+                "name": "transcription",
+                "description": "Transcribe audio or video without a project: queue it, watch the job, fetch the transcript.",
+            },
+            {
                 "name": "settings",
                 "description": "Application configuration (transcription provider and limits).",
             },
@@ -155,7 +159,7 @@ def create_app() -> FastAPI:
     # development), and the iPhone app sends bearer keys, so no other origin is ever let in.
     app.add_middleware(CSRFMiddleware)
 
-    # ----- Exception handlers (RFC 9457 Problem Details) -----
+    # ----- Exception handlers: every error answers in the ErrorResponse shape -----
     @app.exception_handler(StarletteHTTPException)
     async def _http_exc(_req: Request, exc: StarletteHTTPException) -> JSONResponse:
         # If the detail is already an ErrorResponse-shaped dict, pass through.
