@@ -70,6 +70,7 @@ def test_record_job_usage_merges_and_persists_via_sync_session() -> None:
         s.flush()
         job = Job(
             project_id=proj.id,
+            user_id=owner.id,
             type="rendering",
             status="completed",
             metadata_json={"format_id": "mp4", "render_hash": "abc"},
@@ -130,6 +131,7 @@ async def _seed_job(
         metadata = merge_usage_into_metadata(None, unit, amount) if unit else {"format_id": "mp4"}
         job = Job(
             project_id=proj.id,
+            user_id=owner_id,
             type="rendering",
             status="completed",
             metadata_json=metadata,

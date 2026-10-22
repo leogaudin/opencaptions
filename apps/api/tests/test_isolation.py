@@ -90,7 +90,7 @@ async def test_user_b_gets_404_on_user_a_job(
         proj = Project(title="a", owner_id=owner_a, status="rendering")
         s.add(proj)
         await s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="running")
+        job = Job(project_id=proj.id, user_id=owner_a, type="rendering", status="running")
         s.add(job)
         await s.commit()
         job_id = job.id

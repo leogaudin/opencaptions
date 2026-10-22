@@ -171,7 +171,7 @@ async def test_progress_callback_rejected_without_job_token(
         proj = Project(title="p", owner_id=owner_id, status="rendering")
         s.add(proj)
         await s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="running")
+        job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")
         s.add(job)
         await s.commit()
         job_id = job.id
@@ -207,7 +207,7 @@ async def test_progress_callback_accepts_valid_job_token(
         proj = Project(title="p", owner_id=owner_id, status="rendering")
         s.add(proj)
         await s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="running")
+        job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")
         s.add(job)
         await s.commit()
         job_id = job.id
@@ -246,7 +246,7 @@ async def test_progress_callback_rejects_wrong_job_token(
         proj = Project(title="p", owner_id=owner_id, status="rendering")
         s.add(proj)
         await s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="running")
+        job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")
         s.add(job)
         await s.commit()
         job_id = job.id

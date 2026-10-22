@@ -20,7 +20,7 @@ async def _job(user_a: tuple[AsyncClient, UUID], db_factory: Any) -> UUID:
         proj = Project(title="p", owner_id=owner, status="draft")
         s.add(proj)
         await s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="running")
+        job = Job(project_id=proj.id, user_id=owner, type="rendering", status="running")
         s.add(job)
         await s.commit()
         job_id: UUID = job.id

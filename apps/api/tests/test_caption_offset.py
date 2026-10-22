@@ -106,7 +106,7 @@ def _run_render_video(monkeypatch: pytest.MonkeyPatch, offset_ms: int) -> dict[s
         )
         s.add(proj)
         s.flush()
-        job = Job(project_id=proj.id, type="rendering", status="pending")
+        job = Job(project_id=proj.id, user_id=owner.id, type="rendering", status="pending")
         s.add(job)
         s.commit()
         pid, jid = str(proj.id), str(job.id)

@@ -92,10 +92,8 @@ class Job(Base):
     project_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=True
     )
-    # Who asked, for a job with no project to say it. Null where the project says it.
-    user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True
-    )
+    # Who asked: a job is its user's, whether or not it has a project.
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     type: Mapped[str] = mapped_column(String(32))  # 'transcription' | 'rendering'
     status: Mapped[str] = mapped_column(
         String(32), default="pending"
