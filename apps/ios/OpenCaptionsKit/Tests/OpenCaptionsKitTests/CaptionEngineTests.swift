@@ -56,6 +56,19 @@ extension EngineSuites {
             #expect(Set(frames.compactMap { $0?.rgba }).count == presets.count, "no two presets look the same")
         }
 
+        @Test func aPresetThatMixesLooksShowsThemOnItsSampleWords() async throws {
+            try await engine.registerBundledFonts(in: Repo.fonts)
+            let editorial = try #require(try Presets.load(from: Repo.presets).first { $0.id == "builtin:editorial" })
+            #expect(editorial.config.variants.count == 5)
+            let shown = try #require(editorial.tileVariants)
+            #expect(shown.count == 3 && shown.allSatisfy { $0 == nil || $0! < editorial.config.variants.count })
+            let words = ["Make", "it", "pop"]
+            let plain = await engine.samples(of: [editorial.config], words: words, width: 600, height: 300)
+            let mixed = await engine.samples(
+                of: [editorial.config], words: words, variants: shown, width: 600, height: 300)
+            #expect(try #require(mixed[0]).rgba != (try #require(plain[0])).rgba, "the looks are drawn")
+        }
+
         @Test func aWatermarkIsDrawnByTheEngineInTheTopRightOfEveryFrame() async throws {
             try await engine.registerBundledFonts(in: Repo.fonts)
             let style = try Repo.defaultStyle()
@@ -195,6 +208,21 @@ extension EngineSuites {
             #expect(spaced.words[0].start == t.words[0].start && spaced.words[0].end == t.words[0].end)
             await #expect(throws: EngineError.self) {
                 try await engine.setWord(t, index: 9, text: "x")
+            }
+        }
+
+        @Test func aWordIsGivenALookAndLosesItAgain() async throws {
+            let t = try Repo.transcript()
+            let styled = try await engine.setVariant(t, index: 2, variant: 4)
+            #expect(styled.words[2].variant == 4 && styled.words[1].variant == nil)
+            #expect(styled.words.map(\.text) == t.words.map(\.text), "the text stays")
+            #expect(styled.words[2].start == t.words[2].start && styled.words[2].end == t.words[2].end)
+            let renamed = try await engine.setWord(styled, index: 2, text: "tres")
+            #expect(renamed.words[2].variant == 4, "a look survives a rename")
+            let cleared = try await engine.setVariant(styled, index: 2, variant: nil)
+            #expect(cleared.words[2].variant == nil)
+            await #expect(throws: EngineError.self) {
+                try await engine.setVariant(t, index: 9, variant: 0)
             }
         }
 

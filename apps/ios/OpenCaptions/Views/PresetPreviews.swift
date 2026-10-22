@@ -17,17 +17,24 @@ final class PresetPreviews {
         loading = true
         defer { loading = false }
         let missing = presets.filter { images[$0.id] == nil }
-        let drawn = await Self.draw(missing.map { ($0.id, $0.config) }, fonts: fonts, engine: engine)
-        images.merge(drawn) { _, new in new }
+        // A preset that mixes looks shows them on its sample words; the others draw together.
+        for (variants, group) in Dictionary(grouping: missing, by: \.tileVariants) {
+            let drawn = await Self.draw(
+                group.map { ($0.id, $0.config) }, variants: variants ?? [], fonts: fonts, engine: engine)
+            images.merge(drawn) { _, new in new }
+        }
     }
 
     /// Tiles for any looks, by id: the engine draws a sample caption in each, at one size so that
-    /// they compare the looks and not how big each happened to be.
+    /// they compare the looks and not how big each happened to be. `words` are the sample's (three by
+    /// default) and `variants` the looks they wear, as a word's own `variant`.
     static func draw(
-        _ looks: [(id: String, config: StyleConfig)], fonts: FontCache, engine: CaptionEngine = .shared
+        _ looks: [(id: String, config: StyleConfig)], words: [String] = ["Make", "it", "pop"],
+        variants: [Int?] = [], fonts: FontCache, engine: CaptionEngine = .shared
     ) async -> [String: CGImage] {
-        // Downloaded side by side (and kept), then registered one after another.
-        let families = Set(looks.map(\.config.font))
+        // Downloaded side by side (and kept), then registered one after another. A style's own font
+        // and those of the looks its words may wear.
+        let families = Set(looks.flatMap { [$0.config.font] + $0.config.variants.compactMap(\.font) })
         await withTaskGroup(of: Void.self) { group in
             for family in families { group.addTask { _ = await fonts.data(for: family) } }
         }
@@ -41,7 +48,7 @@ final class PresetPreviews {
                 var config = look.config
                 config.fontSize = 64
                 return config
-            }, words: ["Make", "it", "pop"], width: width, height: height)
+            }, words: words, variants: variants, width: width, height: height)
         let context = Self.context
         var images: [String: CGImage] = [:]
         for (look, frame) in zip(looks, frames) {

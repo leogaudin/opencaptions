@@ -10,12 +10,16 @@ public struct Word: Codable, Equatable, Sendable {
     public var start: Double
     public var end: Double
     public var confidence: Double
+    /// The word's look: an index into the style's `variants`; nil is the style's own. An index past
+    /// the end draws as the style's own and is kept, so a preset with more looks gives it back.
+    public var variant: Int?
 
-    public init(text: String, start: Double, end: Double, confidence: Double = 1) {
+    public init(text: String, start: Double, end: Double, confidence: Double = 1, variant: Int? = nil) {
         self.text = text
         self.start = start
         self.end = end
         self.confidence = confidence
+        self.variant = variant
     }
 
     public init(from decoder: Decoder) throws {
@@ -24,6 +28,7 @@ public struct Word: Codable, Equatable, Sendable {
         start = try c.decode(Double.self, forKey: .start)
         end = try c.decode(Double.self, forKey: .end)
         confidence = try c.decodeIfPresent(Double.self, forKey: .confidence) ?? 1
+        variant = try c.decodeIfPresent(Int.self, forKey: .variant)
     }
 }
 
@@ -102,6 +107,8 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case letterRise = "letter_rise"
     case wordSlam = "word_slam"
     case drift = "drift"
+    /// Each word comes out of a short blur as it is said; nothing moves.
+    case blurIn = "blur_in"
 }
 
 public enum CaptionAlign: String, Codable, CaseIterable, Sendable {
@@ -157,6 +164,43 @@ public enum Background: String, Codable, CaseIterable, Sendable {
     case square
 }
 
+/// How one word differs from the style's look: what is nil is the style's own.
+public struct WordVariant: Codable, Equatable, Sendable {
+    public var font: String?
+    /// A multiple of the style's font size.
+    public var scale: Double?
+    public var italic: Bool?
+    public var textCase: TextCase?
+    public var textColor: String?
+    public var letterSpacing: Double?
+    public var stretch: Double?
+    /// A square box of this colour behind the word: a name's label.
+    public var boxColor: String?
+
+    public init(
+        font: String? = nil, scale: Double? = nil, italic: Bool? = nil, textCase: TextCase? = nil,
+        textColor: String? = nil, letterSpacing: Double? = nil, stretch: Double? = nil, boxColor: String? = nil
+    ) {
+        self.font = font
+        self.scale = scale
+        self.italic = italic
+        self.textCase = textCase
+        self.textColor = textColor
+        self.letterSpacing = letterSpacing
+        self.stretch = stretch
+        self.boxColor = boxColor
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case font, scale, italic
+        case textCase = "text_case"
+        case textColor = "text_color"
+        case letterSpacing = "letter_spacing"
+        case stretch
+        case boxColor = "box_color"
+    }
+}
+
 /// Caption styling. Colours are `#RRGGBB` (`#RRGGBBAA` for the shadow). There is no
 /// default value here on purpose: the defaults are the first preset in `presets.json`.
 public struct StyleConfig: Codable, Equatable, Sendable {
@@ -201,6 +245,9 @@ public struct StyleConfig: Codable, Equatable, Sendable {
     public var letterSpacing: Double
     /// How much wider (or narrower, below 1) the letters are drawn than the face has them.
     public var stretch: Double
+    /// Looks a word can be given instead of the style's own (`Word.variant` is an index into this); a
+    /// preset defines them and the editor only picks.
+    public var variants: [WordVariant]
 
     public init(
         font: String, fontSize: Int, textColor: String, highlightColors: [String],
@@ -210,7 +257,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         shadowColor: String, shadowOffsetX: Double = 0, shadowOffsetY: Double = 0, glowBlur: Double = 0,
         glowColor: String = "#FFFFFF", textCase: TextCase = .none, italic: Bool = false,
         fillColors: [String] = [], extrudeShade: Double = 0, extrudeBack: String = "#00000000",
-        align: CaptionAlign = .center, letterSpacing: Double = 0, stretch: Double = 1
+        align: CaptionAlign = .center, letterSpacing: Double = 0, stretch: Double = 1,
+        variants: [WordVariant] = []
     ) {
         self.font = font
         self.fontSize = fontSize
@@ -240,6 +288,7 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         self.align = align
         self.letterSpacing = letterSpacing
         self.stretch = stretch
+        self.variants = variants
     }
 
     /// The fields a style gained later may be missing from a project saved before: they take their defaults.
@@ -271,7 +320,8 @@ public struct StyleConfig: Codable, Equatable, Sendable {
             extrudeBack: try c.decodeIfPresent(String.self, forKey: .extrudeBack) ?? "#00000000",
             align: try Self.decodeAlign(decoder, c),
             letterSpacing: try c.decodeIfPresent(Double.self, forKey: .letterSpacing) ?? 0,
-            stretch: try c.decodeIfPresent(Double.self, forKey: .stretch) ?? 1)
+            stretch: try c.decodeIfPresent(Double.self, forKey: .stretch) ?? 1,
+            variants: try c.decodeIfPresent([WordVariant].self, forKey: .variants) ?? [])
     }
 
     /// A project saved before `align` has a `layout`, whose `stack` is now `justify`.
@@ -337,5 +387,6 @@ public struct StyleConfig: Codable, Equatable, Sendable {
         case align
         case letterSpacing = "letter_spacing"
         case stretch
+        case variants
     }
 }

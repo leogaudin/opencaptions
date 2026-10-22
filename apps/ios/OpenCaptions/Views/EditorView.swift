@@ -277,8 +277,13 @@ struct EditorView: View {
     @ViewBuilder
     private var wordEditor: some View {
         if let target = edit {
+            let stored = model.transcript?.words[safe: target.index]
             WordEditCard(
                 text: Binding(get: { edit?.text ?? target.text }, set: { edit?.text = $0 }),
+                looks: WordLooks(
+                    style: model.project.styleConfig, word: stored?.text ?? target.text,
+                    current: stored?.variant
+                ) { model.setVariant(index: target.index, variant: $0) },
                 save: {
                     model.setWord(index: target.index, text: edit?.text ?? target.text)
                     edit = nil
@@ -325,6 +330,7 @@ struct EditorView: View {
 
 private struct WordEditCard: View {
     @Binding var text: String
+    let looks: WordLooks
     let save: () -> Void
     let cancel: () -> Void
     @FocusState private var focused: Bool
@@ -346,6 +352,7 @@ private struct WordEditCard: View {
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
                 Text("Clear it to delete the word.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                looks
                 HStack(spacing: 10) {
                     Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
                     Button(text.isEmpty ? "Delete" : "Save", action: save).buttonStyle(PrimaryButtonStyle())

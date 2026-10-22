@@ -10,7 +10,8 @@
 import { useEffect, useState } from "react";
 import { type CaptionRenderer, createCaptionRenderer } from "@/lib/engine";
 import type { BuiltinPreset } from "@/lib/presets";
-import type { StyleConfig, Transcript } from "@/types";
+import { STEP, sample, WORDS } from "@/lib/tileSample";
+import type { StyleConfig } from "@/types";
 
 /**
  * The plain card a tile sits on, the same dark in light and dark mode: captions are mostly white,
@@ -21,26 +22,6 @@ export const TILE_CARD = "#232736";
 const FRAME = { width: 540, height: 960 };
 const CROP = { x: 90, y: 380, width: 360, height: 200 };
 const TILE_FONT_SIZE = 64;
-const WORDS = ["Make", "it", "pop"];
-const STEP = 0.4;
-
-function sample(): Transcript {
-  const words = WORDS.map((text, i) => ({
-    text,
-    start: i * STEP,
-    end: (i + 1) * STEP,
-    confidence: 1,
-  }));
-  const end = WORDS.length * STEP;
-  return {
-    schema_version: 1,
-    language: "en",
-    language_detection: "manual",
-    duration: end,
-    segments: [{ id: "sample", words, start: 0, end, text: WORDS.join(" ") }],
-  };
-}
-
 let shared: Promise<CaptionRenderer> | null = null;
 
 /** One engine for every tile; the scenes it draws are set and drawn without waiting in between. */
@@ -56,13 +37,20 @@ function renderer(): Promise<CaptionRenderer> {
 export interface Look {
   id: string;
   config: StyleConfig;
+  /** The sample words' own looks (see `sample`), and the words: the tile's three by default. */
+  variants?: readonly (number | null)[];
+  words?: readonly string[];
 }
 
 /** Tiles for any looks, by id: a sample caption drawn in each by the engine. */
 export async function drawLooks(looks: readonly Look[]): Promise<Record<string, string>> {
   const engine = await renderer();
-  const transcript = sample();
-  await Promise.all([...new Set(looks.map((l) => l.config.font))].map((f) => engine.loadFont(f)));
+  // Every font a tile is drawn with: the style's, and those of the looks its words may wear.
+  const fonts = looks.flatMap((l) => [
+    l.config.font,
+    ...(l.config.variants ?? []).flatMap((v) => (v.font ? [v.font] : [])),
+  ]);
+  await Promise.all([...new Set(fonts)].map((f) => engine.loadFont(f)));
   const full = document.createElement("canvas");
   full.width = FRAME.width;
   full.height = FRAME.height;
@@ -73,11 +61,12 @@ export async function drawLooks(looks: readonly Look[]): Promise<Record<string, 
   const cropCtx = crop.getContext("2d");
   const out: Record<string, string> = {};
   if (!fullCtx || !cropCtx) return out;
-  // The middle word is being spoken: the highlight and the animation are in view.
-  const at = STEP * 1.5;
   for (const look of looks) {
+    const words = look.words ?? WORDS;
+    // The middle word is being spoken: the highlight and the animation are in view.
+    const at = STEP * (words.length / 2);
     engine.setScene({
-      transcript,
+      transcript: sample(words, look.variants),
       style: {
         ...look.config,
         font_size: TILE_FONT_SIZE,
@@ -86,7 +75,7 @@ export async function drawLooks(looks: readonly Look[]): Promise<Record<string, 
         // A tile shows the look, centred in its frame: a block held by its left or right edge would
         // start at the middle of it and run off the side.
         align: look.config.align === "justify" ? "justify" : "center",
-        words_per_line: WORDS.length,
+        words_per_line: words.length,
       },
       width: FRAME.width,
       height: FRAME.height,
@@ -108,7 +97,9 @@ let cached: Promise<Record<string, string>> | null = null;
 
 /** The tiles, drawn once per page load. A failure is not remembered, so the next ask tries again. */
 export function presetPreviews(presets: readonly BuiltinPreset[]): Promise<Record<string, string>> {
-  cached ??= drawLooks(presets.map((p) => ({ id: p.id, config: p.config })));
+  cached ??= drawLooks(
+    presets.map((p) => ({ id: p.id, config: p.config, variants: p.tile_variants })),
+  );
   cached.catch(() => {
     cached = null;
   });
@@ -156,4 +147,25 @@ export function useLookPreviews(
   }, [key]);
   // The tiles of the last look stay until the new ones are drawn, so they do not blink.
   return previews;
+}
+
+/**
+ * A word drawn in each look a style offers: the style's own, then each of its variants, one tile
+ * each (keyed `base`, `0`, `1`...). Null until drawn. `key` names what they depend on.
+ */
+export function useWordLooks(
+  config: StyleConfig,
+  text: string | null,
+  key: string,
+): Record<string, string> | null {
+  const looks: Look[] =
+    text === null || !config.variants?.length
+      ? []
+      : [null, ...config.variants.keys()].map((variant) => ({
+          id: variant === null ? "base" : String(variant),
+          config,
+          words: [text],
+          variants: [variant],
+        }));
+  return useLookPreviews(looks, `${key}|${text}`);
 }

@@ -18,6 +18,28 @@ import Testing
         #expect(w.confidence == 1)
     }
 
+    @Test func aWordsLookIsOptionalAndLeftOutWhenItHasNone() throws {
+        let plain = try JSONDecoder().decode(Word.self, from: Data(#"{"text":"hi","start":0,"end":1}"#.utf8))
+        #expect(plain.variant == nil)
+        let keys = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(plain)) as? [String: Any]).keys
+        #expect(!keys.contains("variant"), "a transcript without looks is sent as it always was")
+        let styled = try JSONDecoder().decode(
+            Word.self, from: Data(#"{"text":"hi","start":0,"end":1,"variant":3}"#.utf8))
+        #expect(styled.variant == 3)
+        let again = try JSONDecoder().decode(Word.self, from: JSONEncoder().encode(styled))
+        #expect(again == styled)
+    }
+
+    @Test func aStylesLooksKeepTheirSnakeCaseAndOnlyWhatTheySet() throws {
+        let json = #"{"font":"Inter","scale":0.42,"italic":true,"box_color":"#000000","text_case":"upper"}"#
+        let look = try JSONDecoder().decode(WordVariant.self, from: Data(json.utf8))
+        #expect(look.font == "Inter" && look.scale == 0.42 && look.italic == true)
+        #expect(look.boxColor == "#000000" && look.textCase == .upper && look.stretch == nil)
+        let sent = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(look)) as? [String: Any])
+        #expect(Set(sent.keys) == ["font", "scale", "italic", "box_color", "text_case"], "unset looks are not sent")
+    }
+
     @Test func theKeysAreTheAPIsSnakeCase() throws {
         let json = try JSONSerialization.jsonObject(
             with: JSONEncoder().encode(Repo.transcript())) as? [String: Any]
@@ -64,7 +86,7 @@ import Testing
     @Test func aStyleSavedBeforeItsLaterFieldsStillOpens() throws {
         var json = try #require(
             JSONSerialization.jsonObject(with: JSONEncoder().encode(Repo.defaultStyle())) as? [String: Any])
-        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "fill_colors", "extrude_shade", "extrude_back", "layout", "align", "letter_spacing", "stretch"] {
+        for key in ["shadow_offset_x", "shadow_offset_y", "glow_blur", "glow_color", "text_case", "italic", "fill_colors", "extrude_shade", "extrude_back", "layout", "align", "letter_spacing", "stretch", "variants"] {
             json.removeValue(forKey: key)
         }
         let old = try JSONDecoder().decode(StyleConfig.self, from: JSONSerialization.data(withJSONObject: json))

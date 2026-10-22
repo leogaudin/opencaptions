@@ -247,6 +247,18 @@ final class Counter { var value = 0 }
         #expect(model.saveState == .saved)
     }
 
+    @Test func aWordsLookIsTheEnginesAndIsSaved() async throws {
+        let (model, store) = try make()
+        model.setVariant(index: 1, variant: 2)
+        await model.settled()
+        #expect(model.transcript?.words.map(\.variant) == [nil, 2, nil, nil])
+        await model.flush()
+        #expect(try store.load(model.project.id).transcript?.words[1].variant == 2)
+        model.setVariant(index: 1, variant: nil)
+        await model.settled()
+        #expect(model.transcript?.words[1].variant == nil)
+    }
+
     @Test func savingDoesNotMoveTheStampThePreviewReadsAsAnEdit() async throws {
         let (model, store) = try make()
         model.setPosition(x: 0.3, y: 0.2)

@@ -26,6 +26,7 @@
     "src/lib/transcriptionLanguages.ts",
     "src/lib/fontManifest.ts",
     "src/lib/history.ts",
+    "src/lib/tileSample.ts",
     "src/lib/transcriptText.ts"
   ]
 }

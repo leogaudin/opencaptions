@@ -32,6 +32,7 @@ export const ANIMATION_NAMES: Record<Animation, string> = {
   letter_rise: msg("Rise"),
   word_slam: msg("Slam"),
   drift: msg("Drift"),
+  blur_in: msg("Blur In"),
 };
 
 /** Every animation, in the order the style panel shows them: the order of the names above. */

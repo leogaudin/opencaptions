@@ -193,6 +193,13 @@ public final class EditorModel {
         enqueue { try await engine.setWord($0, index: index, text: text) }
     }
 
+    /// Gives one word the look `variant` of the style (an index into its variants), or the style's own
+    /// with nil. The text and timing stay; the change is saved like any other edit.
+    public func setVariant(index: Int, variant: Int?) {
+        let engine = engine
+        enqueue { try await engine.setVariant($0, index: index, variant: variant) }
+    }
+
     /// Moves one edge of a word to `time` as shown, stopping at its neighbours.
     public func retime(index: Int, edge: CaptionEdge, time: Double) {
         let (engine, offset) = (engine, project.captionOffsetMs)

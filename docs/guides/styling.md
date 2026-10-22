@@ -33,6 +33,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Slam** | Heavy capitals dropping in, the line knocked down a little as each lands. |
 | **Cascade** | Plain white type whose letters rise into place one after another as each word is said. |
 | **Title Card** | Tall, condensed capitals in a bold serif, flush left on a sharp black rectangle with a faint white glow, as on a film title card. |
+| **Editorial** | A book serif, flush left, each word coming out of a short blur. Pick a word to give it another look: a tiny italic for the small words, an italic serif or a heavy sans (red, if you like) for the ones that matter, or capitals on a black label for a name. |
 | **Glow Intro** | Soft, glowing capitals: each word comes into focus out of a blur, the whole line pushes slowly toward you and floats, and the word being said glows brighter. |
 
 A preset sets the whole style, so pick it first and adjust after. Selecting one keeps your caption

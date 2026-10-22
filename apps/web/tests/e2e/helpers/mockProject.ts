@@ -7,6 +7,7 @@ export interface MockWord {
   start: number;
   end: number;
   confidence: number;
+  variant?: number | null;
 }
 /** The transcript shape the API serves, as far as the tests read it. */
 export interface Transcript {
@@ -49,8 +50,11 @@ export async function mockTranscribedProject(
     transcript = HELLO,
     captionOffsetMs = 0,
     videoSize = { width: 1080, height: 1920 },
+    styleConfig = null,
   }: {
     transcript?: Transcript;
+    /** A whole style (the editor falls back to the default one when there is none). */
+    styleConfig?: Record<string, unknown> | null;
     captionOffsetMs?: number;
     videoSize?: { width: number; height: number };
   } = {},
@@ -61,7 +65,7 @@ export async function mockTranscribedProject(
     title,
     status: "transcribed",
     transcript,
-    style_config: null,
+    style_config: styleConfig,
     caption_offset_ms: captionOffsetMs,
     video_storage_key: `projects/${MOCK_PROJECT_ID}/source.mp4`,
     video_width: videoSize.width,

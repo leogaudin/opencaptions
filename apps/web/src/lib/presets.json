@@ -30,7 +30,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -64,7 +65,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -98,7 +100,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -132,7 +135,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -166,7 +170,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -201,7 +206,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -236,7 +242,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -271,7 +278,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -306,7 +314,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -341,7 +350,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     }
   },
   {
@@ -375,7 +385,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -410,7 +421,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -445,7 +457,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -480,7 +493,8 @@
       "extrude_back": "#FFBB00",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -515,7 +529,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -550,7 +565,8 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -585,7 +601,8 @@
       "extrude_back": "#00000000",
       "align": "justify",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
     "pro": true
   },
@@ -620,7 +637,8 @@
       "extrude_back": "#00000000",
       "align": "left",
       "letter_spacing": -0.02,
-      "stretch": 0.79
+      "stretch": 0.79,
+      "variants": []
     },
     "pro": true
   },
@@ -655,8 +673,52 @@
       "extrude_back": "#00000000",
       "align": "center",
       "letter_spacing": 0,
-      "stretch": 1
+      "stretch": 1,
+      "variants": []
     },
+    "pro": true
+  },
+  {
+    "id": "builtin:editorial",
+    "name": "Editorial",
+    "config": {
+      "font": "Instrument Serif",
+      "font_size": 84,
+      "text_color": "#FFFFFF",
+      "highlight_colors": ["#FFFFFF"],
+      "background": "none",
+      "background_color": "#000000",
+      "background_opacity": 0,
+      "position_x": 0.08,
+      "position_y": 0.62,
+      "animation": "blur_in",
+      "words_per_line": 3,
+      "word_spacing": 0,
+      "stroke_width": 0,
+      "stroke_color": "#000000",
+      "shadow_blur": 8,
+      "shadow_color": "#00000080",
+      "shadow_offset_x": 0,
+      "shadow_offset_y": 0,
+      "glow_blur": 0,
+      "glow_color": "#FFFFFF",
+      "text_case": "none",
+      "italic": false,
+      "fill_colors": [],
+      "extrude_shade": 0,
+      "extrude_back": "#00000000",
+      "align": "left",
+      "letter_spacing": 0,
+      "stretch": 1,
+      "variants": [
+        { "font": "Inter", "italic": true, "scale": 0.42, "stretch": 0.88 },
+        { "font": "Instrument Serif", "italic": true, "scale": 1.15 },
+        { "font": "Poppins", "scale": 1.05 },
+        { "font": "Poppins", "scale": 1.05, "text_color": "#E0241B" },
+        { "font": "Inter", "text_case": "upper", "scale": 0.8, "box_color": "#000000" }
+      ]
+    },
+    "tile_variants": [null, 0, 2],
     "pro": true
   }
 ]

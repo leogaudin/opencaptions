@@ -15,6 +15,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { previewQueryForSource, probePlaybackSupport } from "@/lib/mediaSupport";
 import { useAttachVideo, useVideo } from "@/lib/playback";
+import { TILE_CARD, useWordLooks } from "@/lib/presetPreviews";
 import { blockAnchor, EDGE_MARGIN } from "@/lib/presets";
 import { videoSource } from "@/lib/sources";
 import { useThrottledPatch } from "@/lib/useThrottledPatch";
@@ -99,6 +100,16 @@ function CaptionCanvas({
   const setStyleThrottled = useThrottledPatch<StyleConfig>(setStyle);
   const editTranscript = useEditorStore((s) => s.editTranscript);
   const editor = useCaptionEditor();
+
+  // The word being edited, drawn in each look the style offers (none when it offers none).
+  const editedWord = editing
+    ? transcript?.segments.flatMap((s) => s.words)[editing.index]
+    : undefined;
+  const wordLooks = useWordLooks(
+    scene.style,
+    editedWord?.text ?? null,
+    JSON.stringify(scene.style),
+  );
 
   // Frame pixels → on-screen pixels. Width and height share the ratio.
   const k = displayWidth / scene.width;
@@ -276,6 +287,15 @@ function CaptionCanvas({
     setEditing(null);
   }
 
+  /** Gives the edited word a look, committing the text typed meanwhile. */
+  function pickLook(variant: number | null): void {
+    if (!editing || !editor || !editing.text.trim()) return;
+    resolved.current = true;
+    const { index, text } = editing;
+    editTranscript((t) => editor.setVariant(editor.setWord(t, index, text), index, variant));
+    setEditing(null);
+  }
+
   const bounds = active && {
     left: active.bounds.x * k,
     top: active.bounds.y * k,
@@ -338,6 +358,37 @@ function CaptionCanvas({
           }}
           className="absolute rounded-sm bg-background px-1 text-center text-foreground outline-hidden ring-2 ring-primary"
         />
+      )}
+      {editing && wordLooks && Object.keys(wordLooks).length > 1 && (
+        <fieldset
+          aria-label={t("Word look")}
+          style={{
+            left: editing.left + editing.width / 2,
+            top: editing.top + editing.height + 6,
+          }}
+          className="absolute z-10 flex -translate-x-1/2 gap-1 rounded-md bg-background/95 p-1 shadow-lg ring-1 ring-border"
+        >
+          {Object.entries(wordLooks).map(([id, tile]) => {
+            const variant = id === "base" ? null : Number(id);
+            const current = (editedWord?.variant ?? null) === variant;
+            return (
+              <button
+                key={id}
+                type="button"
+                data-testid={`word-look-${id}`}
+                aria-pressed={current}
+                aria-label={`${t("Word look")} ${variant === null ? 0 : variant + 1}`}
+                // Keeps the text field focused, so choosing a look does not first end the edit.
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => pickLook(variant)}
+                style={{ backgroundColor: TILE_CARD }}
+                className={`overflow-hidden rounded-sm ring-2 ${current ? "ring-primary" : "ring-transparent hover:ring-white/40"}`}
+              >
+                <img src={tile} alt="" className="h-9 w-auto" />
+              </button>
+            );
+          })}
+        </fieldset>
       )}
     </>
   );

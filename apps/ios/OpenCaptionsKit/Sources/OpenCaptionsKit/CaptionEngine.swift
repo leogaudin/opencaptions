@@ -122,7 +122,11 @@ public actor CaptionEngine {
         for name in names {
             let data = try Data(contentsOf: directory.appendingPathComponent(name))
             let (ptr, len) = put(data)
-            if oc_add_font(ptr, len) == 1 { families.append(String(decoding: result(), as: UTF8.self)) }
+            if oc_add_font(ptr, len) == 1 {
+                // A family of several files (an italic beside its upright) is listed once.
+                let family = String(decoding: result(), as: UTF8.self)
+                if !families.contains(family) { families.append(family) }
+            }
         }
         bundledFamilies = families
         return families
@@ -181,14 +185,17 @@ public actor CaptionEngine {
     /// picker shows. The same drawing as the preview and the export, so a tile cannot disagree with
     /// the result. The scene in use is put back before returning, so a preview open at the same
     /// time carries on unaffected. Fonts must have been made available (`ensureFont`) already.
+    /// `variants` gives the word at each place its look (nil, or no entry, is the style's own).
     public func samples(
-        of styles: [StyleConfig], words: [String], width: Int, height: Int
+        of styles: [StyleConfig], words: [String], variants: [Int?] = [], width: Int, height: Int
     ) -> [CaptionFrame?] {
         let previous = scene
         defer { if let previous { try? apply(previous) } }
         let step = 0.4
         let spoken = words.enumerated().map { i, text in
-            Word(text: text, start: Double(i) * step, end: Double(i + 1) * step)
+            Word(
+                text: text, start: Double(i) * step, end: Double(i + 1) * step,
+                variant: i < variants.count ? variants[i] : nil)
         }
         let transcript = Transcript(
             language: "en", languageDetection: .manual, duration: Double(words.count) * step,
@@ -292,6 +299,13 @@ public actor CaptionEngine {
         let (ptr, len) = try put(json: t)
         let (tp, tl) = put(text)
         return try decoded(oc_set_word(ptr, len, UInt32(index), tp, tl), as: Transcript.self)
+    }
+
+    /// Gives one word the look `variant` of the style (an index into its variants), or the style's own
+    /// with nil, keeping its text and timing.
+    public func setVariant(_ t: Transcript, index: Int, variant: Int?) throws -> Transcript {
+        let (ptr, len) = try put(json: t)
+        return try decoded(oc_set_variant(ptr, len, UInt32(index), Int32(variant ?? -1)), as: Transcript.self)
     }
 
 }

@@ -99,6 +99,20 @@ class TestRenderHash:
         h2 = compute_render_hash(**{**_BASE_INPUTS, "transcript": modified})
         assert h1 != h2
 
+    def test_changing_a_words_look_changes_hash(self) -> None:
+        """A word given a look, or another one, is another file."""
+
+        def with_word(**extra: object) -> dict[str, object]:
+            word = {"text": "hi", "start": 0.0, "end": 0.5, **extra}
+            segment = {"id": "a", "start": 0.0, "end": 0.5, "text": "hi", "words": [word]}
+            transcript = {**_BASE_INPUTS["transcript"], "segments": [segment]}
+            return {**_BASE_INPUTS, "transcript": transcript}
+
+        plain = compute_render_hash(**with_word())
+        assert compute_render_hash(**with_word(variant=1)) != plain
+        first = compute_render_hash(**with_word(variant=1))
+        assert first != compute_render_hash(**with_word(variant=2))
+
     def test_changing_style_changes_hash(self) -> None:
         h1 = compute_render_hash(**_BASE_INPUTS)
         h2 = compute_render_hash(

@@ -51,6 +51,7 @@ interface Exports {
     offsetMs: number,
   ): number;
   oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
+  oc_set_variant(ptr: number, len: number, index: number, variant: number): number;
 }
 
 /** The rows of the overlay that changed, from `top`, the frame's width. */
@@ -149,6 +150,11 @@ export interface CaptionEditor {
    * spaces inside stay (collapsed to one), so it is still a single word.
    */
   setWord(t: Transcript, index: number, text: string): Transcript;
+  /**
+   * Gives one word the look `variant` of the style (an index into its variants), or the style's own
+   * with null, keeping its text and timing.
+   */
+  setVariant(t: Transcript, index: number, variant: number | null): Transcript;
 }
 
 export interface CaptionRenderer {
@@ -425,6 +431,7 @@ export function loadCaptionEditor(): Promise<CaptionEditor> {
         parse(x.oc_retime_word(...json(t), index, edge === "start" ? 0 : 1, time, offsetMs)),
       setWord: (t, index, text) =>
         parse(x.oc_set_word(...json(t), index, ...copyIn(x, encoder.encode(text)))),
+      setVariant: (t, index, variant) => parse(x.oc_set_variant(...json(t), index, variant ?? -1)),
       snapAxis: (position, extent, anchor, size, threshold, margin) => {
         x.oc_snap_axis(position, extent, anchor, size, threshold, margin);
         const [snapped, line] = resultFloats(x);

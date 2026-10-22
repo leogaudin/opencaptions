@@ -41,6 +41,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `align` | `center`, `left`, `right`, `justify` | `center` | How the rows sit in the block. `left` and `right` also make `position_x` the place of that edge of the block, not its centre, so each line of words starts (or ends) at the same spot. `justify` is a poster: short rows (cut at about half the width), each scaled up (at most three times) to the width of the widest, stacked tight. A style saved with `layout` (`stack`, `line`) is read as `justify` and `center`. |
 | `letter_spacing` | -0.2 to 1 | `0` | Extra space after each letter, as a fraction of the font size. Negative tightens. |
 | `stretch` | 0.5 to 2 | `1` | How much wider (or narrower, below 1) the letters are drawn than the font has them: `0.79` is a condensed version of any face. |
+| `variants` | 0 to 6 looks | none | Looks a word can be given instead of the style's own (see [Word looks](#word-looks)). |
 
 ## Animations
 
@@ -62,7 +63,29 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `word_slam` | Slam | Each word hidden until said, then dropping in from 1.7 times its size, the line jolting a little as it lands. |
 | `letter_rise` | Rise | Each word hidden until said, its letters then climbing into place one after another. A word in a connected script (Arabic, Hebrew, the Indic scripts, Thai) rises as one piece. |
 | `drift` | Drift | Each word hidden until said, then coming into focus out of a blur; the whole line pushes in a little over its life and floats, and the glow of the word being said is brighter than the rest (it needs a `glow_blur`). |
+| `blur_in` | Blur In | Each word hidden until said, then coming out of a short blur (about four frames); nothing moves and nothing glows. |
 | `none` | None | Nothing: plain captions. |
+
+## Word looks
+
+A style can define up to six **looks**, in `variants`, and a word in the transcript picks one by its index
+(`variant`, counting from 0; absent is the style's own look). A look overrides the style for that word, and
+every field is optional: what a look leaves out is the style's own.
+
+| Field | Range | |
+|---|---|---|
+| `font` | A font family name | Another face. A family with an italic file (Instrument Serif) draws that, not the upright face leaned. |
+| `scale` | 0.3 to 3 | A multiple of `font_size`. All the words of a line sit on one baseline, whatever their size. |
+| `italic` | Boolean | |
+| `text_case` | `none` or `upper` | |
+| `text_color` | Colour | Replaces `text_color` (and any `fill_colors` gradient) for this word. |
+| `letter_spacing`, `stretch` | As in the style | |
+| `box_color` | Colour | A square box of this colour behind the word, like a name label. |
+
+A `variant` past the end of the style's looks draws as the style's own and is kept, so switching to a
+preset with fewer looks and back loses nothing. A look is picked on a word in the editors (double-click a
+word, or tap it on the phone); the style panel does not edit them, they come with a preset such as
+**Editorial**.
 
 ## Timing offset
 

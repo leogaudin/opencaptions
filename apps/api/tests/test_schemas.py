@@ -80,6 +80,7 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         "letter_rise",
         "word_slam",
         "drift",
+        "blur_in",
     ):
         assert StyleConfig(animation=animation).animation == animation  # type: ignore[arg-type]
     for bad in (
@@ -95,6 +96,11 @@ def test_style_config_effects_default_to_off_and_are_bounded() -> None:
         {"fill_colors": ["#111111"] * 5},
         {"fill_colors": ["red"]},
         {"text_case": "lower"},
+        {"variants": [{}] * 7},
+        {"variants": [{"scale": 3.1}]},
+        {"variants": [{"scale": 0.2}]},
+        {"variants": [{"text_color": "red"}]},
+        {"variants": [{"box_color": "#12"}]},
     ):
         with pytest.raises(ValidationError):
             StyleConfig(**bad)  # type: ignore[arg-type]
@@ -121,3 +127,16 @@ def test_error_response_shape() -> None:
     e = ErrorResponse(error="not_found", detail="missing", code=404)
     payload = e.model_dump()
     assert payload == {"error": "not_found", "detail": "missing", "code": 404, "field": None}
+
+
+def test_a_words_look_is_an_optional_index_that_survives_a_round_trip() -> None:
+    word = Word(text="a", start=0, end=1)
+    assert word.variant is None
+    assert Word.model_validate(word.model_dump()).variant is None
+    assert Word.model_validate({"text": "a", "start": 0, "end": 1, "variant": 4}).variant == 4
+    with pytest.raises(ValidationError):
+        Word(text="a", start=0, end=1, variant=-1)
+    # Looks are optional all the way down: a variant with nothing set is the style's own.
+    style = StyleConfig(variants=[{}, {"scale": 0.5, "italic": True}])  # type: ignore[list-item]
+    assert style.variants[0].scale is None
+    assert style.model_dump(exclude_none=True)["variants"] == [{}, {"scale": 0.5, "italic": True}]

@@ -7,15 +7,22 @@ public struct Preset: Codable, Equatable, Sendable, Identifiable {
     public var config: StyleConfig
     /// Part of the paid tier (`Entitlements`); false when the file does not say.
     public var pro: Bool
+    /// The looks the tile's sample words are drawn in, one per word (nil is the base look), for a
+    /// preset whose point is mixing them. Never applied to a user's transcript.
+    public var tileVariants: [Int?]?
 
-    public init(id: String, name: String, config: StyleConfig, pro: Bool = false) {
+    public init(id: String, name: String, config: StyleConfig, pro: Bool = false, tileVariants: [Int?]? = nil) {
         self.id = id
         self.name = name
         self.config = config
         self.pro = pro
+        self.tileVariants = tileVariants
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, config, pro }
+    enum CodingKeys: String, CodingKey {
+        case id, name, config, pro
+        case tileVariants = "tile_variants"
+    }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -23,6 +30,7 @@ public struct Preset: Codable, Equatable, Sendable, Identifiable {
         name = try c.decode(String.self, forKey: .name)
         config = try c.decode(StyleConfig.self, forKey: .config)
         pro = try c.decodeIfPresent(Bool.self, forKey: .pro) ?? false
+        tileVariants = try c.decodeIfPresent([Int?].self, forKey: .tileVariants)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -31,6 +39,7 @@ public struct Preset: Codable, Equatable, Sendable, Identifiable {
         try c.encode(name, forKey: .name)
         try c.encode(config, forKey: .config)
         if pro { try c.encode(true, forKey: .pro) }
+        try c.encodeIfPresent(tileVariants, forKey: .tileVariants)
     }
 }
 

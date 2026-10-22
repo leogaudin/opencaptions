@@ -15,6 +15,11 @@ export interface BuiltinPreset {
   id: string;
   name: string;
   config: StyleConfig;
+  /**
+   * Which looks the tile's sample words are drawn in, one per word (null for the base look), for a
+   * preset whose point is mixing them. Never applied to a user's transcript.
+   */
+  tile_variants?: (number | null)[];
 }
 
 // The data is shared with the iOS app and checked against the API's `StyleConfig`

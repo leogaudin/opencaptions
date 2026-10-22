@@ -285,6 +285,7 @@ struct StylePanel: View {
         case .letterRise: "Rise"
         case .wordSlam: "Slam"
         case .drift: "Drift"
+        case .blurIn: "Blur In"
         }
     }
 

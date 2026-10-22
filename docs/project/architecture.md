@@ -164,6 +164,18 @@ in passes (backdrops, glow, shadow, words, bar), `pixels.rs` holds the blur and 
     changes: `positionOnAlign` on the web, `positionX(afterAligning:)` on iOS). Saved styles with `layout` read as `justify`
     (`stack`) or `center`. `letter_spacing` (a share of the font size, after every letter but the last) and `stretch` (a horizontal scale of the
     outlines and advances) reshape any face; both are applied where the text is shaped, so a default leaves every frame byte for byte as it was.
+  - *Word looks.* `Style.variants` (at most six, defined by a preset) are looks a word can wear instead of the style's:
+    a `Variant` overrides `font`, `scale`, `italic`, `text_case`, `text_color`, `letter_spacing`, `stretch`, and `box_color`
+    (a square label behind the word), each optional. `Word.variant` is an index into them (absent is the style's own; an index
+    past the end draws as the style's own and is kept). The layout resolves each word's look once (`look_of`), shapes the word
+    with its own face and tracking, and sits every word of a row on one baseline: the row's height is the tallest word's, the
+    baseline the tallest word's half-leading, each word using its own face's ascent and descent, and a word's slot is its own
+    line box on that baseline. A word's `size` is its row's scale times its look's `scale`, so every effect (outline, shadow,
+    glow, extrusion) grows with it. A family with an italic file (`FontBook::styled`) draws that face, and a family without one
+    is leaned (sheared) as before; a transcript with no looks lays out and draws byte for byte as it did. The editors only
+    choose: `set_variant` (`oc_set_variant`) sets or clears one word's look, `set_word` and `retime` keep it, and the word
+    card shows the word drawn by the engine in each look. The `blur_in` animation is Drift's entrance alone (0.12 s, no line
+    motion, no glow).
   - *Justify layout.* `align: "justify"` cuts rows at 0.55 of the usual width, then scales each row up to the widest row's natural width, at most three times, and
     stacks them with leading of 1.0 of each row's own size. A word's `size` (its row's scale) is what every animation uses wherever it used the font size: the underline's
     thickness, the cursor, the sliding box's corner, a label's radius, the blur of a soft word,

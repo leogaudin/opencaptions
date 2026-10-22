@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, type Locator, test } from "@playwright/test";
 import { MOCK_PROJECT_ID, mockTranscribedProject, type Transcript } from "./helpers/mockProject";
 
@@ -131,5 +132,47 @@ test.describe("Editing a word on a caption that follows a pause", () => {
         (saved().transcript as Transcript).segments.flatMap((s) => s.words.map((w) => w.text)),
       )
       .toEqual(["a", "b", "c", "x"]);
+  });
+});
+
+test.describe("Giving a word a look", () => {
+  // The Editorial preset defines five looks; the transcript starts with none chosen.
+  const presets: { name: string; config: Record<string, unknown> }[] = JSON.parse(
+    readFileSync(new URL("../../src/lib/presets.json", import.meta.url), "utf8"),
+  );
+  const editorial = presets.find((p) => p.name === "Editorial")?.config;
+
+  test("a look chosen on the word card is saved and shown again after a reload", async ({
+    page,
+  }) => {
+    const saved = await mockTranscribedProject(page, "Looks test", {
+      transcript: TRANSCRIPT,
+      styleConfig: editorial,
+    });
+    const firstLook = () =>
+      (saved().transcript as Transcript).segments[0]?.words[0]?.variant ?? null;
+    const open = async () => {
+      await page.goto(`/projects/${MOCK_PROJECT_ID}`);
+      const handle = page.getByTestId("caption-handle");
+      await expect(handle).toBeVisible();
+      const box = await handle.boundingBox();
+      if (!box) throw new Error("caption not laid out");
+      await handle.dblclick({ position: { x: box.width * 0.2, y: box.height / 2 } });
+      await expect(page.getByTestId("caption-word-edit")).toHaveValue("alpha");
+    };
+    await open();
+    // The base look and the five of the preset, drawn by the engine.
+    for (const id of ["base", "0", "1", "2", "3", "4"]) {
+      await expect(page.getByTestId(`word-look-${id}`)).toBeVisible();
+    }
+    await page.getByTestId("word-look-2").click();
+    await expect.poll(firstLook).toBe(2);
+    await expect
+      .poll(() => (saved().transcript as Transcript).segments[0]?.words[0]?.text)
+      .toBe("alpha");
+    await open();
+    await expect(page.getByTestId("word-look-2")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("word-look-base").click();
+    await expect.poll(firstLook).toBe(null);
   });
 });

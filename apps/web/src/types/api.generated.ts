@@ -1383,7 +1383,7 @@ export interface components {
              * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift" | "blur_in";
             /**
              * Words Per Line
              * @default 3
@@ -1477,6 +1477,11 @@ export interface components {
              * @default 1
              */
             stretch: number;
+            /**
+             * Variants
+             * @default []
+             */
+            variants: components["schemas"]["WordVariant"][];
         };
         /**
          * SubtitleExportLinks
@@ -1797,6 +1802,30 @@ export interface components {
              * @default 1
              */
             confidence: number;
+            /** Variant */
+            variant?: number | null;
+        };
+        /**
+         * WordVariant
+         * @description How one word differs from the style's look; what is left out is the style's own.
+         */
+        WordVariant: {
+            /** Font */
+            font?: string | null;
+            /** Scale */
+            scale?: number | null;
+            /** Italic */
+            italic?: boolean | null;
+            /** Text Case */
+            text_case?: ("none" | "upper") | null;
+            /** Text Color */
+            text_color?: string | null;
+            /** Letter Spacing */
+            letter_spacing?: number | null;
+            /** Stretch */
+            stretch?: number | null;
+            /** Box Color */
+            box_color?: string | null;
         };
     };
     responses: never;

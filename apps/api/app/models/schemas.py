@@ -16,6 +16,9 @@ class Word(BaseModel):
     start: float = Field(ge=0.0, description="seconds from start of audio")
     end: float = Field(ge=0.0, description="seconds from start of audio")
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    # The word's look: an index into the style's variants, None for the style's own. One past the
+    # end draws as the style's own and is kept, so a preset with more looks gives it back.
+    variant: int | None = Field(default=None, ge=0)
 
 
 class TranscriptSegment(BaseModel):
@@ -134,6 +137,21 @@ class PasswordResetConfirm(BaseModel):
 # Style config
 
 
+class WordVariant(BaseModel):
+    """How one word differs from the style's look; what is left out is the style's own."""
+
+    font: str | None = None
+    # A multiple of the style's font size.
+    scale: float | None = Field(default=None, ge=0.3, le=3.0)
+    italic: bool | None = None
+    text_case: Literal["none", "upper"] | None = None
+    text_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    letter_spacing: float | None = Field(default=None, ge=-0.2, le=1.0)
+    stretch: float | None = Field(default=None, ge=0.5, le=2.0)
+    # A square box of this colour behind the word: a name's label.
+    box_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+
+
 class StyleConfig(BaseModel):
     """Caption styling parameters."""
 
@@ -171,6 +189,7 @@ class StyleConfig(BaseModel):
         "letter_rise",
         "word_slam",
         "drift",
+        "blur_in",
     ] = "highlight_slide"
     words_per_line: int = Field(default=3, ge=1, le=10)
     # Gap between words, as a fraction of font size, so it scales with the text.
@@ -208,6 +227,9 @@ class StyleConfig(BaseModel):
     letter_spacing: float = Field(default=0.0, ge=-0.2, le=1.0)
     # How much wider (or narrower, below 1) the letters are drawn than the face has them.
     stretch: float = Field(default=1.0, ge=0.5, le=2.0)
+    # Looks a word can be given instead of the style's own (Word.variant is an index into this);
+    # a preset defines them and the editor only picks.
+    variants: list[WordVariant] = Field(default=[], max_length=6)
 
     @model_validator(mode="before")
     @classmethod
