@@ -1,8 +1,8 @@
 # The iOS app, built and tested on macOS.
 #
-# A separate workflow on purpose. `ci.yml` is mirrored by `make ci` (see
-# scripts/check-ci-parity.sh), which runs in Linux containers and cannot run Xcode, so
-# this is the one validation the local gate does not repeat. It only runs when iOS or the
+# A separate workflow on purpose. `ci.yml` runs the Makefile's CI_CHECKS, the same list `make ci`
+# runs, in Linux containers that cannot run Xcode, so this is the one validation the local gate
+# does not repeat. It only runs when iOS or the
 # engine changes, and nobody without a Mac is blocked: `make ci` still covers
 # everything else. `scripts/ci-local.sh` does lint this file with actionlint.
 name: iOS

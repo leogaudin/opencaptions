@@ -34,8 +34,10 @@ make ci-static   # a fast subset: no image builds, no end-to-end tests
 ```
 
 It validates a clean snapshot in pinned containers, on throwaway volumes and off-default ports, so it is safe to
-run while your own stack is up. A green run means the push is expected to be green. Run `make` for the
-other targets (`lint`, `test-backend`, `typecheck`, and more).
+run while your own stack is up. A green run means the push is expected to be green. Each check is a `make`
+target (`lint-backend`, `test-backend`, `typecheck`, `e2e`, and more: `make ci-checks` lists them) that runs in
+its own container, and GitHub CI runs the same list, one job per check. To add a check, write its target and
+name it in `CI_CHECKS` in the `Makefile`: nothing else changes.
 
 ## Where things are
 

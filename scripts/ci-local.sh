@@ -1,40 +1,23 @@
 #!/usr/bin/env bash
 # Full local CI, the repository's acceptance gate.
 #
-# Runs every validation .github/workflows/ci.yml runs except publishing, from a
-# `git archive` snapshot of committed source in pinned containers, so local build
-# output cannot make a broken commit look green. The e2e stack uses its own
-# project name, named volumes and off-default ports, so it never touches a live stack
-# and can run while `make up` is live. Teardown is unconditional.
+# Runs every check of CI_CHECKS (the Makefile names them; GitHub CI runs the same list, one job
+# each) from a `git archive` snapshot of committed source, each in its pinned container, so local
+# build output cannot make a broken commit look green. Publishing is the one thing it leaves out.
+# The end-to-end stack uses its own project name, named volumes and off-default ports (scripts/e2e.sh),
+# so it can run while `make up` is live.
 #
-# It leaves nothing behind: the images it builds carry their own tag (never a live stack's
-# `latest`), are removed at the end, and what it adds to Docker's build cache is capped.
+# It leaves nothing behind: the images it builds carry their own tag (never a live stack's `latest`),
+# are removed at the end, and what it adds to Docker's build cache is capped.
 #
 # Usage:
 #   scripts/ci-local.sh            # committed HEAD
 #   scripts/ci-local.sh --staged   # HEAD + staged changes (pre-commit check)
-#   scripts/ci-local.sh --no-e2e   # skip images + e2e (fast static gate)
+#   scripts/ci-local.sh --no-e2e   # only the static checks: no image builds, sites or e2e
 #   scripts/ci-local.sh --gpu      # also build the GPU image (otherwise only when its inputs changed)
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CI_PROJECT="opencaptions-ci"
-# The CI stack is docker-compose.yml under its own project name, so every named
-# volume and the network are separate from a live stack's. The override below adds
-# only what the name cannot: the web port moved so both can run at once, and the
-# model cache read-only. `!override` replaces rather than appends a list, and
-# needs Compose v2.24+.
-CI_OVERRIDE='services:
-  web:      { ports:   !override ["127.0.0.1:15173:5173"] }
-  api:      { volumes: !override ["./models:/models:ro"] }
-  worker-transcription: { volumes: !override ["./models:/models:ro"] }'
-# The images this stack builds are tagged `ci-local`, not `latest`: a live stack's images are
-# named the same, and building over them would leave its own as untagged leftovers.
-CI_IMAGE_TAG="ci-local"
-compose_ci() {
-  printf '%s\n' "$CI_OVERRIDE" |
-    OPENCAPTIONS_VERSION="$CI_IMAGE_TAG" docker compose -p "$CI_PROJECT" -f docker-compose.yml -f - "$@"
-}
 GPU_IMAGE="opencaptions-ci-gpu:local"
 # What the GPU image is made from: it changes rarely, and it is the slowest build (several
 # GB of CUDA libraries), so it is built when one of these differs from origin/main.
@@ -42,23 +25,12 @@ GPU_INPUTS="apps/api/Dockerfile apps/api/pyproject.toml apps/api/uv.lock"
 # How much Docker build cache may stay after a run, so the next run is fast but disk is bounded.
 KEEP_BUILD_CACHE="2GB"
 
-# Pinned toolchain, matching ci.yml and the Dockerfiles.
-NODE_IMAGE="node:26-bookworm"
-UV_IMAGE="ghcr.io/astral-sh/uv:python3.14-bookworm-slim"
-ACTIONLINT_IMAGE="rhysd/actionlint:1.7.12"
-RUST_IMAGE="rust:1.99-slim-bookworm"
-ENGINE_TOOLS_IMAGE="opencaptions-ci-engine:local"
-# Built locally from NODE_IMAGE + uv (see "combined toolchain image" below).
-TOOLS_IMAGE="opencaptions-ci-tools:local"
-WEB_BASE_URL="http://localhost:15173"
-
-INCLUDE_E2E=1
+INCLUDE_HEAVY=1
 FORCE_GPU=0
-SOURCE_REF="HEAD"
 STAGED=0
 for arg in "$@"; do
   case "$arg" in
-    --no-e2e) INCLUDE_E2E=0 ;;
+    --no-e2e) INCLUDE_HEAVY=0 ;;
     --staged) STAGED=1 ;;
     --gpu) FORCE_GPU=1 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
@@ -84,30 +56,18 @@ larger than its images, lower its disk limit in Settings > Resources"
 fi
 
 WORKTREE="$(mktemp -d "${TMPDIR:-/tmp}/oc-ci-XXXXXX")"
-# mktemp gives 0700; some pinned images (actionlint, playwright) run as a
-# non-root user and must be able to traverse the snapshot.
 chmod 755 "$WORKTREE"
-STACK_UP=0
 IMAGES_BUILT=0
 
 cleanup() {
   local status=$?
-  if [ "$STACK_UP" = "1" ]; then
-    step "Tearing down the isolated CI stack"
-    (cd "$WORKTREE" && compose_ci down -v --remove-orphans >/dev/null 2>&1) || true
-  fi
   if [ "$IMAGES_BUILT" = "1" ]; then
     # Only what this run built: its own tag, never a live stack's images.
     # shellcheck disable=SC2046
-    docker image rm -f "$GPU_IMAGE" $( (cd "$WORKTREE" && compose_ci config --images 2>/dev/null) | grep ":$CI_IMAGE_TAG\$" || true) >/dev/null 2>&1 || true
+    docker image rm -f "$GPU_IMAGE" $(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep ':ci-local$' || true) >/dev/null 2>&1 || true
     docker builder prune -f --keep-storage "$KEEP_BUILD_CACHE" >/dev/null 2>&1 || true
   fi
-  # Container-written files are root-owned; remove them from a container.
-  if [ -d "$WORKTREE" ]; then
-    docker run --rm -v "$WORKTREE":/target "$NODE_IMAGE" \
-      find /target -mindepth 1 -delete >/dev/null 2>&1 || true
-    rm -rf "$WORKTREE" 2>/dev/null || true
-  fi
+  rm -rf "$WORKTREE" 2>/dev/null || true
   exit "$status"
 }
 trap cleanup EXIT INT TERM
@@ -116,120 +76,36 @@ trap cleanup EXIT INT TERM
 step "Exporting a clean source snapshot"
 cd "$REPO_ROOT"
 if [ "$STAGED" = "1" ]; then
-  # Archive the index so staged-but-uncommitted work is validated as CI would
-  # see it after commit.
+  # Archive the index so staged-but-uncommitted work is validated as CI would see it after commit.
   TREE="$(git write-tree)"
   git archive "$TREE" | tar -x -C "$WORKTREE"
   echo "snapshot: staged index (tree $TREE)"
 else
-  git archive "$SOURCE_REF" | tar -x -C "$WORKTREE"
-  echo "snapshot: $(git rev-parse --short "$SOURCE_REF") ($SOURCE_REF)"
+  TREE="HEAD"
+  git archive HEAD | tar -x -C "$WORKTREE"
+  echo "snapshot: $(git rev-parse --short HEAD) (HEAD)"
 fi
-# `git archive` intentionally omits .git; the generated-types gate needs a repo
-# to diff against, so make the snapshot a throwaway one.
+# `git archive` intentionally omits .git; the generated-types gate needs a repo to diff against,
+# so make the snapshot a throwaway one.
 git -C "$WORKTREE" init -q
 git -C "$WORKTREE" -c user.email=ci@local -c user.name=ci add -A
 git -C "$WORKTREE" -c user.email=ci@local -c user.name=ci commit -qm snapshot
 
-in_uv() { docker run --rm -v "$WORKTREE":/w -w "/w/$1" "$UV_IMAGE" sh -euc "$2"; }
-in_node() { docker run --rm -v "$WORKTREE":/w -w "/w/$1" "$NODE_IMAGE" sh -euc "$2"; }
-# Type generation needs Python AND Node in one place, exactly like the GitHub
-# runner: the uv-managed venv is not portable between images, so a venv created
-# in the uv image cannot be executed from the node image.
-in_tools() { docker run --rm -v "$WORKTREE":/w -w "/w/$1" "$TOOLS_IMAGE" sh -euc "$2"; }
+# --- The checks ------------------------------------------------------------
+# Containers run as this user (scripts/ci-shell.sh), so the snapshot stays removable; the caches the
+# checks share live outside it, in $CI_CACHE.
+if [ "$INCLUDE_HEAVY" = "1" ]; then target=ci-checks; else target=ci-static-checks; fi
+checks="$(make -s -C "$WORKTREE" "$target")"
+for check in $checks; do
+  case "$check" in build-demo | build-docs | e2e) IMAGES_BUILT=1 ;; esac
+  step "make $check"
+  make -s -C "$WORKTREE" "$check" || fail "$check failed"
+done
 
-step "Preparing the combined toolchain image"
-docker build -q -t "$TOOLS_IMAGE" - >/dev/null <<DOCKERFILE
-FROM $NODE_IMAGE
-COPY --from=$UV_IMAGE /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
-DOCKERFILE
-
-# --- Workflow lint (catches errors GitHub only reports at run time) ---------
-step "Workflow lint (actionlint)"
-# Explicit path: actionlint's repository auto-discovery does not apply to the
-# snapshot, and the workflow file is the only thing being checked.
-docker run --rm -v "$WORKTREE":/repo:ro -w /repo "$ACTIONLINT_IMAGE" -no-color \
-  .github/workflows/ci.yml .github/workflows/ios.yml .github/workflows/cla.yml \
-  || fail "actionlint found workflow errors"
-
-# --- Repository guards -----------------------------------------------------
-step "Repository guards (version sync, compose fallbacks, this gate against CI, iOS strings)"
-in_node . 'bash scripts/check-version-sync.sh && bash scripts/check-compose.sh && bash scripts/check-ci-parity.sh && bash scripts/check-ios-strings.sh' \
-  || fail "repository guards failed"
-
-# --- Backend ---------------------------------------------------------------
-step "Backend lint (ruff + mypy) and tests (pytest)"
-in_uv apps/api '
-  export UV_CACHE_DIR=/tmp/uv RUFF_CACHE_DIR=/tmp/ruff MYPY_CACHE_DIR=/tmp/mypy
-  uv sync --extra dev --locked -q
-  uv run ruff check .
-  uv run ruff format --check .
-  uv run mypy app/
-  uv run pytest -q
-' || fail "backend validation failed"
-
-# --- Engine ----------------------------------------------------------------
-step "Engine format, clippy (server, WebAssembly, iOS) and tests"
-# The stock image lacks the WebAssembly and iOS targets, and the cache volume must belong
-# to the caller so the snapshot stays removable.
-docker build -q -t "$ENGINE_TOOLS_IMAGE" - >/dev/null <<DOCKERFILE
-FROM $RUST_IMAGE
-RUN rustup component add rustfmt clippy && rustup target add wasm32-unknown-unknown aarch64-apple-ios
-DOCKERFILE
-docker run --rm -v opencaptions-ci-cargo:/cargo "$ENGINE_TOOLS_IMAGE" chown "$(id -u):$(id -g)" /cargo
-docker run --rm --user "$(id -u):$(id -g)" -e CARGO_HOME=/cargo -v opencaptions-ci-cargo:/cargo \
-  -v "$WORKTREE":/w -w /w/apps/engine "$ENGINE_TOOLS_IMAGE" sh -euc '
-  cargo fmt --check
-  cargo clippy --locked --all-targets -q -- -D warnings
-  cargo clippy --locked --lib --target wasm32-unknown-unknown -q -- -D warnings
-  cargo clippy --locked --lib --target aarch64-apple-ios -q -- -D warnings
-  cargo test --locked -q
-' || fail "engine validation failed"
-
-# --- Frontend --------------------------------------------------------------
-step "Generated API types are in sync"
-in_tools . '
-  export UV_CACHE_DIR=/tmp/uv
-  (cd apps/api && uv sync --extra dev --locked -q)
-  npm --prefix apps/web ci --no-audit --no-fund >/dev/null
-  bash scripts/generate-api-types.sh
-' || fail "type generation failed"
-git -C "$WORKTREE" diff --exit-code -- apps/web/src/types/api.generated.ts \
-  || fail "apps/web/src/types/api.generated.ts is stale, run 'make generate-types' and commit"
-
-step "Frontend lint, typecheck and production build"
-in_node apps/web '
-  npm run lint
-  npm run typecheck
-  npm test
-  npm run build
-' || fail "web validation failed"
-
-if [ "$INCLUDE_E2E" = "0" ]; then
-  bold $'\n✓ Static gate passed (images and e2e skipped via --no-e2e)'
+if [ "$INCLUDE_HEAVY" = "0" ]; then
+  bold $'\n✓ Static gate passed (images, sites and e2e skipped via --no-e2e)'
   exit 0
 fi
-
-# --- Images ----------------------------------------------------------------
-# The api, engine and web images are built once, here, by the same compose file the stack
-# runs from, and the end-to-end stack below starts from them (it does not build again).
-step "Building images (api, engine, web)"
-IMAGES_BUILT=1
-(cd "$WORKTREE" && compose_ci build -q >/dev/null) || fail "image builds failed"
-
-# The public demo's static files come from the web Dockerfile's demo-site stage, which is what
-# the demo job exports; building it here proves the stage (and so the site) builds.
-step "Building the public demo site (apps/web demo-site stage)"
-(cd "$WORKTREE" && docker build -q --build-context engine=apps/engine --target demo-site \
-  -o "$WORKTREE/.ci-demo-site" apps/web >/dev/null) || fail "the demo site build failed"
-rm -rf "$WORKTREE/.ci-demo-site"
-
-# The documentation site is the Markdown of docs/ built by the docs Dockerfile's docs-site stage,
-# which is what the docs job exports; a broken link or a bad page fails the build.
-step "Building the documentation site (apps/docs docs-site stage)"
-(cd "$WORKTREE" && docker build -q --build-context docs=docs --target docs-site \
-  -o "$WORKTREE/.ci-docs-site" apps/docs >/dev/null) || fail "the documentation site build failed"
-rm -rf "$WORKTREE/.ci-docs-site"
 
 # The GPU image is what publish-gpu pushes, so building it here is a rehearsal of that: worth
 # its several GB only when something it is made from changed (or when asked with --gpu).
@@ -237,7 +113,7 @@ build_gpu=$FORCE_GPU
 if [ "$build_gpu" = "0" ]; then
   # An unknown origin/main (a fresh clone, no remote) cannot say nothing changed: build.
   # shellcheck disable=SC2086
-  git -C "$REPO_ROOT" diff --quiet origin/main "$( [ "$STAGED" = "1" ] && echo "$TREE" || echo "$SOURCE_REF" )" -- $GPU_INPUTS 2>/dev/null || build_gpu=1
+  git -C "$REPO_ROOT" diff --quiet origin/main "$TREE" -- $GPU_INPUTS 2>/dev/null || build_gpu=1
 fi
 if [ "$build_gpu" = "1" ]; then
   step "Building the GPU image (its inputs changed, or --gpu)"
@@ -246,42 +122,5 @@ if [ "$build_gpu" = "1" ]; then
 else
   echo "GPU image skipped: apps/api/Dockerfile, pyproject.toml and uv.lock match origin/main (--gpu builds it anyway)"
 fi
-
-# --- End-to-end against a disposable stack ---------------------------------
-step "End-to-end (Playwright) against an isolated stack"
-cd "$WORKTREE"
-mkdir -p models
-
-# Assert isolation positively rather than trusting the project name: the only
-# bind mount is the model cache, and every named volume resolves under the CI
-# project, so nothing a live stack writes can be reached.
-resolved="$(compose_ci config)"
-bad="$(printf '%s\n' "$resolved" | awk '
-  /^volumes:/ { top = 1; next }
-  /^[a-z]/    { top = 0 }
-  top && /^    name: / && $2 !~ /^'"$CI_PROJECT"'_/ { print "volume " $2 }
-  !top && /^ *source: \// && $2 !~ /\/models$/     { print "bind " $2 }
-')"
-if [ -n "$bad" ]; then
-  printf 'mounts outside the CI project:\n%s\n' "$bad" >&2
-  fail "the CI stack would touch host state, refusing to run e2e"
-fi
-
-compose_ci up -d --wait --wait-timeout 240 || {
-  compose_ci ps
-  fail "the isolated CI stack did not become healthy"
-}
-STACK_UP=1
-
-# Run the SNAPSHOT's specs in the toolchain image, with Chromium installed beside the locked
-# @playwright/test, as ci.yml does: the Playwright image is a multi-GB pull for three browsers
-# when only Chromium is used. The browser lives in a named volume, so a rerun downloads nothing.
-# --network host is what lets the suite reach the isolated stack's off-default port.
-docker run --rm --network host \
-  -v "$WORKTREE":/w -w /w/apps/web -v opencaptions-ci-playwright:/pw \
-  -e BASE_URL="$WEB_BASE_URL" -e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/pw \
-  "$TOOLS_IMAGE" \
-  sh -euc 'npm ci --no-audit --no-fund >/dev/null && npx playwright install --with-deps chromium >/dev/null && npm run test:e2e' \
-  || fail "end-to-end tests failed"
 
 bold $'\n✓ Full local CI passed, this commit is expected to pass GitHub CI'

@@ -27,22 +27,34 @@ the publish job pushes, so it is built when `apps/api/Dockerfile`, `pyproject.to
 |---------|-----|
 | `make ci` | Acceptance gate. Full local CI against committed `HEAD`. |
 | `make ci-staged` | Same, but validates `HEAD` + staged changes (pre-commit). |
-| `make ci-static` | Fast subset: skips image builds and e2e. |
+| `make ci-static` | Fast subset: skips the sites, image builds and e2e. |
+
+**CI is defined once.** Each check is a Makefile target that runs in its pinned container
+(`scripts/ci-shell.sh`, `scripts/engine-shell.sh`, `scripts/e2e.sh`), and `CI_CHECKS` in the Makefile
+lists them. `make ci` runs that list from a clean snapshot, and `.github/workflows/ci.yml` runs the same
+list, one job each (`make ci-list`). To add a check, write its target and name it in `CI_CHECKS`: nothing
+else is edited. Publishing jobs are the only thing that lives in the workflow alone.
 
 ## Verification Commands
 
 `make ci` runs all of these. Reach for an individual one only to iterate quickly.
 
 ```bash
-make lint             # ruff + mypy (api), biome (web)
+make ci-checks        # the list: every target below is one of them
+make lint-backend     # ruff + mypy (api)
+make lint-frontend    # biome (web)
+make lint-engine      # rustfmt + clippy (server, WebAssembly, iOS)
+make lint-actions     # actionlint on the workflows
 make test-backend     # pytest
 make test-web         # the web's unit tests (node --test)
+make test-engine      # the engine's Rust tests
 make typecheck        # tsc -b project references (web)
-make test-engine      # the engine's Rust tests (in a pinned toolchain container)
 make typegen-check    # regenerate API types and fail if the committed file is stale
-make check-versions   # the manifests agree on the version
-make check-compose    # docker-compose.yml fallbacks agree with each other and config.py
-make docs-build       # build the documentation site (a broken link or anchor fails it)
+make check-repo       # manifest versions, compose fallbacks, iOS purpose strings
+make build-web        # the production build of the web app
+make build-docs       # build the documentation site (a broken link or anchor fails it)
+make build-demo       # build the public demo site
+make e2e              # the images, then Playwright against a disposable stack
 ```
 
 iOS needs macOS with full Xcode, and is **not** part of `make ci` (it has its own
@@ -121,7 +133,7 @@ images, which is what an end user does.
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
 | `apps/ios/` | The iPhone/iPad/Mac app (one multiplatform target): SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
-| `scripts/` | `ci-local.sh` (acceptance gate), `check-ci-parity.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
+| `scripts/` | `ci-local.sh` (acceptance gate), `ci-shell.sh` and `engine-shell.sh` (a check's pinned container), `e2e.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, plus `reset_password.py` (recovery without SMTP). |
 | `docs/` | The documentation, plain Markdown (guides, self-hosting, reference), built into the site in `apps/docs/`. `docs/project/architecture.md` is the design: services, the job flow, the engine, data, security, configuration, the iOS app. Keep it current. |
 | `apps/docs/` | The documentation site (Starlight). It owns no content: the pages are `docs/`. A broken link fails its build, which `make ci` runs. |
 | `Makefile` | All lifecycle targets (`up`, `watch`, `test`, `lint`, `generate-types`, etc). |
