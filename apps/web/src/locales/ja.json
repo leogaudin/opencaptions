@@ -225,13 +225,10 @@
   "Zoom in": "拡大",
   "Zoom out": "縮小",
   "created {day}": "作成 {day}",
-  "done": "完了",
   "draft": "下書き",
-  "error": "エラー",
   "its own model": "独自のモデル",
   "last used {day}": "最終使用 {day}",
   "never used": "未使用",
-  "preparing": "準備中",
   "request a new one": "新しいリンクをリクエストしてください",
   "save": "保存",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "OpenAIプロバイダを選ぶと、音声がOpenAIのサーバーにアップロードされます。",
@@ -369,5 +366,6 @@
   "Letter spacing": "文字間隔",
   "Stretch": "幅",
   "Square": "角形",
-  "Shuffle looks": "スタイルをシャッフル"
+  "Shuffle looks": "スタイルをシャッフル",
+  "failed": "失敗"
 }

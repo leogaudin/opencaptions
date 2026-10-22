@@ -405,8 +405,10 @@ takes 7% to 14% off the file and 1% off what is sent. None is worth its cost.
 ## Data
 
 - **Postgres:** `users`, `projects` (transcript and style as JSON, video
-  metadata, timing offset), `jobs` (type, status, progress, message), and
-  `api_keys` (hashed).
+  metadata, timing offset), `jobs` (the owner, type, status, progress, message), and
+  `api_keys` (hashed). A project stores no state of its own: the project list reads what it is doing
+  (draft, transcribing, transcribed, failed) from its transcript and its transcription jobs, and a
+  render's progress and failure are its job's.
 - **Object store:** everything under `projects/{id}/`, plus `fonts/`. Deleting
   a project deletes its prefix.
 - **Types:** Pydantic models in `apps/api` are the single source of truth.

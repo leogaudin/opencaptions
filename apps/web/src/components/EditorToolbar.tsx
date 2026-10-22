@@ -55,9 +55,8 @@ export function EditorToolbar() {
   // Store objects (project) get new identities on every Zustand write; key on
   // the primitive fields that actually determine when exports should be refetched.
   const projectId = project?.id;
-  const projectStatus = project?.status;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: projectStatus is an intentional refetch trigger. Not updated_at: every autosave changes it, and the sizes on offer do not depend on the captions.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a job starting or finishing (activeJobId) is an intentional refetch trigger. Not updated_at: every autosave changes it, and the sizes on offer do not depend on the captions.
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -72,7 +71,7 @@ export function EditorToolbar() {
     return () => {
       cancelled = true;
     };
-  }, [projectId, projectStatus]);
+  }, [projectId, activeJobId]);
 
   if (!project) return null;
 
@@ -80,7 +79,7 @@ export function EditorToolbar() {
   const preparingDownload = activeJob?.type === "rendering" ? activeJob : null;
   const transcriptionJob = activeJob?.type === "transcription" ? activeJob : null;
   const preparingNow = !!preparingDownload;
-  const transcribing = !!transcriptionJob || (project.status === "transcribing" && !activeJob);
+  const transcribing = !!transcriptionJob;
   const preparePct = preparingDownload ? Math.round((preparingDownload.progress ?? 0) * 100) : 0;
   const transcriptionPct = transcriptionJob
     ? Math.round((transcriptionJob.progress ?? 0) * 100)

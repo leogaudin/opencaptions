@@ -12,9 +12,8 @@ from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import load_only
 
 from app.api.deps import (
     db_session,
@@ -74,35 +73,44 @@ async def list_projects(
     Scoped to the caller's own projects, never lists other users' projects.
     """
     offset = (page - 1) * per_page
-    rows = (
-        (
-            await session.execute(
-                select(Project)
-                # The list shows none of the transcript or style; leave them in the table.
-                .options(
-                    load_only(
-                        Project.id,
-                        Project.title,
-                        Project.status,
-                        Project.video_size_bytes,
-                        Project.created_at,
-                        Project.updated_at,
-                    )
-                )
-                .where(Project.owner_id == user.id)
-                .order_by(Project.created_at.desc())
-                .offset(offset)
-                .limit(per_page)
-            )
-        )
-        .scalars()
-        .all()
+    # What a project is doing is not stored: it is transcribing while a transcription job is in flight,
+    # transcribed once it has a transcript, failed when its last transcription failed, else a draft.
+    transcription = Job.project_id == Project.id, Job.type == "transcription"
+    transcribing = exists().where(*transcription, Job.status.in_(("pending", "running")))
+    last = (
+        select(Job.status)
+        .where(*transcription)
+        .order_by(Job.created_at.desc())
+        .limit(1)
+        .scalar_subquery()
     )
+    status = case(
+        (transcribing, "transcribing"),
+        (Project.transcript.is_not(None), "transcribed"),
+        (last == "failed", "failed"),
+        else_="draft",
+    ).label("status")
+    rows = (
+        await session.execute(
+            select(
+                Project.id,
+                Project.title,
+                status,
+                Project.video_size_bytes,
+                Project.created_at,
+                Project.updated_at,
+            )
+            .where(Project.owner_id == user.id)
+            .order_by(Project.created_at.desc())
+            .offset(offset)
+            .limit(per_page)
+        )
+    ).all()
     total = await session.scalar(
         select(func.count()).select_from(Project).where(Project.owner_id == user.id)
     )
     return ProjectList(
-        items=[ProjectListItem.model_validate(r) for r in rows],
+        items=[ProjectListItem.model_validate(r, from_attributes=True) for r in rows],
         total=int(total or 0),
         page=page,
         per_page=per_page,
@@ -295,6 +303,5 @@ async def start_transcription(
         language=body.language,
     )
     job.celery_task_id = async_result.id
-    proj.status = "transcribing"
     await session.flush()
     return JobStatus.model_validate(job)

@@ -47,7 +47,6 @@ export async function loadClip(clip: Clip): Promise<{ project: Project; transcri
   const project: Project = {
     id: clip.id,
     title: clip.label,
-    status: "transcribed",
     transcript,
     style_config: defaultStyle,
     caption_offset_ms: 0,
@@ -56,7 +55,6 @@ export async function loadClip(clip: Clip): Promise<{ project: Project; transcri
     video_height: clip.height,
     video_fps: clip.fps,
     video_duration: clip.duration,
-    error: null,
     created_at: now,
     updated_at: now,
     active_job: null,

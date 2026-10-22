@@ -275,7 +275,6 @@ class ProjectStatus(BaseModel):
 
     id: UUID
     title: str
-    status: Literal["draft", "transcribing", "transcribed", "rendering", "done", "error"]
     transcript: Transcript | None = None
     style_config: StyleConfig | None = None
     caption_offset_ms: int = Field(
@@ -294,7 +293,6 @@ class ProjectStatus(BaseModel):
     video_height: int | None = None
     video_fps: float | None = None
     video_duration: float | None = None
-    error: str | None = None
     created_at: datetime
     updated_at: datetime
     # Latest non-terminal job for this project (pending or running).
@@ -310,7 +308,8 @@ class ProjectListItem(BaseModel):
 
     id: UUID
     title: str
-    status: str
+    # Not stored: read from the project's transcript and its transcription jobs.
+    status: Literal["draft", "transcribing", "transcribed", "failed"]
     video_size_bytes: int | None = None
     created_at: datetime
     updated_at: datetime

@@ -29,8 +29,8 @@ async def test_recovery_fails_only_jobs_nothing_can_be_working_on(db_factory: An
     now = datetime.now(UTC)
     async with db_factory() as s:
         owner = await _user(s)
-        busy = Project(title="busy", owner_id=owner, status="rendering")
-        dead = Project(title="dead", owner_id=owner, status="transcribing")
+        busy = Project(title="busy", owner_id=owner)
+        dead = Project(title="dead", owner_id=owner)
         s.add_all([busy, dead])
         await s.flush()
         fresh = Job(project_id=busy.id, user_id=owner, type="rendering", status="running")
@@ -52,10 +52,6 @@ async def test_recovery_fails_only_jobs_nothing_can_be_working_on(db_factory: An
         assert status[queued.id] == "pending", "a waiting job is still in the queue"
         assert status[stale.id] == "failed"
         assert status[lost.id] == "failed"
-        await s.refresh(busy)
-        await s.refresh(dead)
-        assert busy.status == "rendering"
-        assert dead.status == "draft"
 
 
 def test_the_limits_cover_what_the_product_allows() -> None:

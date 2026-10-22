@@ -168,7 +168,7 @@ async def test_progress_callback_rejected_without_job_token(
 ) -> None:
     _client_a, owner_id = user_a
     async with db_factory() as s:
-        proj = Project(title="p", owner_id=owner_id, status="rendering")
+        proj = Project(title="p", owner_id=owner_id)
         s.add(proj)
         await s.flush()
         job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")
@@ -204,7 +204,7 @@ async def test_progress_callback_accepts_valid_job_token(
 
     _client_a, owner_id = user_a
     async with db_factory() as s:
-        proj = Project(title="p", owner_id=owner_id, status="rendering")
+        proj = Project(title="p", owner_id=owner_id)
         s.add(proj)
         await s.flush()
         job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")
@@ -243,7 +243,7 @@ async def test_progress_callback_rejects_wrong_job_token(
 ) -> None:
     _client_a, owner_id = user_a
     async with db_factory() as s:
-        proj = Project(title="p", owner_id=owner_id, status="rendering")
+        proj = Project(title="p", owner_id=owner_id)
         s.add(proj)
         await s.flush()
         job = Job(project_id=proj.id, user_id=owner_id, type="rendering", status="running")

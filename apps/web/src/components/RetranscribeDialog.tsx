@@ -17,9 +17,7 @@ export function RetranscribeDialog({ current }: { current: string }) {
   const startTranscription = useEditorStore((s) => s.startTranscription);
   const disabled = useEditorStore((s) => {
     const active = s.jobs.find((j) => j.id === s.activeJobId);
-    const transcribing =
-      active?.type === "transcription" || (s.project?.status === "transcribing" && !active);
-    return !s.project?.video_storage_key || transcribing;
+    return !s.project?.video_storage_key || active?.type === "transcription";
   });
   const { languages: supported, models, defaultModel } = useTranscriptionSettings();
   const [open, setOpen] = useState(false);

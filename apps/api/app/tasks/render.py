@@ -103,8 +103,6 @@ def render_video(
             # content-addressed hash, so any disagreement between the two would
             # present as a permanent cache miss.
             inputs = resolve_render_inputs(project, render_options)
-            project.status = "rendering"
-            session.commit()
 
         render_hash = inputs.hash_for(fmt.id)
         output_key = render_object_key(project_id, fmt.id, render_hash, fmt.extension)
@@ -180,16 +178,8 @@ def render_video(
             logger.info("pruning stale render: %s", key)
             s3.delete_object(key)
 
-        # Mark project status as done (no rendered_storage_key column, the
-        # content-addressed object in storage IS the source of truth).
-        with session_local() as session:
-            project = session.get(Project, UUID(project_id))
-            if project is None:
-                raise RuntimeError("Project disappeared during render")
-            project.status = "done"
-            project.error = None
-            session.commit()
-
+        # Nothing is recorded on the project: the content-addressed object in storage IS the
+        # source of truth for a finished render.
         task.set_job_status(
             "completed",
             progress=progress.DONE,

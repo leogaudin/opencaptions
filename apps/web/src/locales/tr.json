@@ -225,13 +225,10 @@
   "Zoom in": "Yakınlaştır",
   "Zoom out": "Uzaklaştır",
   "created {day}": "oluşturuldu {day}",
-  "done": "bitti",
   "draft": "taslak",
-  "error": "hata",
   "its own model": "kendi modeli",
   "last used {day}": "son kullanım {day}",
   "never used": "hiç kullanılmadı",
-  "preparing": "hazırlanıyor",
   "request a new one": "yenisini isteyin",
   "save": "kaydedin",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "OpenAI sağlayıcısını seçmek sesinizi OpenAI sunucularına yükler.",
@@ -369,5 +366,6 @@
   "Letter spacing": "Harf aralığı",
   "Stretch": "Genişlik",
   "Square": "Kare",
-  "Shuffle looks": "Stilleri karıştır"
+  "Shuffle looks": "Stilleri karıştır",
+  "failed": "başarısız"
 }

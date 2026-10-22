@@ -94,7 +94,6 @@ def _run_render_video(monkeypatch: pytest.MonkeyPatch, offset_ms: int) -> dict[s
         proj = Project(
             title="fr",
             owner_id=owner.id,
-            status="transcribed",
             video_storage_key="projects/x/source.mp4",
             transcript=copy.deepcopy(_TRANSCRIPT),
             style_config=None,

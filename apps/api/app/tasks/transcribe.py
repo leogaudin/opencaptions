@@ -135,8 +135,6 @@ def transcribe_video(
             if not project.video_storage_key:
                 raise RuntimeError("Project has no video_storage_key")
             video_key = project.video_storage_key
-            project.status = "transcribing"
-            session.commit()
 
         task.set_job_status("running", celery_task_id=self.request.id, progress=0.0)
         task.enter_stage(progress.TRANSCRIBE_STARTING, STAGE)
@@ -175,8 +173,6 @@ def transcribe_video(
             if project is None:
                 raise RuntimeError("Project disappeared during transcription")
             project.transcript = transcript.model_dump()
-            project.status = "transcribed"
-            project.error = None
             session.commit()
 
         # 6. Finalize

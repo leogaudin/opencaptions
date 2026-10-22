@@ -70,7 +70,14 @@ export function HomePage() {
         setItems((prev) =>
           prev
             ? prev.map((x) =>
-                x.id === id ? { ...x, status: p.status, updated_at: p.updated_at } : x,
+                x.id === id
+                  ? {
+                      ...x,
+                      // Read as the list reads it: a transcript means it worked, none that it did not.
+                      status: p.transcript ? "transcribed" : "failed",
+                      updated_at: p.updated_at,
+                    }
+                  : x,
               )
             : prev,
         ),
@@ -420,9 +427,7 @@ const STATUS_LABELS: Record<string, string> = {
   draft: msg("draft"),
   transcribing: msg("transcribing"),
   transcribed: msg("transcribed"),
-  preparing: msg("preparing"),
-  done: msg("done"),
-  error: msg("error"),
+  failed: msg("failed"),
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -435,12 +440,9 @@ function StatusBadge({ status }: { status: string }) {
       draft: "bg-muted text-muted-foreground",
       transcribing: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
       transcribed: "bg-amber-500/20 text-amber-700 dark:text-amber-400",
-      rendering: "bg-purple-500/20 text-purple-700 dark:text-purple-400",
-      done: "bg-green-500/20 text-green-700 dark:text-green-400",
-      error: "bg-red-500/20 text-red-700 dark:text-red-400",
+      failed: "bg-red-500/20 text-red-700 dark:text-red-400",
     }[status] ?? "bg-muted text-muted-foreground";
-  // User-facing labels: avoid exposing internal "rendering" state.
-  const label = STATUS_LABELS[status === "rendering" ? "preparing" : status] ?? status;
+  const label = STATUS_LABELS[status] ?? status;
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{t(label)}</span>
   );

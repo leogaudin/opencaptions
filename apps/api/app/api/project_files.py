@@ -161,7 +161,6 @@ async def request_download(
 
     async_result = render_video.delay(str(job.id), str(proj.id), body.format, options.model_dump())
     job.celery_task_id = async_result.id
-    proj.status = "rendering"
     await session.flush()
 
     return JSONResponse(

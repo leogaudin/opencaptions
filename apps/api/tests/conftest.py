@@ -164,7 +164,6 @@ async def seed_project(db_factory: Any) -> Callable[..., Awaitable[UUID]]:
             proj = Project(
                 title="owned project",
                 owner_id=owner_id,
-                status="transcribed",
                 video_storage_key=f"projects/{uuid4()}/source.mp4",
                 transcript=_MINIMAL_TRANSCRIPT if with_transcript else None,
             )

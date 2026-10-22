@@ -225,13 +225,10 @@
   "Zoom in": "放大",
   "Zoom out": "缩小",
   "created {day}": "创建于 {day}",
-  "done": "完成",
   "draft": "草稿",
-  "error": "错误",
   "its own model": "自带模型",
   "last used {day}": "上次使用 {day}",
   "never used": "从未使用",
-  "preparing": "准备中",
   "request a new one": "重新申请",
   "save": "保存",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "选择 OpenAI 将把您的音频上传到 OpenAI 的服务器。",
@@ -369,5 +366,6 @@
   "Letter spacing": "字间距",
   "Stretch": "拉伸",
   "Square": "方形",
-  "Shuffle looks": "随机打乱样式"
+  "Shuffle looks": "随机打乱样式",
+  "failed": "失败"
 }

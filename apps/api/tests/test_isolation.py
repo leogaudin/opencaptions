@@ -87,7 +87,7 @@ async def test_user_b_gets_404_on_user_a_job(
 
     _client_a, owner_a = user_a
     async with db_factory() as s:
-        proj = Project(title="a", owner_id=owner_a, status="rendering")
+        proj = Project(title="a", owner_id=owner_a)
         s.add(proj)
         await s.flush()
         job = Job(project_id=proj.id, user_id=owner_a, type="rendering", status="running")

@@ -47,13 +47,9 @@ class Project(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title: Mapped[str] = mapped_column(String(255))
-    status: Mapped[str] = mapped_column(
-        String(32),
-        default="draft",
-        # 'draft' | 'transcribing' | 'transcribed' | 'rendering' | 'done' | 'error'
-    )
+    # No transcript is SQL NULL, never a JSON `null`, so "has a transcript" is a plain IS NOT NULL.
     transcript: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB().with_variant(JSON, "sqlite"), nullable=True
+        JSONB(none_as_null=True).with_variant(JSON(none_as_null=True), "sqlite"), nullable=True
     )
     style_config: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB().with_variant(JSON, "sqlite"), nullable=True
@@ -71,7 +67,6 @@ class Project(Base):
     # What the uploaded file weighs, for the project list. Null for a project made before it was
     # recorded.
     video_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_now, onupdate=_now

@@ -17,7 +17,7 @@ from app.services import fonts
 async def _job(user_a: tuple[AsyncClient, UUID], db_factory: Any) -> UUID:
     _client, owner = user_a
     async with db_factory() as s:
-        proj = Project(title="p", owner_id=owner, status="draft")
+        proj = Project(title="p", owner_id=owner)
         s.add(proj)
         await s.flush()
         job = Job(project_id=proj.id, user_id=owner, type="rendering", status="running")

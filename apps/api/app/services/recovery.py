@@ -11,11 +11,11 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import and_, case, exists, func, or_, update
+from sqlalchemy import and_, func, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.task_limits import STALE_AFTER_S
-from app.models import Job, Project
+from app.models import Job
 
 # A job waits in the queue as long as the workers are busy, but not for a day: a
 # message that old was lost (the broker's data was).
@@ -47,14 +47,4 @@ async def recover_orphan_jobs(session: AsyncSession, *, now: datetime | None = N
     )
     failed = len(result.all())
 
-    # A project still marked as busy with no job left in progress is not busy.
-    still_working = exists().where(Job.project_id == Project.id, Job.status.in_(IN_PROGRESS))
-    await session.execute(
-        update(Project)
-        .where(Project.status.in_(("transcribing", "rendering")), ~still_working)
-        .values(
-            status=case((Project.transcript.is_not(None), "transcribed"), else_="draft"),
-        )
-        .execution_options(synchronize_session=False)
-    )
     return failed

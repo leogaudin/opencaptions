@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
@@ -99,14 +99,9 @@ class TaskContext:
             self.logger.warning("usage accounting skipped for job %s: %s", self.job_id, exc)
 
     def mark_failed(self, reason: str, message: str, stage: str) -> None:
+        # The job records the failure; a project keeps what it has (a failed render does not
+        # make a good transcript an error).
         self.set_job_status("failed", error=reason, message=message)
-        if self.project_id is not None:
-            with self.sessions() as session:
-                session.execute(
-                    text("UPDATE projects SET status='error', error=:e WHERE id=:id"),
-                    {"e": reason, "id": self.project_id},
-                )
-                session.commit()
         self.publish(
             "job_failed",
             {"job_id": self.job_id, "error": reason, "stage": stage},

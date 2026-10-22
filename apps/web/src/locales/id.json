@@ -225,13 +225,10 @@
   "Zoom in": "Perbesar",
   "Zoom out": "Perkecil",
   "created {day}": "dibuat {day}",
-  "done": "selesai",
   "draft": "draf",
-  "error": "galat",
   "its own model": "model sendiri",
   "last used {day}": "terakhir dipakai {day}",
   "never used": "belum pernah dipakai",
-  "preparing": "menyiapkan",
   "request a new one": "minta yang baru",
   "save": "simpan",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "memilih penyedia OpenAI akan mengunggah audio Anda ke server OpenAI.",
@@ -369,5 +366,6 @@
   "Letter spacing": "Jarak huruf",
   "Stretch": "Peregangan",
   "Square": "Persegi",
-  "Shuffle looks": "Acak gaya"
+  "Shuffle looks": "Acak gaya",
+  "failed": "gagal"
 }

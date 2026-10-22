@@ -65,7 +65,7 @@ def test_record_job_usage_merges_and_persists_via_sync_session() -> None:
         owner = User(email="u@example.com", password_hash="x", is_active=True)
         s.add(owner)
         s.flush()
-        proj = Project(title="p", owner_id=owner.id, status="done")
+        proj = Project(title="p", owner_id=owner.id)
         s.add(proj)
         s.flush()
         job = Job(
@@ -125,7 +125,7 @@ async def _seed_job(
     ``unit=None`` seeds a job with no usage record (should be ignored by sums).
     """
     async with factory() as s:
-        proj = Project(title="p", owner_id=owner_id, status="done")
+        proj = Project(title="p", owner_id=owner_id)
         s.add(proj)
         await s.flush()
         metadata = merge_usage_into_metadata(None, unit, amount) if unit else {"format_id": "mp4"}

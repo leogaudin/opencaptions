@@ -225,13 +225,10 @@
   "Zoom in": "Acercar",
   "Zoom out": "Alejar",
   "created {day}": "creada {day}",
-  "done": "hecho",
   "draft": "borrador",
-  "error": "error",
   "its own model": "su propio modelo",
   "last used {day}": "último uso {day}",
   "never used": "nunca usada",
-  "preparing": "preparando",
   "request a new one": "solicita uno nuevo",
   "save": "guarda",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "elegir el proveedor OpenAI subirá tu audio a los servidores de OpenAI.",
@@ -369,5 +366,6 @@
   "Letter spacing": "Espaciado de letras",
   "Stretch": "Estiramiento",
   "Square": "Cuadrado",
-  "Shuffle looks": "Mezclar estilos"
+  "Shuffle looks": "Mezclar estilos",
+  "failed": "fallida"
 }

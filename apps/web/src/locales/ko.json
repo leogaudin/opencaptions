@@ -225,13 +225,10 @@
   "Zoom in": "확대",
   "Zoom out": "축소",
   "created {day}": "생성 {day}",
-  "done": "완료",
   "draft": "초안",
-  "error": "오류",
   "its own model": "자체 모델",
   "last used {day}": "마지막 사용 {day}",
   "never used": "사용 안 함",
-  "preparing": "준비 중",
   "request a new one": "새 링크를 요청하세요",
   "save": "저장",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "OpenAI 제공자를 선택하면 오디오가 OpenAI 서버로 업로드됩니다.",
@@ -369,5 +366,6 @@
   "Letter spacing": "자간",
   "Stretch": "너비 비율",
   "Square": "사각형",
-  "Shuffle looks": "스타일 섞기"
+  "Shuffle looks": "스타일 섞기",
+  "failed": "실패"
 }

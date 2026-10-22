@@ -1207,8 +1207,11 @@ export interface components {
             id: string;
             /** Title */
             title: string;
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "transcribing" | "transcribed" | "failed";
             /** Video Size Bytes */
             video_size_bytes?: number | null;
             /**
@@ -1234,11 +1237,6 @@ export interface components {
             id: string;
             /** Title */
             title: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "draft" | "transcribing" | "transcribed" | "rendering" | "done" | "error";
             transcript?: components["schemas"]["Transcript"] | null;
             style_config?: components["schemas"]["StyleConfig"] | null;
             /**
@@ -1257,8 +1255,6 @@ export interface components {
             video_fps?: number | null;
             /** Video Duration */
             video_duration?: number | null;
-            /** Error */
-            error?: string | null;
             /**
              * Created At
              * Format: date-time

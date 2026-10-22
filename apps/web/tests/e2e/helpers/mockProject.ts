@@ -63,7 +63,6 @@ export async function mockTranscribedProject(
   let project: Record<string, unknown> = {
     id: MOCK_PROJECT_ID,
     title,
-    status: "transcribed",
     transcript,
     style_config: styleConfig,
     caption_offset_ms: captionOffsetMs,

@@ -225,13 +225,10 @@
   "Zoom in": "Увеличить",
   "Zoom out": "Уменьшить",
   "created {day}": "создан {day}",
-  "done": "готово",
   "draft": "черновик",
-  "error": "ошибка",
   "its own model": "собственная модель",
   "last used {day}": "последнее использование {day}",
   "never used": "не использовался",
-  "preparing": "подготовка",
   "request a new one": "запросите новую",
   "save": "сохраняйте",
   "selecting the OpenAI provider will upload your audio to OpenAI's servers.": "при выборе провайдера OpenAI ваш звук будет загружен на серверы OpenAI.",
@@ -369,5 +366,6 @@
   "Letter spacing": "Межбуквенный интервал",
   "Stretch": "Растяжение",
   "Square": "Квадрат",
-  "Shuffle looks": "Перемешать стили"
+  "Shuffle looks": "Перемешать стили",
+  "failed": "ошибка"
 }
