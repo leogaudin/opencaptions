@@ -33,14 +33,16 @@ struct SaveOptionsSheet: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Text("Save video").font(.system(size: 22, weight: .heavy))
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack {
+                Text("Save video").font(.system(size: 22, weight: .heavy))
+                Spacer()
+                subtitlesMenu
+            }
             if isHDR && !greenScreen { hdrSection }
             if !isHDR || !keepHDR || greenScreen { formatSection }
             sizeSection
             if rates.count > 1 { frameRateSection }
             backgroundSection
-            subtitlesSection
             estimate
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -80,20 +82,20 @@ struct SaveOptionsSheet: View {
         }
     }
 
-    private var subtitlesSection: some View {
-        section("Subtitles", note: "Text files for a player or an editor: each line is a caption, as on the video.") {
-            HStack(spacing: 10) {
-                ForEach([SubtitleFormat.srt, .vtt], id: \.rawValue) { format in
-                    let name = format == .srt ? "SRT" : "VTT"
-                    ShareLink(
-                        item: SubtitleFile(format: format, write: subtitles), preview: SharePreview(name)
-                    ) {
-                        Label { Text(verbatim: name) } icon: { Image(systemName: "captions.bubble") }
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
+    /// The subtitle files are a side door: a menu, not a section of the sheet.
+    private var subtitlesMenu: some View {
+        Menu {
+            ForEach([SubtitleFormat.srt, .vtt], id: \.rawValue) { format in
+                let name = format == .srt ? "SRT" : "VTT"
+                ShareLink(item: SubtitleFile(format: format, write: subtitles), preview: SharePreview(name)) {
+                    Label { Text(verbatim: name) } icon: { Image(systemName: "captions.bubble") }
                 }
             }
+        } label: {
+            Image(systemName: "ellipsis")
         }
+        .buttonStyle(CircleButtonStyle())
+        .accessibilityLabel("Subtitles")
     }
 
     private var formatSection: some View {

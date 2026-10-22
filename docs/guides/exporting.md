@@ -53,7 +53,7 @@ The **Download subtitles** button gives:
 - **JSON**, the full transcript with the timing and confidence of every word. See
   [Transcript format](../reference/transcript-format.md).
 
-The caption engine writes the SRT and VTT files, the same code that cuts the captions on the video, so they line up with it. On the iPhone and the Mac, the Save sheet has an SRT and a VTT button that share the same files.
+The caption engine writes the SRT and VTT files, the same code that cuts the captions on the video, so they line up with it. On the iPhone and the Mac, the Save sheet has a **…** menu at the top with SRT and VTT, which share the same files.
 
 ## From a script
 

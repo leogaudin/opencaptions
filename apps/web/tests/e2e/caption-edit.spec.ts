@@ -136,7 +136,7 @@ test.describe("Editing a word on a caption that follows a pause", () => {
 });
 
 test.describe("Giving a word a look", () => {
-  // The Editorial preset defines five looks; the transcript starts with none chosen.
+  // The Editorial preset defines four looks; the transcript starts with none chosen.
   const presets: { name: string; config: Record<string, unknown> }[] = JSON.parse(
     readFileSync(new URL("../../src/lib/presets.json", import.meta.url), "utf8"),
   );
@@ -161,8 +161,8 @@ test.describe("Giving a word a look", () => {
       await expect(page.getByTestId("caption-word-edit")).toHaveValue("alpha");
     };
     await open();
-    // The base look and the five of the preset, drawn by the engine.
-    for (const id of ["base", "0", "1", "2", "3", "4"]) {
+    // The base look and the four of the preset, drawn by the engine.
+    for (const id of ["base", "0", "1", "2", "3"]) {
       await expect(page.getByTestId(`word-look-${id}`)).toBeVisible();
     }
     await page.getByTestId("word-look-2").click();

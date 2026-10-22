@@ -45,6 +45,13 @@ import Testing
         #expect(Set(sent.keys) == ["font", "scale", "italic", "box_color", "text_case"], "unset looks are not sent")
     }
 
+    @Test func anAccentLookIsSentAsSuchAndFollowsTheHighlight() throws {
+        let look = try JSONDecoder().decode(WordVariant.self, from: Data(##"{"accent":true,"scale":1.05}"##.utf8))
+        #expect(look.accent == true && look.textColor == nil)
+        let sent = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(look)) as? [String: Any])
+        #expect(Set(sent.keys) == ["accent", "scale"])
+    }
+
     @Test func theKeysAreTheAPIsSnakeCase() throws {
         let json = try JSONSerialization.jsonObject(
             with: JSONEncoder().encode(Repo.transcript())) as? [String: Any]

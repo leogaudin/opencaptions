@@ -231,6 +231,9 @@ pub struct Variant {
     pub italic: Option<bool>,
     pub text_case: Option<TextCase>,
     pub text_color: Option<Rgba>,
+    /// Set the word in the style's first highlight colour, so the accent follows it. An own
+    /// `text_color` wins.
+    pub accent: Option<bool>,
     pub letter_spacing: Option<f32>,
     pub stretch: Option<f32>,
     /// A square box of this colour behind the word, the label of a name.

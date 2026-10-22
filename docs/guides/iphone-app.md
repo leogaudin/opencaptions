@@ -40,7 +40,7 @@ One purchase of Pro covers the iPhone, the iPad and the Mac, with no account: it
    While paused, **drag** the caption to move it (it snaps to the centre lines and the margins, with a small haptic tick),
    **pinch** to change the size, and **double-tap** a word to fix it. Drag the edges of a caption on the
    timeline to retime it, pinch the timeline to zoom, and scrub by dragging it.
-4. **Style.** Open the style controls: the same eighteen looks and the same settings as the web.
+4. **Style.** Open the style controls: the same nineteen looks and the same settings as the web.
 5. **Save.** Choose the size and frame rate. Videos are saved as H.264, or 10-bit HEVC when the video is HDR,
    and HDR videos stay HDR.
 
@@ -60,7 +60,7 @@ Undo and redo are in the toolbar.
 Models are downloaded once and run on the phone.
 
 **The first transcription is slower.** A model must be optimized for your device's Neural Engine before it runs
-fast, and the screen says "Optimizing for this device and this version of OpenCaptions…". It takes from about half
+fast, and the screen says "Optimizing for this device…". It takes from about half
 a minute (Parakeet Ultra on an M1 Mac) to several minutes (the biggest models on an older iPhone). The system keeps
 the result, so every later load takes a few seconds. It is done again after an update of OpenCaptions or of
 iOS or macOS, because the result belongs to that exact version of the app and of the system.

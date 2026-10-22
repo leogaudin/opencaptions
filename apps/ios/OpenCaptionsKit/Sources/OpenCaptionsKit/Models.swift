@@ -172,6 +172,8 @@ public struct WordVariant: Codable, Equatable, Sendable {
     public var italic: Bool?
     public var textCase: TextCase?
     public var textColor: String?
+    /// Set in the style's first highlight colour, so the accent follows it.
+    public var accent: Bool?
     public var letterSpacing: Double?
     public var stretch: Double?
     /// A square box of this colour behind the word: a name's label.
@@ -179,20 +181,22 @@ public struct WordVariant: Codable, Equatable, Sendable {
 
     public init(
         font: String? = nil, scale: Double? = nil, italic: Bool? = nil, textCase: TextCase? = nil,
-        textColor: String? = nil, letterSpacing: Double? = nil, stretch: Double? = nil, boxColor: String? = nil
+        textColor: String? = nil, accent: Bool? = nil, letterSpacing: Double? = nil, stretch: Double? = nil,
+        boxColor: String? = nil
     ) {
         self.font = font
         self.scale = scale
         self.italic = italic
         self.textCase = textCase
         self.textColor = textColor
+        self.accent = accent
         self.letterSpacing = letterSpacing
         self.stretch = stretch
         self.boxColor = boxColor
     }
 
     enum CodingKeys: String, CodingKey {
-        case font, scale, italic
+        case font, scale, italic, accent
         case textCase = "text_case"
         case textColor = "text_color"
         case letterSpacing = "letter_spacing"

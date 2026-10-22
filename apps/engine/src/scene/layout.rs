@@ -99,7 +99,9 @@ fn look_of(book: &FontBook, style: &Style, word: &Word) -> Look {
             stretch: v.stretch.unwrap_or(style.stretch),
         },
         case: v.text_case.unwrap_or(style.text_case),
-        color: v.text_color,
+        color: v
+            .text_color
+            .or_else(|| v.accent.unwrap_or(false).then(|| style.highlight(0))),
         label: v.box_color,
         own: variant.is_some(),
     }

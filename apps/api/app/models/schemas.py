@@ -148,6 +148,8 @@ class WordVariant(BaseModel):
     text_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
     letter_spacing: float | None = Field(default=None, ge=-0.2, le=1.0)
     stretch: float | None = Field(default=None, ge=0.5, le=2.0)
+    # Set in the style's first highlight colour, so the accent follows it.
+    accent: bool | None = None
     # A square box of this colour behind the word: a name's label.
     box_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
 

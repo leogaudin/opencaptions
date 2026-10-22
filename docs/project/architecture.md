@@ -406,8 +406,8 @@ disk.
   the Turbo model), and the system keeps the result, so later loads take seconds (the same Mac: 2.8 s). The cache
   belongs to the build of the app and to the OS: **a new build of the app, or an update of the OS, pays it
   again.** That is every rebuild during development, so time a load on the second launch of one build, never the
-  first, and a user pays it once after installing or updating. The screen says "Optimizing for this device and this
-  version of OpenCaptions…" (not "loading", and not "the first time", which is wrong after an update). Loading starts early and beside the reading of
+  first, and a user pays it once after installing or updating. The screen says "Optimizing for this device…" and that later
+  transcriptions are much faster (not "loading", and not "the first time", which is wrong after an update). Loading starts early and beside the reading of
   the audio: the default model as the app opens (when it is downloaded), any other as soon as it is
   chosen in the Transcribe sheet, while the language is picked. The loaded model stays for the next
   transcription and is let go on a memory warning or when the app leaves the screen.

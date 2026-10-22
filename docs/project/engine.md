@@ -132,7 +132,7 @@ colour) and an arm in `word_state`; the exhaustive matches refuse to compile unt
 
 `Style.variants` (at most six, defined by a preset) are looks a word can wear instead of the style's.
 
-- A `Variant` overrides `font`, `scale`, `italic`, `text_case`, `text_color`, `letter_spacing`, `stretch` and
+- A `Variant` overrides `font`, `scale`, `italic`, `text_case`, `text_color`, `accent` (the style's highlight colour), `letter_spacing`, `stretch` and
   `box_color` (a square label behind the word), each optional.
 - `Word.variant` is an index into them. Absent is the style's own; an index past the end draws as the style's own
   and is kept.
@@ -166,8 +166,7 @@ remove, on both editors).
   until said, and the line never changes size), Stickers, Plain, Neon, Typewriter, Handwritten (a marker stroke laid
   under the words as they are said), Pop (white letters in an orange outline, the word being said rising on a short
   golden extrusion), Cascade (letters rising one after another), Slam (heavy capitals dropping in), Poster (a stack
-  of rows scaled to one width), Title Card (condensed bold serif capitals flush left on a sharp black box), Glow
-  Intro (floating, glowing capitals that come into focus) and Editorial (a book serif with looks to mix).
+  of rows scaled to one width), Title Card (condensed bold serif capitals flush left on a sharp black box) and Editorial (a book serif with looks to mix).
 - **Tiles.** The preset tiles, and the choices in the Background and Animation tabs, are drawn by the engine
   (`CaptionEngine.samples`: the same drawing as the preview and the export, in a phone-shaped frame, cropped to the
   band around the caption), so each shows its real font, colours and highlight, each in a scene of its own, so the

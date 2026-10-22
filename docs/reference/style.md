@@ -79,6 +79,7 @@ every field is optional: what a look leaves out is the style's own.
 | `italic` | Boolean | |
 | `text_case` | `none` or `upper` | |
 | `text_color` | Colour | Replaces `text_color` (and any `fill_colors` gradient) for this word. |
+| `accent` | Boolean | Sets the word in the style's first highlight colour, so the accent follows it. A `text_color` of its own wins. |
 | `letter_spacing`, `stretch` | As in the style | |
 | `box_color` | Colour | A square box of this colour behind the word, like a name label. |
 
@@ -96,7 +97,7 @@ change the transcript.
 
 ## Presets
 
-The eighteen built-in looks are plain data in
+The nineteen built-in looks are plain data in
 [`apps/web/src/lib/presets.json`](https://github.com/leogaudin/opencaptions/blob/main/apps/web/src/lib/presets.json),
 each a name and a complete style in this shape. They are shared by the web app, the API's tests and the iPhone
 app.

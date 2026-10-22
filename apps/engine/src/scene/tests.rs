@@ -1984,6 +1984,21 @@ fn an_italic_family_uses_its_italic_and_is_not_leaned_again() {
 }
 
 #[test]
+fn an_accent_word_follows_the_highlight_colour_unless_it_has_its_own() {
+    let mut input = with_looks(
+        serde_json::json!([{ "accent": true }, { "accent": true, "text_color": "#00FF00" }]),
+        Some(0),
+    );
+    input.style.highlight_colors = vec![Rgba([255, 0, 0, 255])];
+    let scene = Scene::new(&serif_book(), input.clone());
+    assert_eq!(scene.lines[0].words[1].color, Some(Rgba([255, 0, 0, 255])));
+    assert_eq!(scene.lines[0].words[0].color, None);
+    input.transcript.segments[0].words[1].variant = Some(1);
+    let own = Scene::new(&serif_book(), input);
+    assert_eq!(own.lines[0].words[1].color, Some(Rgba([0, 255, 0, 255])));
+}
+
+#[test]
 fn a_boxed_word_has_a_square_box_behind_it() {
     let looks = serde_json::json!([{ "box_color": "#00FF00", "scale": 0.8 }]);
     let mut r = Renderer::new(Scene::new(&serif_book(), with_looks(looks, Some(0))));

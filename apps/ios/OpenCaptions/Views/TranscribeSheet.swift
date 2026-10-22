@@ -40,9 +40,16 @@ struct TranscribeSheet: View {
 
     var body: some View {
         NavigationStack {
-            firstStep
-                .navigationDestination(isPresented: $showLanguages) { secondStep }
-                .hidesNavigationBar()
+            // Two steps in place of a pushed destination: the back arrow only flips the flag.
+            Group {
+                if showLanguages {
+                    secondStep.transition(.move(edge: .trailing))
+                } else {
+                    firstStep.transition(.move(edge: .leading))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: showLanguages)
+            .hidesNavigationBar()
         }
         .background(Theme.background)
         .tint(Theme.accent)

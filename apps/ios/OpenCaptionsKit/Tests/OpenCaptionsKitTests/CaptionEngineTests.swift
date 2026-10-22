@@ -61,7 +61,7 @@ extension EngineSuites {
         @Test func aPresetThatMixesLooksShowsThemOnItsSampleWords() async throws {
             try await engine.registerBundledFonts(in: Repo.fonts)
             let editorial = try #require(try Presets.load(from: Repo.presets).first { $0.id == "builtin:editorial" })
-            #expect(editorial.config.variants.count == 5)
+            #expect(editorial.config.variants.count == 4)
             let shown = try #require(editorial.tileVariants)
             #expect(shown.count == 3 && shown.allSatisfy { $0 == nil || $0! < editorial.config.variants.count })
             let words = ["Make", "it", "pop"]

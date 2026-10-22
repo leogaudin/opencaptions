@@ -1843,6 +1843,8 @@ export interface components {
             letter_spacing?: number | null;
             /** Stretch */
             stretch?: number | null;
+            /** Accent */
+            accent?: boolean | null;
             /** Box Color */
             box_color?: string | null;
         };

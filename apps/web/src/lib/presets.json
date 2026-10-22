@@ -643,49 +643,13 @@
     "pro": true
   },
   {
-    "id": "builtin:glow-intro",
-    "name": "Glow Intro",
-    "config": {
-      "font": "Montserrat",
-      "font_size": 76,
-      "text_color": "#FFFFFF",
-      "highlight_colors": ["#CFE6FF"],
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0,
-      "position_x": 0.5,
-      "position_y": 0.5,
-      "animation": "drift",
-      "words_per_line": 3,
-      "word_spacing": 0.2,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 0,
-      "shadow_color": "#00000000",
-      "shadow_offset_x": 0,
-      "shadow_offset_y": 0,
-      "glow_blur": 28,
-      "glow_color": "#8EC5FF",
-      "text_case": "upper",
-      "italic": false,
-      "fill_colors": [],
-      "extrude_shade": 0,
-      "extrude_back": "#00000000",
-      "align": "center",
-      "letter_spacing": 0,
-      "stretch": 1,
-      "variants": []
-    },
-    "pro": true
-  },
-  {
     "id": "builtin:editorial",
     "name": "Editorial",
     "config": {
       "font": "Instrument Serif",
       "font_size": 84,
       "text_color": "#FFFFFF",
-      "highlight_colors": ["#FFFFFF"],
+      "highlight_colors": ["#E0241B"],
       "background": "none",
       "background_color": "#000000",
       "background_opacity": 0,
@@ -714,8 +678,7 @@
         { "font": "Barlow Condensed", "italic": true, "scale": 0.5 },
         { "font": "Instrument Serif", "italic": true, "scale": 1.15 },
         { "font": "Poppins", "scale": 1.05 },
-        { "font": "Poppins", "scale": 1.05, "text_color": "#E0241B" },
-        { "font": "Inter", "text_case": "upper", "scale": 0.8, "box_color": "#000000" }
+        { "font": "Poppins", "scale": 1.05, "accent": true }
       ]
     },
     "tile_variants": [null, 0, 2],

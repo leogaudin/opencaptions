@@ -53,7 +53,7 @@ there is no Save button.
 
 ### Pick a look
 
-The **Presets** tab holds eighteen looks. Select one and the preview changes at once. The other tabs
+The **Presets** tab holds nineteen looks. Select one and the preview changes at once. The other tabs
 adjust it: **Text** (font, size, case, colours), **Background**, **Animation**, **Outline** and
 **Timing**. See [Styling](../guides/styling.md).
 

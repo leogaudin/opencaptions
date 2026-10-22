@@ -110,7 +110,7 @@ public final class ParakeetTranscriber: Transcriber {
 
         // The first load of a build on a device is Core ML preparing the Neural Engine plan, which takes up to
         // minutes and shows nothing: the screen says what it is doing.
-        progress(0, KitStrings.localized("Optimizing for this device and this version of OpenCaptions… This can take a few minutes, and only happens again after an update."))
+        progress(0, KitStrings.localized("Optimizing for this device… A few minutes, once. Later transcriptions are much faster."))
         let manager = try await loading.value
 
         let fractions = await manager.transcriptionProgressStream

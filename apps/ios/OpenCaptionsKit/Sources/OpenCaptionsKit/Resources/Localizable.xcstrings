@@ -1778,79 +1778,79 @@
         }
       }
     },
-    "Optimizing for this device and this version of OpenCaptions… This can take a few minutes, and only happens again after an update.": {
+    "Optimizing for this device… A few minutes, once. Later transcriptions are much faster.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optimisation pour cet appareil et cette version d'OpenCaptions… Cela peut prendre quelques minutes, et ne se reproduit qu'après une mise à jour."
+            "value": "Optimisation pour cet appareil… Quelques minutes, une seule fois. Les transcriptions suivantes seront bien plus rapides."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optimizando para este dispositivo y esta versión de OpenCaptions… Puede tardar unos minutos y solo vuelve a ocurrir tras una actualización."
+            "value": "Optimizando para este dispositivo… Unos minutos, solo una vez. Las siguientes transcripciones serán mucho más rápidas."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wird für dieses Gerät und diese Version von OpenCaptions optimiert … Das kann einige Minuten dauern und passiert erst nach einem Update wieder."
+            "value": "Wird für dieses Gerät optimiert … Einmalig ein paar Minuten. Spätere Transkriptionen sind viel schneller."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optymalizacja pod to urządzenie i tę wersję OpenCaptions… Może to potrwać kilka minut i powtórzy się dopiero po aktualizacji."
+            "value": "Optymalizacja pod to urządzenie… Kilka minut, tylko raz. Kolejne transkrypcje będą znacznie szybsze."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Otimizando para este dispositivo e esta versão do OpenCaptions… Pode levar alguns minutos e só acontece de novo após uma atualização."
+            "value": "Otimizando para este dispositivo… Alguns minutos, só uma vez. As próximas transcrições serão muito mais rápidas."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ottimizzazione per questo dispositivo e questa versione di OpenCaptions… Può richiedere qualche minuto e si ripete solo dopo un aggiornamento."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このデバイスとこのバージョンのOpenCaptions向けに最適化しています… 数分かかることがありますが、アップデート後にしか再び行われません。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이 기기와 이 버전의 OpenCaptions에 맞게 최적화하는 중… 몇 분 걸릴 수 있으며, 업데이트 후에만 다시 진행됩니다."
+            "value": "Ottimizzazione per questo dispositivo… Pochi minuti, una volta sola. Le trascrizioni successive saranno molto più veloci."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Оптимизация под это устройство и эту версию OpenCaptions… Это может занять несколько минут и повторится только после обновления."
+            "value": "Оптимизация для этого устройства… Несколько минут, один раз. Следующие расшифровки будут намного быстрее."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu cihaz ve OpenCaptions'ın bu sürümü için optimize ediliyor… Birkaç dakika sürebilir ve yalnızca bir güncellemeden sonra yeniden yapılır."
+            "value": "Bu cihaz için optimize ediliyor… Birkaç dakika, yalnızca bir kez. Sonraki transkripsiyonlar çok daha hızlı olur."
           }
         },
-        "id": {
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mengoptimalkan untuk perangkat ini dan versi OpenCaptions ini… Ini bisa memakan waktu beberapa menit dan hanya terjadi lagi setelah pembaruan."
+            "value": "このデバイス向けに最適化しています… 数分かかりますが、最初の1回だけです。次回以降の文字起こしはずっと速くなります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 기기에 맞게 최적화하는 중… 처음 한 번만 몇 분 걸립니다. 이후의 받아쓰기는 훨씬 빨라집니다."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在针对此设备和此版本的 OpenCaptions 优化… 可能需要几分钟，且仅在更新后才会再次进行。"
+            "value": "正在针对此设备进行优化… 只需几分钟，仅此一次。之后的转录会快得多。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mengoptimalkan untuk perangkat ini… Beberapa menit, hanya sekali. Transkripsi berikutnya jauh lebih cepat."
           }
         }
       }
