@@ -68,7 +68,7 @@ def main(argv: list[str]) -> int:
     if len(new_password) < MIN_PASSWORD_LENGTH:
         _die(f"password must be at least {MIN_PASSWORD_LENGTH} characters")
 
-    engine = create_engine(settings.database_url_sync)
+    engine = create_engine(settings.database_url)
     try:
         with Session(engine) as session:
             user = session.scalar(select(User).where(User.email == email))

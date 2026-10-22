@@ -110,15 +110,7 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """SQLAlchemy async DSN for asyncpg."""
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:5432/{self.postgres_db}"
-        )
-
-    @property
-    def database_url_sync(self) -> str:
-        """Sync DSN for alembic."""
+        """SQLAlchemy DSN (psycopg 3), for the API's async engine, the workers' sync one and Alembic."""
         return (
             f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:5432/{self.postgres_db}"

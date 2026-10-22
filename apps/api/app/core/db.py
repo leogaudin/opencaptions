@@ -1,4 +1,4 @@
-"""Async SQLAlchemy 2 engine + session factory."""
+"""Async SQLAlchemy 2 engine + session factory (psycopg 3, as the workers use)."""
 
 from collections.abc import AsyncIterator
 

@@ -22,7 +22,7 @@ TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled", "deleted"})
 @functools.cache
 def sync_session_factory() -> SyncSessionFactory:
     """One engine (and pool) per worker process, made on first use so a forked child has its own."""
-    engine = create_engine(settings.database_url_sync, pool_pre_ping=True, future=True)
+    engine = create_engine(settings.database_url, pool_pre_ping=True, future=True)
     return sessionmaker(engine, expire_on_commit=False)
 
 
