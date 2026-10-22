@@ -79,9 +79,9 @@ def test_the_editorial_preset_mixes_looks_with_fonts_the_engine_ships() -> None:
     config = editorial["config"]
     assert isinstance(config, dict) and config["animation"] == "blur_in"
     variants = config["variants"]
-    assert isinstance(variants, list) and len(variants) == 5
+    assert isinstance(variants, list) and len(variants) == 4
     families = {config["font"], *(v["font"] for v in variants)}
-    shipped = {"Instrument Serif", "Inter", "Poppins", "Barlow Condensed"}
+    shipped = {"Instrument Serif", "Poppins", "Barlow Condensed"}
     assert families == shipped
     for name in (
         "InstrumentSerif-Regular.ttf",
