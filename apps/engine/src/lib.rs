@@ -439,6 +439,25 @@ mod abi {
                 .and_then(|t| edit::set_word(&t, index as usize, &text)),
         )
     }
+
+    /// Gives word `index` the look `variant` of the style, or the style's own with -1; the edited
+    /// transcript is left as JSON. Returns 0 on failure with the reason.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_set_variant(
+        ptr: *mut u8,
+        len: usize,
+        index: u32,
+        variant: i32,
+    ) -> u32 {
+        let variant = u32::try_from(variant).ok();
+        respond(
+            unsafe { read_transcript(ptr, len) }
+                .and_then(|t| edit::set_variant(&t, index as usize, variant)),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -514,7 +533,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 25);
+        assert_eq!(exported.len(), 26);
         assert_eq!(exported, declared);
     }
 }

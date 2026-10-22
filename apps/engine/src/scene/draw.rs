@@ -333,6 +333,15 @@ impl<'a> LinePainter<'a> {
             let p = paint(colour(s.primary(), g.alpha));
             canvas.fill_path(&path, &p, FillRule::Winding, Transform::identity(), None);
         }
+        // A name's label sits behind its word, whatever the animation, and moves with it.
+        for (w, st) in line.words.iter().zip(self.states) {
+            if let Some(label) = w.label
+                && let Some(path) = rounded_rect(w.slot, 0.0)
+            {
+                let p = paint(colour(label, st.opacity));
+                canvas.fill_path(&path, &p, FillRule::Winding, self.pivot(w, st), None);
+            }
+        }
         if s.animation == Animation::Stickers {
             for (w, st) in line.words.iter().zip(self.states) {
                 if let Some(path) = rounded_rect(w.slot, self.word_radius * w.size * 1.6) {
@@ -615,6 +624,7 @@ impl<'a> LinePainter<'a> {
             | Animation::Drift
             | Animation::WordPress => st.on,
             Animation::None
+            | Animation::BlurIn
             | Animation::HighlightBox
             | Animation::HighlightSlide
             | Animation::LineBar
@@ -625,7 +635,13 @@ impl<'a> LinePainter<'a> {
             | Animation::Typewriter => 0.0,
         };
         let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
-        match gradient_stops(&s.fill_colors, &tint) {
+        // A word with a colour of its own is painted in it, whatever gradient the style has.
+        let fills: &[Rgba] = if w.color.is_some() {
+            &[]
+        } else {
+            &s.fill_colors
+        };
+        match gradient_stops(fills, &tint) {
             Some(stops) => LinearGradient::new(
                 Point::from_xy(w.ink_x, w.em_top),
                 Point::from_xy(w.ink_x, w.baseline),
@@ -642,7 +658,11 @@ impl<'a> LinePainter<'a> {
                 },
             ),
             None => paint(colour(
-                tint(s.fill_colors.first().copied().unwrap_or(s.text_color)),
+                tint(
+                    w.color
+                        .or(s.fill_colors.first().copied())
+                        .unwrap_or(s.text_color),
+                ),
                 1.0,
             )),
         }

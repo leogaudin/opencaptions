@@ -22,6 +22,8 @@ const FALLBACK_FAMILY: &str = "Inter";
 struct Entry<'a> {
     family: String,
     face: Face<'a>,
+    /// Whether the face is the italic of its family, so a look can ask for the real one.
+    italic: bool,
     bundled: bool,
     /// Where a bundled face stands among the others: the order the files are listed in.
     rank: usize,
@@ -71,6 +73,7 @@ impl<'a> FontBook<'a> {
             .unwrap_or(0);
         self.faces.push(Entry {
             family: family.clone(),
+            italic: face.is_italic(),
             face,
             bundled: true,
             rank,
@@ -93,6 +96,7 @@ impl<'a> FontBook<'a> {
             at,
             Entry {
                 family: family.clone(),
+                italic: face.is_italic(),
                 face,
                 bundled: true,
                 rank,
@@ -107,6 +111,7 @@ impl<'a> FontBook<'a> {
             .map(|face| {
                 self.faces.push(Entry {
                     family: family.into(),
+                    italic: face.is_italic(),
                     face,
                     bundled: false,
                     rank: 0,
@@ -136,10 +141,27 @@ impl<'a> FontBook<'a> {
         self.faces.is_empty()
     }
 
+    /// The family's upright face, else its first face: an italic file that sorts before the
+    /// upright one never becomes what a plain look draws with.
     pub fn find(&self, family: &str) -> Option<usize> {
+        self.face_of(family, false)
+            .or_else(|| self.face_of(family, true))
+    }
+
+    fn face_of(&self, family: &str, italic: bool) -> Option<usize> {
         self.faces
             .iter()
-            .position(|e| e.family.eq_ignore_ascii_case(family))
+            .position(|e| e.italic == italic && e.family.eq_ignore_ascii_case(family))
+    }
+
+    /// The face for a look that wants the family `italic` (or not), and whether it must be sheared
+    /// to lean: the family's own italic when it has one, and else its upright face, sheared.
+    /// A real italic is drawn by its designer, so it is never leaned a second time.
+    pub fn styled(&self, family: &str, italic: bool) -> (usize, bool) {
+        if italic && let Some(i) = self.face_of(family, true) {
+            return (i, false);
+        }
+        (self.primary(family), italic)
     }
 
     /// The face for `family`, else the default face, else the first registered.
@@ -183,6 +205,35 @@ mod tests {
     const INTER: &[u8] = include_bytes!("../fonts/Inter.ttf");
     const THAI: &[u8] = include_bytes!("../fonts/NotoSansThai.ttf");
     const POPPINS: &[u8] = include_bytes!("../fonts/Poppins-ExtraBold.ttf");
+    const SERIF: &[u8] = include_bytes!("../fonts/InstrumentSerif-Regular.ttf");
+    const SERIF_ITALIC: &[u8] = include_bytes!("../fonts/InstrumentSerif-Italic.ttf");
+
+    #[test]
+    fn an_italic_family_draws_its_own_italic_and_is_not_sheared() {
+        // The italic file is registered first, as its name sorts first.
+        let mut book = FontBook::new();
+        for data in [INTER, SERIF_ITALIC, SERIF] {
+            book.add(data);
+        }
+        let upright = book.find("Instrument Serif").unwrap();
+        assert!(
+            !book.faces[upright].italic,
+            "the upright face is the family's face"
+        );
+        let (real, sheared) = book.styled("Instrument Serif", true);
+        assert!(book.faces[real].italic && !sheared);
+        assert_eq!(book.styled("Instrument Serif", false), (upright, false));
+        // A family with no italic file leans its upright face.
+        assert_eq!(
+            book.styled("Inter", true),
+            (book.find("Inter").unwrap(), true)
+        );
+        assert_eq!(
+            book.families(),
+            ["Inter", "Instrument Serif"],
+            "one family, two faces"
+        );
+    }
 
     /// Poppins draws Devanagari and Thai too, so the face tried first decides the glyphs: a face
     /// that arrives late must still stand where its file name puts it.

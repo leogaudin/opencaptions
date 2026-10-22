@@ -92,11 +92,13 @@ pub enum Animation {
     /// Each word fades in from a blur; the line pushes slowly toward the viewer and floats, and the
     /// word being said glows brighter.
     Drift,
+    /// Each word comes out of a short blur as it is said; nothing moves.
+    BlurIn,
 }
 
 impl Animation {
     /// Every animation, in the order the API and the editors list them.
-    pub const ALL: [Animation; 17] = [
+    pub const ALL: [Animation; 18] = [
         Animation::WordHighlight,
         Animation::HighlightBox,
         Animation::WordPop,
@@ -114,6 +116,7 @@ impl Animation {
         Animation::LetterRise,
         Animation::WordSlam,
         Animation::Drift,
+        Animation::BlurIn,
     ];
 }
 
@@ -209,6 +212,29 @@ pub struct Style {
     /// How much wider (or narrower, below 1) the letters are drawn than the face draws them.
     #[serde(default = "one")]
     pub stretch: f32,
+    /// Looks a word can be given instead of the style's own (see `Word::variant`); a preset
+    /// defines them.
+    #[serde(default)]
+    pub variants: Vec<Variant>,
+}
+
+/// The most looks a style defines.
+pub const MAX_VARIANTS: usize = 6;
+
+/// How one word differs from the style's look. Every field is optional: what is absent is the
+/// style's own.
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Variant {
+    pub font: Option<String>,
+    /// How much larger than the style's font size the word is set.
+    pub scale: Option<f32>,
+    pub italic: Option<bool>,
+    pub text_case: Option<TextCase>,
+    pub text_color: Option<Rgba>,
+    pub letter_spacing: Option<f32>,
+    pub stretch: Option<f32>,
+    /// A square box of this colour behind the word, the label of a name.
+    pub box_color: Option<Rgba>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -216,6 +242,10 @@ pub struct Word {
     pub text: String,
     pub start: f32,
     pub end: f32,
+    /// The word's look: an index into `Style::variants`. None is the style's own look; an index past
+    /// the end draws as that and is kept, so a style with more looks gives it back.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variant: Option<u32>,
     #[serde(flatten)]
     pub rest: Map<String, Value>,
 }
@@ -364,6 +394,19 @@ impl SceneInput {
         within("extrude_shade", s.extrude_shade, 0.0, 1.0)?;
         within("letter_spacing", s.letter_spacing, -0.5, 2.0)?;
         within("stretch", s.stretch, 0.25, 4.0)?;
+        if s.variants.len() > MAX_VARIANTS {
+            return Err(format!("variants holds at most {MAX_VARIANTS} looks"));
+        }
+        for v in &s.variants {
+            within("variant scale", v.scale.unwrap_or(1.0), 0.3, 3.0)?;
+            within(
+                "variant letter_spacing",
+                v.letter_spacing.unwrap_or(0.0),
+                -0.5,
+                2.0,
+            )?;
+            within("variant stretch", v.stretch.unwrap_or(1.0), 0.25, 4.0)?;
+        }
         if s.fill_colors.len() > 4 {
             return Err("fill_colors holds at most 4 colours".into());
         }
@@ -403,6 +446,7 @@ mod tests {
             Animation::LetterRise => 14,
             Animation::WordSlam => 15,
             Animation::Drift => 16,
+            Animation::BlurIn => 17,
         };
         for (i, a) in Animation::ALL.into_iter().enumerate() {
             assert_eq!(place(a), i, "{a:?} is out of place");
@@ -417,6 +461,7 @@ mod tests {
             text: "w".into(),
             start,
             end,
+            variant: None,
             rest: Map::new(),
         }
     }
@@ -497,6 +542,27 @@ mod tests {
                 .collect();
             assert_eq!(pauses(&refs), expected, "{}", case["name"]);
         }
+    }
+
+    #[test]
+    fn a_looks_numbers_are_bounded_and_a_word_without_one_is_unchanged() {
+        let mut scene = input(serde_json::json!({}));
+        scene.style.variants = vec![Variant {
+            scale: Some(5.0),
+            ..Variant::default()
+        }];
+        assert!(scene.check().unwrap_err().contains("scale"));
+        scene.style.variants = vec![Variant::default(); MAX_VARIANTS + 1];
+        assert!(scene.check().unwrap_err().contains("variants"));
+        // Without a look, a word serialises as it always did.
+        let word: Word =
+            serde_json::from_str(r#"{"text":"a","start":0.0,"end":1.0,"extra":1}"#).unwrap();
+        assert_eq!(word.variant, None);
+        let json = serde_json::to_string(&word).unwrap();
+        assert!(!json.contains("variant"), "{json}");
+        let styled: Word =
+            serde_json::from_str(r#"{"text":"a","start":0.0,"end":1.0,"variant":2}"#).unwrap();
+        assert_eq!(styled.variant, Some(2));
     }
 
     #[test]

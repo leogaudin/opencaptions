@@ -23,7 +23,9 @@ mod tests;
 mod text;
 
 use crate::fonts::FontBook;
-use crate::model::{Align, Animation, Background, Rgba, SceneInput, Style, TextCase, cut, shifted};
+use crate::model::{
+    Align, Animation, Background, Rgba, SceneInput, Style, TextCase, Word, cut, shifted,
+};
 use anim::*;
 use draw::*;
 use ease::{ease_out_quad, lerp, linear, overshoot, ramp, wave};
@@ -75,6 +77,8 @@ const DRIFT_PUSH: f32 = 0.06;
 const DRIFT_BOB: f32 = 0.02;
 const DRIFT_PERIOD_S: f32 = 3.0;
 const DRIFT_GLOW_REST: f32 = 0.55;
+/// BlurIn: how long a word takes to come out of the same blur (about four frames), and nothing else.
+const BLUR_IN_S: f32 = 0.12;
 /// A line that does not drift.
 const NO_DRIFT: [f32; 3] = [0.0, 0.0, 1.0];
 /// Letter rise: each letter climbs this far (a share of the font size) from below, takes `RISE_S`,
@@ -137,8 +141,12 @@ struct Placed {
     chars: usize,
     /// Its place in the transcript, which decides which way it leans.
     index: usize,
-    /// How much larger than the style's size it is set: its row's scale in a stack, else 1.
+    /// How much larger than the style's size it is set: its row's scale in a stack times its look's.
     size: f32,
+    /// Its look's colour, in place of the style's text colour.
+    color: Option<Rgba>,
+    /// A square box of this colour behind it: a name's label.
+    label: Option<Rgba>,
 }
 
 struct Line {

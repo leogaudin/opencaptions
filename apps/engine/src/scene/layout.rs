@@ -68,6 +68,43 @@ pub(super) fn pixel_bounds(r: Rect, margin: f32, width: u32, height: u32) -> Int
     IntRect::from_ltrb(x0, y0, x1, y1).unwrap_or(IntRect::from_xywh(0, 0, 1, 1).unwrap())
 }
 
+/// How one word is set: the style's look with the word's variant laid over it.
+struct Look {
+    /// The face it is drawn with, and the lean it is given for want of an italic one.
+    face: usize,
+    italic: bool,
+    sheared: bool,
+    /// Its size against the style's, the width of its gaps and its row's share of the baseline.
+    scale: f32,
+    tracking: Tracking,
+    case: TextCase,
+    color: Option<Rgba>,
+    label: Option<Rgba>,
+    /// Whether the word has a look of its own (a variant the style defines).
+    own: bool,
+}
+
+fn look_of(book: &FontBook, style: &Style, word: &Word) -> Look {
+    let variant = word.variant.and_then(|i| style.variants.get(i as usize));
+    let v = variant.cloned().unwrap_or_default();
+    let italic = v.italic.unwrap_or(style.italic);
+    let (face, sheared) = book.styled(v.font.as_deref().unwrap_or(&style.font), italic);
+    Look {
+        face,
+        italic,
+        sheared,
+        scale: v.scale.unwrap_or(1.0),
+        tracking: Tracking {
+            spacing: v.letter_spacing.unwrap_or(style.letter_spacing),
+            stretch: v.stretch.unwrap_or(style.stretch),
+        },
+        case: v.text_case.unwrap_or(style.text_case),
+        color: v.text_color,
+        label: v.box_color,
+        own: variant.is_some(),
+    }
+}
+
 impl Scene {
     pub fn new(book: &FontBook, input: SceneInput) -> Self {
         // Encoders need even dimensions; the overlay must match the frame exactly.
@@ -79,28 +116,18 @@ impl Scene {
             style.animation,
             Animation::HighlightBox | Animation::HighlightSlide | Animation::Stickers
         );
-        let (pad_wx, pad_wy) = if boxed {
-            (fs * 0.12, fs * 0.06)
-        } else {
-            (0.0, 0.0)
-        };
         let (pad_bx, pad_by) = if style.background == Background::None {
             (0.0, 0.0)
         } else {
             (fs * 0.6, fs * 0.3)
         };
-        let primary = book.primary(&style.font);
+        let primary = book.styled(&style.font, style.italic).0;
         let fallbacks: Vec<usize> = input
             .fallback_fonts
             .iter()
             .filter_map(|family| book.find(family))
             .collect();
         let face = book.face(primary);
-        let em = fs / face.units_per_em() as f32;
-        let (ascent, descent) = (
-            f32::from(face.ascender()) * em,
-            -f32::from(face.descender()) * em,
-        );
         // A boxed word's padding already separates it from the next, so the boxes
         // sit almost touching instead of adding a whole space on top.
         let tracking = Tracking {
@@ -124,7 +151,7 @@ impl Scene {
                 + style.glow_blur * 3.0
                 + style.stroke_width)
                 * k
-                + if style.italic {
+                + if style.italic || style.variants.iter().any(|v| v.italic == Some(true)) {
                     fs * ITALIC_SKEW * k
                 } else {
                     0.0
@@ -137,6 +164,7 @@ impl Scene {
                     Animation::LetterRise => fs * RISE_FROM * k,
                     Animation::WordSlam => fs * JOLT * 1.5 * k,
                     Animation::Drift => fs * (DRIFT_BOB + DRIFT_SOFT * 3.0) * k,
+                    Animation::BlurIn => fs * DRIFT_SOFT * 3.0 * k,
                     _ => 0.0,
                 }
                 + 2.0
@@ -150,24 +178,34 @@ impl Scene {
             .map(|range| {
                 let first = range.start;
                 let chunk = &words[range];
+                let looks: Vec<Look> = chunk.iter().map(|w| look_of(book, &style, w)).collect();
                 let texts: Vec<String> = chunk
                     .iter()
-                    .map(|w| match style.text_case {
+                    .zip(&looks)
+                    .map(|(w, look)| match look.case {
                         TextCase::Upper => w.text.to_uppercase(),
                         TextCase::None => w.text.clone(),
                     })
                     .collect();
+                let faces: Vec<usize> = texts
+                    .iter()
+                    .zip(&looks)
+                    .map(|(text, look)| book.for_text(look.face, &fallbacks, text))
+                    .collect();
+                // A real italic is drawn as designed; a letter from another face is leaned.
+                let leans: Vec<bool> = looks
+                    .iter()
+                    .zip(&faces)
+                    .map(|(look, face)| look.italic && (look.sheared || face != &look.face))
+                    .collect();
                 let lean = Transform::from_row(1.0, 0.0, -ITALIC_SKEW, 1.0, 0.0, 0.0);
                 let shaped: Vec<_> = texts
                     .iter()
-                    .map(|text| {
-                        let (glyphs, advance) = shape_tracked(
-                            book.face(book.for_text(primary, &fallbacks, text)),
-                            text,
-                            fs,
-                            tracking,
-                        );
-                        let glyphs = if style.italic {
+                    .enumerate()
+                    .map(|(i, text)| {
+                        let (glyphs, advance) =
+                            shape_tracked(book.face(faces[i]), text, fs, looks[i].tracking);
+                        let glyphs = if leans[i] {
                             glyphs.and_then(|p| p.transform(lean))
                         } else {
                             glyphs
@@ -178,19 +216,43 @@ impl Scene {
                 // One outline per letter, only for the look that moves them apart.
                 let clusters: Vec<Vec<Path>> = texts
                     .iter()
-                    .map(|text| {
+                    .enumerate()
+                    .map(|(i, text)| {
                         if style.animation != Animation::LetterRise {
                             return vec![];
                         }
-                        let face = book.face(book.for_text(primary, &fallbacks, text));
-                        let letters = cluster_paths(face, text, fs, tracking);
-                        if style.italic {
+                        let letters =
+                            cluster_paths(book.face(faces[i]), text, fs, looks[i].tracking);
+                        if leans[i] {
                             letters
                                 .into_iter()
                                 .filter_map(|p| p.transform(lean))
                                 .collect()
                         } else {
                             letters
+                        }
+                    })
+                    .collect();
+                // A word's own face sets where its baseline sits in its line box.
+                let metrics: Vec<(f32, f32)> = looks
+                    .iter()
+                    .map(|look| {
+                        let face = book.face(look.face);
+                        let em = fs / face.units_per_em() as f32;
+                        (
+                            f32::from(face.ascender()) * em,
+                            -f32::from(face.descender()) * em,
+                        )
+                    })
+                    .collect();
+                // A boxed word, or any word of a boxing animation, is padded.
+                let pads: Vec<(f32, f32)> = looks
+                    .iter()
+                    .map(|look| {
+                        if boxed || look.label.is_some() {
+                            (fs * 0.12, fs * 0.06)
+                        } else {
+                            (0.0, 0.0)
                         }
                     })
                     .collect();
@@ -203,11 +265,15 @@ impl Scene {
                 };
                 let mut rows: Vec<(Vec<usize>, f32)> = vec![];
                 for (i, (_, adv)) in shaped.iter().enumerate() {
-                    let slot = adv + 2.0 * pad_wx;
+                    let slot = (adv + 2.0 * pads[i].0) * looks[i].scale;
+                    let gap = rows
+                        .last()
+                        .and_then(|r| r.0.last())
+                        .map_or(sep, |&j| sep * looks[j].scale);
                     match rows.last_mut() {
-                        Some((row, w)) if *w + sep + slot <= limit => {
+                        Some((row, w)) if *w + gap + slot <= limit => {
                             row.push(i);
-                            *w += sep + slot;
+                            *w += gap + slot;
                         }
                         _ => rows.push((vec![i], slot)),
                     }
@@ -225,7 +291,33 @@ impl Scene {
                     })
                     .collect();
                 let lead = if stack { STACK_LEADING } else { LINE_HEIGHT };
-                let height_of = |scale: f32| (lead * fs + 2.0 * pad_wy) * scale;
+                // Where a word's baseline sits in its own line box (half-leading, as CSS does) and
+                // how tall that box is, at the word's size in its row.
+                let up_of = |i: usize, size: f32| {
+                    let (ascent, descent) = metrics[i];
+                    pads[i].1 * size
+                        + (lead * fs * size - (ascent + descent) * size) / 2.0
+                        + ascent * size
+                };
+                let box_of = |i: usize, size: f32| (lead * fs + 2.0 * pads[i].1) * size;
+                // A row sits its words on one baseline: the tallest word's.
+                let heights: Vec<(f32, f32)> = rows
+                    .iter()
+                    .zip(&scales)
+                    .map(|((row, _), scale)| {
+                        let (mut up, mut down, mut tall) = (0.0f32, 0.0f32, 0.0f32);
+                        for &i in row {
+                            let size = scale * looks[i].scale;
+                            let (u, h) = (up_of(i, size), box_of(i, size));
+                            up = up.max(u);
+                            down = down.max(h - u);
+                            tall = tall.max(h);
+                        }
+                        // A row of the style's own looks is as tall as its boxes, to the bit.
+                        let mixed = row.iter().any(|&i| looks[i].own);
+                        (up, if mixed { up + down } else { tall })
+                    })
+                    .collect();
                 let inner_w = rows
                     .iter()
                     .zip(&scales)
@@ -233,7 +325,7 @@ impl Scene {
                     .fold(0.0, f32::max);
                 let (block_w, block_h) = (
                     inner_w + 2.0 * pad_bx,
-                    scales.iter().map(|s| height_of(*s)).sum::<f32>() + 2.0 * pad_by,
+                    heights.iter().map(|h| h.1).sum::<f32>() + 2.0 * pad_by,
                 );
                 // The block is centred on (position_x, position_y) and clamped so it
                 // never leaves the frame, whatever a drag asks for. One wider than the
@@ -264,14 +356,9 @@ impl Scene {
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
                 let mut top = y0 + pad_by;
                 let mut biggest = 1.0f32;
-                for ((row, row_w), scale) in rows.iter().zip(&scales) {
-                    let k = *scale;
-                    biggest = biggest.max(k);
-                    let row_h = height_of(k);
-                    // Half-leading, as CSS does, for this row's size.
-                    let baseline_in_row = pad_wy * scale
-                        + (lead * fs * k - (ascent + descent) * k) / 2.0
-                        + ascent * k;
+                for (((row, row_w), scale), (baseline_in_row, row_h)) in
+                    rows.iter().zip(&scales).zip(&heights)
+                {
                     let spare = inner_w - row_w * scale;
                     let mut x = x0
                         + pad_bx
@@ -288,34 +375,41 @@ impl Scene {
                     };
                     for i in order {
                         let (glyphs, adv) = &shaped[i];
-                        let slot_w = (adv + 2.0 * pad_wx) * scale;
+                        let size = scale * looks[i].scale;
+                        biggest = biggest.max(size);
+                        let slot_w = (adv + 2.0 * pads[i].0) * size;
                         let at =
-                            Transform::from_translate(x + pad_wx * scale, top + baseline_in_row)
-                                .pre_scale(*scale, *scale);
+                            Transform::from_translate(x + pads[i].0 * size, top + baseline_in_row)
+                                .pre_scale(size, size);
+                        // The word's own line box, on the row's baseline.
+                        let slot_top = top + (baseline_in_row - up_of(i, size));
                         placed[i] = Some(Placed {
                             start: shifted(chunk[i].start, offset),
                             end: shifted(chunk[i].end, offset),
                             glyphs: glyphs.clone().and_then(|p| p.transform(at)),
-                            slot: Rect::from_xywh(x, top, slot_w.max(1.0), row_h).unwrap(),
-                            ink_x: x + pad_wx * scale,
-                            ink_w: adv * scale,
+                            slot: Rect::from_xywh(x, slot_top, slot_w.max(1.0), box_of(i, size))
+                                .unwrap(),
+                            ink_x: x + pads[i].0 * size,
+                            ink_w: adv * size,
                             baseline: top + baseline_in_row,
-                            em_top: top + baseline_in_row - ascent * k,
+                            em_top: top + baseline_in_row - metrics[i].0 * size,
                             clusters: clusters[i]
                                 .iter()
                                 .filter_map(|c| c.clone().transform(at))
                                 .collect(),
                             chars: texts[i].chars().count(),
                             index: first + i,
-                            size: *scale,
+                            size,
+                            color: looks[i].color,
+                            label: looks[i].label,
                         });
-                        x += slot_w + sep * scale;
+                        x += slot_w + sep * size;
                     }
                     top += row_h;
                 }
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
-                let tallest = scales.iter().map(|s| height_of(*s)).fold(0.0, f32::max);
+                let tallest = heights.iter().map(|h| h.1).fold(0.0, f32::max);
                 let grow = inner_w.max(tallest) * lift(style.animation);
                 Line {
                     first,

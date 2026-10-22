@@ -1772,6 +1772,7 @@ const GOLDEN: &[(&str, u64)] = &[
     ("letter_rise", 0x9bf46ac595f09960),
     ("word_slam", 0x01b67dcf00483f0b),
     ("drift", 0x4db2b22b1c3c5323),
+    ("blur_in", 0x838ead26fd0a0a6b),
     ("word_highlight+stroke", 0xa886db0bfe0007d8),
     ("word_fade+stroke", 0x100c37255aee5408),
     ("word_pop+stroke", 0x8bbaecd606e3c7e3),
@@ -1831,4 +1832,191 @@ fn a_glow_lies_under_the_extrusion_and_surrounds_it() {
         lit_reach.3 >= bare_reach.3 + 6,
         "the halo surrounds the extrusion"
     );
+}
+
+// Word looks: a style's variants, and a word's choice of one.
+
+fn serif_book() -> FontBook<'static> {
+    let mut b = FontBook::new();
+    for font in [
+        &include_bytes!("../../fonts/Inter.ttf")[..],
+        include_bytes!("../../fonts/InstrumentSerif-Italic.ttf"),
+        include_bytes!("../../fonts/InstrumentSerif-Regular.ttf"),
+    ] {
+        b.add(font).unwrap();
+    }
+    b
+}
+
+/// Three words on one row, the middle one given look `variant`, over a style with these looks.
+fn with_looks(variants: serde_json::Value, variant: Option<u32>) -> SceneInput {
+    let mut scene = styled(
+        "none",
+        &[("xxx", 0.0, 0.5), ("xxx", 0.5, 1.0), ("xxx", 1.0, 1.5)],
+        serde_json::json!({ "variants": variants }),
+    );
+    scene.transcript.segments[0].words[1].variant = variant;
+    scene
+}
+
+#[test]
+fn a_word_with_a_look_is_set_at_its_scale_on_the_rows_baseline() {
+    let looks = serde_json::json!([{ "scale": 0.5 }]);
+    let plain = Scene::new(&serif_book(), with_looks(looks.clone(), None));
+    let small = Scene::new(&serif_book(), with_looks(looks, Some(0)));
+    let (a, b) = (&small.lines[0].words[0], &small.lines[0].words[1]);
+    assert_eq!((a.size, b.size), (1.0, 0.5));
+    assert_eq!(a.baseline, b.baseline, "one baseline for the row");
+    assert!(b.slot.width() < plain.lines[0].words[1].slot.width() * 0.6);
+    let (ga, gb) = (a.glyphs.as_ref().unwrap(), b.glyphs.as_ref().unwrap());
+    assert!(
+        gb.bounds().height() < ga.bounds().height() * 0.6,
+        "drawn smaller"
+    );
+    assert!(
+        (ga.bounds().bottom() - gb.bounds().bottom()).abs() < 1.0,
+        "and standing on the same line"
+    );
+    // The gap after a small word is small too.
+    let (c_plain, c_small) = (&plain.lines[0].words[2], &small.lines[0].words[2]);
+    assert!(c_small.slot.x() < c_plain.slot.x());
+}
+
+#[test]
+fn a_look_past_the_end_draws_as_the_base_look() {
+    let looks = serde_json::json!([{ "scale": 0.5, "text_color": "#00FF00" }]);
+    let frame = |variant| {
+        let mut r = Renderer::new(Scene::new(
+            &serif_book(),
+            with_looks(looks.clone(), variant),
+        ));
+        r.render(0.7);
+        r.rgba().to_vec()
+    };
+    assert_eq!(frame(Some(7)), frame(None));
+    assert_ne!(frame(Some(0)), frame(None));
+}
+
+#[test]
+fn a_look_can_change_a_words_face_colour_and_case() {
+    let looks = serde_json::json!([
+        { "font": "Instrument Serif", "text_color": "#00FF00", "text_case": "upper" }
+    ]);
+    let mut r = Renderer::new(Scene::new(&serif_book(), with_looks(looks, Some(0))));
+    r.render(0.7);
+    let green = r
+        .rgba()
+        .chunks(4)
+        .filter(|p| p[3] == 255 && p[1] > 200 && p[0] < 60 && p[2] < 60)
+        .count();
+    assert!(green > 100, "the word is painted in its own colour");
+    let word = &r.scene().lines[0].words[1];
+    assert_eq!(word.chars, 3);
+    assert_eq!(word.color, Some(Rgba([0, 255, 0, 255])));
+}
+
+#[test]
+fn an_italic_family_uses_its_italic_and_is_not_leaned_again() {
+    let book = serif_book();
+    let scene = |italic| {
+        styled(
+            "none",
+            &[("aaa", 0.0, 0.5)],
+            serde_json::json!({ "font": "Instrument Serif", "italic": italic }),
+        )
+    };
+    let (upright, italic) = (
+        Scene::new(&book, scene(false)),
+        Scene::new(&book, scene(true)),
+    );
+    let (u, i) = (&upright.lines[0].words[0], &italic.lines[0].words[0]);
+    let fs = italic.style.font_size;
+    let advance = |face: usize| {
+        shape_tracked(
+            book.face(face),
+            "aaa",
+            fs,
+            Tracking {
+                spacing: 0.0,
+                stretch: 1.0,
+            },
+        )
+        .1
+    };
+    let (regular, real) = (
+        book.styled("Instrument Serif", false).0,
+        book.styled("Instrument Serif", true).0,
+    );
+    assert_ne!(regular, real);
+    assert!((u.ink_w - advance(regular)).abs() < 0.01);
+    assert!(
+        (i.ink_w - advance(real)).abs() < 0.01,
+        "set in the italic face"
+    );
+    // Inter has no italic: it is the upright face, leaned over its top corner.
+    let plain = Scene::new(
+        &book,
+        styled("none", &[("aaa", 0.0, 0.5)], serde_json::json!({})),
+    );
+    let leaned = Scene::new(
+        &book,
+        styled(
+            "none",
+            &[("aaa", 0.0, 0.5)],
+            serde_json::json!({ "italic": true }),
+        ),
+    );
+    let (p, l) = (&plain.lines[0].words[0], &leaned.lines[0].words[0]);
+    assert_eq!(p.ink_w, l.ink_w);
+    assert!(
+        l.glyphs.as_ref().unwrap().bounds().right() > p.glyphs.as_ref().unwrap().bounds().right()
+    );
+}
+
+#[test]
+fn a_boxed_word_has_a_square_box_behind_it() {
+    let looks = serde_json::json!([{ "box_color": "#00FF00", "scale": 0.8 }]);
+    let mut r = Renderer::new(Scene::new(&serif_book(), with_looks(looks, Some(0))));
+    r.render(0.7);
+    let slot = r.scene().lines[0].words[1].slot;
+    let (x, y) = (slot.x() as usize + 1, slot.y() as usize + 1);
+    let at = |x: usize, y: usize| {
+        let i = (y * 1080 + x) * 4;
+        r.rgba()[i..i + 4].to_vec()
+    };
+    // The corner of the box is its colour: a square, not rounded.
+    assert_eq!(at(x, y), vec![0, 255, 0, 255]);
+    // Another word has none.
+    let other = r.scene().lines[0].words[0].slot;
+    assert_ne!(
+        at(other.x() as usize + 1, other.y() as usize + 1),
+        vec![0, 255, 0, 255]
+    );
+}
+
+#[test]
+fn blur_in_comes_out_of_a_blur_in_a_few_frames_and_moves_nothing() {
+    let scene = Scene::new(&book(), input("blur_in", WORDS, 3));
+    let w = &scene.lines[0].words[0];
+    let state = |t| word_state(Animation::BlurIn, w, t);
+    let before = state(w.start - LEAD_S);
+    assert_eq!(before.opacity, 0.0);
+    assert!(before.soften > 0.0);
+    let part = state(w.start - LEAD_S + BLUR_IN_S / 2.0);
+    assert!(part.opacity > 0.0 && part.opacity < 1.0 && part.soften > 0.0);
+    for t in [w.start - LEAD_S, w.start, w.end + 1.0] {
+        let st = state(t);
+        assert_eq!(
+            (st.scale, st.tilt, st.on, st.press),
+            (1.0, 0.0, 0.0, 0.0),
+            "nothing moves"
+        );
+    }
+    let after = state(w.start - LEAD_S + BLUR_IN_S + 0.001);
+    assert_eq!(
+        (after.opacity, after.soften),
+        (1.0, 0.0),
+        "sharp after {BLUR_IN_S} s"
+    );
+    assert_eq!(state(w.end + 5.0).opacity, 1.0, "and it stays");
 }

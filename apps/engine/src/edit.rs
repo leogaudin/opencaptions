@@ -161,6 +161,22 @@ pub fn set_word(t: &Transcript, index: usize, text: &str) -> Result<Transcript, 
     Ok(rebuild(t, entries))
 }
 
+/// Gives word `index` the look `variant` of the style (None for the style's own), keeping its
+/// text, timing and every other field. An index the style has no look for is kept: a preset with
+/// more looks gives it back.
+pub fn set_variant(
+    t: &Transcript,
+    index: usize,
+    variant: Option<u32>,
+) -> Result<Transcript, String> {
+    let mut entries = flatten(t);
+    let Some(entry) = entries.get_mut(index) else {
+        return Err(format!("no word at index {index}"));
+    };
+    entry.1.variant = variant;
+    Ok(rebuild(t, entries))
+}
+
 /// Each word paired with the index of the segment it belongs to.
 fn flatten(t: &Transcript) -> Vec<(usize, Word)> {
     t.segments
@@ -495,5 +511,37 @@ mod tests {
         assert_eq!(t.segments[0].rest["end"], 0.9f32, "span follows the words");
         let gone = (0..4).fold(transcript(), |t, _| set_word(&t, 0, "").unwrap());
         assert!(gone.segments.is_empty());
+    }
+
+    #[test]
+    fn set_variant_sets_and_clears_one_words_look_and_nothing_else() {
+        let t = set_variant(&transcript(), 1, Some(2)).unwrap();
+        let v = serde_json::to_value(&t).unwrap();
+        assert_eq!(v["segments"][0]["words"][1]["variant"], 2);
+        assert!(v["segments"][0]["words"][0].get("variant").is_none());
+        assert_eq!(v["segments"][0]["words"][1]["confidence"], 0.8f32);
+        assert_eq!(words(&t), words(&transcript()), "text and timing kept");
+        let cleared = set_variant(&t, 1, None).unwrap();
+        assert_eq!(
+            serde_json::to_value(&cleared.segments[0].words).unwrap(),
+            serde_json::to_value(&transcript().segments[0].words).unwrap(),
+            "a cleared look leaves the words as they were"
+        );
+        assert!(set_variant(&transcript(), 4, Some(0)).is_err());
+    }
+
+    #[test]
+    fn a_look_survives_renaming_and_retiming_its_word() {
+        let t = set_variant(&transcript(), 1, Some(3)).unwrap();
+        let renamed = set_word(&t, 1, "deux").unwrap();
+        assert_eq!(renamed.words().nth(1).unwrap().variant, Some(3));
+        let moved = retime(&t, 1, Edge::End, 1.1, 0);
+        assert_eq!(moved.words().nth(1).unwrap().variant, Some(3));
+        let other = set_word(&t, 0, "uno").unwrap();
+        assert_eq!(
+            other.words().nth(1).unwrap().variant,
+            Some(3),
+            "a neighbour's edit"
+        );
     }
 }

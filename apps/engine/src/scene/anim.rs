@@ -107,6 +107,15 @@ pub(super) fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
                 ..steady
             }
         }
+        Animation::BlurIn => {
+            // Out of a blur in a few frames, then still: nothing moves, nothing glows.
+            let p = reached(t, w, BLUR_IN_S);
+            WordState {
+                opacity: p,
+                soften: (1.0 - p) * DRIFT_SOFT / FOCUS_BLUR,
+                ..steady
+            }
+        }
         Animation::LetterRise => WordState {
             on,
             enter: ramp(t, w.start - LEAD_S, rise_timing(w).1),

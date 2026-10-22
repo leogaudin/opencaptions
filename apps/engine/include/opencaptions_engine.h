@@ -92,6 +92,9 @@ uint32_t oc_retime_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint
  * transcript. */
 uint32_t oc_set_word(uint8_t *json_ptr, size_t json_len, uint32_t index, uint8_t *text_ptr,
                      size_t text_len);
+/* Gives one word the look `variant` of the style (an index into its variants), or the style's own
+ * with -1, keeping its text and timing. Leaves the edited transcript. */
+uint32_t oc_set_variant(uint8_t *json_ptr, size_t json_len, uint32_t index, int32_t variant);
 
 #ifdef __cplusplus
 }
