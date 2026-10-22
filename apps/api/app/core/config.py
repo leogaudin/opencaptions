@@ -95,11 +95,9 @@ class Settings(BaseSettings):
     smtp_from: str = ""  # falls back to smtp_username
     smtp_use_tls: bool = True
 
-    # Used to build reset links; falls back to the first CORS origin.
+    # The address people use. Password-reset links are built from it, and they are never built from a
+    # request's Host header (which anyone can set), so reset needs it.
     public_base_url: str = ""
-
-    # ----- CORS -----
-    cors_origins: str = "http://localhost:5173"
 
     # ----- Rendering -----
     engine_token: str = "opencaptions-dev-engine-token-change-me-for-any-exposed-host"
@@ -140,16 +138,14 @@ class Settings(BaseSettings):
 
     @property
     def smtp_configured(self) -> bool:
-        """Whether the password-reset flow is available at all."""
-        return bool(self.smtp_host.strip())
+        """Whether the password-reset flow is available at all: it needs a mail server to send
+        through and the address the link will point to."""
+        return bool(self.smtp_host.strip()) and bool(self.public_base_url.strip())
 
     @property
     def reset_link_base_url(self) -> str:
         """Base URL for reset links, without a trailing slash."""
-        base = self.public_base_url.strip()
-        if not base:
-            base = next((o.strip() for o in self.cors_origins.split(",") if o.strip()), "")
-        return base.rstrip("/")
+        return self.public_base_url.strip().rstrip("/")
 
 
 settings = Settings()

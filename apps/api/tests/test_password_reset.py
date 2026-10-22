@@ -226,3 +226,14 @@ async def test_reset_endpoints_share_the_per_ip_ceiling(
     )
     assert blocked.status_code == 429
     assert blocked.json()["error"] == "rate_limited"
+
+
+def test_reset_needs_the_address_its_links_point_to(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A link is built from `PUBLIC_BASE_URL` alone: a request's own Host header is anyone's to set, so
+    a mail server without the address does not turn reset on."""
+    monkeypatch.setattr(settings, "smtp_host", "smtp.test")
+    monkeypatch.setattr(settings, "public_base_url", "")
+    assert not settings.smtp_configured
+    monkeypatch.setattr(settings, "public_base_url", "https://captions.example.com/")
+    assert settings.smtp_configured
+    assert settings.reset_link_base_url == "https://captions.example.com"

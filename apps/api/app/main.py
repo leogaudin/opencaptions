@@ -8,7 +8,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -152,18 +151,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
-    # CSRF is added BEFORE CORS so that CORS ends up the OUTERMOST middleware:
-    # a CSRF-rejected (403) response still receives CORS headers and the browser
-    # can read it. See app/api/csrf.py.
+    # No CORS: the page and the API are one origin (nginx proxies /api in production, Vite in
+    # development), and the iPhone app sends bearer keys, so no other origin is ever let in.
     app.add_middleware(CSRFMiddleware)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
     # ----- Exception handlers (RFC 9457 Problem Details) -----
     @app.exception_handler(StarletteHTTPException)

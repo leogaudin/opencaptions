@@ -56,11 +56,11 @@ bind the port to `127.0.0.1` so only the proxy can reach it. Behind TLS, also se
 ```yaml
 SESSION_COOKIE_SECURE: "true"
 PUBLIC_BASE_URL: "https://captions.example.com"
-CORS_ORIGINS: "https://captions.example.com"   # only if the page is served from another origin
 ```
 
-`PUBLIC_BASE_URL` is the address people use: password-reset links are built from it. The defaults of all three
-are for `http://localhost:5173`.
+`PUBLIC_BASE_URL` is the address people use: password-reset links are built from it, and nothing else (a request's
+own Host header can be set by anyone), so password reset needs it as well as a mail server. The page and the API
+are one origin, so there is nothing to allow across origins.
 
 The proxy must pass WebSocket connections on `/ws/` (they carry job progress) and allow large uploads: set
 its body limit at least as high as `MAX_UPLOAD_SIZE_MB` (2 GB by default), and a read timeout of several

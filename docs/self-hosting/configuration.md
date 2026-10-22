@@ -42,14 +42,13 @@ command line: `COMPOSE_PROFILES=gpu` and `OC_CPU_TRANSCRIBERS`. See [GPU acceler
 | `REGISTRATION_ENABLED` | `true` | Whether anyone can create an account. Turn it off once yours exist. |
 | `HOSTED_MODE` | `false` | `true` when you run it for other people: the API then withholds host details (health, models, device) and refuses a per-job choice of provider or model. |
 | `SESSION_COOKIE_SECURE` | `false` | Set `true` behind HTTPS. |
-| `PUBLIC_BASE_URL` | empty | The address people use. Password-reset links are built from it. |
-| `CORS_ORIGINS` | `http://localhost:5173` | Where the page is served from, if not that address. |
+| `PUBLIC_BASE_URL` | empty | The address people use. Password-reset links are built from it, so password reset is available only when it is set (with an SMTP host). |
 | `AUTH_THROTTLE_MAX_ATTEMPTS` | `5` | Sign-in attempts per account within `AUTH_THROTTLE_WINDOW_S` (15 minutes). |
 | `AUTH_IP_THROTTLE_MAX_ATTEMPTS` | `50` | Attempts per source address within `AUTH_IP_THROTTLE_WINDOW_S` (5 minutes). Loose on purpose, so an office behind one address is never locked out. |
 
 ## Email
 
-Password reset by email turns on when a host is set. See [Accounts](./accounts.md#password-reset).
+Password reset by email turns on when a host and `PUBLIC_BASE_URL` are set. See [Accounts](./accounts.md#password-reset).
 
 | Setting | Default | |
 |---|---|---|
