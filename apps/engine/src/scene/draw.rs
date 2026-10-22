@@ -614,25 +614,10 @@ impl<'a> LinePainter<'a> {
     /// the highlight by `on` for the looks that light the word being said.
     fn word_fill(&self, w: &Placed, st: &WordState) -> Paint<'static> {
         let s = self.style;
-        let lit = match s.animation {
-            Animation::WordHighlight
-            | Animation::WordPop
-            | Animation::WordBounce
-            | Animation::LyricFocus
-            | Animation::LetterRise
-            | Animation::WordSlam
-            | Animation::Drift
-            | Animation::WordPress => st.on,
-            Animation::None
-            | Animation::BlurIn
-            | Animation::HighlightBox
-            | Animation::HighlightSlide
-            | Animation::LineBar
-            | Animation::Stickers
-            | Animation::WordFade
-            | Animation::WordSweep
-            | Animation::WordUnderline
-            | Animation::Typewriter => 0.0,
+        let lit = if s.animation.traits().lights {
+            st.on
+        } else {
+            0.0
         };
         let tint = |c: Rgba| mix(c, s.highlight(w.index), lit);
         // A word with a colour of its own is painted in it, whatever gradient the style has.

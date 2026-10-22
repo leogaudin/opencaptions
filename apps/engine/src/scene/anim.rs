@@ -164,14 +164,107 @@ pub(super) fn parts<'a>(
     w.glyphs.iter().map(|g| (g, 0.0, 1.0)).collect()
 }
 
-/// How far a word grows past its slot at most, as a share of the line: room the line's bounds keep.
-pub(super) fn lift(anim: Animation) -> f32 {
-    match anim {
-        Animation::WordBounce => BOUNCE,
-        Animation::WordSlam => SLAM_FROM - 1.0,
-        Animation::Drift => DRIFT_PUSH,
-        Animation::Stickers => STICKER_LIFT,
-        _ => POP,
+/// What an animation is, apart from how a word's state moves in time (`word_state`): the facts the
+/// layout and the drawing read about it. Adding an animation is its entry in `Animation::traits` and
+/// its arm in `word_state`; the exhaustive match refuses to compile until both exist.
+pub(super) struct AnimTraits {
+    /// Each word sits on a box of its own (a highlight, a sticker), so the line is padded for it.
+    pub boxed: bool,
+    /// Room the effect needs past the block, as `(font size, frame scale) -> pixels`: a blur's
+    /// spread, a turned word's corners, the bar under the line.
+    pub reach: fn(f32, f32) -> f32,
+    /// How far a word grows past its slot at most, as a share of the line: room the line's bounds keep.
+    pub lift: f32,
+    /// Whether the word being said is turned toward the highlight colour.
+    pub lights: bool,
+}
+
+fn reach_none(_fs: f32, _k: f32) -> f32 {
+    0.0
+}
+/// The soft words' blur.
+fn reach_focus(fs: f32, k: f32) -> f32 {
+    fs * FOCUS_BLUR * 3.0 * k
+}
+/// A turned word's corners.
+fn reach_corners(fs: f32, k: f32) -> f32 {
+    fs * 0.15 * k
+}
+/// The bar under the line.
+fn reach_bar(fs: f32, _k: f32) -> f32 {
+    fs * (BAR_GAP + BAR_THICK + 0.05)
+}
+fn reach_rise(fs: f32, k: f32) -> f32 {
+    fs * RISE_FROM * k
+}
+fn reach_jolt(fs: f32, k: f32) -> f32 {
+    fs * JOLT * 1.5 * k
+}
+fn reach_drift(fs: f32, k: f32) -> f32 {
+    fs * (DRIFT_BOB + DRIFT_SOFT * 3.0) * k
+}
+fn reach_soften(fs: f32, k: f32) -> f32 {
+    fs * DRIFT_SOFT * 3.0 * k
+}
+
+impl Animation {
+    pub(super) const fn traits(self) -> AnimTraits {
+        let plain = AnimTraits {
+            boxed: false,
+            reach: reach_none,
+            lift: POP,
+            lights: false,
+        };
+        let lit = AnimTraits {
+            lights: true,
+            ..plain
+        };
+        match self {
+            Animation::None | Animation::WordFade | Animation::WordSweep => plain,
+            Animation::WordUnderline | Animation::Typewriter => plain,
+            Animation::WordHighlight | Animation::WordPop | Animation::WordPress => lit,
+            Animation::HighlightBox | Animation::HighlightSlide => AnimTraits {
+                boxed: true,
+                ..plain
+            },
+            Animation::Stickers => AnimTraits {
+                boxed: true,
+                reach: reach_corners,
+                lift: STICKER_LIFT,
+                ..plain
+            },
+            Animation::WordBounce => AnimTraits {
+                reach: reach_corners,
+                lift: BOUNCE,
+                ..lit
+            },
+            Animation::LyricFocus => AnimTraits {
+                reach: reach_focus,
+                ..lit
+            },
+            Animation::LineBar => AnimTraits {
+                reach: reach_bar,
+                ..plain
+            },
+            Animation::LetterRise => AnimTraits {
+                reach: reach_rise,
+                ..lit
+            },
+            Animation::WordSlam => AnimTraits {
+                reach: reach_jolt,
+                lift: SLAM_FROM - 1.0,
+                ..lit
+            },
+            Animation::Drift => AnimTraits {
+                reach: reach_drift,
+                lift: DRIFT_PUSH,
+                ..lit
+            },
+            Animation::BlurIn => AnimTraits {
+                reach: reach_soften,
+                ..plain
+            },
+        }
     }
 }
 

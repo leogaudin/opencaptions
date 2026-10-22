@@ -112,10 +112,8 @@ impl Scene {
         let k = height as f32 / REF_HEIGHT;
         let style = scaled(&input.style, k);
         let fs = style.font_size;
-        let boxed = matches!(
-            style.animation,
-            Animation::HighlightBox | Animation::HighlightSlide | Animation::Stickers
-        );
+        let traits = style.animation.traits();
+        let boxed = traits.boxed;
         let (pad_bx, pad_by) = if style.background == Background::None {
             (0.0, 0.0)
         } else {
@@ -156,17 +154,7 @@ impl Scene {
                 } else {
                     0.0
                 }
-                + match style.animation {
-                    // The soft words' blur, a turned word's corners, the bar under the line.
-                    Animation::LyricFocus => fs * FOCUS_BLUR * 3.0 * k,
-                    Animation::WordBounce | Animation::Stickers => fs * 0.15 * k,
-                    Animation::LineBar => fs * (BAR_GAP + BAR_THICK + 0.05),
-                    Animation::LetterRise => fs * RISE_FROM * k,
-                    Animation::WordSlam => fs * JOLT * 1.5 * k,
-                    Animation::Drift => fs * (DRIFT_BOB + DRIFT_SOFT * 3.0) * k,
-                    Animation::BlurIn => fs * DRIFT_SOFT * 3.0 * k,
-                    _ => 0.0,
-                }
+                + (traits.reach)(fs, k)
                 + 2.0
         };
 
@@ -410,7 +398,7 @@ impl Scene {
                 let block = Rect::from_xywh(x0, y0, block_w.max(1.0), block_h.max(1.0)).unwrap();
                 // Room for the pop to grow a word past its slot.
                 let tallest = heights.iter().map(|h| h.1).fold(0.0, f32::max);
-                let grow = inner_w.max(tallest) * lift(style.animation);
+                let grow = inner_w.max(tallest) * traits.lift;
                 Line {
                     first,
                     start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
