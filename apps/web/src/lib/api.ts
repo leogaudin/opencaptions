@@ -1,4 +1,9 @@
-/** Typed API client. All paths are relative: nginx proxies /api and /ws. */
+/**
+ * Typed API client. Every call goes through `openapi-fetch` over the generated `paths`
+ * (src/types/api.generated.ts), so the compiler checks each path, method, parameter, body and
+ * response against the API's own schema. All paths are same-origin: nginx proxies /api and /ws.
+ */
+import createClient from "openapi-fetch";
 import type {
   ApiError,
   ApiKey,
@@ -18,6 +23,7 @@ import type {
   UsageRead,
   UserRead,
 } from "@/types";
+import type { components, paths } from "@/types/api.generated";
 import type { AuthSession, AuthStatus } from "@/types/auth";
 
 const API_BASE = "/api/v1";
@@ -38,7 +44,7 @@ export function setCsrfToken(token: string | null): void {
 
 /**
  * Clears auth state and redirects on an unexpected 401, in one place. The
- * bootstrap probe opts out via `skipAuthRedirect` to avoid a redirect loop.
+ * bootstrap probe opts out via `quiet401` to avoid a redirect loop.
  */
 let onUnauthorized: (() => void) | null = null;
 
@@ -58,64 +64,48 @@ class ApiException extends Error {
   }
 }
 
-async function request<T>(
-  path: string,
-  init: RequestInit & { json?: unknown; skipAuthRedirect?: boolean } = {},
-): Promise<T> {
-  const { json, skipAuthRedirect, ...rest } = init;
-  const headers = new Headers(rest.headers);
-  if (json !== undefined) {
-    headers.set("Content-Type", "application/json");
-  }
-  // CSRF: the API requires an X-CSRF-Token header on every state-changing
-  // method. Attach the in-memory token once, here, for all callers. Safe GETs
-  // (and HEAD/OPTIONS) don't need it and are left untouched.
-  const method = (rest.method ?? "GET").toUpperCase();
-  if (csrfToken && !SAFE_METHODS.has(method)) {
-    headers.set("X-CSRF-Token", csrfToken);
-  }
-  const resp = await fetch(`${API_BASE}${path}`, {
-    ...rest,
-    headers,
-    // Send the httpOnly session cookie. Everything is same-origin (Vite proxy
-    // in dev, nginx in prod), so same-origin credentials suffice.
-    credentials: "same-origin",
-    body: json !== undefined ? JSON.stringify(json) : rest.body,
-  });
-  return settle<T>(resp, skipAuthRedirect);
-}
+/** Marks a request whose 401 is expected (a bootstrap probe, a wrong password): the global handler skips it. */
+const QUIET_401 = "x-oc-quiet-401";
+const quiet = { headers: { [QUIET_401]: "1" } };
 
-/** The one place a response becomes a value or an error, for `fetch` and uploads alike. */
-async function settle<T>(resp: Response, skipAuthRedirect = false): Promise<T> {
-  if (resp.status === 204) {
-    return undefined as T;
-  }
+// Same-origin: the page's own origin, which is what a relative URL means in a browser (a request built
+// outside one, as in the unit tests, needs it spelled out).
+const origin = typeof location === "undefined" ? "" : location.origin;
+const client = createClient<paths>({ baseUrl: origin, credentials: "same-origin" });
 
-  let body: unknown = null;
-  const ct = resp.headers.get("content-type") ?? "";
-  if (ct.includes("application/json")) {
-    body = await resp.json();
-  } else {
-    body = await resp.text();
-    // A successful answer that is not JSON is not the API's (a dev server or a proxy answering
-    // with its own page): fail here, in words, rather than hand a string to code expecting data.
-    if (resp.ok && typeof body === "string" && body.trim() !== "") {
-      throw new ApiException(resp.status, null, "Unexpected response from the server");
+client.use({
+  onRequest({ request }) {
+    // CSRF: the API requires an X-CSRF-Token header on every state-changing method. Attached once,
+    // here, for all callers. Safe GETs (and HEAD/OPTIONS) don't need it and are left untouched.
+    if (csrfToken && !SAFE_METHODS.has(request.method.toUpperCase())) {
+      request.headers.set("X-CSRF-Token", csrfToken);
     }
-    if (resp.ok) return undefined as T;
-  }
-
-  if (!resp.ok) {
-    // Central 401 handling: a session that expires mid-use clears auth state and
-    // routes the user to login. The bootstrap probe (GET /auth/me) passes
-    // skipAuthRedirect so its EXPECTED logged-out 401 can't loop.
-    if (resp.status === 401 && !skipAuthRedirect) {
-      onUnauthorized?.();
+    return request;
+  },
+  async onResponse({ request, response }) {
+    // A successful answer that is not JSON is not the API's (a dev server or a proxy answering with its
+    // own page): fail here, in words, rather than hand a string to code expecting data.
+    const json = (response.headers.get("content-type") ?? "").includes("application/json");
+    if (response.ok && response.status !== 204 && !json) {
+      if ((await response.clone().text()).trim() !== "") {
+        throw new ApiException(response.status, null, "Unexpected response from the server");
+      }
     }
-    const apiError = typeof body === "object" && body ? (body as ApiError) : null;
-    throw new ApiException(resp.status, apiError, apiError?.detail ?? resp.statusText);
+    // Central 401 handling: a session that expires mid-use clears auth state and routes the user to
+    // login. The bootstrap probe (GET /auth/me) is `quiet` so its EXPECTED logged-out 401 can't loop.
+    if (response.status === 401 && !request.headers.has(QUIET_401)) onUnauthorized?.();
+    return response;
+  },
+});
+
+/** The value of a call, or the error it answered with, as an ApiException. The types come from the call. */
+function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
+  const { data, error, response } = result;
+  if (!response.ok) {
+    const body = typeof error === "object" && error ? (error as ApiError) : null;
+    throw new ApiException(response.status, body, body?.detail ?? response.statusText);
   }
-  return body as T;
+  return data as T;
 }
 
 // ---------- Auth ----------
@@ -124,16 +114,13 @@ async function settle<T>(resp: Response, skipAuthRedirect = false): Promise<T> {
  * Public probe used on first load to decide what to render: `setup_required`
  * is true on an instance with no users yet (first run).
  */
-export function getAuthStatus(): Promise<AuthStatus> {
-  return request<AuthStatus>("/auth/status");
+export async function getAuthStatus(): Promise<AuthStatus> {
+  return unwrap(await client.GET("/api/v1/auth/status"));
 }
 
 /** Register an account. Sets the session cookie and returns a CSRF token. */
 export async function register(email: string, password: string): Promise<AuthSession> {
-  const session = await request<AuthSession>("/auth/register", {
-    method: "POST",
-    json: { email, password },
-  });
+  const session = unwrap(await client.POST("/api/v1/auth/register", { body: { email, password } }));
   setCsrfToken(session.csrf_token);
   return session;
 }
@@ -143,20 +130,17 @@ export async function register(email: string, password: string): Promise<AuthSes
  * imply whether the email exists.
  */
 export async function login(email: string, password: string): Promise<AuthSession> {
-  const session = await request<AuthSession>("/auth/login", {
-    method: "POST",
-    json: { email, password },
-  });
+  const session = unwrap(await client.POST("/api/v1/auth/login", { body: { email, password } }));
   setCsrfToken(session.csrf_token);
   return session;
 }
 
 /**
  * Resolve the session from the cookie, or throw ApiException(401).
- * skipAuthRedirect keeps an expected bootstrap 401 out of the global redirect.
+ * `quiet` keeps an expected bootstrap 401 out of the global redirect.
  */
 export async function fetchMe(): Promise<AuthSession> {
-  const session = await request<AuthSession>("/auth/me", { skipAuthRedirect: true });
+  const session = unwrap(await client.GET("/api/v1/auth/me", quiet));
   setCsrfToken(session.csrf_token);
   return session;
 }
@@ -164,7 +148,7 @@ export async function fetchMe(): Promise<AuthSession> {
 /** Log out: clears the server session (204) and the in-memory CSRF token. */
 export async function logout(): Promise<void> {
   try {
-    await request<void>("/auth/logout", { method: "POST" });
+    unwrap(await client.POST("/api/v1/auth/logout"));
   } finally {
     setCsrfToken(null);
   }
@@ -174,40 +158,42 @@ export async function logout(): Promise<void> {
  * Request a reset link. The server answers identically for unknown emails, so
  * the caller must show the same neutral confirmation either way.
  */
-export function requestPasswordReset(email: string): Promise<void> {
-  return request<void>("/auth/password-reset", {
-    method: "POST",
-    json: { email },
-    // Logged-out flow: an expected-401 elsewhere must not redirect us, and there
-    // is no session to clear here anyway.
-    skipAuthRedirect: true,
-  });
+export async function requestPasswordReset(email: string): Promise<void> {
+  // Logged-out flow: an expected-401 elsewhere must not redirect us, and there is no session to clear.
+  unwrap(await client.POST("/api/v1/auth/password-reset", { body: { email }, ...quiet }));
 }
 
 /**
  * Set a new password from a token. Every session is revoked and none created,
  * so send the user to sign in. Bad or used tokens come back as a generic 400.
  */
-export function confirmPasswordReset(token: string, password: string): Promise<void> {
-  return request<void>("/auth/password-reset/confirm", {
-    method: "POST",
-    json: { token, password },
-    skipAuthRedirect: true,
-  });
+export async function confirmPasswordReset(token: string, password: string): Promise<void> {
+  unwrap(
+    await client.POST("/api/v1/auth/password-reset/confirm", {
+      body: { token, password },
+      ...quiet,
+    }),
+  );
 }
 
 // ---------- Projects ----------
 
 export async function listProjects(page = 1, perPage = 20): Promise<ProjectList> {
-  const list = await request<ProjectList>(`/projects?page=${page}&per_page=${perPage}`);
+  const list = unwrap(
+    await client.GET("/api/v1/projects", { params: { query: { page, per_page: perPage } } }),
+  );
   if (!Array.isArray(list?.items)) {
     throw new ApiException(200, null, "Unexpected response from the server");
   }
   return list;
 }
 
-export function getProject(projectId: string): Promise<Project> {
-  return request<Project>(`/projects/${projectId}`);
+export async function getProject(projectId: string): Promise<Project> {
+  return unwrap(
+    await client.GET("/api/v1/projects/{project_id}", {
+      params: { path: { project_id: projectId } },
+    }),
+  ) as Project;
 }
 
 export interface UploadHooks {
@@ -218,8 +204,8 @@ export interface UploadHooks {
 }
 
 /**
- * POST with progress and cancel, which `fetch` cannot give a request body.
- * Same CSRF header, cookie and error handling as {@link request}.
+ * POST with progress and cancel, which `fetch` cannot give a request body: an XMLHttpRequest, with the
+ * same CSRF header, cookie and error handling as the client.
  */
 function upload<T>(path: string, body: FormData, hooks: UploadHooks): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -231,12 +217,21 @@ function upload<T>(path: string, body: FormData, hooks: UploadHooks): Promise<T>
       if (e.lengthComputable) hooks.onProgress?.(e.loaded, e.total);
     };
     xhr.onload = () => {
-      const resp = new Response(xhr.status === 204 ? null : xhr.responseText, {
-        status: xhr.status,
-        statusText: xhr.statusText,
-        headers: { "content-type": xhr.getResponseHeader("content-type") ?? "" },
-      });
-      settle<T>(resp).then(resolve, reject);
+      let parsed: unknown = null;
+      try {
+        parsed = JSON.parse(xhr.responseText);
+      } catch {
+        // Not JSON: reported below as what it is.
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && parsed !== null) {
+        resolve(parsed as T);
+        return;
+      }
+      if (xhr.status === 401) onUnauthorized?.();
+      const error = typeof parsed === "object" && parsed ? (parsed as ApiError) : null;
+      reject(
+        new ApiException(xhr.status, error, error?.detail ?? (xhr.statusText || "Upload failed")),
+      );
     };
     xhr.onerror = () => reject(new Error("Network error"));
     xhr.onabort = () => reject(new DOMException("Upload cancelled", "AbortError"));
@@ -264,14 +259,23 @@ export function createProject(
 }
 
 /** Create a project from a direct video URL. Page links (YouTube) are not supported. */
-export function createProjectFromUrl(title: string, videoUrl: string): Promise<Project> {
-  const fd = new FormData();
-  fd.append("title", title);
-  fd.append("video_url", videoUrl);
-  return request<Project>("/projects", { method: "POST", body: fd });
+export async function createProjectFromUrl(title: string, videoUrl: string): Promise<Project> {
+  return unwrap(
+    await client.POST("/api/v1/projects", {
+      body: { title, video_url: videoUrl },
+      // A form, not JSON: the browser sets its own content type.
+      bodySerializer: (body) => {
+        const fd = new FormData();
+        for (const [key, value] of Object.entries(body ?? {})) {
+          if (typeof value === "string") fd.append(key, value);
+        }
+        return fd;
+      },
+    }),
+  ) as Project;
 }
 
-export function updateProject(
+export async function updateProject(
   projectId: string,
   body: {
     title?: string;
@@ -280,14 +284,20 @@ export function updateProject(
     caption_offset_ms?: number;
   },
 ): Promise<Project> {
-  return request<Project>(`/projects/${projectId}`, {
-    method: "PATCH",
-    json: body,
-  });
+  return unwrap(
+    await client.PATCH("/api/v1/projects/{project_id}", {
+      params: { path: { project_id: projectId } },
+      body,
+    }),
+  ) as Project;
 }
 
-export function deleteProject(projectId: string): Promise<void> {
-  return request<void>(`/projects/${projectId}`, { method: "DELETE" });
+export async function deleteProject(projectId: string): Promise<void> {
+  unwrap(
+    await client.DELETE("/api/v1/projects/{project_id}", {
+      params: { path: { project_id: projectId } },
+    }),
+  );
 }
 
 /** Poster-frame URL. Same-origin so the cookie authenticates it; 404 when absent. */
@@ -301,29 +311,42 @@ export interface TranscribeBody {
   language?: string;
 }
 
-export function startTranscription(projectId: string, body: TranscribeBody = {}): Promise<Job> {
-  return request<Job>(`/projects/${projectId}/transcribe`, {
-    method: "POST",
-    json: body,
-  });
+export async function startTranscription(
+  projectId: string,
+  body: TranscribeBody = {},
+): Promise<Job> {
+  return unwrap(
+    await client.POST("/api/v1/projects/{project_id}/transcribe", {
+      params: { path: { project_id: projectId } },
+      // Only what was chosen is sent: the API defaults the rest. Its generated type lists every field
+      // that has a default as required, so the body is stated as that type here and nowhere else.
+      body: body as components["schemas"]["TranscribeRequest"],
+    }),
+  ) as Job;
 }
 
 // ---------- Multi-format video download ----------
 
-export function getExportLinks(projectId: string): Promise<ExportLinks> {
-  return request<ExportLinks>(`/projects/${projectId}/exports`);
+export async function getExportLinks(projectId: string): Promise<ExportLinks> {
+  return unwrap(
+    await client.GET("/api/v1/projects/{project_id}/exports", {
+      params: { path: { project_id: projectId } },
+    }),
+  ) as ExportLinks;
 }
 
 /** Request a download: a URL when ready, otherwise a job_id to wait on. */
-export function requestDownload(
+export async function requestDownload(
   projectId: string,
   format: string,
   options: RenderOptions,
 ): Promise<DownloadResponse> {
-  return request<DownloadResponse>(`/projects/${projectId}/download`, {
-    method: "POST",
-    json: { format, ...options },
-  });
+  return unwrap(
+    await client.POST("/api/v1/projects/{project_id}/download", {
+      params: { path: { project_id: projectId } },
+      body: { format, ...options },
+    }),
+  ) as DownloadResponse;
 }
 
 /**
@@ -341,66 +364,69 @@ export function getDownloadUrl(projectId: string, format: string, options: Rende
 
 // ---------- Jobs ----------
 
-export function getJob(jobId: string): Promise<Job> {
-  return request<Job>(`/jobs/${jobId}`);
+export async function getJob(jobId: string): Promise<Job> {
+  return unwrap(
+    await client.GET("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } } }),
+  ) as Job;
 }
 
-export function cancelJob(jobId: string): Promise<void> {
-  return request<void>(`/jobs/${jobId}`, { method: "DELETE" });
+export async function cancelJob(jobId: string): Promise<void> {
+  unwrap(await client.DELETE("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } } }));
 }
 
 // ---------- API keys ----------
 
-export function listApiKeys(): Promise<ApiKey[]> {
-  return request<ApiKey[]>("/api-keys");
+export async function listApiKeys(): Promise<ApiKey[]> {
+  return unwrap(await client.GET("/api/v1/api-keys"));
 }
 
-export function createApiKey(name: string): Promise<ApiKeyCreated> {
-  return request<ApiKeyCreated>("/api-keys", { method: "POST", json: { name } });
+export async function createApiKey(name: string): Promise<ApiKeyCreated> {
+  return unwrap(await client.POST("/api/v1/api-keys", { body: { name } }));
 }
 
-export function revokeApiKey(id: string): Promise<void> {
-  return request<void>(`/api-keys/${id}`, { method: "DELETE" });
+export async function revokeApiKey(id: string): Promise<void> {
+  unwrap(await client.DELETE("/api/v1/api-keys/{key_id}", { params: { path: { key_id: id } } }));
 }
 
 // ---------- Fonts ----------
 
 /** Every Google Fonts family, most popular first. */
-export function listFonts(): Promise<FontFamily[]> {
-  return request<FontFamily[]>("/fonts");
+export async function listFonts(): Promise<FontFamily[]> {
+  return unwrap(await client.GET("/api/v1/fonts"));
 }
 
 // ---------- Settings ----------
 
 /** Work this account has had done, for the account page. */
-export function getMyUsage(): Promise<UsageRead> {
-  return request<UsageRead>("/auth/me/usage");
+export async function getMyUsage(): Promise<UsageRead> {
+  return unwrap(await client.GET("/api/v1/auth/me/usage"));
 }
 
 /** Change the account's email. Requires the current password. */
-export function changeEmail(email: string, currentPassword: string): Promise<UserRead> {
-  return request<UserRead>("/auth/me/email", {
-    method: "PATCH",
-    json: { email, current_password: currentPassword },
-    // A 401 here means the password was wrong, not that the session expired, so
-    // it must not reach the global handler, which would log the user out for a
-    // typo and lose the form they were filling in.
-    skipAuthRedirect: true,
-  });
+export async function changeEmail(email: string, currentPassword: string): Promise<UserRead> {
+  // A 401 here means the password was wrong, not that the session expired, so it must not reach the
+  // global handler, which would log the user out for a typo and lose the form they were filling in.
+  return unwrap(
+    await client.PATCH("/api/v1/auth/me/email", {
+      body: { email, current_password: currentPassword },
+      ...quiet,
+    }),
+  );
 }
 
 /** Change the account's password. Every other session is revoked. */
-export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  return request<void>("/auth/me/password", {
-    method: "PATCH",
-    json: { current_password: currentPassword, new_password: newPassword },
-    // As above: a wrong current password is a form error, not a dead session.
-    skipAuthRedirect: true,
-  });
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  // As above: a wrong current password is a form error, not a dead session.
+  unwrap(
+    await client.PATCH("/api/v1/auth/me/password", {
+      body: { current_password: currentPassword, new_password: newPassword },
+      ...quiet,
+    }),
+  );
 }
 
-export function getSettings(): Promise<AppSettingsResponse> {
-  return request<AppSettingsResponse>("/settings");
+export async function getSettings(): Promise<AppSettingsResponse> {
+  return unwrap(await client.GET("/api/v1/settings"));
 }
 
 /** What the server says about the remote OpenCaptions instance it is set to transcribe on. */
@@ -413,14 +439,16 @@ export type RemoteTranscriptionTest =
     }
   | { ok: false; error: string };
 
-export function testRemoteTranscription(): Promise<RemoteTranscriptionTest> {
-  return request<RemoteTranscriptionTest>("/settings/transcription/test", { method: "POST" });
+export async function testRemoteTranscription(): Promise<RemoteTranscriptionTest> {
+  return unwrap(
+    await client.POST("/api/v1/settings/transcription/test"),
+  ) as RemoteTranscriptionTest;
 }
 
 // ---------- Health ----------
 
-export function getHealth(): Promise<HealthResponse> {
-  return request<HealthResponse>("/health");
+export async function getHealth(): Promise<HealthResponse> {
+  return unwrap(await client.GET("/api/v1/health"));
 }
 
 // Re-export response types so consumers importing them from "@/lib/api" continue to work.

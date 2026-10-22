@@ -13,7 +13,10 @@
     "outDir": "node_modules/.tmp/tsc-node",
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "types": ["node"]
+    "types": ["node"],
+    // The client under test imports the app's types through the `@/` alias, and the types read presets.json.
+    "paths": { "@/*": ["./src/*"] },
+    "resolveJsonModule": true
   },
   "include": [
     "vite.config.ts",
@@ -22,11 +25,14 @@
     "playwright.config.ts",
     "tests/**/*.ts",
     "src/demo/links.ts",
+    "src/lib/api.ts",
     "src/lib/autosave.ts",
     "src/lib/transcriptionLanguages.ts",
     "src/lib/fontManifest.ts",
     "src/lib/history.ts",
     "src/lib/tileSample.ts",
-    "src/lib/transcriptText.ts"
+    "src/lib/transcriptText.ts",
+    "src/lib/presets.json",
+    "src/types/*.ts"
   ]
 }
