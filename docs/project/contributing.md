@@ -39,6 +39,13 @@ target (`lint-backend`, `test-backend`, `typecheck`, `e2e`, and more: `make ci-c
 its own container, and GitHub CI runs the same list, one job per check. To add a check, write its target and
 name it in `CI_CHECKS` in the `Makefile`: nothing else changes.
 
+## Releasing
+
+`make release VERSION=x.y.z` prepares a release without making it: it bumps every manifest the version check knows
+(and the lock files that repeat them), rewrites `CHANGELOG.md` from the Conventional Commits (git-cliff, configured in
+`cliff.toml`) and prints the commit, tag and push commands. Tagging and pushing are the maintainer's: a `v*.*.*` tag
+publishes the multi-arch images.
+
 ## Where things are
 
 | Path | What it owns |

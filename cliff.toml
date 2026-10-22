@@ -1,0 +1,28 @@
+# git-cliff: the changelog is made from the Conventional Commits (feat:, fix:, refactor:, docs:, ...).
+# `make release VERSION=x.y.z` runs it; nothing here tags or publishes.
+[changelog]
+header = "# Changelog\n\nEvery change to OpenCaptions, from its commit messages.\n"
+body = """
+{% if version %}## {{ version | trim_start_matches(pat="v") }} ({{ timestamp | date(format="%Y-%m-%d") }}){% else %}## Unreleased{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}- {{ commit.message | split(pat="\n") | first | upper_first }}
+{% endfor %}{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+commit_parsers = [
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Fixes" },
+  { message = "^refactor", group = "Changes" },
+  { message = "^perf", group = "Changes" },
+  { message = "^docs", group = "Documentation" },
+  { message = "^test", group = "Tests" },
+  { message = "^(chore|ci|build)", group = "Maintenance" },
+]
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"

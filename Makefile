@@ -131,6 +131,9 @@ format:              ## Auto-format all code
 generate-types:      ## Regenerate TypeScript types from the OpenAPI spec
 	@$(WEB) generate-types
 
+release:             ## Prepare a release without making it. Usage: make release VERSION=0.2.0
+	@./scripts/release.sh $(VERSION)
+
 check-versions:      ## Verify the manifests agree on the version
 	@./scripts/check-version-sync.sh
 

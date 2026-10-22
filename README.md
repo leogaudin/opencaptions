@@ -45,6 +45,9 @@ docker compose up -d
 
 Open <http://localhost:5173>, create an account, drop a video in.
 
+The compose file runs the `edge` images (the main branch) until a release exists. Once one does, pin it:
+`OPENCAPTIONS_VERSION=<version> docker compose up -d`.
+
 To build from source instead, clone the repository and run `docker compose up -d --build`
 (or `make up`).
 
