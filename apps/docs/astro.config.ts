@@ -33,6 +33,7 @@ export default defineConfig({
         { label: "Getting started", items: [{ autogenerate: { directory: "getting-started" } }] },
         { label: "Guides", items: [{ autogenerate: { directory: "guides" } }] },
         { label: "Self-hosting", items: [{ autogenerate: { directory: "self-hosting" } }] },
+        { label: "Use cases", items: [{ autogenerate: { directory: "use-cases" } }] },
         { label: "Reference", items: [{ autogenerate: { directory: "reference" } }] },
         { slug: "faq" },
         { label: "About the project", collapsed: true, items: [{ autogenerate: { directory: "project" } }] },
