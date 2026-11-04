@@ -6,7 +6,7 @@
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach the live
-store, so what is here only reads; a command that writes says so in its name.
+store: the commands here only read, and writing means calling `send` on purpose.
 """
 
 from __future__ import annotations
@@ -57,14 +57,22 @@ def token() -> str:
     return f"{signing}.{_b64(_raw_signature(der))}"
 
 
-def get(path: str) -> dict[str, Any]:
+def send(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    """One call to the API. Anything but GET changes the live store."""
     url = path if path.startswith("http") else API + path
-    request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token()}"})
+    headers = {"Authorization": f"Bearer {token()}", "Content-Type": "application/json"}
+    data = json.dumps(body).encode() if body is not None else None
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response)
+            text = response.read()
+            return json.loads(text) if text else {}
     except urllib.error.HTTPError as e:
         return {"status": e.code, "errors": json.load(e).get("errors", [])}
+
+
+def get(path: str) -> dict[str, Any]:
+    return send("GET", path)
 
 
 def snapshot() -> dict[str, Any]:

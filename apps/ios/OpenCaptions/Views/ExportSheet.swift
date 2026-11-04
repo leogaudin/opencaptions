@@ -1,11 +1,13 @@
 import OpenCaptionsKit
 import Photos
+import StoreKit
 import SwiftUI
 
 /// Saving the captioned video: a percentage and time left while it is made, then Share or
 /// Save to Photos. Small on purpose: there is little to say, so it takes little of the screen.
 struct ExportSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     let controller: ExportController
     /// What a file saved from here is called by default: the project's title.
     var suggestedName = "OpenCaptions"
@@ -89,11 +91,18 @@ struct ExportSheet: View {
                 .buttonStyle(SecondaryButtonStyle())
             }
             if let photosMessage { Text(photosMessage).font(.footnote).foregroundStyle(.secondary) }
-            Button("Done") { dismiss() }
+            Button("Done") { finish() }
                 .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textSecondary)
                 .padding(.vertical, 2)
         }
         .animation(.default, value: photosMessage)
+    }
+
+    /// Leaving a video that worked: the one moment a rating may be asked for.
+    private func finish() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        if ReviewPrompt.finishedVideo(version: version) { requestReview() }
+        dismiss()
     }
 
     #if os(macOS)
