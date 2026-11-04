@@ -21,8 +21,7 @@ it. The [quick start](../getting-started/quick-start.md) is the short version of
   about 3 GB each) and for your videos and their exports.
 - **A free port 5173**, the one port the stack publishes.
 
-The images are published for `amd64`, and, with the first release, for `arm64` too, so a Mac with
-Apple silicon or a Raspberry Pi can run them.
+The images are published for `amd64` and `arm64`, so a Mac with Apple silicon or a Raspberry Pi can run them.
 
 ## Start it
 
