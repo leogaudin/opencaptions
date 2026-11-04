@@ -5,7 +5,7 @@
 Key facts:
 
 - Open source under AGPL-3.0. Self-hosted with Docker Compose: download one `docker-compose.yml` and run `docker compose up -d`. A GPU is optional.
-- An iPhone and iPad app transcribes on the device. No account is needed.
+- An iPhone and iPad app transcribes on the device, with no account: https://apps.apple.com/app/id6820548922
 - No tracking and no analytics. Videos stay on the device or on your own server unless you choose another transcription provider.
 - One Rust engine draws the captions in the browser (WebAssembly), on the server and on the iPhone, so the preview is the export.
 - Speech models: Whisper covers about 100 spoken languages, Parakeet is fast in 25 European languages, and Apple Speech is built into iOS. Captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts; the interface is available in 13 languages.

@@ -102,21 +102,9 @@ function Hero() {
         >
           {t("Self-host it")}
         </a>
-        {APP_STORE_URL ? (
-          <a
-            href={APP_STORE_URL}
-            {...external}
-            className={`${buttonClass} bg-muted text-foreground`}
-          >
-            {t("Get the iPhone app")}
-          </a>
-        ) : (
-          <span
-            className={`${buttonClass} cursor-default bg-muted text-muted-foreground hover:opacity-100`}
-          >
-            {t("iPhone app: coming soon")}
-          </span>
-        )}
+        <a href={APP_STORE_URL} {...external} className={`${buttonClass} bg-muted text-foreground`}>
+          {t("Get the iPhone app")}
+        </a>
       </div>
     </section>
   );
@@ -238,19 +226,13 @@ function Ways() {
           <p className="flex-1 text-sm text-muted-foreground">
             {t("Caption, retime and save right on the phone.")}
           </p>
-          {APP_STORE_URL ? (
-            <a
-              href={APP_STORE_URL}
-              {...external}
-              className={`${buttonClass} bg-primary text-primary-foreground`}
-            >
-              {t("Get the iPhone app")}
-            </a>
-          ) : (
-            <span className="text-sm font-semibold text-muted-foreground">
-              {t("iPhone app: coming soon")}
-            </span>
-          )}
+          <a
+            href={APP_STORE_URL}
+            {...external}
+            className={`${buttonClass} bg-primary text-primary-foreground`}
+          >
+            {t("Get the iPhone app")}
+          </a>
         </article>
         <article className="flex min-w-0 flex-col gap-3 rounded-2xl bg-muted p-6">
           <IconBadge icon={Server} />

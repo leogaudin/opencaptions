@@ -4,12 +4,11 @@
  * place so the tags cannot disagree, and the build writes it into the page's <head>
  * (`demo.html` holds a placeholder), once for each language the page is in.
  *
- * Only claims that are true of the product today: the iPhone app is listed as available once
- * `APP_STORE_URL` is set. The FAQ is the same text as the one on the page.
+ * Only claims that are true of the product today. The FAQ is the same text as the one on the page.
  */
 import { type LanguageCode, msg, translate } from "@/lib/i18n";
 import { FAQ } from "./faq";
-import { APP_STORE_URL, DOCS_URL, GITHUB_URL, SITE_URL } from "./links";
+import { APP_STORE_ID, APP_STORE_URL, DOCS_URL, GITHUB_URL, SITE_URL } from "./links";
 import { HREFLANG, OG_LOCALE, PAGE_LANGUAGES, pageUrl } from "./pages";
 
 /** In English: a page in another language shows these translated (see `titleOf`). */
@@ -44,7 +43,7 @@ export function structuredData(code: LanguageCode): object {
         url,
         description: translate((FAQ[0] as { a: string }).a),
         applicationCategory: "MultimediaApplication",
-        operatingSystem: APP_STORE_URL ? "iOS, iPadOS, Web, Docker" : "Web, Docker",
+        operatingSystem: "iOS, iPadOS, Web, Docker",
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         isAccessibleForFree: true,
         license: LICENSE_URL,
@@ -52,7 +51,7 @@ export function structuredData(code: LanguageCode): object {
         image: OG_IMAGE,
         softwareHelp: { "@type": "CreativeWork", url: DOCS_URL },
         sameAs: [GITHUB_URL],
-        ...(APP_STORE_URL ? { downloadUrl: APP_STORE_URL } : {}),
+        downloadUrl: APP_STORE_URL,
       },
       { "@type": "WebSite", "@id": `${SITE_URL}#site`, name: "OpenCaptions", url: SITE_URL },
       {
@@ -97,6 +96,8 @@ export function headTags(code: LanguageCode): string {
     `<link rel="canonical" href="${url}" />`,
     ...alternates,
     meta("robots", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"),
+    // Safari on an iPhone offers the app above the page.
+    meta("apple-itunes-app", `app-id=${APP_STORE_ID}`),
     `<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />`,
     `<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />`,
     `<link rel="icon" href="/favicon.ico" sizes="48x48" />`,
