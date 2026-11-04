@@ -49,8 +49,9 @@
 			</array>
 		</dict>
 	</array>
+	<!-- The file stays where it is and the app copies it in (ProjectsView.load(file:)); macOS refuses NO. -->
 	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<false/>
+	<true/>
 	<!-- Only HTTPS and the system's own encryption: nothing for export compliance to ask about. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
