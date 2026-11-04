@@ -34,7 +34,7 @@ PY
 bash scripts/check-version-sync.sh
 
 # The changelog, as it will read once v$VERSION exists.
-docker run --rm -v "$PWD":/app -w /app orhun/git-cliff:2 --tag "v$VERSION" --output CHANGELOG.md
+docker run --rm -v "$PWD":/app -w /app orhunp/git-cliff:2.14.2 --tag "v$VERSION" --output CHANGELOG.md
 
 cat <<MSG
 

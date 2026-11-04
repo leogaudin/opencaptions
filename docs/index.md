@@ -51,8 +51,8 @@ the server and on the phone. What the preview shows is what the export draws.
 
 ## Status
 
-OpenCaptions is before its first release (v0.1). The interface and the self-hosting setup work today,
-but the API and the data formats may still change until the first tagged release.
+The iPhone and iPad app is on the App Store, and the self-hosted stack has tagged releases. What changed in
+each one is in the [changelog](https://github.com/leogaudin/opencaptions/blob/main/CHANGELOG.md).
 
 ## Where to go next
 

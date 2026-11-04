@@ -13,7 +13,7 @@ Nothing leaves your machine unless you say so.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![CI](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml/badge.svg)](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml)
-[![Status](https://img.shields.io/badge/status-pre--v0.1-orange.svg)](#status)
+[![Release](https://img.shields.io/github/v/release/leogaudin/opencaptions)](https://github.com/leogaudin/opencaptions/releases)
 
 ![OpenCaptions editor: a video with word-by-word animated captions next to the style panel, over the caption timeline](docs/screenshot.webp)
 
@@ -48,8 +48,8 @@ docker compose up -d
 
 Open <http://localhost:5173>, create an account, drop a video in.
 
-The compose file runs the `edge` images (the main branch) until a release exists. Once one does, pin it:
-`OPENCAPTIONS_VERSION=<version> docker compose up -d`.
+The compose file runs the `edge` images, which follow the main branch. To stay on a release, pin it:
+`OPENCAPTIONS_VERSION=1.0.0 docker compose up -d`.
 
 To build from source instead, clone the repository and run `docker compose up -d --build`
 (or `make up`).
@@ -71,8 +71,8 @@ To build from source instead, clone the repository and run `docker compose up -d
 
 ## Status
 
-Pre-v0.1: under active construction, and APIs and schemas may change until the first tagged
-release.
+The iPhone and iPad app is on the App Store, and the self-hosted stack has tagged releases. What changed in
+each one is in the [changelog](CHANGELOG.md).
 
 ## Why is there a Pro?
 
