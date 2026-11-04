@@ -18,6 +18,8 @@ final class AppModel {
     private(set) var useServer = false
     /// A server named by a pairing link, until the user says whether to use it.
     var pendingConnection: ServerConnection?
+    /// A video handed over from outside the app, waiting for the project list to take it.
+    var incomingVideo: URL?
     /// Tiles of the presets drawn by the engine, made once.
     let presetPreviews = PresetPreviews()
     private(set) var presets: [Preset] = []
@@ -99,9 +101,14 @@ final class AppModel {
         useServer = use
     }
 
-    /// A pairing link opened on this phone: ask before trusting it with the user's audio.
+    /// Something opened with the app: a video from another app or from Files, or a pairing link, which is
+    /// asked about before it is trusted with the user's audio.
     func handle(link: URL) {
-        if let connection = ServerConnection.parse(link: link) { pendingConnection = connection }
+        if link.isFileURL {
+            incomingVideo = link
+        } else if let connection = ServerConnection.parse(link: link) {
+            pendingConnection = connection
+        }
     }
 
     /// The application default style: the first preset, as on the web.

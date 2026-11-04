@@ -32,6 +32,14 @@ the phone does, with the Mac's ways of doing it:
 
 One purchase of Pro covers the iPhone and the iPad, with no account, and will cover the Mac too: it is the same App Store app.
 
+## Bring a video in
+
+Tap **+** on the Projects screen to pick one from Photos. A video can also come from outside the app:
+
+- **Open in**: in Files, or in another app that shares a video file, choose OpenCaptions.
+- **Shortcuts**: the **Caption a Video** action opens any video on the import screen. A shortcut with that action,
+  set to show in the share sheet, puts OpenCaptions in the Photos app's share sheet too.
+
 ## Make captions
 
 1. **Add a video** from your photos. You see it with its length and size, and can rename it, before it is imported.

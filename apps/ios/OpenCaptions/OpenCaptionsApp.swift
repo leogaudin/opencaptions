@@ -1,9 +1,17 @@
+import AppIntents
 import SwiftUI
 
 @main
 struct OpenCaptionsApp: App {
-    @State private var app = AppModel()
+    @State private var app: AppModel
     @AppStorage(Appearance.storageKey) private var appearance = Appearance.system
+
+    init() {
+        let model = AppModel()
+        _app = State(initialValue: model)
+        // What the Shortcuts action reaches the app through.
+        AppDependencyManager.shared.add(dependency: model)
+    }
 
     var body: some Scene {
         #if os(macOS)

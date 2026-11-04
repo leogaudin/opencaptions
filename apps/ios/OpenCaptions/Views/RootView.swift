@@ -13,6 +13,7 @@ struct RootView: View {
 
     /// The first screen fades in over the launch screen (the logo on the background colour), so
     /// starting reads as one movement and not as a flash.
+    @Environment(AppModel.self) private var app
     @State private var shown = false
 
     var body: some View {
@@ -34,6 +35,10 @@ struct RootView: View {
             // The content fades into the page behind the bar (`fadesIntoTabBar`), so the bar needs no
             // edge of its own.
             .tabBarBackgroundHidden()
+            // A video opened with the app is taken by the project list, so that is what must be showing.
+            .onChange(of: app.incomingVideo) { _, video in
+                if video != nil { page = .projects }
+            }
         }
     #endif
 }

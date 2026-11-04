@@ -32,6 +32,25 @@
 			</array>
 		</dict>
 	</array>
+	<!-- "Open in OpenCaptions" for a video, from Files, another app's share sheet or Finder. Alternate: the
+	     app offers to open a video, it does not claim to be what opens them. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Video</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.movie</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
 	<!-- Only HTTPS and the system's own encryption: nothing for export compliance to ask about. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

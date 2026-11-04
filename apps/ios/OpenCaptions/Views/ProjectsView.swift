@@ -41,6 +41,13 @@ struct ProjectsView: View {
 
     var body: some View {
         NavigationStack(path: $path) { library }
+            // A video opened with the app takes the road of any other: back to the list, and the import screen.
+            .task(id: app.incomingVideo) {
+                guard let video = app.incomingVideo else { return }
+                app.incomingVideo = nil
+                path = []
+                await load(file: video)
+            }
             .modifier(
                 ProjectDialogs(
                     deleting: $deleting, pending: $pending, renaming: $renaming, onDelete: { app.delete($0) },
