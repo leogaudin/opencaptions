@@ -97,7 +97,7 @@ struct ProjectsView: View {
         .overlay { if importing != nil { importingCard } }
         .navigationDestination(for: UUID.self) { id in
             if let project = app.projects.first(where: { $0.id == id }) {
-                EditorView(model: app.editor(for: project))
+                EditorView(model: app.editor(for: project), close: { path.removeAll() })
             }
         }
     }

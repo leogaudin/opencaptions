@@ -4,10 +4,13 @@ import SwiftUI
 struct EditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.dismiss) private var dismiss
     /// Owned by the app, not this screen: leaving for the project list must not end a
     /// transcription or drop an unsaved edit.
     let model: EditorModel
+    /// Back to the project list. Not `@Environment(\.dismiss)`: once the app took videos from outside, reading
+    /// it here re-rendered this screen without end on iOS 26.7 (never on the iOS 27 simulator), which froze
+    /// the app with nothing to tap.
+    let close: () -> Void
     @State private var playback = Playback()
     @State private var showTranscribe = false
     @State private var showSaveOptions = false
@@ -236,7 +239,7 @@ struct EditorView: View {
 
     private func topBar(showsStyleButton: Bool) -> some View {
         HStack(spacing: 10) {
-            Button { dismiss() } label: { Image(systemName: "chevron.left") }
+            Button(action: close) { Image(systemName: "chevron.left") }
                 .buttonStyle(CircleButtonStyle())
                 .accessibilityLabel("Back")
             VStack(alignment: .leading, spacing: 1) {
