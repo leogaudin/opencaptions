@@ -153,15 +153,14 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
             type=sha,format=short
-      - name: Determine platforms
-        id: platforms
-        run: echo "platforms=${{ startsWith(github.ref, 'refs/tags/') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}" >> "$GITHUB_OUTPUT"
       - name: Build & push
         uses: docker/build-push-action@v7
         with:
           context: apps/${{ matrix.service }}
           build-contexts: engine=apps/engine
-          platforms: ${{ steps.platforms.outputs.platforms }}
+          # Both, on every push: `edge` is what the compose file runs by default, and on an Apple-silicon Mac
+          # an amd64 image would run emulated. arm64 costs about 17 minutes here, measured on v1.0.0.
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
