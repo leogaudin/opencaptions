@@ -136,6 +136,7 @@ struct TranscribeSheet: View {
                 Button { showLanguages = false } label: { Image(systemName: "chevron.left") }
                     .buttonStyle(CircleButtonStyle())
                     .accessibilityLabel("Back")
+                    .accessibilityIdentifier("language-back")
                     .disabled(busy)
                 Text("Spoken language").font(.system(size: 24, weight: .heavy))
                 Spacer()
