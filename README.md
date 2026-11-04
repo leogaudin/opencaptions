@@ -9,13 +9,15 @@
 Transcribe with Whisper or Parakeet, style every word, and export a burned-in video or subtitle files.
 Nothing leaves your machine unless you say so.
 
-**[Documentation](https://docs.opencaptions.app)** · **[Try it in your browser](https://opencaptions.app)** · **[Self-host it](#quick-start)**
+**[Get the iPhone app](https://apps.apple.com/app/id6820548922)** · **[Try it in your browser](https://opencaptions.app)** · **[Self-host it](#quick-start)** · **[Documentation](https://docs.opencaptions.app)**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![CI](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml/badge.svg)](https://github.com/leogaudin/opencaptions/actions/workflows/ci.yml)
 [![Status](https://img.shields.io/badge/status-pre--v0.1-orange.svg)](#status)
 
 ![OpenCaptions editor: a video with word-by-word animated captions next to the style panel, over the caption timeline](docs/screenshot.webp)
+
+<sub>Clip: <a href="https://studio.blender.org/projects/sprite-fright/">Sprite Fright</a> by Blender Studio, CC BY 4.0</sub>
 
 </div>
 
@@ -29,7 +31,8 @@ Nothing leaves your machine unless you say so.
 - **Export** a burned-in MP4, WebM or ProRes, SRT, VTT and JSON, or just the captions on a green
   screen to key out in your video editor
 - **The preview is the export**: one Rust engine draws both, so what you see is what you get
-- **iPhone, iPad and Mac app** with on-device Whisper, Parakeet and Apple Speech, no server and no account
+- **[iPhone and iPad app](https://apps.apple.com/app/id6820548922)** with on-device Whisper, Parakeet and Apple Speech, no server and
+  no account. The same code builds for the Mac
 - **Many scripts and languages**: Latin, Cyrillic, Arabic, Hebrew, Indic, Thai, CJK and more, and
   an interface in 13 languages
 - **Private by design**: no telemetry, no tracking, accounts are local to your instance
@@ -71,12 +74,20 @@ To build from source instead, clone the repository and run `docker compose up -d
 Pre-v0.1: under active construction, and APIs and schemas may change until the first tagged
 release.
 
+## Why is there a Pro?
+
+The iPhone app is free. Pro is one purchase, with no subscription: it removes the mark on saved videos
+and adds 4K, 60 fps, HDR and every caption style. All of that code is here, and
+[a build you make yourself](apps/ios/README.md) has everything unlocked. The App Store version costs
+money so that someone signs it, ships it and keeps it working.
+
 ## License
 
 [AGPL-3.0-only](LICENSE). If you offer a hosted version of OpenCaptions, the AGPL requires you to
 publish your modifications. Contributors accept a [CLA](CLA.md) so the maintainer can also ship
 the code where the AGPL cannot go, such as the App Store. Third-party components keep their own
-licences, see [NOTICE](NOTICE).
+licences, see [NOTICE](NOTICE). The name and the icon are covered by the
+[trademark policy](TRADEMARK.md).
 
 Built and maintained by [Leo Gaudin](https://github.com/leogaudin).
 

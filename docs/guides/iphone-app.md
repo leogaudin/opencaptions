@@ -12,14 +12,15 @@ save a captioned video. There is no account and no server, and nothing is upload
 **iOS 18** or later and works on iPhone and iPad.
 
 :::note[Availability]
-The app is being prepared for the App Store. Until it is there, you can
+[Get it on the App Store](https://apps.apple.com/app/id6820548922), for iPhone and iPad. You can also
 [build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) with Xcode.
 :::
 
 ## On the Mac
 
-The same app runs on a Mac with Apple silicon (**macOS 15** or later), in one window with the editor
-laid out wide: the video and the style controls side by side, the timeline under them. It does everything
+The Mac version is not on the App Store yet, so for now you
+[build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md). It is the same app, on
+a Mac with Apple silicon (**macOS 15** or later), in one window with the editor laid out wide: the video and the style controls side by side, the timeline under them. It does everything
 the phone does, with the Mac's ways of doing it:
 
 - **Import** a video by dragging it from Finder onto the window, with **File → Import Video…** (⌘O), or from Photos.
@@ -29,7 +30,7 @@ the phone does, with the Mac's ways of doing it:
   Photos are there too.
 - **Settings** is a window of its own (⌘,).
 
-One purchase of Pro covers the iPhone, the iPad and the Mac, with no account: it is the same App Store app.
+One purchase of Pro covers the iPhone and the iPad, with no account, and will cover the Mac too: it is the same App Store app.
 
 ## Make captions
 
