@@ -10592,79 +10592,156 @@
         }
       }
     },
-    "Open source (AGPL-3.0). Uses Whisper models and WhisperKit (MIT) and the Inter font (SIL OFL).": {
+    "Open source (AGPL-3.0). The speech models, fonts and libraries it uses keep their own licences.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open source (AGPL-3.0). Utilise les modèles Whisper, WhisperKit (MIT) et la police Inter (SIL OFL)."
+            "value": "Open source (AGPL-3.0). Les modèles de parole, les polices et les bibliothèques utilisés gardent leurs propres licences."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Código abierto (AGPL-3.0). Usa los modelos Whisper, WhisperKit (MIT) y la fuente Inter (SIL OFL)."
+            "value": "Código abierto (AGPL-3.0). Los modelos de voz, las fuentes y las bibliotecas que usa mantienen sus propias licencias."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Source (AGPL-3.0). Nutzt Whisper-Modelle, WhisperKit (MIT) und die Schrift Inter (SIL OFL)."
+            "value": "Open Source (AGPL-3.0). Die verwendeten Sprachmodelle, Schriften und Bibliotheken behalten ihre eigenen Lizenzen."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open source (AGPL-3.0). Używa modeli Whisper, WhisperKit (MIT) i czcionki Inter (SIL OFL)."
+            "value": "Otwarte źródło (AGPL-3.0). Używane modele mowy, czcionki i biblioteki mają własne licencje."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Código aberto (AGPL-3.0). Usa modelos Whisper, WhisperKit (MIT) e a fonte Inter (SIL OFL)."
+            "value": "Código aberto (AGPL-3.0). Os modelos de fala, as fontes e as bibliotecas usados mantêm suas próprias licenças."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open source (AGPL-3.0). Usa i modelli Whisper, WhisperKit (MIT) e il carattere Inter (SIL OFL)."
+            "value": "Open source (AGPL-3.0). I modelli vocali, i font e le librerie usati mantengono le proprie licenze."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Открытый код (AGPL-3.0). Использует модели Whisper, WhisperKit (MIT) и шрифт Inter (SIL OFL)."
+            "value": "Открытый исходный код (AGPL-3.0). Используемые речевые модели, шрифты и библиотеки сохраняют собственные лицензии."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Açık kaynak (AGPL-3.0). Whisper modellerini, WhisperKit'i (MIT) ve Inter yazı tipini (SIL OFL) kullanır."
+            "value": "Açık kaynak (AGPL-3.0). Kullanılan konuşma modelleri, yazı tipleri ve kitaplıklar kendi lisanslarını korur."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "オープンソース（AGPL-3.0）。Whisperモデル、WhisperKit（MIT）、Interフォント（SIL OFL）を使用しています。"
+            "value": "オープンソース（AGPL-3.0）。使用している音声モデル、フォント、ライブラリにはそれぞれのライセンスが適用されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "오픈 소스(AGPL-3.0). Whisper 모델, WhisperKit(MIT), Inter 글꼴(SIL OFL)을 사용합니다."
+            "value": "오픈 소스(AGPL-3.0). 사용하는 음성 모델, 글꼴, 라이브러리에는 각각의 라이선스가 적용됩니다."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "开源（AGPL-3.0）。使用 Whisper 模型、WhisperKit（MIT）和 Inter 字体（SIL OFL）。"
+            "value": "开源（AGPL-3.0）。所用的语音模型、字体和库保留各自的许可证。"
           }
         },
         "id": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sumber terbuka (AGPL-3.0). Memakai model Whisper, WhisperKit (MIT), dan font Inter (SIL OFL)."
+            "value": "Sumber terbuka (AGPL-3.0). Model suara, font, dan pustaka yang digunakan tetap memakai lisensinya sendiri."
+          }
+        }
+      }
+    },
+    "Licences and credits": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licences et crédits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licencias y créditos"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lizenzen und Danksagungen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licencje i autorzy"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenças e créditos"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licenze e riconoscimenti"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лицензии и авторы"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisanslar ve emeği geçenler"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライセンスとクレジット"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "라이선스 및 크레딧"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "许可与致谢"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisensi dan kredit"
           }
         }
       }

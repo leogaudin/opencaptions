@@ -278,7 +278,11 @@ struct SettingsView: View {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
                         .font(.system(size: 15, weight: .semibold))
                 }
-                Text("Open source (AGPL-3.0). Uses Whisper models and WhisperKit (MIT) and the Inter font (SIL OFL).")
+                Link(destination: URL(string: "https://github.com/leogaudin/opencaptions/blob/main/NOTICE")!) {
+                    Label("Licences and credits", systemImage: "doc.text")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                Text("Open source (AGPL-3.0). The speech models, fonts and libraries it uses keep their own licences.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                 if FileManager.default.fileExists(atPath: Diagnostics.fileURL.path) {
                     ShareLink(item: Diagnostics.fileURL) {
