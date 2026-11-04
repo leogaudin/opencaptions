@@ -62,7 +62,7 @@ changes. The history is in this file's git log.
 
 ## Contact
 
-Questions about privacy: [open an issue](https://github.com/leogaudin/opencaptions/issues), or use
+Questions about privacy: write to [support@opencaptions.app](mailto:support@opencaptions.app), [open an issue](https://github.com/leogaudin/opencaptions/issues), or use
 [private vulnerability reporting](https://github.com/leogaudin/opencaptions/security/advisories/new) for
 anything sensitive.
 

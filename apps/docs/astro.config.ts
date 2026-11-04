@@ -36,6 +36,7 @@ export default defineConfig({
         { label: "Use cases", items: [{ autogenerate: { directory: "use-cases" } }] },
         { label: "Reference", items: [{ autogenerate: { directory: "reference" } }] },
         { slug: "faq" },
+        { slug: "support" },
         { label: "About the project", collapsed: true, items: [{ autogenerate: { directory: "project" } }] },
         {
           label: "Links",

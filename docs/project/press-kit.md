@@ -51,4 +51,4 @@ a phone is slow, while the model is prepared for the device.
 
 ## Contact
 
-[Open an issue](https://github.com/leogaudin/opencaptions/issues) on GitHub.
+[support@opencaptions.app](mailto:support@opencaptions.app)
