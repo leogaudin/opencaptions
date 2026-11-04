@@ -1,6 +1,29 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.1.0 (2026-11-04)
+
+### Documentation
+- The images are published for arm64 now
+- Use-case pages for the questions people actually ask: bold word-by-word captions, self-hosting instead of a subscription, Whisper with Docker, and green screen captions
+- The listing's names and keywords work harder: a local name in each language, no word repeated from the name or subtitle, and the freed space used
+
+### Features
+- Ask for a rating when someone leaves their second finished video, once per version, and never after a failed save
+- Settings links to the full licences and credits, which name Parakeet and FluidAudio too
+- A video can come from outside the app: Open In from Files and other apps, and a Caption a Video action in Shortcuts, both landing on the import screen
+- Scripts/asc.py checks the listing against Apple's limits and sends it to a draft version; What's New for 1.1 in 13 languages
+- Text follows the system text size, secondary text passes contrast on every surface, and Apple's accessibility audit runs as a UI test
+
+### Fixes
+- Open In keeps the file in place, as macOS requires, so the Mac app builds again
+- The editor no longer reads the dismiss action: since Open In it re-rendered the screen without end on iOS 26.7, which froze the app when a project opened
+
+### Maintenance
+- Edge images are built for arm64 too, so the default compose file runs natively on an Apple-silicon Mac
+
+### Tests
+- The transcribe sheet's way back is driven by real taps
 ## 1.0.0 (2026-11-04)
 
 ### Changes
@@ -254,6 +277,7 @@ Every change to OpenCaptions, from its commit messages.
 - Lint suppressions work: BLE and RUF100 are selected, so a broad except is a decision and an unused noqa fails
 - Make release VERSION=x.y.z prepares a release without making it: manifests, a git-cliff changelog, and the tag commands
 - Scripts/asc.py reads App Store Connect from the command line, with nothing to install and the key kept outside the repository
+- Release 1.0.0, the version the App Store shows: a changelog from the commits, the first tagged images, and a release script that names the right git-cliff image
 
 ### Tests
 - Cover editing a word on the preview
