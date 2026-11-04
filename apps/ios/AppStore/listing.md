@@ -2,7 +2,7 @@
 
 The text for App Store Connect, per language: what to paste into each field, within Apple's limits (name and subtitle 30 characters, promotional text 170, keywords 100, description 4000). Keep it true to the app: the free tier and what Pro adds are in `OpenCaptionsKit/.../Entitlements.swift`.
 
-`python3 scripts/asc.py check-listing` holds this file to those limits, and `push-listing <version>` sends it to a draft of that version in App Store Connect.
+`python3 scripts/asc.py check-listing` holds this file to those limits, and `push-listing <version>` sends it to a draft of that version in App Store Connect. What differs on the Mac is in `listing-mac.json`, sent with `push-listing <version> mac`.
 
 The privacy policy is `PRIVACY.md` in the repository root, at <https://github.com/leogaudin/opencaptions/blob/main/PRIVACY.md>.
 

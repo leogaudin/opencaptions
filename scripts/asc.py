@@ -4,7 +4,7 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py snapshot
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py get /v1/apps
     python3 scripts/asc.py check-listing
-    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-listing 1.1.0
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-listing 1.1.0 [mac]
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach production:
@@ -29,6 +29,9 @@ from typing import Any
 API = "https://api.appstoreconnect.apple.com"
 BUNDLE_ID = "org.leogaudin.opencaptions"
 LISTING = Path(__file__).resolve().parent.parent / "apps/ios/AppStore/listing.md"
+# What differs on the Mac, per language. The name and subtitle belong to the app, so they are shared.
+LISTING_MAC = LISTING.with_name("listing-mac.json")
+PHONE_WORDS = r"iPhone|phone|téléphone|teléfono|Handy|telefon|celular|ponsel|телефон|휴대폰|手机"
 SUPPORT_URL = "https://opencaptions.app/support"
 MARKETING_URL = "https://opencaptions.app"
 PRIVACY_URL = "https://github.com/leogaudin/opencaptions/blob/main/PRIVACY.md"
@@ -154,6 +157,29 @@ def listing() -> dict[str, dict[str, str]]:
     return out
 
 
+def mac_listing(text: dict[str, dict[str, str]]) -> dict[str, dict[str, str]]:
+    """The listing as the Mac store shows it."""
+    changes = json.loads(LISTING_MAC.read_text())
+    out: dict[str, dict[str, str]] = {}
+    for code, fields in text.items():
+        mac = dict(fields)
+        for name in ("Promotional text", "Description"):
+            for old, new in changes[code]:
+                mac[name] = mac[name].replace(old, new)
+        out[code] = mac
+    return out
+
+
+def mac_problems(text: dict[str, dict[str, str]]) -> list[str]:
+    """A phone mentioned where the Mac store would show it."""
+    return [
+        f"{code}: {name} still says '{match[0]}'"
+        for code, fields in text.items()
+        for name in ("Promotional text", "Description")
+        if (match := re.search(PHONE_WORDS, fields[name], flags=re.I))
+    ]
+
+
 def listing_problems(text: dict[str, dict[str, str]]) -> list[str]:
     """What App Store Connect would refuse, or what would be wasted, before anything is sent."""
     problems = [f"{code} is not in LOCALES" for code in text if code not in LOCALES]
@@ -184,25 +210,38 @@ def _upsert(kind: str, parent: str, parent_id: str, have: dict[str, str], locale
     return "; ".join(e.get("detail", e.get("title", "")) for e in answer.get("errors", []))
 
 
-def push_listing(version: str) -> int:
+def push_listing(version: str, platform: str = "IOS") -> int:
     """Sends listing.md to a draft of `version`, made if there is none. Released by hand, so that approval
     alone never puts it on the store."""
     text = listing()
-    if problems := listing_problems(text):
+    if platform == "MAC_OS":
+        text = mac_listing(text)
+    if problems := listing_problems(text) + (mac_problems(text) if platform == "MAC_OS" else []):
         print("\n".join(problems))
         return 1
     app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
     versions = get(f"/v1/apps/{app}/appStoreVersions?limit=10")["data"]
-    draft = next((v for v in versions if v["attributes"]["versionString"] == version), None)
+    draft = next(
+        (
+            v
+            for v in versions
+            if v["attributes"]["versionString"] == version and v["attributes"]["platform"] == platform
+        ),
+        None,
+    )
     if draft is None:
         relation = {"app": {"data": {"type": "apps", "id": app}}}
-        attrs = {"platform": "IOS", "versionString": version, "releaseType": "MANUAL"}
+        attrs = {"platform": platform, "versionString": version, "releaseType": "MANUAL"}
         made = send("POST", "/v1/appStoreVersions", {"data": {"type": "appStoreVersions", "attributes": attrs, "relationships": relation}})
         if "data" not in made:
             print(made)
             return 1
         draft = made["data"]
     info = next(i for i in get(f"/v1/apps/{app}/appInfos")["data"] if i["attributes"]["state"] != "READY_FOR_DISTRIBUTION")
+    # A platform's first version has nothing to say is new, and Apple refuses the field.
+    released = any(
+        v["attributes"]["platform"] == platform and v["id"] != draft["id"] for v in versions
+    )
 
     def existing(path: str) -> dict[str, str]:
         return {i["attributes"]["locale"]: i["id"] for i in get(path).get("data", [])}
@@ -212,17 +251,17 @@ def push_listing(version: str) -> int:
     errors: dict[str, list[str]] = {code: [] for code in text}
     for code, fields in text.items():
         about = {"name": fields["Name"], "subtitle": fields["Subtitle"], "privacyPolicyUrl": PRIVACY_URL}
-        errors[code].append(_upsert("appInfoLocalizations", "appInfo", info["id"], on_info, LOCALES[code], about))
+        if platform == "IOS":
+            errors[code].append(_upsert("appInfoLocalizations", "appInfo", info["id"], on_info, LOCALES[code], about))
     on_version = existing(f"/v1/appStoreVersions/{draft['id']}/appStoreVersionLocalizations?limit=50")
     for code, fields in text.items():
         store = {
             "description": fields["Description"],
             "keywords": fields["Keywords"],
             "promotionalText": fields["Promotional text"],
-            "whatsNew": fields["What's new"],
             "supportUrl": SUPPORT_URL,
             "marketingUrl": MARKETING_URL,
-        }
+        } | ({"whatsNew": fields["What's new"]} if released else {})
         errors[code].append(
             _upsert("appStoreVersionLocalizations", "appStoreVersion", draft["id"], on_version, LOCALES[code], store)
         )
@@ -241,11 +280,13 @@ def main() -> int:
     elif command == "get" and len(sys.argv) == 3:
         print(json.dumps(get(sys.argv[2]), indent=2, ensure_ascii=False))
     elif command == "check-listing":
-        problems = listing_problems(listing())
-        print("\n".join(problems) or "The listing fits, in every language")
+        text = listing()
+        mac = mac_listing(text)
+        problems = listing_problems(text) + listing_problems(mac) + mac_problems(mac)
+        print("\n".join(problems) or "The listing fits, in every language, on the phone and on the Mac")
         return 1 if problems else 0
-    elif command == "push-listing" and len(sys.argv) == 3:
-        return push_listing(sys.argv[2])
+    elif command == "push-listing" and len(sys.argv) in (3, 4):
+        return push_listing(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     else:
         print(__doc__)
         return 2
