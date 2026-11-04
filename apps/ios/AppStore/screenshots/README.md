@@ -19,6 +19,12 @@ cd apps/ios/AppStore/screenshots
 PHOTOS=~/path/to/pexels SIM="iPhone 18 Pro" OUT=~/path/to/out ./make-slides.sh
 ```
 
+The words of every slide, in each language the store lists, are in `slides.json`. `LANGUAGES="fr de"` makes those
+languages (the app runs in that language, and a language other than English goes in `$OUT/<language>/`), and
+`SIZES="1206x2622"` makes fewer sizes. Poppins has no Cyrillic, Japanese, Korean or Chinese, so those name a face in
+`slides.json`. `python3 scripts/asc.py push-screenshots <version> $OUT` sends the iPhone slides of each language to a
+draft version.
+
 Most of the time is the simulator drawing each screen. It writes
 `$OUT/iphone-<width>x<height>/01.png` to `05.png`, one folder per size, and keeps its working files
 in `$OUT/work`.

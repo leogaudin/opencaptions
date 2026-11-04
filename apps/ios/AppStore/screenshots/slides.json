@@ -1,0 +1,240 @@
+{
+  "en": {
+    "headlines": [
+      "Captions that|[stop the scroll]",
+      "[Nothing] leaves|your phone",
+      "About [100 languages].|One tap.",
+      "Up to [4K].|HDR stays HDR.",
+      "[Open source].|Pay once.|No subscription."
+    ],
+    "man": [
+      "Here is the one tip nobody tells you:",
+      "start with the ending,",
+      "then work backwards."
+    ],
+    "cat": [
+      "Meet Mochi, the boss of the house.",
+      "She watches every video I make."
+    ]
+  },
+  "fr": {
+    "headlines": [
+      "Des sous-titres|qui [captivent]",
+      "[Rien] ne quitte|votre téléphone",
+      "Environ [100 langues].|En un geste.",
+      "Jusqu'en [4K].|Le HDR reste HDR.",
+      "[Open source].|Un seul achat.|Sans abonnement."
+    ],
+    "man": [
+      "Voici le conseil que personne ne donne :",
+      "commencez par la fin,",
+      "puis remontez."
+    ],
+    "cat": [
+      "Voici Mochi, la cheffe de la maison.",
+      "Elle regarde toutes mes vidéos."
+    ]
+  },
+  "es": {
+    "headlines": [
+      "Subtítulos que|[atrapan]",
+      "[Nada] sale de|tu teléfono",
+      "Unos [100 idiomas].|Con un toque.",
+      "Hasta [4K].|El HDR sigue HDR.",
+      "[Código abierto].|Un solo pago.|Sin suscripción."
+    ],
+    "man": [
+      "El consejo que nadie te da:",
+      "empieza por el final,",
+      "y ve hacia atrás."
+    ],
+    "cat": [
+      "Esta es Mochi, la jefa de la casa.",
+      "Ve todos mis vídeos."
+    ]
+  },
+  "de": {
+    "headlines": [
+      "Untertitel, die|[fesseln]",
+      "[Nichts] verlässt|dein iPhone",
+      "Rund [100 Sprachen].|Ein Tipp.",
+      "Bis zu [4K].|HDR bleibt HDR.",
+      "[Open Source].|Einmal zahlen.|Kein Abo."
+    ],
+    "man": [
+      "Der Tipp, den dir niemand gibt:",
+      "fang mit dem Ende an,",
+      "und arbeite rückwärts."
+    ],
+    "cat": [
+      "Das ist Mochi, die Chefin im Haus.",
+      "Sie schaut jedes meiner Videos."
+    ]
+  },
+  "pl": {
+    "headlines": [
+      "Napisy, które|[zatrzymują]",
+      "[Nic] nie opuszcza|telefonu",
+      "Około [100 języków].|Jedno dotknięcie.",
+      "Do [4K].|HDR zostaje HDR.",
+      "[Otwarty kod].|Płacisz raz.|Bez subskrypcji."
+    ],
+    "man": [
+      "Rada, której nikt ci nie da:",
+      "zacznij od końca,",
+      "i idź wstecz."
+    ],
+    "cat": [
+      "Poznaj Mochi, szefową domu.",
+      "Ogląda każdy mój film."
+    ]
+  },
+  "pt-BR": {
+    "headlines": [
+      "Legendas que|[prendem]",
+      "[Nada] sai do|seu celular",
+      "Uns [100 idiomas].|Um toque.",
+      "Até [4K].|HDR continua HDR.",
+      "[Código aberto].|Pague uma vez.|Sem assinatura."
+    ],
+    "man": [
+      "A dica que ninguém te dá:",
+      "comece pelo fim,",
+      "e volte até o início."
+    ],
+    "cat": [
+      "Esta é a Mochi, a chefe da casa.",
+      "Ela vê todos os meus vídeos."
+    ]
+  },
+  "it": {
+    "headlines": [
+      "Sottotitoli che|[catturano]",
+      "[Nulla] lascia|il tuo telefono",
+      "Circa [100 lingue].|Un tocco.",
+      "Fino a [4K].|L'HDR resta HDR.",
+      "[Open source].|Paghi una volta.|Zero abbonamenti."
+    ],
+    "man": [
+      "Il consiglio che nessuno ti dà:",
+      "inizia dalla fine,",
+      "e torna indietro."
+    ],
+    "cat": [
+      "Ecco Mochi, la capa di casa.",
+      "Guarda ogni mio video."
+    ]
+  },
+  "ru": {
+    "font": "system",
+    "headlines": [
+      "Субтитры, которые|[цепляют]",
+      "[Ничто] не покидает|телефон",
+      "Около [100 языков].|Одно касание.",
+      "До [4K].|HDR остаётся HDR.",
+      "[Открытый код].|Одна покупка.|Без подписки."
+    ],
+    "man": [
+      "Совет, который вам никто не даст:",
+      "начните с конца",
+      "и идите назад."
+    ],
+    "cat": [
+      "Это Моти, хозяйка дома.",
+      "Она смотрит все мои видео."
+    ]
+  },
+  "tr": {
+    "headlines": [
+      "Durduran|[altyazılar]",
+      "[Hiçbir şey]|telefondan çıkmaz",
+      "Yaklaşık [100 dil].|Tek dokunuş.",
+      "[4K] çözünürlük.|HDR, HDR kalır.",
+      "[Açık kaynak].|Tek ödeme.|Abonelik yok."
+    ],
+    "man": [
+      "Kimsenin söylemediği ipucu:",
+      "sondan başla,",
+      "geriye doğru ilerle."
+    ],
+    "cat": [
+      "Bu Mochi, evin patronu.",
+      "Her videomu izler."
+    ]
+  },
+  "ja": {
+    "font": "HiraginoSans-W8",
+    "headlines": [
+      "[目を止める]|字幕",
+      "[何も] スマホの|外に出ません",
+      "約 [100言語]。|ワンタップ。",
+      "最大 [4K]。|HDRはHDRのまま。",
+      "[オープンソース]。|買い切り。|サブスクなし。"
+    ],
+    "man": [
+      "誰も 教えない コツ：",
+      "最後 から 始めて、",
+      "逆に 進もう。"
+    ],
+    "cat": [
+      "ボスの モチ です。",
+      "動画を 全部 見ます。"
+    ]
+  },
+  "ko": {
+    "font": "AppleSDGothicNeo-Heavy",
+    "headlines": [
+      "[시선을 멈추는]|자막",
+      "[아무것도] 휴대폰을|떠나지 않습니다",
+      "약 [100개 언어].|한 번의 탭.",
+      "최대 [4K].|HDR은 그대로.",
+      "[오픈 소스].|한 번만 결제.|구독 없음."
+    ],
+    "man": [
+      "아무도 안 알려주는 팁:",
+      "끝에서 시작해서",
+      "거꾸로 가세요."
+    ],
+    "cat": [
+      "이 집 대장 모치예요.",
+      "제 영상을 다 봐요."
+    ]
+  },
+  "zh-Hans": {
+    "font": "PingFangSC-Semibold",
+    "headlines": [
+      "[让人停下来]|的字幕",
+      "[什么都不] 离开|你的手机",
+      "约 [100 种语言]。|一键完成。",
+      "最高 [4K]。|HDR 保持 HDR。",
+      "[开源]。|一次付费。|没有订阅。"
+    ],
+    "man": [
+      "没人 告诉你的 技巧：",
+      "从 结尾 开始，",
+      "再 倒着 写。"
+    ],
+    "cat": [
+      "这是 麻糬， 家里的 老大。",
+      "她 看我 每个 视频。"
+    ]
+  },
+  "id": {
+    "headlines": [
+      "Teks yang|[bikin berhenti]",
+      "[Semua] tetap|di ponselmu",
+      "Sekitar [100 bahasa].|Sekali ketuk.",
+      "Hingga [4K].|HDR tetap HDR.",
+      "[Sumber terbuka].|Bayar sekali.|Tanpa langganan."
+    ],
+    "man": [
+      "Tips yang tak pernah diberi tahu:",
+      "mulai dari akhir,",
+      "lalu mundur."
+    ],
+    "cat": [
+      "Ini Mochi, bos di rumah.",
+      "Dia menonton semua videoku."
+    ]
+  }
+}

@@ -49,7 +49,10 @@ src.draw(in: dev)
 NSGraphicsContext.restoreGraphicsState()
 // the headline, centred between the top of the frame and the top of the device, with the key words in a box
 let size = W * (a.count > 8 ? CGFloat(Double(a[8])!) : 0.083)
-let font = NSFont(name: "Poppins-ExtraBold", size: size) ?? NSFont.systemFont(ofSize: size, weight: .heavy)
+// Poppins has no Cyrillic, Japanese, Korean or Chinese: those languages name a face of their own.
+let named = ProcessInfo.processInfo.environment["HEADLINE_FONT"] ?? ""
+let face = named.isEmpty ? "Poppins-ExtraBold" : named
+let font = NSFont(name: face, size: size) ?? NSFont.systemFont(ofSize: size, weight: .heavy)
 var inBox = false
 // "|" ends a line: the headline is broken by hand, so it never leaves one word alone.
 var lines: [[(String, Bool)]] = []
@@ -58,7 +61,7 @@ for part in a[3].split(separator: "|") {
     for token in part.split(separator: " ", omittingEmptySubsequences: true) {
         var t = String(token)
         if t.hasPrefix("[") { inBox = true; t.removeFirst() }
-        let closes = t.hasSuffix("]") || t.contains("].")
+        let closes = t.contains("]")
         words.append((t.replacingOccurrences(of: "]", with: ""), inBox))
         if closes { inBox = false }
     }
@@ -91,7 +94,9 @@ for line in lines {
     for i in line.indices {
         let (w, boxed) = line[i]
         let colour: NSColor = boxed ? (dark ? ink : yellow) : (dark ? .white : ink)
-        (w as NSString).draw(at: NSPoint(x: x + lead[i], y: base + (lineH - font.ascender + font.descender - font.leading) / 2 + size * 0.02), withAttributes: [.font: font, .foregroundColor: colour])
+        // Centred by its measured height: faces differ in how much room they keep around a line.
+        let textH = (w as NSString).size(withAttributes: [.font: font]).height
+        (w as NSString).draw(at: NSPoint(x: x + lead[i], y: base + (lineH - textH) / 2 + size * 0.02), withAttributes: [.font: font, .foregroundColor: colour])
         x += widths[i] + space
     }
     top += lineH

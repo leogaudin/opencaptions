@@ -5,16 +5,18 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py get /v1/apps
     python3 scripts/asc.py check-listing
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-listing 1.1.0 [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-screenshots 1.1.0 <folder>
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach production:
-only `push-listing` writes, and only to a version still being prepared, which nobody sees until it is
+the `push-` commands write, and only to a version still being prepared, which nobody sees until it is
 submitted, approved and released by hand.
 """
 
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -273,6 +275,59 @@ def push_listing(version: str, platform: str = "IOS") -> int:
     return 1 if failed else 0
 
 
+def _upload_screenshot(set_id: str, path: Path) -> str:
+    """Reserves the file, sends its bytes where Apple says, and commits it with its checksum."""
+    data = path.read_bytes()
+    relation = {"appScreenshotSet": {"data": {"type": "appScreenshotSets", "id": set_id}}}
+    attrs = {"fileName": path.name, "fileSize": len(data)}
+    made = send("POST", "/v1/appScreenshots", {"data": {"type": "appScreenshots", "attributes": attrs, "relationships": relation}})
+    if "data" not in made:
+        return str(made.get("errors"))
+    shot = made["data"]
+    for part in shot["attributes"]["uploadOperations"]:
+        chunk = data[part["offset"] : part["offset"] + part["length"]]
+        headers = {h["name"]: h["value"] for h in part["requestHeaders"]}
+        request = urllib.request.Request(part["url"], data=chunk, headers=headers, method=part["method"])
+        with urllib.request.urlopen(request, timeout=120):
+            pass
+    done = {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}
+    answer = send("PATCH", f"/v1/appScreenshots/{shot['id']}", {"data": {"type": "appScreenshots", "id": shot["id"], "attributes": done}})
+    return "; ".join(e.get("detail", "") for e in answer.get("errors", []))
+
+
+def push_screenshots(version: str, folder: str, kind: str = "APP_IPHONE_61", size: str = "1206x2622") -> int:
+    """Replaces the iPhone screenshots of each language found in `folder` (<folder>/<language>/iphone-<size>/),
+    on the draft of `version`. English is not touched here."""
+    app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
+    versions = get(f"/v1/apps/{app}/appStoreVersions?limit=10")["data"]
+    draft = next(
+        v
+        for v in versions
+        if v["attributes"]["versionString"] == version
+        and v["attributes"]["platform"] == "IOS"
+        and v["attributes"]["appVersionState"] == "PREPARE_FOR_SUBMISSION"
+    )
+    localizations = get(f"/v1/appStoreVersions/{draft['id']}/appStoreVersionLocalizations?limit=50")["data"]
+    by_locale = {item["attributes"]["locale"]: item["id"] for item in localizations}
+    failed = 0
+    for code, locale in LOCALES.items():
+        files = sorted((Path(folder) / code / f"iphone-{size}").glob("*.png"))
+        if not files:
+            continue
+        sets = get(f"/v1/appStoreVersionLocalizations/{by_locale[locale]}/appScreenshotSets?limit=20")["data"]
+        chosen = next((s for s in sets if s["attributes"]["screenshotDisplayType"] == kind), None)
+        if chosen is None:
+            relation = {"appStoreVersionLocalization": {"data": {"type": "appStoreVersionLocalizations", "id": by_locale[locale]}}}
+            body = {"type": "appScreenshotSets", "attributes": {"screenshotDisplayType": kind}, "relationships": relation}
+            chosen = send("POST", "/v1/appScreenshotSets", {"data": body})["data"]
+        for old in get(f"/v1/appScreenshotSets/{chosen['id']}/appScreenshots?limit=20")["data"]:
+            send("DELETE", f"/v1/appScreenshots/{old['id']}")
+        errors = [e for e in (_upload_screenshot(chosen["id"], f) for f in files) if e]
+        failed += bool(errors)
+        print(f"{locale:8} {len(files) - len(errors)} of {len(files)} {errors[:1] or ''}")
+    return 1 if failed else 0
+
+
 def main() -> int:
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "snapshot":
@@ -285,6 +340,8 @@ def main() -> int:
         problems = listing_problems(text) + listing_problems(mac) + mac_problems(mac)
         print("\n".join(problems) or "The listing fits, in every language, on the phone and on the Mac")
         return 1 if problems else 0
+    elif command == "push-screenshots" and len(sys.argv) == 4:
+        return push_screenshots(sys.argv[2], sys.argv[3])
     elif command == "push-listing" and len(sys.argv) in (3, 4):
         return push_listing(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     else:
