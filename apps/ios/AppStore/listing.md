@@ -2,6 +2,8 @@
 
 The text for App Store Connect, per language: what to paste into each field, within Apple's limits (name and subtitle 30 characters, promotional text 170, keywords 100, description 4000). Keep it true to the app: the free tier and what Pro adds are in `OpenCaptionsKit/.../Entitlements.swift`.
 
+`python3 scripts/asc.py check-listing` holds this file to those limits, and `push-listing <version>` sends it to a draft of that version in App Store Connect.
+
 The privacy policy is `PRIVACY.md` in the repository root, at <https://github.com/leogaudin/opencaptions/blob/main/PRIVACY.md>.
 
 ## en
@@ -14,7 +16,7 @@ The privacy policy is `PRIVACY.md` in the repository root, at <https://github.co
 
 **Keywords:** transcribe,reels,tiktok,shorts,speech to text,offline,whisper,video,animated,karaoke,srt,podcast
 
-**What's new:** First release.
+**What's new:** Open a video straight from Files or another app, and use the new Caption a Video action in Shortcuts. Plus fixes.
 
 **Description:**
 
@@ -48,7 +50,7 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 **Keywords:** légendes,transcription,reels,tiktok,shorts,parole en texte,hors ligne,whisper,vidéo,animés,captions
 
-**What's new:** Première version.
+**What's new:** Ouvrez une vidéo directement depuis Fichiers ou une autre app, et utilisez la nouvelle action Sous-titrer une vidéo dans Raccourcis. Et quelques corrections.
 
 **Description:**
 
@@ -82,7 +84,7 @@ OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même o
 
 **Keywords:** transcribir,reels,tiktok,shorts,voz a texto,sin conexión,whisper,vídeo,animados,karaoke,srt,captions
 
-**What's new:** Primera versión.
+**What's new:** Abre un vídeo directamente desde Archivos u otra app, y usa la nueva acción Subtitular un vídeo en Atajos. Además de correcciones.
 
 **Description:**
 
@@ -116,7 +118,7 @@ OpenCaptions es de código abierto (AGPL-3.0). Lee el código, compílalo tú mi
 
 **Keywords:** Transkription,Reels,TikTok,Shorts,Sprache zu Text,offline,Whisper,Video,animiert,SRT,Captions
 
-**What's new:** Erste Version.
+**What's new:** Öffne ein Video direkt aus „Dateien“ oder einer anderen App und nutze die neue Aktion „Video untertiteln“ in Kurzbefehle. Dazu Fehlerbehebungen.
 
 **Description:**
 
@@ -150,7 +152,7 @@ OpenCaptions ist Open Source (AGPL-3.0). Lies den Code, baue ihn selbst oder hos
 
 **Keywords:** transkrypcja,reels,tiktok,shorts,mowa na tekst,offline,whisper,wideo,animowane,karaoke,srt,captions
 
-**What's new:** Pierwsza wersja.
+**What's new:** Otwórz wideo prosto z aplikacji Pliki lub innej aplikacji i użyj nowej czynności Dodaj napisy do wideo w Skrótach. Oraz poprawki.
 
 **Description:**
 
@@ -184,7 +186,7 @@ OpenCaptions jest open source (AGPL-3.0). Czytaj kod, zbuduj go sam albo uruchom
 
 **Keywords:** transcrever,reels,tiktok,shorts,fala para texto,offline,whisper,vídeo,animadas,karaoke,srt,captions
 
-**What's new:** Primeira versão.
+**What's new:** Abra um vídeo direto do app Arquivos ou de outro app e use a nova ação Legendar um vídeo nos Atalhos. Além de correções.
 
 **Description:**
 
@@ -218,7 +220,7 @@ O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo
 
 **Keywords:** trascrizione,reels,tiktok,shorts,voce in testo,offline,whisper,video,animati,karaoke,srt,captions
 
-**What's new:** Prima versione.
+**What's new:** Apri un video direttamente da File o da un'altra app e usa la nuova azione Sottotitola un video in Comandi Rapidi. Più varie correzioni.
 
 **Description:**
 
@@ -252,7 +254,7 @@ OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o osp
 
 **Keywords:** транскрибация,reels,tiktok,shorts,речь в текст,офлайн,whisper,видео,анимация,караоке,srt,captions
 
-**What's new:** Первая версия.
+**What's new:** Открывайте видео прямо из «Файлов» или другого приложения и используйте новое действие «Добавить субтитры к видео» в «Командах». А также исправления.
 
 **Description:**
 
@@ -286,7 +288,7 @@ OpenCaptions — проект с открытым кодом (AGPL-3.0). Чит�
 
 **Keywords:** deşifre,reels,tiktok,shorts,konuşmayı metne,çevrimdışı,whisper,video,animasyonlu,srt,captions,metin
 
-**What's new:** İlk sürüm.
+**What's new:** Bir videoyu doğrudan Dosyalar'dan veya başka bir uygulamadan açın ve Kestirmeler'deki yeni Videoya altyazı ekle eylemini kullanın. Ayrıca düzeltmeler.
 
 **Description:**
 
@@ -320,7 +322,7 @@ OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin vey
 
 **Keywords:** 文字起こし,テロップ,リール,tiktok,ショート,音声認識,オフライン,whisper,動画,キャプション,アニメーション,カラオケ,srt,ポッドキャスト,動画編集
 
-**What's new:** 最初のリリース。
+**What's new:** 「ファイル」や他のアプリから動画を直接開けるようになり、ショートカットに新しいアクション「動画に字幕を付ける」を追加しました。不具合も修正しました。
 
 **Description:**
 
@@ -354,7 +356,7 @@ OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、
 
 **Keywords:** 받아쓰기,릴스,틱톡,쇼츠,음성 텍스트,오프라인,whisper,동영상,캡션,애니메이션,노래방,srt,팟캐스트,영상 편집,자막 생성
 
-**What's new:** 첫 번째 릴리스.
+**What's new:** 파일 앱이나 다른 앱에서 동영상을 바로 열고, 단축어의 새 동작 ‘동영상에 자막 넣기’를 사용해 보세요. 버그도 수정했습니다.
 
 **Description:**
 
@@ -388,7 +390,7 @@ OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌�
 
 **Keywords:** 转录,短视频,tiktok,reels,语音转文字,离线,whisper,视频,captions,动画,卡拉OK,srt,播客,视频编辑,加字幕,语音识别
 
-**What's new:** 首个版本。
+**What's new:** 现在可以直接从“文件”或其他 App 打开视频，并在“快捷指令”中使用新的“为视频添加字幕”操作。另有问题修复。
 
 **Description:**
 
@@ -422,7 +424,7 @@ OpenCaptions 是开源软件（AGPL-3.0）。你可以阅读代码、自行构�
 
 **Keywords:** teks,transkripsi,reels,tiktok,shorts,ucapan ke teks,offline,whisper,video,animasi,karaoke,caption
 
-**What's new:** Rilis pertama.
+**What's new:** Buka video langsung dari File atau app lain, dan gunakan tindakan baru Beri teks pada video di Pintasan. Plus perbaikan.
 
 **Description:**
 
