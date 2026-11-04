@@ -12,7 +12,7 @@ The privacy policy is `PRIVACY.md` in the repository root, at <https://github.co
 
 **Promotional text:** Animated captions for your videos, made on your phone. Nothing is uploaded. Pay once for Pro, no subscription.
 
-**Keywords:** captions,subtitles,transcribe,reels,tiktok,shorts,speech to text,offline,private,whisper,video
+**Keywords:** transcribe,reels,tiktok,shorts,speech to text,offline,whisper,video,animated,karaoke,srt,podcast
 
 **What's new:** First release.
 
@@ -40,13 +40,13 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 ## fr
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Sous-titres auto
 
 **Subtitle:** Sous-titres privés, sur iPhone
 
 **Promotional text:** Des sous-titres animés pour vos vidéos, créés sur votre téléphone. Rien n'est envoyé. Pro en achat unique, sans abonnement.
 
-**Keywords:** sous-titres,légendes,transcription,reels,tiktok,shorts,parole en texte,hors ligne,privé,whisper
+**Keywords:** légendes,transcription,reels,tiktok,shorts,parole en texte,hors ligne,whisper,vidéo,animés,captions
 
 **What's new:** Première version.
 
@@ -74,13 +74,13 @@ OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même o
 
 ## es
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Subtítulos auto
 
 **Subtitle:** Subtítulos privados, en iPhone
 
 **Promotional text:** Subtítulos animados para tus vídeos, creados en tu teléfono. No se sube nada. Pro con un solo pago, sin suscripción.
 
-**Keywords:** subtítulos,transcribir,reels,tiktok,shorts,voz a texto,sin conexión,privado,whisper,vídeo,captions
+**Keywords:** transcribir,reels,tiktok,shorts,voz a texto,sin conexión,whisper,vídeo,animados,karaoke,srt,captions
 
 **What's new:** Primera versión.
 
@@ -108,13 +108,13 @@ OpenCaptions es de código abierto (AGPL-3.0). Lee el código, compílalo tú mi
 
 ## de
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Auto-Untertitel
 
 **Subtitle:** Private Untertitel am iPhone
 
 **Promotional text:** Animierte Untertitel für deine Videos, auf deinem Handy erstellt. Nichts wird hochgeladen. Pro einmal kaufen, kein Abo.
 
-**Keywords:** Untertitel,Transkription,Reels,TikTok,Shorts,Sprache zu Text,offline,privat,Whisper,Video,Captions
+**Keywords:** Transkription,Reels,TikTok,Shorts,Sprache zu Text,offline,Whisper,Video,animiert,SRT,Captions
 
 **What's new:** Erste Version.
 
@@ -142,13 +142,13 @@ OpenCaptions ist Open Source (AGPL-3.0). Lies den Code, baue ihn selbst oder hos
 
 ## pl
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Napisy auto
 
 **Subtitle:** Prywatne napisy w iPhonie
 
 **Promotional text:** Animowane napisy do filmów, tworzone na telefonie. Nic nie jest wysyłane. Pro to jednorazowy zakup, bez subskrypcji.
 
-**Keywords:** napisy,transkrypcja,reels,tiktok,shorts,mowa na tekst,offline,prywatność,whisper,wideo,captions
+**Keywords:** transkrypcja,reels,tiktok,shorts,mowa na tekst,offline,whisper,wideo,animowane,karaoke,srt,captions
 
 **What's new:** Pierwsza wersja.
 
@@ -176,13 +176,13 @@ OpenCaptions jest open source (AGPL-3.0). Czytaj kod, zbuduj go sam albo uruchom
 
 ## pt-BR
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Legendas auto
 
 **Subtitle:** Legendas privadas no iPhone
 
 **Promotional text:** Legendas animadas para seus vídeos, feitas no celular. Nada é enviado. Pro com pagamento único, sem assinatura.
 
-**Keywords:** legendas,transcrever,reels,tiktok,shorts,fala para texto,offline,privado,whisper,vídeo,captions
+**Keywords:** transcrever,reels,tiktok,shorts,fala para texto,offline,whisper,vídeo,animadas,karaoke,srt,captions
 
 **What's new:** Primeira versão.
 
@@ -210,13 +210,13 @@ O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo
 
 ## it
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Sottotitoli auto
 
 **Subtitle:** Sottotitoli privati su iPhone
 
 **Promotional text:** Sottotitoli animati per i tuoi video, creati sul telefono. Nulla viene caricato. Pro con acquisto unico, senza abbonamento.
 
-**Keywords:** sottotitoli,trascrizione,reels,tiktok,shorts,voce in testo,offline,privato,whisper,video,captions
+**Keywords:** trascrizione,reels,tiktok,shorts,voce in testo,offline,whisper,video,animati,karaoke,srt,captions
 
 **What's new:** Prima versione.
 
@@ -244,13 +244,13 @@ OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o osp
 
 ## ru
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Автосубтитры
 
 **Subtitle:** Приватные субтитры на iPhone
 
 **Promotional text:** Анимированные субтитры для видео, созданные на телефоне. Ничего не загружается. Pro — разовая покупка, без подписки.
 
-**Keywords:** субтитры,транскрибация,reels,tiktok,shorts,речь в текст,офлайн,приватно,whisper,видео,captions
+**Keywords:** транскрибация,reels,tiktok,shorts,речь в текст,офлайн,whisper,видео,анимация,караоке,srt,captions
 
 **What's new:** Первая версия.
 
@@ -278,13 +278,13 @@ OpenCaptions — проект с открытым кодом (AGPL-3.0). Чит�
 
 ## tr
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Otomatik Altyazı
 
 **Subtitle:** iPhone'da gizli altyazı
 
 **Promotional text:** Videolarınız için telefonda oluşturulan animasyonlu altyazılar. Hiçbir şey yüklenmez. Pro tek seferlik, abonelik yok.
 
-**Keywords:** altyazı,deşifre,reels,tiktok,shorts,konuşmayı metne,çevrimdışı,gizlilik,whisper,video,captions
+**Keywords:** deşifre,reels,tiktok,shorts,konuşmayı metne,çevrimdışı,whisper,video,animasyonlu,srt,captions,metin
 
 **What's new:** İlk sürüm.
 
@@ -312,13 +312,13 @@ OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin vey
 
 ## ja
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: 自動字幕
 
 **Subtitle:** iPhoneで完結するプライベート字幕
 
 **Promotional text:** 動画にアニメーション字幕を。iPhone上で作成し、何もアップロードしません。Proは買い切り、サブスクなし。
 
-**Keywords:** 字幕,文字起こし,リール,tiktok,ショート,音声認識,オフライン,プライバシー,whisper,動画,キャプション
+**Keywords:** 文字起こし,テロップ,リール,tiktok,ショート,音声認識,オフライン,whisper,動画,キャプション,アニメーション,カラオケ,srt,ポッドキャスト,動画編集
 
 **What's new:** 最初のリリース。
 
@@ -346,13 +346,13 @@ OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、
 
 ## ko
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: 자동 자막
 
 **Subtitle:** iPhone에서 만드는 비공개 자막
 
 **Promotional text:** 내 휴대폰에서 만드는 애니메이션 자막. 아무것도 업로드하지 않습니다. Pro는 한 번만 결제, 구독 없음.
 
-**Keywords:** 자막,받아쓰기,릴스,틱톡,쇼츠,음성 텍스트,오프라인,개인정보,whisper,동영상,캡션
+**Keywords:** 받아쓰기,릴스,틱톡,쇼츠,음성 텍스트,오프라인,whisper,동영상,캡션,애니메이션,노래방,srt,팟캐스트,영상 편집,자막 생성
 
 **What's new:** 첫 번째 릴리스.
 
@@ -380,13 +380,13 @@ OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌�
 
 ## zh-Hans
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: 自动字幕
 
 **Subtitle:** 在 iPhone 上生成的私密字幕
 
 **Promotional text:** 在手机上为视频生成动画字幕，不上传任何内容。Pro 一次购买，无需订阅。
 
-**Keywords:** 字幕,转录,短视频,tiktok,reels,语音转文字,离线,隐私,whisper,视频,captions
+**Keywords:** 转录,短视频,tiktok,reels,语音转文字,离线,whisper,视频,captions,动画,卡拉OK,srt,播客,视频编辑,加字幕,语音识别
 
 **What's new:** 首个版本。
 
@@ -414,13 +414,13 @@ OpenCaptions 是开源软件（AGPL-3.0）。你可以阅读代码、自行构�
 
 ## id
 
-**Name:** OpenCaptions: Auto Captions
+**Name:** OpenCaptions: Auto Subtitle
 
 **Subtitle:** Subtitle privat di iPhone
 
 **Promotional text:** Teks animasi untuk videomu, dibuat di ponsel. Tidak ada yang diunggah. Pro sekali bayar, tanpa langganan.
 
-**Keywords:** teks,subtitle,transkripsi,reels,tiktok,shorts,ucapan ke teks,offline,privasi,whisper,video,caption
+**Keywords:** teks,transkripsi,reels,tiktok,shorts,ucapan ke teks,offline,whisper,video,animasi,karaoke,caption
 
 **What's new:** Rilis pertama.
 
