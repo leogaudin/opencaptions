@@ -38,6 +38,8 @@ struct OpenCaptionsApp: App {
     private var mainWindow: some Scene {
         WindowGroup {
             RootView()
+                // Past this the fixed parts of the editor no longer fit; it is still over twice the default size.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility3)
                 // Inside the environment, which it reads the app model from.
                 .modifier(PairingConfirmation())
                 .environment(app)

@@ -28,7 +28,7 @@ struct ServerSection: View {
                 connected(connection)
             } else if app.serverConnection == nil {
                 Text("Choose “Remote server” to transcribe on another OpenCaptions server instead, which is faster on a computer with a graphics card.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                    .scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             }
         }
         #if DEBUG
@@ -51,8 +51,8 @@ struct ServerSection: View {
     private func connected(_ connection: ServerConnection) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(connection.displayName).font(.system(size: 16, weight: .semibold))
-                Text(connection.url.absoluteString).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                Text(connection.displayName).scaledFont(16, weight: .semibold)
+                Text(connection.url.absoluteString).scaledFont(12).foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 10) {
                 Button(testing ? "Testing…" : "Test") { Task { await test(connection) } }
@@ -66,14 +66,14 @@ struct ServerSection: View {
             switch testResult {
             case .success(let caps):
                 Label("Connected to \(caps.instanceName).", systemImage: "checkmark.circle.fill")
-                    .font(.system(size: 13, weight: .medium))
+                    .scaledFont(13, weight: .medium)
             case .failure(let error):
-                Text(error.localizedDescription).font(.system(size: 13)).foregroundStyle(Theme.danger)
+                Text(error.localizedDescription).scaledFont(13).foregroundStyle(Theme.danger)
             case nil:
                 EmptyView()
             }
             Text("The audio of a video is sent to \(connection.url.host ?? "it") to be transcribed, and deleted there afterwards.")
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary)
         }
         .card()
     }
@@ -105,13 +105,13 @@ struct ConnectServerSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Connect a server").font(.system(size: 22, weight: .heavy))
+                Text("Connect a server").scaledFont(22, weight: .heavy)
                 Spacer()
                 Button { dismiss() } label: { Image(systemName: "xmark") }
                     .buttonStyle(CircleButtonStyle()).accessibilityLabel("Close")
             }
             Text("In the server's web app, open Account and create a key: it comes with a link. Paste the link here, or enter the address and the key.")
-                .font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                .scaledFont(13).foregroundStyle(Theme.textSecondary)
             Button { paste() } label: { Label("Paste link", systemImage: "doc.on.clipboard") }
                 .buttonStyle(PillButtonStyle())
             VStack(spacing: 10) {
@@ -119,11 +119,11 @@ struct ConnectServerSheet: View {
                 SecureField("Key (oc_…)", text: $key)
                     .focused($focus, equals: .key)
                     .noAutocapitalization().autocorrectionDisabled()
-                    .font(.system(size: 16, weight: .medium))
+                    .scaledFont(16, weight: .medium)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
             }
-            if let problem { Text(problem).font(.system(size: 13)).foregroundStyle(Theme.danger) }
+            if let problem { Text(problem).scaledFont(13).foregroundStyle(Theme.danger) }
             Spacer(minLength: 0)
             Button(checking ? "Checking…" : "Connect") { Task { await connect() } }
                 .buttonStyle(PrimaryButtonStyle())
@@ -140,7 +140,7 @@ struct ConnectServerSheet: View {
             .focused($focus, equals: target)
             .urlKeyboard()
             .noAutocapitalization().autocorrectionDisabled()
-            .font(.system(size: 16, weight: .medium))
+            .scaledFont(16, weight: .medium)
             .padding(.horizontal, 14).padding(.vertical, 12)
             .background(Theme.raised, in: .rect(cornerRadius: 12))
     }

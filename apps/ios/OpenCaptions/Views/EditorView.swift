@@ -77,7 +77,7 @@ struct EditorView: View {
         .sheet(isPresented: $showStyle) {
             VStack(spacing: 0) {
                 HStack {
-                    Text("Style").font(.system(size: 20, weight: .heavy))
+                    Text("Style").scaledFont(20, weight: .heavy)
                     Spacer()
                     Button("Done") { showStyle = false }.buttonStyle(PillButtonStyle(prominent: true))
                 }
@@ -218,7 +218,7 @@ struct EditorView: View {
             .overlay(alignment: .topLeading) {
                 let style = model.project.styleConfig
                 Text("size=\(style.fontSize) x=\(Int((style.positionX * 100).rounded())) y=\(Int((style.positionY * 100).rounded()))")
-                    .font(.system(size: 4)).opacity(0.02).allowsHitTesting(false)
+                    .scaledFont(4).opacity(0.02).allowsHitTesting(false)
                     .accessibilityIdentifier("debug-style")
             }
         #endif
@@ -243,7 +243,7 @@ struct EditorView: View {
                 .buttonStyle(CircleButtonStyle())
                 .accessibilityLabel("Back")
             VStack(alignment: .leading, spacing: 1) {
-                Text(model.project.title).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                Text(model.project.title).scaledFont(15, weight: .semibold).lineLimit(1)
                 SaveLabel(state: model.saveState)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -305,21 +305,21 @@ struct EditorView: View {
                     // A short clip is a single step, so there is no fraction to show until it
                     // ends: a spinner, with the words as they are decoded, beats a stuck 0%.
                     if fraction > 0 {
-                        Text("\(Int(fraction * 100))%").font(.system(size: 20, weight: .heavy).monospacedDigit())
+                        Text("\(Int(fraction * 100))%").scaledFont(20, weight: .heavy).monospacedDigit()
                             .foregroundStyle(Theme.textPrimary)
                     } else {
                         Spinner()
                     }
-                    Text(message).font(.system(size: 14, weight: .semibold))
+                    Text(message).scaledFont(14, weight: .semibold)
                     Spacer(minLength: 0)
                 }
                 if fraction > 0 { ProgressBar(value: fraction) }
                 HStack {
                     Text("Keep OpenCaptions open until this finishes.")
-                        .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                        .scaledFont(12).foregroundStyle(Theme.textSecondary)
                     Spacer()
                     Button("Cancel") { model.cancelTranscription() }
-                        .font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.danger)
+                        .scaledFont(13, weight: .bold).foregroundStyle(Theme.danger)
                 }
             }
             .padding(14)
@@ -344,18 +344,18 @@ private struct WordEditCard: View {
         ZStack(alignment: .top) {
             Color.black.opacity(0.5).ignoresSafeArea().onTapGesture(perform: cancel)
             VStack(alignment: .leading, spacing: 14) {
-                Text("Edit word").font(.system(size: 18, weight: .heavy))
+                Text("Edit word").scaledFont(18, weight: .heavy)
                 TextField("Word", text: $text, selection: $selection)
                     .focused($focused)
                     .submitLabel(.done)
                     .onSubmit(save)
                     .noAutocapitalization()
                     .autocorrectionDisabled()
-                    .font(.system(size: 22, weight: .bold))
+                    .scaledFont(22, weight: .bold)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
                 Text("Clear it to delete the word.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    .scaledFont(12).foregroundStyle(Theme.textSecondary)
                 looks
                 HStack(spacing: 10) {
                     Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
@@ -383,9 +383,9 @@ private struct SaveLabel: View {
     var body: some View {
         switch state {
         case .idle: EmptyView()
-        case .saving: Text("Saving…").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-        case .saved: Label("Saved", systemImage: "checkmark").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-        case .failed(let reason): Text("Save failed: \(reason)").font(.system(size: 11)).foregroundStyle(Theme.danger)
+        case .saving: Text("Saving…").scaledFont(11).foregroundStyle(Theme.textSecondary)
+        case .saved: Label("Saved", systemImage: "checkmark").scaledFont(11).foregroundStyle(Theme.textSecondary)
+        case .failed(let reason): Text("Save failed: \(reason)").scaledFont(11).foregroundStyle(Theme.danger)
         }
     }
 }

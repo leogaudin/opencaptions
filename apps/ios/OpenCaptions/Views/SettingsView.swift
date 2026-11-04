@@ -35,7 +35,7 @@ struct SettingsView: View {
         // (which would scroll it to the top).
         let _ = refresh
         VStack(spacing: 0) {
-            Text("Settings").font(.system(size: 28, weight: .heavy))
+            Text("Settings").scaledFont(28, weight: .heavy)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 10)
             ScrollView(.vertical) {
@@ -152,7 +152,7 @@ struct SettingsView: View {
                     if !app.entitlements.isPro { showPro = true }
                 } label: {
                     HStack {
-                        Text(app.entitlements.isPro ? "Pro is unlocked" : "Unlock Pro").font(.system(size: 16, weight: .medium))
+                        Text(app.entitlements.isPro ? "Pro is unlocked" : "Unlock Pro").scaledFont(16, weight: .medium)
                         Spacer()
                         Image(systemName: app.entitlements.isPro ? "checkmark.circle.fill" : "chevron.right")
                             .foregroundStyle(app.entitlements.isPro ? Theme.accent : Theme.textSecondary)
@@ -183,7 +183,7 @@ struct SettingsView: View {
             .background(Theme.surface, in: .rect(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
             Text("Models are downloaded once and run on this device. Delete the ones you do not use to free space.")
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
         }
     }
 
@@ -191,7 +191,7 @@ struct SettingsView: View {
         let downloaded = app.transcriber.isDownloaded(model.id)
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.label).font(.system(size: 16, weight: .semibold))
+                Text(model.label).scaledFont(16, weight: .semibold)
                 Group {
                     if model.isBuiltIn {
                         Text("Built into iOS")
@@ -201,12 +201,12 @@ struct SettingsView: View {
                         Text("\(model.megabytes) MB")
                     }
                 }
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 8)
             if let fraction = downloading[model.id] {
                 HStack(spacing: 8) {
-                    Text("\(Int(fraction * 100))%").font(.system(size: 13, weight: .bold).monospacedDigit())
+                    Text("\(Int(fraction * 100))%").scaledFont(13, weight: .bold).monospacedDigit()
                     Spinner().controlSize(.small)
                 }
                 .foregroundStyle(Theme.textSecondary)
@@ -231,9 +231,9 @@ struct SettingsView: View {
                 storageRow("Projects", Self.size(sizes.projects))
                 storageRow("Speech models", Self.size(sizes.models))
                 HStack {
-                    Text("Cached videos").font(.system(size: 16, weight: .medium))
+                    Text("Cached videos").scaledFont(16, weight: .medium)
                     Spacer()
-                    Text(Self.size(sizes.renders)).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
+                    Text(Self.size(sizes.renders)).scaledFont(15).foregroundStyle(Theme.textSecondary)
                     Button("Clear") { clearingSaved = true }
                         .buttonStyle(PillButtonStyle())
                         .disabled(sizes.renders == 0)
@@ -246,9 +246,9 @@ struct SettingsView: View {
 
     private func storageRow(_ title: LocalizedStringKey, _ value: String) -> some View {
         HStack {
-            Text(title).font(.system(size: 16, weight: .medium))
+            Text(title).scaledFont(16, weight: .medium)
             Spacer()
-            Text(value).font(.system(size: 15)).foregroundStyle(Theme.textSecondary)
+            Text(value).scaledFont(15).foregroundStyle(Theme.textSecondary)
         }
     }
 
@@ -272,22 +272,22 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Wordmark()
                 Text(ThisDevice.about)
-                    .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
+                    .scaledFont(14).foregroundStyle(Theme.textSecondary)
                 storageRow("Version", Self.version)
                 Link(destination: URL(string: "https://github.com/leogaudin/opencaptions")!) {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(15, weight: .semibold)
                 }
                 Link(destination: URL(string: "https://github.com/leogaudin/opencaptions/blob/main/NOTICE")!) {
                     Label("Licences and credits", systemImage: "doc.text")
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(15, weight: .semibold)
                 }
                 Text("Open source (AGPL-3.0). The speech models, fonts and libraries it uses keep their own licences.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    .scaledFont(12).foregroundStyle(Theme.textSecondary)
                 if FileManager.default.fileExists(atPath: Diagnostics.fileURL.path) {
                     ShareLink(item: Diagnostics.fileURL) {
                         Label("Share diagnostics", systemImage: "square.and.arrow.up")
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(15, weight: .semibold)
                     }
                 }
             }

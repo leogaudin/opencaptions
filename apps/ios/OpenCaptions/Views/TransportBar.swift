@@ -25,6 +25,8 @@ struct TransportBar: View {
             Button { playback.isMuted.toggle() } label: {
                 Image(systemName: playback.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .foregroundStyle(playback.isMuted ? Theme.textSecondary : Theme.textPrimary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
             }
             .accessibilityLabel(playback.isMuted ? "Unmute" : "Mute")
             tool("arrow.uturn.backward", "Undo", enabled: canUndo, undo)

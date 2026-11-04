@@ -11,7 +11,7 @@ struct ProSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack {
-                Text("OpenCaptions Pro").font(.system(size: 22, weight: .heavy))
+                Text("OpenCaptions Pro").scaledFont(22, weight: .heavy)
                 ProBadge()
                 Spacer()
             }
@@ -24,14 +24,14 @@ struct ProSheet: View {
             }
             .card()
             HStack {
-                Text("One-time purchase").font(.system(size: 15, weight: .medium))
+                Text("One-time purchase").scaledFont(15, weight: .medium)
                 Spacer()
                 priceLabel
             }
             .padding(.horizontal, 4)
             #if APPSTORE
                 if let message = app.purchases.message {
-                    Text(message).font(.system(size: 13)).foregroundStyle(Theme.danger)
+                    Text(message).scaledFont(13).foregroundStyle(Theme.danger)
                 }
                 Button { Task { await app.purchases.buy() } } label: {
                     if app.purchases.isBusy {
@@ -47,7 +47,7 @@ struct ProSheet: View {
                         .disabled(app.purchases.isBusy)
                     Button("Not now") { dismiss() }
                 }
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(15, weight: .semibold)
                 .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity)
             #elseif DEBUG
@@ -82,15 +82,15 @@ struct ProSheet: View {
     @ViewBuilder private var priceLabel: some View {
         #if APPSTORE
             if let price = app.purchases.displayPrice {
-                Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+                Text(price).scaledFont(20, weight: .heavy).monospacedDigit()
             } else if app.purchases.isLoadingProduct {
                 Spinner()
             } else {
                 Button("Try again") { Task { await app.purchases.loadProduct() } }
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(15, weight: .semibold)
             }
         #else
-            Text(price).font(.system(size: 20, weight: .heavy).monospacedDigit())
+            Text(price).scaledFont(20, weight: .heavy).monospacedDigit()
         #endif
     }
 
@@ -106,7 +106,7 @@ struct ProSheet: View {
 
     private func benefit(_ icon: String, _ text: LocalizedStringKey) -> some View {
         Label {
-            Text(text).font(.system(size: 15, weight: .medium))
+            Text(text).scaledFont(15, weight: .medium)
         } icon: {
             Image(systemName: icon).frame(width: 22)
         }

@@ -15,7 +15,8 @@ struct SaveOptionsSheet: View {
     @AppStorage("export.keepHDR") private var keepHDR = true
     @AppStorage("export.fps") private var frameRate = ExportOptions.FrameRate.original
     @State private var greenScreen = false
-    @State private var contentHeight: CGFloat = 520
+    @State private var choicesHeight: CGFloat = 440
+    @State private var buttonsHeight: CGFloat = 60
     @State private var freeBytes = DiskSpace.available()
     @State private var showPro = false
     @Environment(AppModel.self) private var app
@@ -32,28 +33,37 @@ struct SaveOptionsSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 18) {
-            HStack {
-                Text("Save video").font(.system(size: 22, weight: .heavy))
-                Spacer()
-                subtitlesMenu
+        VStack(spacing: 0) {
+            // Scrolls when large text makes the choices taller than the screen; the buttons stay in reach.
+            ScrollView {
+                VStack(spacing: 18) {
+                    HStack {
+                        Text("Save video").scaledFont(22, weight: .heavy)
+                        Spacer()
+                        subtitlesMenu
+                    }
+                    if isHDR && !greenScreen { hdrSection }
+                    if !isHDR || !keepHDR || greenScreen { formatSection }
+                    sizeSection
+                    if rates.count > 1 { frameRateSection }
+                    backgroundSection
+                    estimate
+                }
+                .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 18)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { choicesHeight = $0 }
             }
-            if isHDR && !greenScreen { hdrSection }
-            if !isHDR || !keepHDR || greenScreen { formatSection }
-            sizeSection
-            if rates.count > 1 { frameRateSection }
-            backgroundSection
-            estimate
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(idealHeight: choicesHeight)
             HStack(spacing: 10) {
                 Button("Cancel", action: cancel).buttonStyle(SecondaryButtonStyle())
                 Button("Save") { save(options) }.buttonStyle(PrimaryButtonStyle())
                     .disabled(!fits).opacity(fits ? 1 : 0.4)
             }
+            .padding(.horizontal, 18).padding(.bottom, 8)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { buttonsHeight = $0 }
         }
-        .padding(.horizontal, 18).padding(.top, 24).padding(.bottom, 8)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 + 16 }
         .frame(maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.height(contentHeight)])
+        .presentationDetents([.height(choicesHeight + buttonsHeight + 16)])
         .presentationDragIndicator(.visible)
         .tint(Theme.accent)
         .sheet(isPresented: $showPro) { ProSheet() }
@@ -148,7 +158,7 @@ struct SaveOptionsSheet: View {
             estimateRow
             if !fits, let free = freeBytes {
                 Text(ThisDevice.noRoom(need: Self.size(options.estimatedBytes(for: project) ?? 0), free: Self.size(free)))
-                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.danger)
+                    .scaledFont(12, weight: .medium).foregroundStyle(Theme.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -160,10 +170,10 @@ struct SaveOptionsSheet: View {
 
     private var estimateRow: some View {
         HStack {
-            Label("About", systemImage: "internaldrive").font(.system(size: 13, weight: .medium))
+            Label("About", systemImage: "internaldrive").scaledFont(13, weight: .medium)
             Spacer()
             Text(options.estimatedBytes(for: project).map(Self.size) ?? "")
-                .font(.system(size: 15, weight: .bold).monospacedDigit())
+                .scaledFont(15, weight: .bold).monospacedDigit()
         }
         .foregroundStyle(Theme.textSecondary)
         .padding(.horizontal, 4)
@@ -174,7 +184,7 @@ struct SaveOptionsSheet: View {
             SectionLabel(title)
             content()
             if let note {
-                Text(note).font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                Text(note).scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             }
         }
     }

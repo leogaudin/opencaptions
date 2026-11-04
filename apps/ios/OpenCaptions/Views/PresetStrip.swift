@@ -64,7 +64,7 @@ struct StyleTile: View {
                 .clipShape(.rect(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
                 .overlay(alignment: .topTrailing) { if locked { ProBadge().padding(6) } }
-                Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                Text(title).scaledFont(12, weight: .semibold).foregroundStyle(Theme.textPrimary)
             }
             .padding(6)
             .contentShape(.rect)

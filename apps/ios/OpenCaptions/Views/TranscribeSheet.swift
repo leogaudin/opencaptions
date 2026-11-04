@@ -8,6 +8,7 @@ import SwiftUI
 struct TranscribeSheet: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: EditorModel
 
     /// Remembered between runs, like the language: the model someone chose last is the one they will want.
@@ -43,9 +44,9 @@ struct TranscribeSheet: View {
             // Two steps in place of a pushed destination: the back arrow only flips the flag.
             Group {
                 if showLanguages {
-                    secondStep.transition(.move(edge: .trailing))
+                    secondStep.transition(reduceMotion ? .opacity : .move(edge: .trailing))
                 } else {
-                    firstStep.transition(.move(edge: .leading))
+                    firstStep.transition(reduceMotion ? .opacity : .move(edge: .leading))
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: showLanguages)
@@ -100,13 +101,13 @@ struct TranscribeSheet: View {
                         } icon: {
                             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.accent)
                         }
-                            .font(.system(size: 14, weight: .semibold))
+                            .scaledFont(14, weight: .semibold)
                             .fixedSize(horizontal: false, vertical: true)
                             .card()
                     }
                     if model.isTranscribing {
                         Label("A transcription is already running.", systemImage: "hourglass")
-                            .font(.system(size: 14, weight: .semibold)).card()
+                            .scaledFont(14, weight: .semibold).card()
                     }
                     if app.serverConnection != nil { sourceSection }
                     if onServer { serverSection } else { modelSection }
@@ -138,7 +139,7 @@ struct TranscribeSheet: View {
                     .accessibilityLabel("Back")
                     .accessibilityIdentifier("language-back")
                     .disabled(busy)
-                Text("Spoken language").font(.system(size: 24, weight: .heavy))
+                Text("Spoken language").scaledFont(24, weight: .heavy)
                 Spacer()
             }
             .padding(.horizontal, 18).padding(.top, 22).padding(.bottom, 10)
@@ -147,7 +148,7 @@ struct TranscribeSheet: View {
                     VStack(spacing: 16) {
                         if let downloading { downloadCard(downloading) }
                         if let failure {
-                            Text(failure).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
+                            Text(failure).scaledFont(14).foregroundStyle(Theme.danger).card()
                         }
                         languageSearch
                         languageList
@@ -184,16 +185,16 @@ struct TranscribeSheet: View {
     /// end the bytes are all here and the files are being put in place, which has no fraction to show.
     private func downloadCard(_ fraction: Double) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Downloading the model").font(.system(size: 15, weight: .bold))
+            Text("Downloading the model").scaledFont(15, weight: .bold)
             if fraction >= 0.99 {
                 HStack(spacing: 10) {
                     Spinner().controlSize(.small)
-                    Text("Finishing up…").font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                    Text("Finishing up…").scaledFont(13).foregroundStyle(Theme.textSecondary)
                 }
             } else {
                 ProgressBar(value: fraction)
                 Text("\(Int(fraction * 100))% of \(chosen.megabytes) MB")
-                    .font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                    .scaledFont(13).monospacedDigit().foregroundStyle(Theme.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -238,8 +239,8 @@ struct TranscribeSheet: View {
         let selected = code == language
         return Button { language = code } label: {
             HStack(spacing: 14) {
-                Text(flag).font(.system(size: 26))
-                Text(label).font(.system(size: 16, weight: .semibold))
+                Text(flag).scaledFont(26)
+                Text(label).scaledFont(16, weight: .semibold)
                 Spacer(minLength: 8)
                 if selected { Image(systemName: "checkmark").foregroundStyle(Theme.accent).fontWeight(.bold) }
             }
@@ -262,7 +263,7 @@ struct TranscribeSheet: View {
 
     private var header: some View {
         HStack {
-            Text("Transcribe").font(.system(size: 24, weight: .heavy))
+            Text("Transcribe").scaledFont(24, weight: .heavy)
             Spacer()
             Button { dismiss() } label: { Image(systemName: "xmark") }
                 .buttonStyle(CircleButtonStyle())
@@ -283,7 +284,7 @@ struct TranscribeSheet: View {
             }))
             if sourceChoice != nil, sourceChoice != app.useServer {
                 Text("Just this time. Settings keeps your usual choice.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                    .scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             }
         }
     }
@@ -303,19 +304,19 @@ struct TranscribeSheet: View {
                 .clipShape(.rect(cornerRadius: Theme.radius))
                 .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
             } else if let serverProblem {
-                Text(serverProblem).font(.system(size: 14)).foregroundStyle(Theme.danger).card()
+                Text(serverProblem).scaledFont(14).foregroundStyle(Theme.danger).card()
             } else if serverModels == nil {
                 HStack(spacing: 10) {
                     Spinner().controlSize(.small)
                     Text("Asking \(app.serverConnection?.displayName ?? "the server")…")
-                        .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
+                        .scaledFont(14).foregroundStyle(Theme.textSecondary)
                 }
                 .card()
             } else {
-                Text("The server chooses the model.").font(.system(size: 14)).foregroundStyle(Theme.textSecondary).card()
+                Text("The server chooses the model.").scaledFont(14).foregroundStyle(Theme.textSecondary).card()
             }
             Text("Only the audio is sent, to \(app.serverConnection?.url.host ?? "the server"), which deletes it when it is done.")
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             Button("Change server") { connecting = true }.buttonStyle(PillButtonStyle())
         }
     }
@@ -323,9 +324,9 @@ struct TranscribeSheet: View {
     private func serverModelRow(_ option: ServerCapabilities.Model, selected: Bool) -> some View {
         Button { serverModelID = option.id } label: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(option.label).font(.system(size: 16, weight: .semibold))
+                Text(option.label).scaledFont(16, weight: .semibold)
                 if let note = option.note, !note.isEmpty {
-                    Text(note).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    Text(note).scaledFont(12).foregroundStyle(Theme.textSecondary)
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
@@ -367,7 +368,7 @@ struct TranscribeSheet: View {
                 : downloaded
                 ? "Downloaded. Transcription runs on this device."
                 : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent device.")
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
         }
     }
 
@@ -378,9 +379,9 @@ struct TranscribeSheet: View {
         return Button { storedModelID = option.id } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(option.label).font(.system(size: 16, weight: .semibold))
+                    Text(option.label).scaledFont(16, weight: .semibold)
                     if let hint = Self.hint(option.id) {
-                        Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                        Text(hint).scaledFont(12).foregroundStyle(Theme.textSecondary)
                     }
                     if let languages = languagesByModel[option.id] { languageFlags(languages) }
                 }
@@ -392,7 +393,7 @@ struct TranscribeSheet: View {
                 Group {
                     if option.isBuiltIn { Text("Built in") } else { Text("\(option.megabytes) MB") }
                 }
-                .font(.system(size: 13, weight: .medium).monospacedDigit())
+                .scaledFont(13, weight: .medium).monospacedDigit()
                 .foregroundStyle(Theme.textSecondary)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
@@ -408,8 +409,8 @@ struct TranscribeSheet: View {
     private func languageFlags(_ languages: [TranscriptionLanguage]) -> some View {
         let glance = TranscriptionLanguages.glance(of: languages)
         return HStack(spacing: 4) {
-            Text(glance.flags.joined()).font(.system(size: 12))
-            if glance.more > 0 { Text("+\(glance.more)").font(.system(size: 11, weight: .semibold).monospacedDigit()) }
+            Text(glance.flags.joined()).scaledFont(12)
+            if glance.more > 0 { Text("+\(glance.more)").scaledFont(11, weight: .semibold).monospacedDigit() }
         }
         .foregroundStyle(Theme.textSecondary)
         .padding(.horizontal, 7).padding(.vertical, 2)
@@ -433,7 +434,7 @@ struct TranscribeSheet: View {
         VStack(spacing: 8) {
             button
             Text(onServer ? "Keep OpenCaptions open until the audio has been sent." : "Keep OpenCaptions open while it works.")
-                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                .scaledFont(12).foregroundStyle(Theme.textSecondary)
         }
         .padding(.horizontal, 18)
         .padding(.top, 12)

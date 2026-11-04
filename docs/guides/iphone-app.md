@@ -105,6 +105,12 @@ mark in the corner. **Pro** is a single purchase, with no subscription: it remov
 and a [build you make yourself](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) has
 everything unlocked.
 
+## Accessibility
+
+Text follows the size you set in iOS, up to more than twice the default, and the screens scroll when it needs the
+room. The timeline's labels stay one size, to fit its tracks. Controls are named for VoiceOver, and the secondary text
+keeps a contrast of at least 4.5:1 on every surface, in both themes.
+
 ## Privacy
 
 The app has no analytics and no tracking. Your videos stay on the device. The only network requests are

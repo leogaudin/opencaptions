@@ -171,18 +171,18 @@ struct ProjectsView: View {
             // A caption as the app draws one: the spoken word in yellow.
             VStack(spacing: 14) {
                 Text("Add captions that move")
-                    .font(.system(size: 30, weight: .heavy)).multilineTextAlignment(.center)
+                    .scaledFont(30, weight: .heavy).multilineTextAlignment(.center)
                     .foregroundStyle(Theme.textPrimary)
                 Text(tagline)
                     .foregroundStyle(.white)
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(17, weight: .semibold)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 18).padding(.vertical, 12)
                     .background(.black.opacity(0.75), in: .rect(cornerRadius: 22))
                     .overlay(RoundedRectangle(cornerRadius: 22).stroke(Theme.stroke, lineWidth: 1))
             }
             Text("Nothing is uploaded: the transcription runs on your device.")
-                .font(.system(size: 14)).foregroundStyle(Theme.textSecondary).multilineTextAlignment(.center)
+                .scaledFont(14).foregroundStyle(Theme.textSecondary).multilineTextAlignment(.center)
             #if os(macOS)
                 VStack(spacing: 12) {
                     Button { showFileImporter = true } label: { Label("Import a video", systemImage: "plus") }
@@ -221,7 +221,7 @@ struct ProjectsView: View {
             } else {
                 Spinner()
             }
-            Text(importing ?? "").font(.system(size: 15, weight: .semibold))
+            Text(importing ?? "").scaledFont(15, weight: .semibold)
         }
         .padding(.horizontal, 28).padding(.vertical, 22)
         .background(Theme.raised, in: .rect(cornerRadius: Theme.radius))
@@ -335,7 +335,7 @@ struct ProjectCard: View {
                 .overlay(alignment: .topTrailing) {
                     if let seconds = project.videoDuration, seconds > 0 {
                         Text(Self.length(seconds))
-                            .font(.system(size: 12, weight: .bold).monospacedDigit())
+                            .scaledFont(12, weight: .bold).monospacedDigit()
                             .foregroundStyle(.white)
                             .padding(.horizontal, 7).padding(.vertical, 3)
                             .background(.black.opacity(0.6), in: .capsule)
@@ -346,8 +346,8 @@ struct ProjectCard: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.stroke, lineWidth: 1))
             VStack(alignment: .leading, spacing: 2) {
                 Text((app.openEditor(for: project.id)?.project ?? project).title)
-                    .font(.system(size: 15, weight: .semibold)).lineLimit(1)
-                status.font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    .scaledFont(15, weight: .semibold).lineLimit(1)
+                status.scaledFont(12).foregroundStyle(Theme.textSecondary)
             }
         }
         .contentShape(.rect)
@@ -491,12 +491,12 @@ struct RenameSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Rename").font(.system(size: 22, weight: .heavy))
+            Text("Rename").scaledFont(22, weight: .heavy)
             TextField("Name", text: $title, selection: $selection)
                 .focused($focused)
                 .submitLabel(.done)
                 .onSubmit { save(title) }
-                .font(.system(size: 18, weight: .semibold))
+                .scaledFont(18, weight: .semibold)
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(Theme.raised, in: .rect(cornerRadius: 12))
             HStack(spacing: 10) {

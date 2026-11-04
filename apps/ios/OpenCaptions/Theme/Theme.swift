@@ -11,7 +11,7 @@ enum Theme {
     /// Controls sitting on a surface: buttons, tracks, fields.
     static let raised = Color(light: "#E7E7EB", dark: "#242429")
     static let textPrimary = Color(light: "#0A0A0B", dark: "#FFFFFF")
-    static let textSecondary = Color(light: "#6B6B75", dark: "#8E8E96")
+    static let textSecondary = Color(light: "#5C5C66", dark: "#A0A0A8")
     static let stroke = textPrimary.opacity(0.09)
     /// The caption highlight yellow, as the desktop's favicon and style presets. It fills and tints
     /// (sliders, progress, the primary button); text stays the primary colour, because a darker
@@ -80,6 +80,33 @@ enum Appearance: String, CaseIterable, Identifiable {
     static let storageKey = "appearance"
 }
 
+// MARK: Text
+
+/// A system font at a designed size that follows the person's text size setting. All reading text uses it.
+/// A glyph inside a shape that does not grow, the wordmark, and the timeline's fixed tracks keep
+/// `.font(.system(size:))`.
+private struct ScaledFont: ViewModifier {
+    @ScaledMetric private var size: CGFloat
+    let weight: Font.Weight
+    let design: Font.Design
+
+    init(size: CGFloat, weight: Font.Weight, design: Font.Design) {
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+        self.weight = weight
+        self.design = design
+    }
+
+    func body(content: Content) -> some View {
+        content.font(.system(size: size, weight: weight, design: design))
+    }
+}
+
+extension View {
+    func scaledFont(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> some View {
+        modifier(ScaledFont(size: size, weight: weight, design: design))
+    }
+}
+
 // MARK: Wordmark
 
 /// "OpenCaptions." as on the desktop: a solid block with square corners and bold type, like
@@ -111,7 +138,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 17, weight: .bold))
+            .scaledFont(17, weight: .bold)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(Theme.onAccent)
@@ -129,7 +156,7 @@ struct SecondaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 17, weight: .semibold))
+            .scaledFont(17, weight: .semibold)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(Theme.textPrimary.opacity(enabled ? 1 : 0.4))
@@ -162,7 +189,9 @@ struct PillButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .bold))
+            .scaledFont(14, weight: .bold)
+            // One line whatever the text size: what sits beside the pill wraps instead.
+            .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(prominent ? Theme.onAccent : Theme.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
@@ -193,7 +222,7 @@ struct SectionLabel: View {
     var body: some View {
         Text(text)
             .textCase(.uppercase)
-            .font(.system(size: 12, weight: .bold))
+            .scaledFont(12, weight: .bold)
             .tracking(0.8)
             .foregroundStyle(Theme.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)

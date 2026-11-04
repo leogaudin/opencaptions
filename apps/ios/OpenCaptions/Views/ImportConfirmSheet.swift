@@ -44,7 +44,7 @@ struct ImportConfirmSheet: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Text("Import this video?").font(.system(size: 22, weight: .heavy))
+            Text("Import this video?").scaledFont(22, weight: .heavy)
                 .frame(maxWidth: .infinity, alignment: .leading)
             ZStack {
                 Theme.surface
@@ -62,10 +62,10 @@ struct ImportConfirmSheet: View {
                 TextField("Name", text: $item.title)
                     .focused($naming)
                     .submitLabel(.done)
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(17, weight: .semibold)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(Theme.raised, in: .rect(cornerRadius: 12))
-                Text(item.summary).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.textSecondary)
+                Text(item.summary).scaledFont(13, weight: .medium).foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 2)
             }
             Spacer(minLength: 0)

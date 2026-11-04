@@ -180,7 +180,7 @@ struct StylePanel: View {
                     Button { tab = item } label: {
                         VStack(spacing: 3) {
                             Image(systemName: item.icon).font(.system(size: 17, weight: .semibold))
-                            Text(item.title).font(.system(size: 11, weight: .semibold))
+                            Text(item.title).scaledFont(11, weight: .semibold)
                         }
                         .foregroundStyle(chosen ? Theme.textPrimary : Theme.textSecondary)
                         .frame(minWidth: 62).padding(.vertical, 7).padding(.horizontal, 6)
@@ -243,7 +243,7 @@ struct StylePanel: View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 16, content: content).card()
             if let footer {
-                Text(footer).font(.system(size: 12)).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
+                Text(footer).scaledFont(12).foregroundStyle(Theme.textSecondary).padding(.horizontal, 4)
             }
         }
     }
@@ -400,7 +400,7 @@ private struct Row<Control: View>: View {
 
     var body: some View {
         HStack {
-            Text(title).font(.system(size: 15, weight: .medium))
+            Text(title).scaledFont(15, weight: .medium)
             Spacer()
             control
         }
@@ -424,10 +424,10 @@ private struct LabeledSlider: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack {
-                Text(title).font(.system(size: 15, weight: .medium))
+                Text(title).scaledFont(15, weight: .medium)
                 Spacer()
                 Text(value.formatted(.number.precision(.fractionLength(0...2))))
-                    .font(.system(size: 14, weight: .semibold).monospacedDigit())
+                    .scaledFont(14, weight: .semibold).monospacedDigit()
                     .foregroundStyle(Theme.textSecondary)
             }
             SteppedSlider(value: $value, range: range, step: step)
@@ -444,7 +444,7 @@ private struct OffsetControl: View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
                 Text(ms == 0 ? "0 ms" : "\(ms > 0 ? "+" : "")\(ms) ms")
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .scaledFont(20, weight: .heavy).monospacedDigit()
                 Spacer()
                 nudge("minus", "Earlier by 50 milliseconds") { model.setOffset(ms: ms - 50) }
                 nudge("plus", "Later by 50 milliseconds") { model.setOffset(ms: ms + 50) }

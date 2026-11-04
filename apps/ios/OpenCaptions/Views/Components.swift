@@ -18,9 +18,10 @@ struct SegmentedPills<Value: Hashable>: View {
                 } label: {
                     HStack(spacing: 4) {
                         if locked(option) { Image(systemName: "lock.fill").font(.system(size: 10, weight: .bold)) }
-                        Text(label(option))
+                        // Shrinks before it cuts a word, with large text.
+                        Text(label(option)).lineLimit(1).minimumScaleFactor(0.6)
                     }
-                        .font(.system(size: 14, weight: .bold))
+                        .scaledFont(14, weight: .bold)
                         .foregroundStyle(chosen ? Theme.onAccent : Theme.textPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
@@ -48,7 +49,7 @@ struct InlinePicker<Value: Hashable>: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(title).font(.system(size: 15, weight: .medium)).lineLimit(2)
+            Text(title).scaledFont(15, weight: .medium).lineLimit(2)
             Spacer(minLength: 8)
             // The choice is never broken over two lines, whatever the language: the title gives way.
             Picker(title, selection: $selection) {
@@ -64,7 +65,7 @@ struct InlinePicker<Value: Hashable>: View {
 struct ProBadge: View {
     var body: some View {
         Text("PRO")
-            .font(.system(size: 9, weight: .heavy)).tracking(0.5)
+            .scaledFont(9, weight: .heavy).tracking(0.5)
             .foregroundStyle(Theme.onAccent)
             .padding(.horizontal, 5).padding(.vertical, 2)
             .background(Theme.accent, in: .capsule)

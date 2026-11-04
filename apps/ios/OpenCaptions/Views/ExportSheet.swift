@@ -49,7 +49,7 @@ struct ExportSheet: View {
         VStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(Int(fraction * 100))%")
-                    .font(.system(size: 46, weight: .heavy, design: .rounded)).monospacedDigit()
+                    .scaledFont(46, weight: .heavy, design: .rounded).monospacedDigit()
                 Spacer()
                 TimeLeft(fraction: fraction, startedAt: controller.startedAt)
             }
@@ -62,14 +62,14 @@ struct ExportSheet: View {
                 controller.cancel()
                 dismiss()
             }
-            .font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.danger)
+            .scaledFont(15, weight: .bold).foregroundStyle(Theme.danger)
         }
     }
 
     private func done(_ url: URL) -> some View {
         VStack(spacing: 12) {
             Label("Your video is ready", systemImage: "checkmark.circle.fill")
-                .font(.system(size: 18, weight: .heavy)).foregroundStyle(Theme.textPrimary)
+                .scaledFont(18, weight: .heavy).foregroundStyle(Theme.textPrimary)
             // One under the other: three labels side by side do not fit a narrow sheet, in some languages.
             VStack(spacing: 10) {
                 #if os(macOS)
@@ -92,7 +92,7 @@ struct ExportSheet: View {
             }
             if let photosMessage { Text(photosMessage).font(.footnote).foregroundStyle(.secondary) }
             Button("Done") { finish() }
-                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+                .scaledFont(15, weight: .semibold).foregroundStyle(Theme.textSecondary)
                 .padding(.vertical, 2)
         }
         .animation(.default, value: photosMessage)

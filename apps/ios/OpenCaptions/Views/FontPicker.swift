@@ -73,7 +73,7 @@ struct FontPickerSheet: View {
                     .buttonStyle(CircleButtonStyle())
                     .accessibilityLabel("Back")
             }
-            Text(browsing ? "More fonts" : "Font").font(.system(size: 22, weight: .heavy))
+            Text(browsing ? "More fonts" : "Font").scaledFont(22, weight: .heavy)
             Spacer()
             Button("Done") { dismiss() }.buttonStyle(PillButtonStyle(prominent: true))
         }
@@ -87,9 +87,9 @@ struct FontPickerSheet: View {
                 Button { browsing = true } label: {
                     HStack {
                         Label("More fonts", systemImage: "textformat")
-                            .font(.system(size: 16, weight: .semibold))
+                            .scaledFont(16, weight: .semibold)
                         Spacer()
-                        Text("Google Fonts").font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                        Text("Google Fonts").scaledFont(13).foregroundStyle(Theme.textSecondary)
                         Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textSecondary)
                     }
                     .padding(.horizontal, 16).padding(.vertical, 16)
@@ -123,7 +123,7 @@ struct FontPickerSheet: View {
                 Spacer()
                 if loadedCatalog {
                     VStack(spacing: 10) {
-                        Text("The font list could not be loaded.").font(.system(size: 15, weight: .semibold))
+                        Text("The font list could not be loaded.").scaledFont(15, weight: .semibold)
                         Text("Check your connection and try again.").font(.footnote).foregroundStyle(Theme.textSecondary)
                         Button("Try again") { Task { await loadCatalog() } }.buttonStyle(PillButtonStyle(prominent: true))
                     }
