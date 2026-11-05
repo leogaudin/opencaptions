@@ -79,6 +79,8 @@ target (`supportedDestinations: [iOS, macOS]`): run it from Xcode with the "My M
 needs a Mac distribution certificate, its installer certificate and a Mac App Store profile for
 `org.leogaudin.opencaptions` (`Config/ExportOptions-macOS.plist` names them). The Mac app is sandboxed
 (`Config/OpenCaptions-macOS.entitlements`), so try the archived build, not only a Debug one, before a release.
+The Mac draws an app icon as it is, so its shape is in the files: `swift AppStore/mac-icon.swift` makes them from
+`icon.png`, and has to run again when that changes.
 
 ## Releasing to the App Store
 
