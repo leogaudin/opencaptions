@@ -1,33 +1,46 @@
 #!/usr/bin/env bash
-# Rebuilds the iPhone App Store screenshots from the three Pexels photos. See README.md.
+# Rebuilds the App Store screenshots from the three Pexels photos. See README.md.
 # usage: PHOTOS=/path/to/pexels SIM="iPhone 18 Pro" OUT=/path/to/out ./make-slides.sh
 #   LANGUAGES="fr de" for others than English (the words are in slides.json; a language other than en goes
 #   in $OUT/<language>/), and SIZES="1206x2622" for fewer sizes.
+#   PLATFORM=mac makes the Mac's instead, from the debug Mac app on this screen: no simulator, one size.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 IOS=$(cd "$HERE/../.." && pwd)
 PHOTOS=${PHOTOS:?the folder holding the three Pexels photos (see README.md)}
-SIM=${SIM:?the booted simulator, e.g. SIM="iPhone 18 Pro"}
+PLATFORM=${PLATFORM:-iphone}
 OUT=${OUT:-$PWD/appstore-screenshots}
 mkdir -p "$OUT"
 OUT=$(cd "$OUT" && pwd)  # absolute: the app reads files by the paths it is given
 WORK=$OUT/work
-read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
 read -r -a LANGS <<< "${LANGUAGES:-en}"
 mkdir -p "$WORK"
 
-echo "==> the debug app, on $SIM"
-(cd "$IOS/../.." && make ios-build)
-APP=$(find "$IOS/Build/DerivedData/Build/Products/Debug-iphonesimulator" -name OpenCaptions.app -maxdepth 1 | head -1)
-xcrun simctl install "$SIM" "$APP"
+if [ "$PLATFORM" = mac ]; then
+  read -r -a SIZES <<< "${SIZES:-2560x1600}"
+  # A window on a wide slide: a small corner, and a headline sized for the height left above it.
+  SHAPE=(0.012 0.05 0.28)
+  echo "==> the debug app, on this Mac"
+  (cd "$IOS/../.." && make mac-build)
+  APP=$IOS/Build/DerivedData/Build/Products/Debug/OpenCaptions.app
+  swiftc -O "$HERE/window-id.swift" -o "$WORK/window-id"
+else
+  SIM=${SIM:?the booted simulator, e.g. SIM="iPhone 18 Pro"}
+  read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
+  SHAPE=()
+  echo "==> the debug app, on $SIM"
+  (cd "$IOS/../.." && make ios-build)
+  APP=$(find "$IOS/Build/DerivedData/Build/Products/Debug-iphonesimulator" -name OpenCaptions.app -maxdepth 1 | head -1)
+  xcrun simctl install "$SIM" "$APP"
+fi
 
 echo "==> the composer (the path must be absolute: the headline face is found from it)"
 swiftc -O "$HERE/compose.swift" -o "$WORK/compose"
 
 echo "==> clips and transcripts"
-python3 - "$WORK" "$HERE/slides.json" <<'PY'
+python3 - "$WORK" "$HERE/slides.json" "$PLATFORM" <<'PY'
 import json, sys
-work, slides = sys.argv[1], json.load(open(sys.argv[2]))
+work, slides, platform = sys.argv[1], json.load(open(sys.argv[2])), sys.argv[3]
 def make(name, lang, lines, t0=0.6, step=0.40, gap=0.5):
     t = t0; segs = []
     for i, line in enumerate(lines, 1):
@@ -44,8 +57,13 @@ for lang, text in slides.items():
     last_word = make(f"cat-{lang}.json", lang, text["cat"])
     with open(f"{work}/seek-{lang}.txt", "w") as out:
         out.write(str(last_word + 0.05))
+    headlines = text["headlines"]
+    if platform == "mac":
+        # The second slide names the device, and a wide slide has room for two lines at most.
+        headlines = [text["mac_headline"] if i == 1 else h for i, h in enumerate(headlines)]
+        headlines = [h.replace("|", " ", 1) if h.count("|") > 1 else h for h in headlines]
     with open(f"{work}/headlines-{lang}.txt", "w") as out:
-        out.write("\n".join(text["headlines"]) + "\n")
+        out.write("\n".join(headlines) + "\n")
     with open(f"{work}/font-{lang}.txt", "w") as out:
         out.write(text.get("font", ""))
 # The slide about languages shows one that is not the reader's, whatever the reader's is.
@@ -60,7 +78,13 @@ clip "$WORK/man.mp4" "$PHOTOS"/pexels-vincent-santamaria-194760512-37148334.jpg
 clip "$WORK/cat.mp4" "$PHOTOS"/pexels-sefa-demirtas-2152709769-32557420.jpg
 clip "$WORK/pierogi.mp4" "$PHOTOS"/pexels-elly-fairytale-3893708.jpg
 
-cap() { SIM=$SIM "$HERE/capture.sh" "$WORK/$1.png" "$WORK/$2" "${@:3}"; }
+cap() {
+  if [ "$PLATFORM" = mac ]; then
+    APP=$APP WINDOW=$WORK/window-id MAC_HOME=$WORK/mac-home "$HERE/capture-mac.sh" "$WORK/$1.png" "$WORK/$2" "${@:3}"
+  else
+    SIM=$SIM "$HERE/capture.sh" "$WORK/$1.png" "$WORK/$2" "${@:3}"
+  fi
+}
 for lang in "${LANGS[@]}"; do
   echo "==> five captures, $lang"
   export UI_LANG=$lang
@@ -75,13 +99,13 @@ for lang in "${LANGS[@]}"; do
   dest=$OUT
   [ "$lang" = en ] || dest=$OUT/$lang
   for size in "${SIZES[@]}"; do
-    mkdir -p "$dest/iphone-$size"
+    mkdir -p "$dest/$PLATFORM-$size"
     W=${size%x*}; H=${size#*x}
     n=0
     while IFS= read -r headline; do
       n=$((n + 1))
       background=yellow; [ $((n % 2)) -eq 0 ] && background=dark
-      HEADLINE_FONT=$face "$WORK/compose" "$WORK/h$n.png" "$dest/iphone-$size/0$n.png" "$headline" "$background" "$W" "$H"
+      HEADLINE_FONT=$face "$WORK/compose" "$WORK/h$n.png" "$dest/$PLATFORM-$size/0$n.png" "$headline" "$background" "$W" "$H" ${SHAPE[@]+"${SHAPE[@]}"}
     done < "$WORK/headlines-$lang.txt"
   done
 done

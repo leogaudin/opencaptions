@@ -7,6 +7,7 @@ without remembering anything. Three scripts, no manual steps:
 |---|---|
 | `make-slides.sh` | The whole flow: build the debug app, make three clips and their transcripts, capture five screens in the simulator, compose the slides at every iPhone size. |
 | `capture.sh` | One simulator screenshot of the debug app in a chosen state. |
+| `capture-mac.sh` | The same on the Mac, with `window-id.swift` to find the window. |
 | `compose.swift` | Puts a screenshot in a phone on a coloured background, with a headline above it. |
 
 ## Run it
@@ -49,6 +50,7 @@ To change a headline or a screen, edit the table in `make-slides.sh` (the `cap` 
 | 1284 × 2778, 1242 × 2688 | iPhone 6.5" |
 | 1206 × 2622, 1179 × 2556 | "iPhone with Dynamic Island (medium display)" (6.3") |
 | 2064 × 2752 | iPad 13" |
+| 2560 × 1600 | Mac |
 
 Each App Store slot takes one family of sizes: a picture of another size in a slot is refused with
 "File dimensions are invalid". The PNGs must have no alpha (the composer draws on an opaque
@@ -56,6 +58,17 @@ background, so they have none).
 
 The header art (3840 × 1646) and the search-results art (3:2) were made from the same screens with
 a wider layout; they are not produced by these scripts.
+
+## The Mac set
+
+`PLATFORM=mac PHOTOS=~/path/to/pexels OUT=~/path/to/out ./make-slides.sh` makes the same five slides from the debug Mac
+app, in `$OUT/mac-2560x1600`, with no simulator. The window is the app's own at 1280 × 800 points on a Retina screen, so
+the screen must be unlocked, and the terminal needs Screen Recording in System Settings (it takes effect when the
+terminal is reopened). Slide 2 uses `mac_headline` from `slides.json`, and a headline of three lines is put on two.
+`python3 scripts/asc.py push-screenshots <version> $OUT mac` sends them to the Mac draft, English included.
+
+The debug Mac build is not sandboxed, so it would use your real `Application Support`, and `OC_RESET` would empty its
+projects. `capture-mac.sh` gives it a home of its own: run the app with these switches only through that script.
 
 ## The iPad set
 
