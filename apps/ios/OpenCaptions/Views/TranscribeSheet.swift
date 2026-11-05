@@ -364,7 +364,7 @@ struct TranscribeSheet: View {
             .clipShape(.rect(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.stroke, lineWidth: 1))
             Text(chosen.isBuiltIn
-                ? "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen."
+                ? ThisDevice.builtInNote
                 : downloaded
                 ? "Downloaded. Transcription runs on this device."
                 : "Downloaded once (\(chosen.megabytes) MB), then runs on this device. Larger models are slower and more accurate, and the biggest need a recent device.")
@@ -425,7 +425,7 @@ struct TranscribeSheet: View {
         case "large-v3-turbo": "OpenAI's default, bigger model"
         case SpeechModels.parakeetUltraID: "NVIDIA's default, bigger model"
         case SpeechModels.parakeetReduxID: "NVIDIA's smaller, less precise model"
-        case SpeechModels.appleSpeechID: "Apple's own, built into iOS"
+        case SpeechModels.appleSpeechID: ThisDevice.appleSpeech
         default: nil
         }
     }

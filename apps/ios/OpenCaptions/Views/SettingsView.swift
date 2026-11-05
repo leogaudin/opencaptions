@@ -194,7 +194,7 @@ struct SettingsView: View {
                 Text(model.label).scaledFont(16, weight: .semibold)
                 Group {
                     if model.isBuiltIn {
-                        Text("Built into iOS")
+                        Text(ThisDevice.builtIn)
                     } else if downloaded {
                         Text("On this device · \(Self.size(sizes.perModel[model.id] ?? 0))")
                     } else {

@@ -19,7 +19,9 @@ mkdir -p "$WORK"
 if [ "$PLATFORM" = mac ]; then
   read -r -a SIZES <<< "${SIZES:-2560x1600}"
   # A window on a wide slide: a small corner, and a headline sized for the height left above it.
-  SHAPE=(0.012 0.05 0.28)
+  SHAPE=(0.02 0.05 0.28)
+  # The Mac's editor keeps the style panel open beside the video.
+  STYLE=()
   echo "==> the debug app, on this Mac"
   (cd "$IOS/../.." && make mac-build)
   APP=$IOS/Build/DerivedData/Build/Products/Debug/OpenCaptions.app
@@ -28,6 +30,7 @@ else
   SIM=${SIM:?the booted simulator, e.g. SIM="iPhone 18 Pro"}
   read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
   SHAPE=()
+  STYLE=(OC_SHOW_STYLE=1)
   echo "==> the debug app, on $SIM"
   (cd "$IOS/../.." && make ios-build)
   APP=$(find "$IOS/Build/DerivedData/Build/Products/Debug-iphonesimulator" -name OpenCaptions.app -maxdepth 1 | head -1)
@@ -88,7 +91,7 @@ cap() {
 for lang in "${LANGS[@]}"; do
   echo "==> five captures, $lang"
   export UI_LANG=$lang
-  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_OPEN_FIRST=1 OC_SEEK=2.3 OC_SHOW_STYLE=1
+  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_OPEN_FIRST=1 OC_SEEK=2.3 ${STYLE[@]+"${STYLE[@]}"}
   cap h2 pierogi.mp4 OC_OPEN_FIRST=1 OC_SHOW_TRANSCRIBE=1
   cap h3 pierogi.mp4 "OC_SEED_TRANSCRIPT=$WORK/pierogi_pl.json" OC_OPEN_FIRST=1 OC_SEEK=1.8
   cap h4 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_OPEN_FIRST=1 OC_SEEK=1.6 OC_SHOW_SAVE=1

@@ -95,6 +95,31 @@ enum ThisDevice {
             "There is not enough room: this needs about \(need) and the phone has \(free) free. Choose a smaller size or frame rate, or free up space."
         #endif
     }
+
+    /// Apple's speech model, which comes with the system.
+    static var appleSpeech: LocalizedStringKey {
+        #if os(macOS)
+            "Apple's own, built into macOS"
+        #else
+            "Apple's own, built into iOS"
+        #endif
+    }
+
+    static var builtIn: LocalizedStringKey {
+        #if os(macOS)
+            "Built into macOS"
+        #else
+            "Built into iOS"
+        #endif
+    }
+
+    static var builtInNote: LocalizedStringKey {
+        #if os(macOS)
+            "Built into macOS. Apple downloads each language the first time it is used, and a language has to be chosen."
+        #else
+            "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen."
+        #endif
+    }
 }
 
 extension View {

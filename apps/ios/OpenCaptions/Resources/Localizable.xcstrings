@@ -1636,6 +1636,89 @@
         }
       }
     },
+    "Apple's own, built into macOS": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Celui d'Apple, intégré à macOS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El de Apple, integrado en macOS"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das von Apple, in macOS integriert"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Własny model Apple, wbudowany w macOS"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O da Apple, integrado ao macOS"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quello di Apple, integrato in macOS"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель Apple, встроенная в macOS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple'ın kendi modeli, macOS'a yerleşik"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 独自のモデルで、macOS に内蔵"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 자체 모델, macOS에 내장"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 自家的模型，已内置于 macOS"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model Apple sendiri, bawaan macOS"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's own, built into macOS"
+          }
+        }
+      }
+    },
     "As filmed (%lld fps).": {
       "extractionState": "manual",
       "localizations": {
@@ -2329,6 +2412,83 @@
         }
       }
     },
+    "Built into macOS": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégré à macOS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado en macOS"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In macOS integriert"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wbudowany w macOS"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado ao macOS"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrato in macOS"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроена в macOS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS'a yerleşik"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOSに内蔵"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS에 내장"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已内置于 macOS"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bawaan macOS"
+          }
+        }
+      }
+    },
     "Built into iOS. Apple downloads each language the first time it is used, and a language has to be chosen.": {
       "extractionState": "manual",
       "localizations": {
@@ -2402,6 +2562,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bawaan iOS. Apple mengunduh setiap bahasa saat pertama kali digunakan, dan bahasa harus dipilih."
+          }
+        }
+      }
+    },
+    "Built into macOS. Apple downloads each language the first time it is used, and a language has to be chosen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégré à macOS. Apple télécharge chaque langue la première fois qu'elle est utilisée, et il faut choisir une langue."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado en macOS. Apple descarga cada idioma la primera vez que se usa, y hay que elegir un idioma."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In macOS integriert. Apple lädt jede Sprache bei der ersten Verwendung herunter, und eine Sprache muss gewählt werden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wbudowany w macOS. Apple pobiera każdy język przy pierwszym użyciu, a język trzeba wybrać."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrado ao macOS. A Apple baixa cada idioma na primeira vez em que ele é usado, e é preciso escolher um idioma."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrato in macOS. Apple scarica ogni lingua la prima volta che viene usata, ed è necessario scegliere una lingua."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроена в macOS. Apple загружает каждый язык при первом использовании, а язык нужно выбрать."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS'a yerleşiktir. Apple her dili ilk kullanımda indirir ve bir dil seçilmelidir."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOSに内蔵されています。言語はAppleが初回の使用時にダウンロードします。言語を選ぶ必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS에 내장되어 있습니다. Apple이 각 언어를 처음 사용할 때 다운로드하며, 언어를 선택해야 합니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已内置于 macOS。Apple 会在首次使用时下载各语言，并且必须选择一种语言。"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bawaan macOS. Apple mengunduh setiap bahasa saat pertama kali digunakan, dan bahasa harus dipilih."
           }
         }
       }
