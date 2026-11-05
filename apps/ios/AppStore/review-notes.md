@@ -20,6 +20,12 @@ You can reach the purchase screen from Settings (the first row, "OpenCaptions Pr
 OPTIONAL FEATURE YOU CAN IGNORE
 Settings has an optional "Where to transcribe" section for people who run their own OpenCaptions server (the app is open source, AGPL-3.0). It is not needed for any feature, and the local network permission exists only for that option.
 
+WHAT IS NEW IN 1.1
+A video can now be opened in the app from Files or another app (Open In), and from a "Caption a Video" action in Shortcuts. Text follows the system text size. The App Store listing is now in 13 languages.
+
+THIRD-PARTY AI AND FACE DATA
+No third-party AI service is built into the app. Transcription runs on the device, with open speech models downloaded once from Hugging Face and then used offline, or Apple's on-device speech model. The app collects no face data: it has no face detection or recognition, and does not use the camera, ARKit or Face ID. The privacy policy covers both, under "Face data" and "Third-party AI".
+
 NETWORK AND PRIVACY
 No account, no analytics, no tracking, and videos and transcripts stay on the device. The app contacts the internet only to download the speech model once and, when a style uses a font that is not built in, to fetch that font from Google Fonts. The privacy policy is at https://github.com/leogaudin/opencaptions/blob/main/PRIVACY.md. The app uses only standard encryption provided by the system (ITSAppUsesNonExemptEncryption is set to NO).
 
