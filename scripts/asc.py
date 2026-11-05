@@ -9,6 +9,7 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py attach-build 1.1.0 <build number> [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-notes 1.1.0 [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py submit 1.1.0 [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py cancel-review [mac]
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach production:
@@ -308,7 +309,7 @@ def _upload_screenshot(set_id: str, path: Path) -> str:
 
 
 def _draft(version: str, platform: str) -> tuple[str, dict[str, Any]]:
-    """The app and its version still being prepared."""
+    """The app and its version still being prepared, or taken back from App Review."""
     app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
     versions = get(f"/v1/apps/{app}/appStoreVersions?limit=10")["data"]
     draft = next(
@@ -316,7 +317,7 @@ def _draft(version: str, platform: str) -> tuple[str, dict[str, Any]]:
         for v in versions
         if v["attributes"]["versionString"] == version
         and v["attributes"]["platform"] == platform
-        and v["attributes"]["appVersionState"] == "PREPARE_FOR_SUBMISSION"
+        and v["attributes"]["appVersionState"] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED")
     )
     return app, draft
 
@@ -405,6 +406,23 @@ def submit(version: str, platform: str = "IOS") -> int:
     return 0
 
 
+def cancel_review(platform: str = "IOS") -> int:
+    """Takes back what is waiting for App Review, which returns the version to being prepared."""
+    app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
+    query = f"filter[platform]={platform}&filter[state]=WAITING_FOR_REVIEW"
+    waiting = get(f"/v1/apps/{app}/reviewSubmissions?{query}")["data"]
+    if len(waiting) != 1:
+        print(f"{len(waiting)} submissions are waiting for review: nothing done")
+        return 1
+    body = {"type": "reviewSubmissions", "id": waiting[0]["id"], "attributes": {"canceled": True}}
+    sent = send("PATCH", f"/v1/reviewSubmissions/{waiting[0]['id']}", {"data": body})
+    if "errors" in sent:
+        print(sent["errors"])
+        return 1
+    print(f"Taken back: {sent['data']['attributes']['state']}")
+    return 0
+
+
 def main() -> int:
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "snapshot":
@@ -425,6 +443,8 @@ def main() -> int:
         return push_notes(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     elif command == "push-listing" and len(sys.argv) in (3, 4):
         return push_listing(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
+    elif command == "cancel-review" and len(sys.argv) in (2, 3):
+        return cancel_review("MAC_OS" if sys.argv[2:] == ["mac"] else "IOS")
     elif command == "submit" and len(sys.argv) in (3, 4):
         return submit(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     else:
