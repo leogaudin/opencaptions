@@ -1504,7 +1504,7 @@ const GOLDEN_TIMES: [f32; 5] = [0.0, 0.25, 0.6, 1.2, 3.2];
 /// frame a fresh renderer draws at that time: the incremental redraw changes nothing.
 fn golden(input: &serde_json::Value) -> (u64, bool) {
     let input: SceneInput = serde_json::from_value(input.clone()).unwrap();
-    let book = book();
+    let book = book_with_scripts();
     let mut kept = Renderer::new(Scene::new(&book, input.clone()));
     let mut all = 0xcbf2_9ce4_8422_2325;
     let mut inked = false;
@@ -1521,6 +1521,9 @@ fn golden(input: &serde_json::Value) -> (u64, bool) {
     }
     (all, inked)
 }
+
+/// A transcript's words, as (text, start, end).
+type Words = &'static [(&'static str, f32, f32)];
 
 /// Every look the engine can draw, as (name, scene).
 fn golden_cases() -> Vec<(String, serde_json::Value)> {
@@ -1593,6 +1596,33 @@ fn golden_cases() -> Vec<(String, serde_json::Value)> {
             format!("{anim}+stack"),
             styled_json(anim, FIGURES, poster.clone()),
         ));
+    }
+    // Scripts where shaping does the most: joined and right to left, and marks that move.
+    let scripts: [(&str, Words); 4] = [
+        (
+            "arabic",
+            &[("مرحبا", 0.0, 0.4), ("بكم", 0.4, 0.8), ("جميعا", 0.8, 1.2)],
+        ),
+        (
+            "hebrew",
+            &[("שלום", 0.0, 0.4), ("לכולם", 0.4, 0.8), ("היום", 0.8, 1.2)],
+        ),
+        (
+            "devanagari",
+            &[("नमस्ते", 0.0, 0.4), ("दुनिया", 0.4, 0.8), ("आज", 0.8, 1.2)],
+        ),
+        (
+            "thai",
+            &[("สวัสดี", 0.0, 0.4), ("ทุกคน", 0.4, 0.8), ("วันนี้", 0.8, 1.2)],
+        ),
+    ];
+    for (name, words) in scripts {
+        for anim in ["word_highlight", "word_pop"] {
+            cases.push((
+                format!("{anim}+{name}"),
+                styled_json(anim, words, serde_json::json!({ "stroke_width": 4 })),
+            ));
+        }
     }
     let mut marked = styled_json("word_highlight", WORDS, serde_json::json!({}));
     marked["watermark"] = "OpenCaptions".into();

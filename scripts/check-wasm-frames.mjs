@@ -16,7 +16,14 @@ function put(data) {
 }
 
 // The fonts the native test draws with, in its order.
-for (const font of ["testdata/anton-subset.ttf", "fonts/Inter.ttf"]) {
+for (const font of [
+  "testdata/anton-subset.ttf",
+  "fonts/Inter.ttf",
+  "fonts/NotoSansArabic.ttf",
+  "fonts/NotoSansHebrew.ttf",
+  "fonts/NotoSansDevanagari.ttf",
+  "fonts/NotoSansThai.ttf"
+]) {
   if (engine.oc_add_font(...put(readFileSync(`${root}apps/engine/${font}`))) !== 1) {
     throw new Error(`the engine refused ${font}`);
   }
