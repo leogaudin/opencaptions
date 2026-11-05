@@ -5,12 +5,16 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py get /v1/apps
     python3 scripts/asc.py check-listing
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-listing 1.1.0 [mac]
-    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-screenshots 1.1.0 <folder>
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-screenshots 1.1.0 <folder> [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py attach-build 1.1.0 <build number> [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-notes 1.1.0 [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py submit 1.1.0 [mac]
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach production:
 the `push-` commands write, and only to a version still being prepared, which nobody sees until it is
-submitted, approved and released by hand.
+submitted, approved and released by hand. `submit` sends that version to App Review, and only one
+whose release is manual, so that approval alone publishes nothing.
 """
 
 from __future__ import annotations
@@ -33,6 +37,10 @@ BUNDLE_ID = "org.leogaudin.opencaptions"
 LISTING = Path(__file__).resolve().parent.parent / "apps/ios/AppStore/listing.md"
 # What differs on the Mac, per language. The name and subtitle belong to the app, so they are shared.
 LISTING_MAC = LISTING.with_name("listing-mac.json")
+# The notes for App Review are what lies between the two rules of these files.
+REVIEW_NOTES = {"IOS": LISTING.with_name("review-notes.md"), "MAC_OS": LISTING.with_name("review-notes-mac.md")}
+# Each platform's slot on the store, and the folder of make-slides.sh that fills it.
+SCREENSHOT_SLOTS = {"IOS": ("APP_IPHONE_61", "iphone-1206x2622"), "MAC_OS": ("APP_DESKTOP", "mac-2560x1600")}
 PHONE_WORDS = r"iPhone|phone|téléphone|teléfono|Handy|telefon|celular|ponsel|телефон|휴대폰|手机"
 SUPPORT_URL = "https://opencaptions.app/support"
 MARKETING_URL = "https://opencaptions.app"
@@ -295,23 +303,30 @@ def _upload_screenshot(set_id: str, path: Path) -> str:
     return "; ".join(e.get("detail", "") for e in answer.get("errors", []))
 
 
-def push_screenshots(version: str, folder: str, kind: str = "APP_IPHONE_61", size: str = "1206x2622") -> int:
-    """Replaces the iPhone screenshots of each language found in `folder` (<folder>/<language>/iphone-<size>/),
-    on the draft of `version`. English is not touched here."""
+def _draft(version: str, platform: str) -> tuple[str, dict[str, Any]]:
+    """The app and its version still being prepared."""
     app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
     versions = get(f"/v1/apps/{app}/appStoreVersions?limit=10")["data"]
     draft = next(
         v
         for v in versions
         if v["attributes"]["versionString"] == version
-        and v["attributes"]["platform"] == "IOS"
+        and v["attributes"]["platform"] == platform
         and v["attributes"]["appVersionState"] == "PREPARE_FOR_SUBMISSION"
     )
+    return app, draft
+
+
+def push_screenshots(version: str, folder: str, platform: str = "IOS") -> int:
+    """Replaces the slides of each language found in `folder`, on the draft of `version`. They are where
+    make-slides.sh puts them: <folder>/<language>/<slot folder>, English in <folder>/<slot folder>."""
+    kind, slot = SCREENSHOT_SLOTS[platform]
+    _, draft = _draft(version, platform)
     localizations = get(f"/v1/appStoreVersions/{draft['id']}/appStoreVersionLocalizations?limit=50")["data"]
     by_locale = {item["attributes"]["locale"]: item["id"] for item in localizations}
     failed = 0
     for code, locale in LOCALES.items():
-        files = sorted((Path(folder) / code / f"iphone-{size}").glob("*.png"))
+        files = sorted((Path(folder) / ("" if code == "en" else code) / slot).glob("*.png"))
         if not files:
             continue
         sets = get(f"/v1/appStoreVersionLocalizations/{by_locale[locale]}/appScreenshotSets?limit=20")["data"]
@@ -328,6 +343,64 @@ def push_screenshots(version: str, folder: str, kind: str = "APP_IPHONE_61", siz
     return 1 if failed else 0
 
 
+def attach_build(version: str, number: str, platform: str = "IOS") -> int:
+    """Puts an uploaded build, once Apple has processed it, on the draft of `version`."""
+    app, draft = _draft(version, platform)
+    query = f"filter[app]={app}&filter[version]={number}&filter[preReleaseVersion.platform]={platform}"
+    build = get(f"/v1/builds?{query}")["data"][0]
+    body = {"data": {"type": "builds", "id": build["id"]}}
+    sent = send("PATCH", f"/v1/appStoreVersions/{draft['id']}/relationships/build", body)
+    if "errors" in sent:
+        print(sent["errors"])
+        return 1
+    print(f"Build {number} ({build['attributes']['processingState']}) is on {platform} {version}")
+    return 0
+
+
+def push_notes(version: str, platform: str = "IOS") -> int:
+    """Sends the notes for App Review to the draft of `version`, and reads them back."""
+    notes = REVIEW_NOTES[platform].read_text(encoding="utf-8").split("\n---\n")[1].strip()
+    _, draft = _draft(version, platform)
+    detail = get(f"/v1/appStoreVersions/{draft['id']}/appStoreReviewDetail")["data"]["id"]
+    body = {"type": "appStoreReviewDetails", "id": detail, "attributes": {"notes": notes}}
+    sent = send("PATCH", f"/v1/appStoreReviewDetails/{detail}", {"data": body})
+    if "errors" in sent or sent["data"]["attributes"]["notes"] != notes:
+        print(sent.get("errors", "The notes did not come back the same"))
+        return 1
+    print(f"{len(notes)} characters of notes on {platform} {version}")
+    return 0
+
+
+def submit(version: str, platform: str = "IOS") -> int:
+    """Sends the draft of `version` to App Review. A review is a submission holding the version, sent once."""
+    app, draft = _draft(version, platform)
+    if draft["attributes"]["releaseType"] != "MANUAL":
+        print(f"Not sent: {version} would go live on approval ({draft['attributes']['releaseType']})")
+        return 1
+    relation = {"app": {"data": {"type": "apps", "id": app}}}
+    body = {"type": "reviewSubmissions", "attributes": {"platform": platform}, "relationships": relation}
+    created = send("POST", "/v1/reviewSubmissions", {"data": body})
+    if "errors" in created:
+        print(created["errors"])
+        return 1
+    submission = created["data"]["id"]
+    relation = {
+        "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": submission}},
+        "appStoreVersion": {"data": {"type": "appStoreVersions", "id": draft["id"]}},
+    }
+    item = send("POST", "/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": relation}})
+    if "errors" in item:
+        print(item["errors"])
+        return 1
+    body = {"type": "reviewSubmissions", "id": submission, "attributes": {"submitted": True}}
+    sent = send("PATCH", f"/v1/reviewSubmissions/{submission}", {"data": body})
+    if "errors" in sent:
+        print(sent["errors"])
+        return 1
+    print(f"{version} sent to App Review: {sent['data']['attributes']['state']}")
+    return 0
+
+
 def main() -> int:
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "snapshot":
@@ -340,10 +413,16 @@ def main() -> int:
         problems = listing_problems(text) + listing_problems(mac) + mac_problems(mac)
         print("\n".join(problems) or "The listing fits, in every language, on the phone and on the Mac")
         return 1 if problems else 0
-    elif command == "push-screenshots" and len(sys.argv) == 4:
-        return push_screenshots(sys.argv[2], sys.argv[3])
+    elif command == "push-screenshots" and len(sys.argv) in (4, 5):
+        return push_screenshots(sys.argv[2], sys.argv[3], "MAC_OS" if sys.argv[4:] == ["mac"] else "IOS")
+    elif command == "attach-build" and len(sys.argv) in (4, 5):
+        return attach_build(sys.argv[2], sys.argv[3], "MAC_OS" if sys.argv[4:] == ["mac"] else "IOS")
+    elif command == "push-notes" and len(sys.argv) in (3, 4):
+        return push_notes(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     elif command == "push-listing" and len(sys.argv) in (3, 4):
         return push_listing(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
+    elif command == "submit" and len(sys.argv) in (3, 4):
+        return submit(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     else:
         print(__doc__)
         return 2
