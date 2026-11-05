@@ -11,9 +11,9 @@ BUNDLE=org.leogaudin.opencaptions
 timeout 20 xcrun simctl terminate "$SIM" $BUNDLE 2>/dev/null
 args=(SIMCTL_CHILD_OC_TIER=pro SIMCTL_CHILD_OC_RESET=1 "SIMCTL_CHILD_OC_SEED_VIDEO=$(cd "$(dirname "$video")" && pwd)/$(basename "$video")")
 for v in "$@"; do args+=("SIMCTL_CHILD_$v"); done
-# UI_LANG shows the app in that language, as a person with that language on their phone sees it.
+# UI_LANG shows the app in that language, as a person with that language on their phone sees it, numbers included.
 lang=()
-if [ -n "${UI_LANG:-}" ]; then lang=(-AppleLanguages "($UI_LANG)"); fi
+if [ -n "${UI_LANG:-}" ]; then lang=(-AppleLanguages "($UI_LANG)" -AppleLocale "${UI_LANG//-/_}"); fi
 timeout 40 env "${args[@]}" xcrun simctl launch "$SIM" $BUNDLE "${lang[@]}" >/dev/null
 # The simulator can be slow to draw (and shows the home screen or a blank frame first): take
 # a picture every ten seconds until one is large enough to hold a real screen.

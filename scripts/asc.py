@@ -5,7 +5,7 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py get /v1/apps
     python3 scripts/asc.py check-listing
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-listing 1.1.0 [mac]
-    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-screenshots 1.1.0 <folder> [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-screenshots 1.1.0 <folder> [ipad|mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py attach-build 1.1.0 <build number> [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-notes 1.1.0 [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py submit 1.1.0 [mac]
@@ -39,8 +39,12 @@ LISTING = Path(__file__).resolve().parent.parent / "apps/ios/AppStore/listing.md
 LISTING_MAC = LISTING.with_name("listing-mac.json")
 # The notes for App Review are what lies between the two rules of these files.
 REVIEW_NOTES = {"IOS": LISTING.with_name("review-notes.md"), "MAC_OS": LISTING.with_name("review-notes-mac.md")}
-# Each platform's slot on the store, and the folder of make-slides.sh that fills it.
-SCREENSHOT_SLOTS = {"IOS": ("APP_IPHONE_61", "iphone-1206x2622"), "MAC_OS": ("APP_DESKTOP", "mac-2560x1600")}
+# Each device's version on the store, its slot there, and the folder of make-slides.sh that fills it.
+SCREENSHOT_SLOTS = {
+    "iphone": ("IOS", "APP_IPHONE_61", "iphone-1206x2622"),
+    "ipad": ("IOS", "APP_IPAD_PRO_3GEN_129", "ipad-2064x2752"),
+    "mac": ("MAC_OS", "APP_DESKTOP", "mac-2560x1600"),
+}
 PHONE_WORDS = r"iPhone|phone|téléphone|teléfono|Handy|telefon|celular|ponsel|телефон|휴대폰|手机"
 SUPPORT_URL = "https://opencaptions.app/support"
 MARKETING_URL = "https://opencaptions.app"
@@ -317,10 +321,10 @@ def _draft(version: str, platform: str) -> tuple[str, dict[str, Any]]:
     return app, draft
 
 
-def push_screenshots(version: str, folder: str, platform: str = "IOS") -> int:
+def push_screenshots(version: str, folder: str, device: str = "iphone") -> int:
     """Replaces the slides of each language found in `folder`, on the draft of `version`. They are where
     make-slides.sh puts them: <folder>/<language>/<slot folder>, English in <folder>/<slot folder>."""
-    kind, slot = SCREENSHOT_SLOTS[platform]
+    platform, kind, slot = SCREENSHOT_SLOTS[device]
     _, draft = _draft(version, platform)
     localizations = get(f"/v1/appStoreVersions/{draft['id']}/appStoreVersionLocalizations?limit=50")["data"]
     by_locale = {item["attributes"]["locale"]: item["id"] for item in localizations}
@@ -414,7 +418,7 @@ def main() -> int:
         print("\n".join(problems) or "The listing fits, in every language, on the phone and on the Mac")
         return 1 if problems else 0
     elif command == "push-screenshots" and len(sys.argv) in (4, 5):
-        return push_screenshots(sys.argv[2], sys.argv[3], "MAC_OS" if sys.argv[4:] == ["mac"] else "IOS")
+        return push_screenshots(sys.argv[2], sys.argv[3], *sys.argv[4:])
     elif command == "attach-build" and len(sys.argv) in (4, 5):
         return attach_build(sys.argv[2], sys.argv[3], "MAC_OS" if sys.argv[4:] == ["mac"] else "IOS")
     elif command == "push-notes" and len(sys.argv) in (3, 4):

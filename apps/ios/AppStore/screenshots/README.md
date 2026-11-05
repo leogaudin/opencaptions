@@ -72,10 +72,12 @@ projects. `capture-mac.sh` gives it a home of its own: run the app with these sw
 
 ## The iPad set
 
-Same flow on the "iPad Pro 13-inch (M5)" simulator: `SIM="iPad Pro 13-inch (M5)"`, composed at
-2064 × 2752 with a smaller corner radius, a smaller headline and a higher device:
-`compose in.png out.png "<headline>" yellow|dark 2064 2752 0.035 0.072 0.29`. This path is not wired
-into `make-slides.sh`.
+`PLATFORM=ipad SIM="iPad Pro 13-inch (M5)" PHOTOS=~/path/to/pexels OUT=~/path/to/out ./make-slides.sh`, composed at
+2064 × 2752 with a smaller corner radius, a smaller headline and a higher device. `python3 scripts/asc.py
+push-screenshots <version> $OUT ipad` sends them.
+
+**English counts too:** `$OUT/iphone-1206x2622` with no language folder is the English set, which is also what every
+storefront without a language of its own shows. Remake it with the others, or it falls behind the app.
 
 ## The debug app's launch switches
 

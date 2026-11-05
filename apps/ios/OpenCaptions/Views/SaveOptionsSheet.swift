@@ -192,7 +192,8 @@ struct SaveOptionsSheet: View {
     /// A size by its pixels. The video's own size is `.original`, named by its short side.
     private func label(for size: ExportOptions.Resolution) -> LocalizedStringKey {
         let side = size.shortSide ?? min(project.videoWidth ?? 1080, project.videoHeight ?? 1920)
-        return side == 2160 ? "4K" : "\(side)p"
+        // As text: a number in a localized string is grouped, and "1,080p" is not the name of a size.
+        return side == 2160 ? "4K" : "\(String(side))p"
     }
 
     /// The pixel size the choice makes, e.g. "1080 × 1920".

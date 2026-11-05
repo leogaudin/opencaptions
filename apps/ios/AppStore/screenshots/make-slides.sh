@@ -4,6 +4,7 @@
 #   LANGUAGES="fr de" for others than English (the words are in slides.json; a language other than en goes
 #   in $OUT/<language>/), and SIZES="1206x2622" for fewer sizes.
 #   PLATFORM=mac makes the Mac's instead, from the debug Mac app on this screen: no simulator, one size.
+#   PLATFORM=ipad makes the iPad's, on an iPad simulator.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 IOS=$(cd "$HERE/../.." && pwd)
@@ -28,8 +29,14 @@ if [ "$PLATFORM" = mac ]; then
   swiftc -O "$HERE/window-id.swift" -o "$WORK/window-id"
 else
   SIM=${SIM:?the booted simulator, e.g. SIM="iPhone 18 Pro"}
-  read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
-  SHAPE=()
+  if [ "$PLATFORM" = ipad ]; then
+    read -r -a SIZES <<< "${SIZES:-2064x2752}"
+    # A wider device: a smaller corner and headline, and it sits higher.
+    SHAPE=(0.035 0.072 0.29)
+  else
+    read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
+    SHAPE=()
+  fi
   STYLE=(OC_SHOW_STYLE=1)
   echo "==> the debug app, on $SIM"
   (cd "$IOS/../.." && make ios-build)
