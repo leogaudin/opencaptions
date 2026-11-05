@@ -77,17 +77,6 @@ import SwiftUI
 #endif
 
 extension View {
-    /// Makes room, above the content, for the window's three buttons on the Mac, where the content runs under a
-    /// hidden title bar instead of beneath a bar of its own: the buttons get a strip of their own at the top, so
-    /// that what is under it lines up with the rest of the page. Nothing on the iPhone.
-    func titlebarInset() -> some View {
-        #if os(macOS)
-            padding(.top, 22)
-        #else
-            self
-        #endif
-    }
-
     /// The Mac's window with its title bar hidden: the content runs to the top and the buttons sit on it.
     /// `ownTitle` is for a window whose scene does not hide it already (Settings').
     func hidesTitleBar(ownTitle: Bool = false) -> some View {

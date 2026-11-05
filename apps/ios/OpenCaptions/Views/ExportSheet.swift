@@ -33,7 +33,7 @@ struct ExportSheet: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 28)
-        .padding(.bottom, 4)
+        .padding(.bottom, bottomPadding)
         .frame(maxWidth: .infinity)
         // The sheet is as tall as what it shows (measured), not a fixed height with room to spare.
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
@@ -43,6 +43,15 @@ struct ExportSheet: View {
         .tint(Theme.accent)
         .interactiveDismissDisabled(controller.isRunning)
         .macSheetWidth(380)
+    }
+
+    /// The iPhone's sheet keeps the home indicator's room below this; a panel on the Mac stops at its last button.
+    private var bottomPadding: CGFloat {
+        #if os(macOS)
+            24
+        #else
+            4
+        #endif
     }
 
     private func running(_ fraction: Double) -> some View {

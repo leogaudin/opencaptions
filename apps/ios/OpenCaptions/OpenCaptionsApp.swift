@@ -17,6 +17,8 @@ struct OpenCaptionsApp: App {
         #if os(macOS)
             mainWindow
                 .windowStyle(.hiddenTitleBar)
+                // A navigation stack gives the window a toolbar, and even hidden a full one keeps 52 points of the top.
+                .windowToolbarStyle(.unifiedCompact)
                 .defaultSize(width: 1280, height: 800)
                 .windowResizability(.contentMinSize)
                 .commands { AppCommands() }

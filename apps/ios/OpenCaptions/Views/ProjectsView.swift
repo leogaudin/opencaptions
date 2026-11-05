@@ -156,7 +156,6 @@ struct ProjectsView: View {
         .padding(.horizontal, 18)
         .padding(.top, 4)
         .padding(.bottom, 8)
-        .titlebarInset()
     }
 
     /// `.current` hands over the video as it is stored; the default may transcode it first,

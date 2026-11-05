@@ -272,7 +272,6 @@ struct EditorView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .titlebarInset()
     }
     private var style: some View { StylePanel(model: model, presets: app.presets) }
 
