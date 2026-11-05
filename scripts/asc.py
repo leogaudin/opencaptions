@@ -10,6 +10,7 @@
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py push-notes 1.1.0 [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py submit 1.1.0 [mac]
     ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py cancel-review [mac]
+    ASC_KEY_ID=... ASC_ISSUER=... python3 scripts/asc.py release 1.1.0 [mac]
 
 The key stays where Xcode's tools look for it, ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, or at
 ASC_KEY_FILE. It is never read into this repository. Changes made through this API reach production:
@@ -406,6 +407,30 @@ def submit(version: str, platform: str = "IOS") -> int:
     return 0
 
 
+def release(version: str, platform: str = "IOS") -> int:
+    """Puts an approved version on the store. It cannot be taken back, so a person says when."""
+    app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
+    versions = get(f"/v1/apps/{app}/appStoreVersions?limit=10")["data"]
+    approved = [
+        v
+        for v in versions
+        if v["attributes"]["versionString"] == version
+        and v["attributes"]["platform"] == platform
+        and v["attributes"]["appVersionState"] == "PENDING_DEVELOPER_RELEASE"
+    ]
+    if not approved:
+        print(f"Not released: {platform} {version} is not waiting for a release")
+        return 1
+    relation = {"appStoreVersion": {"data": {"type": "appStoreVersions", "id": approved[0]["id"]}}}
+    body = {"type": "appStoreVersionReleaseRequests", "relationships": relation}
+    answer = send("POST", "/v1/appStoreVersionReleaseRequests", {"data": body})
+    if "errors" in answer:
+        print(answer["errors"])
+        return 1
+    print(f"{platform} {version} is being released")
+    return 0
+
+
 def cancel_review(platform: str = "IOS") -> int:
     """Takes back what is waiting for App Review, which returns the version to being prepared."""
     app = get(f"/v1/apps?filter[bundleId]={BUNDLE_ID}")["data"][0]["id"]
@@ -445,6 +470,8 @@ def main() -> int:
         return push_listing(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     elif command == "cancel-review" and len(sys.argv) in (2, 3):
         return cancel_review("MAC_OS" if sys.argv[2:] == ["mac"] else "IOS")
+    elif command == "release" and len(sys.argv) in (3, 4):
+        return release(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     elif command == "submit" and len(sys.argv) in (3, 4):
         return submit(sys.argv[2], "MAC_OS" if sys.argv[3:] == ["mac"] else "IOS")
     else:
