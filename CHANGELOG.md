@@ -1,12 +1,16 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
-## 1.1.0 (2026-11-04)
+## 1.1.0 (2026-11-05)
 
 ### Documentation
 - The images are published for arm64 now
 - Use-case pages for the questions people actually ask: bold word-by-word captions, self-hosting instead of a subscription, Whisper with Docker, and green screen captions
 - The listing's names and keywords work harder: a local name in each language, no word repeated from the name or subtitle, and the freed space used
+- A press kit: the facts about OpenCaptions in one place, including what it does not have
+- Support has an address and a page of its own: support@opencaptions.app, the short link, the press kit and the privacy policy
+- The review notes say what is new in 1.1 and answer the AI and face data questions up front
+- The privacy policy speaks of the device, not the phone
 
 ### Features
 - Ask for a rating when someone leaves their second finished video, once per version, and never after a failed save
@@ -14,16 +18,30 @@ Every change to OpenCaptions, from its commit messages.
 - A video can come from outside the app: Open In from Files and other apps, and a Caption a Video action in Shortcuts, both landing on the import screen
 - Scripts/asc.py checks the listing against Apple's limits and sends it to a draft version; What's New for 1.1 in 13 languages
 - Text follows the system text size, secondary text passes contrast on every surface, and Apple's accessibility audit runs as a UI test
+- The Mac listing in 13 languages, kept as what differs from the phone's, with a check that no phone is left in it
+- Store screenshots in 13 languages: the words in one file, the app and its captions translated, a face for each script, and an upload to a draft version
+- Asc.py attaches a build, sends the review notes and the Mac's slides, and submits a version for review
+- Mac slides from the same script, with the debug app kept away from the real home
+- A weekly page of the store, crashes, the repository and the speech models
+- Asc.py takes a version back from App Review, and the subtitles name no device, for the Mac
+- Asc.py releases an approved version
 
 ### Fixes
 - Open In keeps the file in place, as macOS requires, so the Mac app builds again
 - The editor no longer reads the dismiss action: since Open In it re-rendered the screen without end on iOS 26.7, which froze the app when a project opened
+- The Mac app has an icon of its own, and its upload finds the installer certificate
+- The Mac names macOS where the phone names iOS, and its slides show numbers in the slide's language
+- A size reads 1080p in every region, not 1,080p, and English and iPad slides come from the same script
+- The Mac's top bar sits closer to the window's edge, and its export panel has room under the last button
 
 ### Maintenance
 - Edge images are built for arm64 too, so the default compose file runs natively on an Apple-silicon Mac
+- Version 1.1.0, for the App Store update: not tagged yet
 
 ### Tests
 - The transcribe sheet's way back is driven by real taps
+- Every build of the engine is held to the same frames: native, WebAssembly and Apple
+- The same frames in Arabic, Hebrew, Devanagari and Thai, where shaping does the most
 ## 1.0.0 (2026-11-04)
 
 ### Changes
