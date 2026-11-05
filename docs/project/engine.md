@@ -14,8 +14,10 @@ sidebar:
 - **as a static library**, for the iOS app.
 
 **The preview is the export.** It is the same code with the same font files, and its arithmetic is
-deterministic (an integer blur, no platform maths), so every build produces byte-identical frames. Nothing else
-may draw captions. The [architecture](./architecture.md) page says where the engine sits in the whole system.
+deterministic (an integer blur, no platform maths), so every build produces byte-identical frames. That is tested:
+`testdata/frames.json` holds a scene for every look and the fingerprint of its frames, and the native test, the
+WebAssembly build (`make test-engine-wasm`, through the file the browser loads) and the Apple build (`FramesTests`)
+all have to draw them. Nothing else may draw captions. The [architecture](./architecture.md) page says where the engine sits in the whole system.
 
 The drawing is `src/scene/`:
 

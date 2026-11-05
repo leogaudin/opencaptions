@@ -117,6 +117,15 @@ fn the_highlight_box_springs_in_past_full_size_then_settles() {
 
 /// `input` with some style fields changed.
 fn styled(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value) -> SceneInput {
+    serde_json::from_value(styled_json(animation, words, patch)).unwrap()
+}
+
+/// `styled`, as the JSON every build of the engine is given.
+fn styled_json(
+    animation: &str,
+    words: &[(&str, f32, f32)],
+    patch: serde_json::Value,
+) -> serde_json::Value {
     let base = input(animation, words, 3);
     let mut style = serde_json::to_value(serde_json::json!({
         "font": "Inter", "font_size": 64, "text_color": "#FFFFFF",
@@ -135,7 +144,7 @@ fn styled(animation: &str, words: &[(&str, f32, f32)], patch: serde_json::Value)
         "transcript": serde_json::to_value(&base.transcript).unwrap_or_default(),
     });
     value["style"] = style;
-    serde_json::from_value(value).unwrap()
+    value
 }
 
 /// The columns and rows with any ink in a frame: (left, right, top, bottom).
@@ -1493,10 +1502,8 @@ const GOLDEN_TIMES: [f32; 5] = [0.0, 0.25, 0.6, 1.2, 3.2];
 /// Draws a scene through `GOLDEN_TIMES` and returns one fingerprint of all the frames,
 /// after checking that each frame, drawn on the renderer that kept the last one, is the
 /// frame a fresh renderer draws at that time: the incremental redraw changes nothing.
-fn golden(mut input: SceneInput) -> (u64, bool) {
-    // Half size: layout is proportional to the frame's height, so this is the same
-    // picture, a quarter of the pixels.
-    (input.width, input.height) = (540, 960);
+fn golden(input: &serde_json::Value) -> (u64, bool) {
+    let input: SceneInput = serde_json::from_value(input.clone()).unwrap();
     let book = book();
     let mut kept = Renderer::new(Scene::new(&book, input.clone()));
     let mut all = 0xcbf2_9ce4_8422_2325;
@@ -1515,11 +1522,14 @@ fn golden(mut input: SceneInput) -> (u64, bool) {
     (all, inked)
 }
 
-/// Every look the engine can draw, as (name, style patch, animation).
-fn golden_cases() -> Vec<(String, SceneInput)> {
+/// Every look the engine can draw, as (name, scene).
+fn golden_cases() -> Vec<(String, serde_json::Value)> {
     let mut cases = Vec::new();
     for anim in animation_names() {
-        cases.push((anim.clone(), styled(&anim, WORDS, serde_json::json!({}))));
+        cases.push((
+            anim.clone(),
+            styled_json(&anim, WORDS, serde_json::json!({})),
+        ));
     }
     let effects = [
         (
@@ -1558,7 +1568,10 @@ fn golden_cases() -> Vec<(String, SceneInput)> {
     for (name, patch) in effects {
         // On a still look and on two that move every word's opacity or scale.
         for anim in ["word_highlight", "word_fade", "word_pop"] {
-            cases.push((format!("{anim}+{name}"), styled(anim, WORDS, patch.clone())));
+            cases.push((
+                format!("{anim}+{name}"),
+                styled_json(anim, WORDS, patch.clone()),
+            ));
         }
     }
     let chunky = serde_json::json!({
@@ -1568,7 +1581,7 @@ fn golden_cases() -> Vec<(String, SceneInput)> {
     for anim in ["word_press", "word_pop"] {
         cases.push((
             format!("{anim}+chunky"),
-            styled(anim, WORDS, chunky.clone()),
+            styled_json(anim, WORDS, chunky.clone()),
         ));
     }
     let poster = serde_json::json!({
@@ -1578,46 +1591,68 @@ fn golden_cases() -> Vec<(String, SceneInput)> {
     for anim in ["word_pop", "letter_rise", "highlight_box"] {
         cases.push((
             format!("{anim}+stack"),
-            styled(anim, FIGURES, poster.clone()),
+            styled_json(anim, FIGURES, poster.clone()),
         ));
     }
-    let mut marked = styled("word_highlight", WORDS, serde_json::json!({}));
-    marked.watermark = Some("OpenCaptions".to_string());
+    let mut marked = styled_json("word_highlight", WORDS, serde_json::json!({}));
+    marked["watermark"] = "OpenCaptions".into();
     cases.push(("watermark".to_string(), marked));
+    // Half size: layout is proportional to the frame's height, so this is the same picture,
+    // a quarter of the pixels.
+    for (_, scene) in &mut cases {
+        scene["width"] = 540.into();
+        scene["height"] = 960.into();
+    }
     cases
 }
 
-/// The fingerprint of every look at every golden time. A change that is meant to alter the
-/// picture updates these (`OC_PRINT_GOLDEN=1 cargo test golden -- --nocapture` prints
-/// them); a change that only makes drawing faster must not touch one.
+/// The fingerprint of every look at every golden time, and the scene it was drawn from, kept in
+/// a file so that the other builds can be held to it: `scripts/check-wasm-frames.mjs` and
+/// `FramesTests` draw the same scenes through WebAssembly and on Apple's platforms, and the
+/// preview and the export are only the same picture if all three agree. A change that is meant
+/// to alter the picture rewrites the file (`OC_PRINT_GOLDEN=1 cargo test frames_are`); a change that
+/// only makes drawing faster must not touch it.
 #[test]
 fn frames_are_byte_for_byte_what_they_were() {
-    let got: Vec<(String, u64)> = golden_cases()
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/testdata/frames.json");
+    let got: Vec<serde_json::Value> = golden_cases()
         .into_iter()
         .map(|(name, input)| {
-            let (h, inked) = golden(input);
+            let (h, inked) = golden(&input);
             assert!(inked, "{name} drew nothing at any time");
-            (name, h)
+            serde_json::json!({ "name": name, "fingerprint": format!("{h:016x}"), "input": input })
         })
         .collect();
     if std::env::var_os("OC_PRINT_GOLDEN").is_some() {
-        for (name, h) in &got {
-            println!("        (\"{name}\", 0x{h:016x}),");
-        }
+        let lines: Vec<String> = got.iter().map(|case| format!("    {case}")).collect();
+        let times = serde_json::to_string(&GOLDEN_TIMES).unwrap();
+        let body = lines.join(",\n");
+        let file = format!("{{\n  \"times\": {times},\n  \"cases\": [\n{body}\n  ]\n}}\n");
+        std::fs::write(path, file).unwrap();
     }
-    let want: &[(&str, u64)] = GOLDEN;
-    let got_names: Vec<&str> = got.iter().map(|(n, _)| n.as_str()).collect();
-    let want_names: Vec<&str> = want.iter().map(|(n, _)| *n).collect();
+    let kept: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let want = kept["cases"].as_array().unwrap();
+    let names = |cases: &[serde_json::Value]| -> Vec<String> {
+        cases.iter().map(|c| c["name"].to_string()).collect()
+    };
     assert_eq!(
-        got_names, want_names,
-        "the looks covered changed: update GOLDEN"
+        names(&got),
+        names(want),
+        "the looks covered changed: rewrite testdata/frames.json"
     );
-    for ((name, h), (_, expected)) in got.iter().zip(want) {
+    for (case, expected) in got.iter().zip(want) {
         assert_eq!(
-            *h, *expected,
-            "{name}: the drawn frames changed. If that is meant, update GOLDEN and bump \
-             src/render_revision.txt (and the API's ENGINE_RENDER_REVISION), so a render \
-             cached with the old drawing is not served"
+            case["input"], expected["input"],
+            "{}: the scene changed: rewrite testdata/frames.json",
+            case["name"]
+        );
+        assert_eq!(
+            case["fingerprint"], expected["fingerprint"],
+            "{}: the drawn frames changed. If that is meant, rewrite testdata/frames.json and \
+             bump src/render_revision.txt (and the API's ENGINE_RENDER_REVISION), so a render \
+             cached with the old drawing is not served",
+            case["name"]
         );
     }
 }
@@ -1763,51 +1798,6 @@ fn the_overlay_box_holds_every_line_and_the_mark_on_even_edges() {
         }
     }
 }
-
-const GOLDEN: &[(&str, u64)] = &[
-    ("word_highlight", 0xf26273125dfc6bf6),
-    ("highlight_box", 0xd7eb38aa81c8867f),
-    ("word_pop", 0xda614d49f56c55f4),
-    ("word_fade", 0x44ed1a5d9329ca4e),
-    ("word_sweep", 0x76a12a545f6c55d2),
-    ("word_underline", 0xfb9619a6926772c7),
-    ("typewriter", 0x774d718bfa4e3047),
-    ("none", 0xfe846054695b2f5c),
-    ("word_bounce", 0x7ccda292d88c19ac),
-    ("lyric_focus", 0xf67ff5ba29429af2),
-    ("highlight_slide", 0x88314a33e4a554f9),
-    ("line_bar", 0x6b1e7afb5365656d),
-    ("stickers", 0x5c9bad18f058c1c7),
-    ("word_press", 0xf26273125dfc6bf6),
-    ("letter_rise", 0x9bf46ac595f09960),
-    ("word_slam", 0x01b67dcf00483f0b),
-    ("drift", 0x4db2b22b1c3c5323),
-    ("blur_in", 0x838ead26fd0a0a6b),
-    ("word_highlight+stroke", 0xa886db0bfe0007d8),
-    ("word_fade+stroke", 0x100c37255aee5408),
-    ("word_pop+stroke", 0x8bbaecd606e3c7e3),
-    ("word_highlight+hard_shadow", 0x5b74783a76662701),
-    ("word_fade+hard_shadow", 0x475ee9f0778267b3),
-    ("word_pop+hard_shadow", 0x553d16d2b7218cc0),
-    ("word_highlight+blur_shadow", 0x14f08f9b6e36576c),
-    ("word_fade+blur_shadow", 0x06a272810bee5643),
-    ("word_pop+blur_shadow", 0x93eadae460e3a326),
-    ("word_highlight+glow", 0x3ee4161be9e7bfda),
-    ("word_fade+glow", 0x9eb95ca66e0a91ce),
-    ("word_pop+glow", 0xd34e7d3719c1ed61),
-    ("word_highlight+italic_upper", 0xbb710f6a8ee71ff2),
-    ("word_fade+italic_upper", 0xbd182700c42782ba),
-    ("word_pop+italic_upper", 0xd20257c98ebb01a7),
-    ("word_highlight+pill", 0x39e4fe882e5dfa3b),
-    ("word_fade+pill", 0xbcf444e5865cfa9c),
-    ("word_pop+pill", 0xc9c9ca585f268aa2),
-    ("word_press+chunky", 0xe55ee93138faa2d6),
-    ("word_pop+chunky", 0x064022aaf29214a8),
-    ("word_pop+stack", 0x7a2ceb6d7115026e),
-    ("letter_rise+stack", 0xe4534b8dcb4a39e8),
-    ("highlight_box+stack", 0x7215adeb165d3e2e),
-    ("watermark", 0xe22c164ced6e9dd5),
-];
 
 #[test]
 fn a_glow_lies_under_the_extrusion_and_surrounds_it() {

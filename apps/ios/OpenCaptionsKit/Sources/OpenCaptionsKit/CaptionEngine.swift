@@ -188,15 +188,28 @@ public actor CaptionEngine {
     /// Lays the scene out and returns its handle; the caller frees it (`oc_scene_free`) or keeps it.
     private func newScene(_ input: SceneInput) throws -> UInt32 {
         let (ptr, len) = try put(json: input)
+        return try newScene(ptr, len)
+    }
+
+    private func newScene(_ ptr: UnsafeMutablePointer<UInt8>, _ len: Int) throws -> UInt32 {
         let handle = oc_scene_new(ptr, len)
         guard handle != 0 else { throw failure() }
         return handle
     }
 
     private func apply(_ input: SceneInput) throws {
-        let next = try newScene(input)
+        use(try newScene(input))
+    }
+
+    private func use(_ next: UInt32) {
         if scene != 0 { oc_scene_free(scene) }
         scene = next
+    }
+
+    /// A scene as the JSON the engine takes: how a test gives this build what it gives the others.
+    func setScene(json: Data) throws {
+        let (ptr, len) = put(json)
+        use(try newScene(ptr, len))
     }
 
     /// One frame per style of `words`, as they look while the middle word is spoken: what a style

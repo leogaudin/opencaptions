@@ -48,6 +48,7 @@ make lint-actions     # actionlint on the workflows
 make test-backend     # pytest
 make test-web         # the web's unit tests (node --test)
 make test-engine      # the engine's Rust tests
+make test-engine-wasm # the WebAssembly build draws the same bytes as the native one
 make typecheck        # tsc -b project references (web)
 make typegen-check    # regenerate API types and fail if the committed file is stale
 make check-repo       # manifest versions, compose fallbacks, iOS purpose strings
@@ -85,7 +86,7 @@ images, which is what an end user does.
 
 2. **`apps/web/src/types/api.generated.ts` is generated, never hand-edit it.** After changing `apps/api/app/models/schemas.py`, regenerate with `bash scripts/generate-api-types.sh` from the repo root. CI runs `git diff --exit-code` on this file. The hand-written types in `apps/web/src/types/index.ts` deliberately derive from the generated file so `tsc` catches API drift at compile time, and every call in `apps/web/src/lib/api.ts` goes through `openapi-fetch` over the generated `paths`, so `tsc` checks each path, method, parameter, body and response against the API too (a call to a route that does not exist, or with the wrong body, does not compile).
 
-3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic, integer blur, no platform maths, so both builds produce byte-identical frames. See `docs/project/architecture.md`.
+3. **The preview and the export are the same code.** `apps/engine` builds natively for the render server and to WebAssembly for the editor preview. Never draw captions anywhere else (CSS, a second canvas implementation): a second renderer is how preview and export drift. Caption edits live there too (`edit.rs`: lines, retiming, editing a word), called by the web through WASM and by the iOS app through `include/opencaptions_engine.h`; editors only draw and handle gestures. The engine is deterministic, integer blur, no platform maths, so every build produces byte-identical frames: `apps/engine/testdata/frames.json` holds the scenes and their fingerprints, and the native test, `make test-engine-wasm` and the Kit's `FramesTests` all draw them. See `docs/project/architecture.md`.
 
 4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format and its encoder settings + dimensions + fps + green screen + the engine's render revision) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
 

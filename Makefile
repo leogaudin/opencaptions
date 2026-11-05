@@ -17,7 +17,7 @@ help:                ## Show this help
 # CI_CHECKS, one job each, so a check is added in one place: its target below, named here.
 
 # The checks, in the order the local gate runs them. Each is a target that runs in its pinned container.
-CI_STATIC_CHECKS := lint-actions check-repo lint-backend test-backend lint-engine test-engine \
+CI_STATIC_CHECKS := lint-actions check-repo lint-backend test-backend lint-engine test-engine test-engine-wasm \
 	typegen-check lint-frontend typecheck test-web build-web
 CI_HEAVY_CHECKS := build-demo build-docs e2e
 CI_CHECKS := $(CI_STATIC_CHECKS) $(CI_HEAVY_CHECKS)
@@ -90,6 +90,10 @@ lint-engine:         ## Engine format and clippy (server, WebAssembly, iOS)
 
 test-engine:         ## Run the engine's tests
 	@$(ENGINE) cargo test --locked --features server -q
+
+test-engine-wasm:    ## Hold the WebAssembly build to the frames the native build draws
+	@$(ENGINE) cargo build --release --locked --lib --target wasm32-unknown-unknown -q
+	@./scripts/ci-shell.sh node . 'node scripts/check-wasm-frames.mjs apps/engine/target/wasm32-unknown-unknown/release/opencaptions_engine.wasm'
 
 typegen-check:       ## Regenerate the TypeScript API types and fail if the committed file is stale
 	@./scripts/ci-shell.sh tools . '(cd apps/api && $(UV_SYNC)) && (cd apps/web && $(NPM_CI)) && bash scripts/generate-api-types.sh'
