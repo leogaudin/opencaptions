@@ -1,29 +1,29 @@
 # Privacy Policy
 
-*Last updated: 23 October 2026. Applies to the OpenCaptions iPhone and iPad app. The self-hosted web
+*Last updated: 5 November 2026. Applies to the OpenCaptions app for Apple devices. The self-hosted web
 app runs on your own server and keeps nothing anywhere else; see [docs/self-hosting/installation.md](docs/self-hosting/installation.md).*
 
 OpenCaptions does not collect your data. There is no account, no analytics, no advertising, and no
 tracking, and the app has no servers of ours to send anything to.
 
-## What stays on your phone
+## What stays on your device
 
 - **Your videos and captions.** Projects live in the app's own storage on your device. Transcription
-  runs on the phone, with a speech model that has been downloaded to it.
+  runs on the device, with a speech model that has been downloaded to it.
 - **Your settings**, such as the language you chose and your last save options.
-- **A diagnostics log** of what the app did (launches, exports, errors), kept on the phone. It is
+- **A diagnostics log** of what the app did (launches, exports, errors), kept on the device. It is
   never sent anywhere. If you choose *Share diagnostics* in Settings, you decide where it goes.
 
 ## What the app asks the internet for
 
-Only when you use the feature that needs it, and always from your phone straight to the service, never
+Only when you use the feature that needs it, and always from your device straight to the service, never
 through us:
 
 | When | Who is contacted | What they receive |
 |---|---|---|
 | You download a speech model | Hugging Face | The request for the model file (your IP address, as with any download) |
 | You use a font that is not built in | Google Fonts (`fonts.google.com`, `fonts.googleapis.com`, `fonts.gstatic.com`) | The request for that font (your IP address) |
-| You pick Apple's speech model for a language | Apple | The request for that language's model, which iOS downloads and keeps. The transcription itself runs on your phone. |
+| You pick Apple's speech model for a language | Apple | The request for that language's model, which iOS downloads and keeps. The transcription itself runs on your device. |
 | You buy Pro | Apple (App Store) | Apple handles the purchase under its own terms. We receive no payment or personal details. |
 | You turn on **Remote server** | The OpenCaptions server **you** connect | The audio of the video you transcribe, to transcribe it there |
 
@@ -44,11 +44,11 @@ videos you choose.
 
 OpenCaptions does not detect, extract, collect, store or share face data. It has no face detection or
 recognition of any kind, and it never uses the camera, Face ID or ARKit. Faces in a video you import are
-only pixels the captions are drawn over, on your phone. Nothing about them is read, kept or sent.
+only pixels the captions are drawn over, on your device. Nothing about them is read, kept or sent.
 
 ## Third-party AI
 
-The speech models that run on your phone are open models, downloaded once and then used offline. Your
+The speech models that run on your device are open models, downloaded once and then used offline. Your
 video and audio are not sent to them or to any AI service, unless you turn on **Remote server** (see above).
 
 ## Children
