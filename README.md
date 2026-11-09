@@ -31,8 +31,8 @@ Nothing leaves your machine unless you say so.
 - **Export** a burned-in MP4, WebM or ProRes, SRT, VTT and JSON, or just the captions on a green
   screen to key out in your video editor
 - **The preview is the export**: one Rust engine draws both, so what you see is what you get
-- **[iPhone and iPad app](https://apps.apple.com/app/id6820548922)** with on-device Whisper, Parakeet and Apple Speech, no server and
-  no account. The same code builds for the Mac
+- **[iPhone, iPad and Mac app](https://apps.apple.com/app/id6820548922)** with on-device Whisper, Parakeet and Apple Speech, no
+  server and no account. One purchase covers all three
 - **Many scripts and languages**: Latin, Cyrillic, Arabic, Hebrew, Indic, Thai, CJK and more, and
   an interface in 13 languages
 - **Private by design**: no telemetry, no tracking, accounts are local to your instance
@@ -71,7 +71,7 @@ To build from source instead, clone the repository and run `docker compose up -d
 
 ## Status
 
-The iPhone and iPad app is on the App Store, and the self-hosted stack has tagged releases. What changed in
+The iPhone, iPad and Mac app is on the App Store, and the self-hosted stack has tagged releases. What changed in
 each one is in the [changelog](CHANGELOG.md).
 
 ## Why is there a Pro?

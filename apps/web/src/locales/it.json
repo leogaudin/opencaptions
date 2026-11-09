@@ -330,7 +330,7 @@
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Leggi il codice, compilalo tu stesso o esegui l'intero editor web sul tuo server.",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Un solo motore Rust disegna ogni sottotitolo nel browser, sul server e sul telefono.",
   "Use it where you work": "Usalo dove lavori",
-  "iPhone and iPad": "iPhone e iPad",
+  "iPhone, iPad and Mac": "iPhone, iPad e Mac",
   "Caption, retime and save right on the phone.": "Sottotitola, regola i tempi e salva direttamente sul telefono.",
   "Your own server": "Il tuo server",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "L'editor web, con timeline, file di sottotitoli e API, avviato con un solo comando docker compose.",

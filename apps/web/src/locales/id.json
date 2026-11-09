@@ -330,7 +330,7 @@
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Baca kodenya, bangun sendiri, atau jalankan seluruh editor web di server Anda.",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Satu mesin Rust menggambar setiap teks di browser, server, dan ponsel.",
   "Use it where you work": "Gunakan di tempat Anda bekerja",
-  "iPhone and iPad": "iPhone dan iPad",
+  "iPhone, iPad and Mac": "iPhone, iPad, dan Mac",
   "Caption, retime and save right on the phone.": "Beri teks, atur waktu, dan simpan langsung di ponsel.",
   "Your own server": "Server Anda sendiri",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Editor web dengan linimasa, berkas teks, dan API, dijalankan dengan satu perintah docker compose.",

@@ -21,8 +21,9 @@ server with one Docker file.
 |---|---|
 | Maker | Léo Gaudin |
 | Licence | AGPL-3.0 |
-| First release | 3 November 2026 on the App Store, version 1.0.0 of the self-hosted stack on 4 November 2026 |
+| First release | 3 November 2026 on the App Store, version 1.0.0 of the self-hosted stack on 4 November 2026, the Mac on 9 November 2026 |
 | iPhone and iPad | [App Store](https://apps.apple.com/app/id6820548922), iOS 18 or later |
+| Mac | [Mac App Store](https://apps.apple.com/app/id6820548922), macOS 15 or later on Apple silicon, the same purchase |
 | Price | The app is free, up to 1080p at 30 fps with a small mark. Pro is one purchase with no subscription, 14,99 € at launch, and adds 4K, 60 fps, HDR and every look. Self-hosting is free. |
 | Try it | [opencaptions.app](https://opencaptions.app), in the browser, with nothing to install |
 | Source | [github.com/leogaudin/opencaptions](https://github.com/leogaudin/opencaptions) |

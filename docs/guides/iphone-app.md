@@ -1,25 +1,25 @@
 ---
-title: "The iPhone and iPad app"
-description: "Caption a video on your iPhone or iPad with OpenCaptions, with on-device speech models, no account and no upload, or send the audio to your own server."
+title: "The iPhone, iPad and Mac app"
+description: "Caption a video on your iPhone, iPad or Mac with OpenCaptions, with on-device speech models, no account and no upload, or send the audio to your own server."
 sidebar:
   order: 5
 ---
 
-# The iPhone and iPad app
+# The iPhone, iPad and Mac app
 
 The app does everything the web editor does, on the phone: transcribe, style, fix words, retime, and
 save a captioned video. There is no account and no server, and nothing is uploaded. It needs
 **iOS 18** or later and works on iPhone and iPad.
 
 :::note[Availability]
-[Get it on the App Store](https://apps.apple.com/app/id6820548922), for iPhone and iPad. You can also
+[Get it on the App Store](https://apps.apple.com/app/id6820548922), for iPhone, iPad and Mac: Pro bought on one
+unlocks the others. You can also
 [build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md) with Xcode.
 :::
 
 ## On the Mac
 
-The Mac version is not on the App Store yet, so for now you
-[build it from source](https://github.com/leogaudin/opencaptions/blob/main/apps/ios/README.md). It is the same app, on
+It is on the [Mac App Store](https://apps.apple.com/app/id6820548922) too. It is the same app, on
 a Mac with Apple silicon (**macOS 15** or later), in one window with the editor laid out wide: the video and the style controls side by side, the timeline under them. It does everything
 the phone does, with the Mac's ways of doing it:
 

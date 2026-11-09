@@ -330,7 +330,7 @@
   "Read the code, build it yourself, or run the whole web editor on your own server.": "Читайте код, собирайте сами или запускайте весь веб-редактор на своём сервере.",
   "One Rust engine draws every caption in the browser, on the server and on the phone.": "Один движок на Rust рисует каждые субтитры в браузере, на сервере и на телефоне.",
   "Use it where you work": "Используйте там, где работаете",
-  "iPhone and iPad": "iPhone и iPad",
+  "iPhone, iPad and Mac": "iPhone, iPad и Mac",
   "Caption, retime and save right on the phone.": "Добавляйте субтитры, правьте тайминг и сохраняйте прямо на телефоне.",
   "Your own server": "Свой сервер",
   "The web editor, with a timeline, subtitle files and an API, started with one docker compose command.": "Веб-редактор с таймлайном, файлами субтитров и API запускается одной командой docker compose.",

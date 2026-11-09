@@ -222,7 +222,7 @@ function Ways() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
           <IconBadge icon={Smartphone} />
-          <h3 className="text-lg font-bold">{t("iPhone and iPad")}</h3>
+          <h3 className="text-lg font-bold">{t("iPhone, iPad and Mac")}</h3>
           <p className="flex-1 text-sm text-muted-foreground">
             {t("Caption, retime and save right on the phone.")}
           </p>

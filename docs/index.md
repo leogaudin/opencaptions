@@ -17,9 +17,9 @@ has no telemetry, and keeps your videos where you put them: on your phone, or on
 
 ## Two ways to use it
 
-| | **The web app, on your server** | **The iPhone and iPad app** |
+| | **The web app, on your server** | **The iPhone, iPad and Mac app** |
 |---|---|---|
-| Runs | In Docker, on your computer, NAS or server | On the phone |
+| Runs | In Docker, on your computer, NAS or server | On the phone, tablet or Mac |
 | Speech to text | Whisper or Parakeet on your machine, a GPU box of yours, or the OpenAI API with your key | Whisper, Parakeet or Apple Speech on the phone, or your own server |
 | Account | A local account on your instance | None |
 | Start here | [Quick start](./getting-started/quick-start.md) | [The iPhone app](./guides/iphone-app.md) |
@@ -51,7 +51,7 @@ the server and on the phone. What the preview shows is what the export draws.
 
 ## Status
 
-The iPhone and iPad app is on the App Store, and the self-hosted stack has tagged releases. What changed in
+The iPhone, iPad and Mac app is on the App Store, and the self-hosted stack has tagged releases. What changed in
 each one is in the [changelog](https://github.com/leogaudin/opencaptions/blob/main/CHANGELOG.md).
 
 ## Where to go next
