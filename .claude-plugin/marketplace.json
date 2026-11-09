@@ -1,0 +1,11 @@
+{
+  "name": "opencaptions",
+  "owner": { "name": "Léo Gaudin", "url": "https://github.com/leogaudin" },
+  "plugins": [
+    {
+      "name": "opencaptions",
+      "source": "./apps/agent/plugin",
+      "description": "Animated word-by-word captions for your videos, on your own OpenCaptions server"
+    }
+  ]
+}

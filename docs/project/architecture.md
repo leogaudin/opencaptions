@@ -537,6 +537,26 @@ a screen, so a transcription or an autosave in progress carries on when the user
 project list, where the project's row shows its progress.
 
 
+## Agents and the command line
+
+`apps/agent` is the `opencaptions` npm package: an MCP server over stdio (`opencaptions mcp`) for Claude Code,
+Claude Desktop, Cursor and other clients, and a command line (`opencaptions caption`) for scripts. It is a
+client of the HTTP API and nothing more: it uploads a video with an API key, starts the transcription,
+sets the style, and asks for the download, so the server stays the one place that transcribes and draws.
+
+- **Types.** Its calls go through `openapi-fetch` over a copy of the generated types, and its tools take the
+  style and the save options as the API's own JSON schemas (`src/generated/`). `scripts/generate-api-types.sh`
+  writes them with the web's types, with the built-in looks, and `make typegen-check` fails on a stale copy.
+  The style's descriptions in `schemas.py` are what an agent reads, in the tool and from `describe_style`.
+- **Edits.** Fixing a word and dealing a look's word variants are the engine's (`edit.rs`), through the same
+  WebAssembly file the editor loads, built into the package by `make agent-engine`.
+- **Long jobs.** A tool waits up to 45 seconds (`OPENCAPTIONS_WAIT_SECONDS`), sending MCP progress, then hands
+  back a ticket holding the project, the job and where the file goes; `check_progress` carries on from it.
+  Nothing is kept between calls.
+- **Out.** A tag publishes it to npm with provenance and lists it in the MCP Registry (`server.json`, whose
+  name the package's `mcpName` matches). The Claude Code plugin (`apps/agent/plugin`, listed by
+  `.claude-plugin/marketplace.json`) runs it with `npx` and adds a skill on when to use it.
+
 ## The documentation site
 
 The documentation is plain Markdown in `docs/`, so GitHub shows it as it is, and `apps/docs` builds the same
