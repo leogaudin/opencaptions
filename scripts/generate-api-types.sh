@@ -3,7 +3,9 @@
 #
 # This script dumps the OpenAPI document OFFLINE (no running server, no
 # Postgres/Redis/object storage required) and pipes it through openapi-typescript to
-# produce apps/web/src/types/api.generated.ts.
+# produce apps/web/src/types/api.generated.ts. The agent package (apps/agent) gets the same types, the style
+# and the save options as JSON schemas for its tools, and the built-in looks, in apps/agent/src/generated/: it is published on its
+# own, so it carries copies, and `make typegen-check` fails when one is stale.
 #
 # Usage: bash scripts/generate-api-types.sh
 # (run from the repository root)
@@ -13,6 +15,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 API_DIR="$REPO_ROOT/apps/api"
 WEB_DIR="$REPO_ROOT/apps/web"
 OUTPUT="$WEB_DIR/src/types/api.generated.ts"
+AGENT_OUT="$REPO_ROOT/apps/agent/src/generated"
 SCHEMA_TMP="$(mktemp)"
 
 cleanup() { rm -f "$SCHEMA_TMP"; }
@@ -52,3 +55,28 @@ if [ ! -s "$OUTPUT" ]; then
 fi
 
 echo "✓ Generated $OUTPUT ($(wc -c < "$OUTPUT") bytes)"
+
+# --- Step 3: the agent package's copies ---
+mkdir -p "$AGENT_OUT"
+cp "$OUTPUT" "$AGENT_OUT/api.ts"
+cp "$WEB_DIR/src/lib/presets.json" "$AGENT_OUT/presets.json"
+# The style and the save options, with what they refer to written in place, as a tool's input schema wants it.
+"${PYTHON[@]}" - "$SCHEMA_TMP" "$AGENT_OUT/schemas.json" <<'PY'
+import json, sys
+
+schemas = json.load(open(sys.argv[1]))["components"]["schemas"]
+
+def inline(node):
+    if isinstance(node, dict):
+        if "$ref" in node:
+            return inline(schemas[node["$ref"].rsplit("/", 1)[1]])
+        return {k: inline(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [inline(v) for v in node]
+    return node
+
+with open(sys.argv[2], "w") as out:
+    json.dump({"style": inline(schemas["StyleConfig"]), "save": inline(schemas["RenderRequest"])}, out, indent=2)
+    out.write("\n")
+PY
+echo "✓ Copied the types, the schemas and the looks to $AGENT_OUT"

@@ -10,7 +10,7 @@ VERSION="${1:-}"
 cd "$(cd "$(dirname "$0")/.." && pwd)"
 [ -z "$(git status --porcelain)" ] || { echo "the working tree is not clean: commit or stash first" >&2; exit 1; }
 
-# The manifests (scripts/check-version-sync.sh reads the same four), and the lock files that repeat them.
+# The manifests (scripts/check-version-sync.sh reads the same five), and the lock files that repeat them.
 # Python, not sed: the first match of a pattern is wanted, which BSD and GNU sed spell differently.
 VERSION="$VERSION" python3 - <<'PY'
 import os, re
@@ -25,6 +25,11 @@ bump("apps/api/pyproject.toml", r'^version = "[^"]*"', f'version = "{v}"')
 bump("apps/engine/Cargo.toml", r'^version = "[^"]*"', f'version = "{v}"')
 bump("apps/web/package.json", r'"version": *"[^"]*"', f'"version": "{v}"')
 bump("apps/web/package-lock.json", r'"version": *"[^"]*"', f'"version": "{v}"', count=2)
+bump("apps/agent/package.json", r'"version": *"[^"]*"', f'"version": "{v}"')
+bump("apps/agent/package-lock.json", r'"version": *"[^"]*"', f'"version": "{v}"', count=2)
+# The MCP Registry's entry names the server's version and the npm package's.
+bump("apps/agent/plugin/.claude-plugin/plugin.json", r'"version": *"[^"]*"', f'"version": "{v}"')
+bump("apps/agent/server.json", r'"version": *"[^"]*"', f'"version": "{v}"', count=2)
 bump("apps/ios/project.yml", r'^( *MARKETING_VERSION: *)[0-9][^ \n]*', rf'\g<1>{v}')
 # The lock files name their own package once.
 bump("apps/engine/Cargo.lock", r'(name = "opencaptions-engine"\nversion = )"[^"]*"', rf'\g<1>"{v}"')

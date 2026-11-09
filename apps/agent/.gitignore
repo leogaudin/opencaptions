@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# Built from apps/engine (make agent-engine); the published package carries it.
+engine/*.wasm

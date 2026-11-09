@@ -299,3 +299,43 @@ jobs:
           cache-from: |
             type=gha,scope=api
             type=gha,scope=api-gpu
+
+  publish-agent:
+    name: Publish the agent package (npm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [check]
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    permissions:
+      contents: read
+      # npm's provenance: the package says which workflow, on which commit, built it.
+      id-token: write
+    env:
+      # `secrets` may not appear in a step-level `if`, so decide once here.
+      NPM_CONFIGURED: ${{ secrets.NPM_TOKEN != '' }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        if: ${{ env.NPM_CONFIGURED == 'true' }}
+      - name: Build the engine's WebAssembly
+        if: ${{ env.NPM_CONFIGURED == 'true' }}
+        run: make agent-engine
+      - name: Publish
+        if: ${{ env.NPM_CONFIGURED == 'true' }}
+        working-directory: apps/agent
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "opencaptions@$version" version >/dev/null 2>&1; then
+            echo "opencaptions@$version is already on npm"; exit 0
+          fi
+          npm ci --no-audit --no-fund
+          npm run build
+          cp ../../LICENSE .
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          npm publish --provenance --access public
+          # The official MCP Registry lists it from server.json, signed in with this workflow's identity
+          # (io.github.leogaudin/...), and checks the package's mcpName matches.
+          curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.4/mcp-publisher_linux_amd64.tar.gz \
+            | tar -xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

@@ -1,0 +1,438 @@
+{
+  "style": {
+    "properties": {
+      "font": {
+        "type": "string",
+        "title": "Font",
+        "description": "Font family: a bundled one, or any Google Fonts family",
+        "default": "Poppins"
+      },
+      "font_size": {
+        "type": "integer",
+        "maximum": 300.0,
+        "minimum": 12.0,
+        "title": "Font Size",
+        "description": "Letter size in pixels on a 1920-pixel-high frame; scales with the video's height",
+        "default": 64
+      },
+      "text_color": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}$",
+        "title": "Text Color",
+        "description": "Colour of the letters",
+        "default": "#FFFFFF"
+      },
+      "highlight_colors": {
+        "items": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "type": "array",
+        "maxItems": 4,
+        "minItems": 1,
+        "title": "Highlight Colors",
+        "description": "What the animation paints in; the first is the primary. A look that marks each word takes them in turn, a single shape (the sliding box, the bar) is the primary, and a sweep runs through all",
+        "default": [
+          "#7C3AED"
+        ]
+      },
+      "background": {
+        "type": "string",
+        "enum": [
+          "none",
+          "solid",
+          "pill",
+          "square"
+        ],
+        "title": "Background",
+        "description": "A shape behind each line",
+        "default": "none"
+      },
+      "background_color": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}$",
+        "title": "Background Color",
+        "description": "Colour of the background shape",
+        "default": "#000000"
+      },
+      "background_opacity": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Background Opacity",
+        "description": "Opacity of the background shape",
+        "default": 0.0
+      },
+      "position_x": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Position X",
+        "description": "Where the caption block sits across the frame, 0 left to 1 right; what it anchors depends on align",
+        "default": 0.5
+      },
+      "position_y": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Position Y",
+        "description": "The caption block's centre down the frame, 0 top to 1 bottom",
+        "default": 0.84
+      },
+      "animation": {
+        "type": "string",
+        "enum": [
+          "word_highlight",
+          "highlight_box",
+          "word_pop",
+          "word_fade",
+          "word_sweep",
+          "word_underline",
+          "typewriter",
+          "none",
+          "word_bounce",
+          "lyric_focus",
+          "highlight_slide",
+          "line_bar",
+          "stickers",
+          "word_press",
+          "letter_rise",
+          "word_slam",
+          "drift",
+          "blur_in"
+        ],
+        "title": "Animation",
+        "description": "How words move as they are said. word_highlight: the word takes the highlight colour. highlight_box: a box springs in behind it. word_pop: it grows for a moment. word_fade: it brightens, then dims. word_sweep: the colour fills it left to right. word_underline: an underline is drawn under it. typewriter: typed letter by letter. none: nothing moves. word_bounce: it jumps and leans. lyric_focus: the line is dim and the word comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under the line fills. stickers: each word on a tilted label. word_press: the word lifts off an extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words fade in from a blur and the line floats. blur_in: words come out of a blur",
+        "default": "highlight_slide"
+      },
+      "words_per_line": {
+        "type": "integer",
+        "maximum": 10.0,
+        "minimum": 1.0,
+        "title": "Words Per Line",
+        "description": "Words shown at once",
+        "default": 3
+      },
+      "word_spacing": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Word Spacing",
+        "description": "Extra gap between words, in font sizes",
+        "default": 0.0
+      },
+      "stroke_width": {
+        "type": "number",
+        "maximum": 10.0,
+        "minimum": 0.0,
+        "title": "Stroke Width",
+        "description": "Outline around the letters (0 for none)",
+        "default": 0.0
+      },
+      "stroke_color": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}$",
+        "title": "Stroke Color",
+        "description": "Colour of the outline",
+        "default": "#000000"
+      },
+      "shadow_blur": {
+        "type": "number",
+        "maximum": 20.0,
+        "minimum": 0.0,
+        "title": "Shadow Blur",
+        "description": "Softness of the shadow",
+        "default": 10.0
+      },
+      "shadow_color": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+        "title": "Shadow Color",
+        "description": "Colour of the shadow, with an optional alpha channel",
+        "default": "#000000A0"
+      },
+      "shadow_offset_x": {
+        "type": "number",
+        "maximum": 40.0,
+        "minimum": -40.0,
+        "title": "Shadow Offset X",
+        "description": "Where the shadow falls across, in the units of its blur. With no blur it is solid and drawn as an extrusion: the outline carried on out to the offset",
+        "default": 0.0
+      },
+      "shadow_offset_y": {
+        "type": "number",
+        "maximum": 40.0,
+        "minimum": -40.0,
+        "title": "Shadow Offset Y",
+        "description": "Where the shadow falls down, as shadow_offset_x",
+        "default": 0.0
+      },
+      "glow_blur": {
+        "type": "number",
+        "maximum": 40.0,
+        "minimum": 0.0,
+        "title": "Glow Blur",
+        "description": "A halo of glow_color around the letters (0 for none): the neon look",
+        "default": 0.0
+      },
+      "glow_color": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+        "title": "Glow Color",
+        "description": "Colour of the glow",
+        "default": "#FFFFFF"
+      },
+      "text_case": {
+        "type": "string",
+        "enum": [
+          "none",
+          "upper"
+        ],
+        "title": "Text Case",
+        "description": "'upper' sets every word in capitals",
+        "default": "none"
+      },
+      "italic": {
+        "type": "boolean",
+        "title": "Italic",
+        "description": "Letters leaned to the right",
+        "default": false
+      },
+      "fill_colors": {
+        "items": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "type": "array",
+        "maxItems": 4,
+        "title": "Fill Colors",
+        "description": "A vertical gradient over each word's letters, top to baseline; empty is text_color",
+        "default": []
+      },
+      "extrude_shade": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "title": "Extrude Shade",
+        "description": "How much a solid shadow (an extrusion) darkens from the front to the back",
+        "default": 0.0
+      },
+      "extrude_back": {
+        "type": "string",
+        "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+        "title": "Extrude Back",
+        "description": "The colour the back of an extrusion fades to from shadow_color; transparent for none",
+        "default": "#00000000"
+      },
+      "align": {
+        "type": "string",
+        "enum": [
+          "center",
+          "left",
+          "right",
+          "justify"
+        ],
+        "title": "Align",
+        "description": "How the rows sit in the block, and what position_x anchors: the block's centre, or for left and right its edge. justify is a poster: short rows, each scaled to the widest one's width",
+        "default": "center"
+      },
+      "letter_spacing": {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": -0.2,
+        "title": "Letter Spacing",
+        "description": "Extra space after each letter, in font sizes (negative tightens)",
+        "default": 0.0
+      },
+      "stretch": {
+        "type": "number",
+        "maximum": 2.0,
+        "minimum": 0.5,
+        "title": "Stretch",
+        "description": "How much wider (or narrower, below 1) the letters are drawn than the face",
+        "default": 1.0
+      },
+      "variants": {
+        "items": {
+          "properties": {
+            "font": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Font",
+              "description": "Font family for the word"
+            },
+            "scale": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 3.0,
+                  "minimum": 0.3
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scale",
+              "description": "A multiple of the style's font size"
+            },
+            "italic": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Italic",
+              "description": "Letters leaned to the right"
+            },
+            "text_case": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "upper"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Text Case",
+              "description": "'upper' sets the word in capitals"
+            },
+            "text_color": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Text Color",
+              "description": "Colour of the letters"
+            },
+            "letter_spacing": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": -0.2
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Letter Spacing",
+              "description": "Extra space after each letter, in font sizes"
+            },
+            "stretch": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 2.0,
+                  "minimum": 0.5
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stretch",
+              "description": "Letters drawn wider (above 1) or narrower"
+            },
+            "accent": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accent",
+              "description": "Set in the style's first highlight colour, so the accent follows it"
+            },
+            "box_color": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Box Color",
+              "description": "A square box of this colour behind the word: a label"
+            }
+          },
+          "type": "object",
+          "title": "WordVariant",
+          "description": "How one word differs from the style's look; what is left out is the style's own."
+        },
+        "type": "array",
+        "maxItems": 6,
+        "title": "Variants",
+        "description": "Looks a word can be given instead of the style's own (a word's variant is an index into this)",
+        "default": []
+      }
+    },
+    "type": "object",
+    "title": "StyleConfig",
+    "description": "Caption styling parameters."
+  },
+  "save": {
+    "properties": {
+      "resolution": {
+        "type": "string",
+        "enum": [
+          "original",
+          "2160",
+          "1080",
+          "720"
+        ],
+        "title": "Resolution",
+        "description": "The short side in pixels, or the source's size",
+        "default": "original"
+      },
+      "frame_rate": {
+        "type": "string",
+        "enum": [
+          "original",
+          "30",
+          "60"
+        ],
+        "title": "Frame Rate",
+        "description": "Frames per second, or the source's rate",
+        "default": "original"
+      },
+      "green_screen": {
+        "type": "boolean",
+        "title": "Green Screen",
+        "description": "Captions only, over solid green to key out, with no sound",
+        "default": false
+      },
+      "format": {
+        "type": "string",
+        "title": "Format",
+        "description": "Format id from the format registry (mp4, mp4-hevc, webm, mov)"
+      }
+    },
+    "type": "object",
+    "required": [
+      "format"
+    ],
+    "title": "RenderRequest",
+    "description": "POST /projects/{id}/download body: request a render in a specific format."
+  }
+}

@@ -1351,21 +1351,25 @@ export interface components {
         StyleConfig: {
             /**
              * Font
+             * @description Font family: a bundled one, or any Google Fonts family
              * @default Poppins
              */
             font: string;
             /**
              * Font Size
+             * @description Letter size in pixels on a 1920-pixel-high frame; scales with the video's height
              * @default 64
              */
             font_size: number;
             /**
              * Text Color
+             * @description Colour of the letters
              * @default #FFFFFF
              */
             text_color: string;
             /**
              * Highlight Colors
+             * @description What the animation paints in; the first is the primary. A look that marks each word takes them in turn, a single shape (the sliding box, the bar) is the primary, and a sweep runs through all
              * @default [
              *       "#7C3AED"
              *     ]
@@ -1373,131 +1377,155 @@ export interface components {
             highlight_colors: string[];
             /**
              * Background
+             * @description A shape behind each line
              * @default none
              * @enum {string}
              */
             background: "none" | "solid" | "pill" | "square";
             /**
              * Background Color
+             * @description Colour of the background shape
              * @default #000000
              */
             background_color: string;
             /**
              * Background Opacity
+             * @description Opacity of the background shape
              * @default 0
              */
             background_opacity: number;
             /**
              * Position X
+             * @description Where the caption block sits across the frame, 0 left to 1 right; what it anchors depends on align
              * @default 0.5
              */
             position_x: number;
             /**
              * Position Y
+             * @description The caption block's centre down the frame, 0 top to 1 bottom
              * @default 0.84
              */
             position_y: number;
             /**
              * Animation
+             * @description How words move as they are said. word_highlight: the word takes the highlight colour. highlight_box: a box springs in behind it. word_pop: it grows for a moment. word_fade: it brightens, then dims. word_sweep: the colour fills it left to right. word_underline: an underline is drawn under it. typewriter: typed letter by letter. none: nothing moves. word_bounce: it jumps and leans. lyric_focus: the line is dim and the word comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under the line fills. stickers: each word on a tilted label. word_press: the word lifts off an extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words fade in from a blur and the line floats. blur_in: words come out of a blur
              * @default highlight_slide
              * @enum {string}
              */
             animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift" | "blur_in";
             /**
              * Words Per Line
+             * @description Words shown at once
              * @default 3
              */
             words_per_line: number;
             /**
              * Word Spacing
+             * @description Extra gap between words, in font sizes
              * @default 0
              */
             word_spacing: number;
             /**
              * Stroke Width
+             * @description Outline around the letters (0 for none)
              * @default 0
              */
             stroke_width: number;
             /**
              * Stroke Color
+             * @description Colour of the outline
              * @default #000000
              */
             stroke_color: string;
             /**
              * Shadow Blur
+             * @description Softness of the shadow
              * @default 10
              */
             shadow_blur: number;
             /**
              * Shadow Color
-             * @description Optional alpha channel for shadow
+             * @description Colour of the shadow, with an optional alpha channel
              * @default #000000A0
              */
             shadow_color: string;
             /**
              * Shadow Offset X
+             * @description Where the shadow falls across, in the units of its blur. With no blur it is solid and drawn as an extrusion: the outline carried on out to the offset
              * @default 0
              */
             shadow_offset_x: number;
             /**
              * Shadow Offset Y
+             * @description Where the shadow falls down, as shadow_offset_x
              * @default 0
              */
             shadow_offset_y: number;
             /**
              * Glow Blur
+             * @description A halo of glow_color around the letters (0 for none): the neon look
              * @default 0
              */
             glow_blur: number;
             /**
              * Glow Color
+             * @description Colour of the glow
              * @default #FFFFFF
              */
             glow_color: string;
             /**
              * Text Case
+             * @description 'upper' sets every word in capitals
              * @default none
              * @enum {string}
              */
             text_case: "none" | "upper";
             /**
              * Italic
+             * @description Letters leaned to the right
              * @default false
              */
             italic: boolean;
             /**
              * Fill Colors
+             * @description A vertical gradient over each word's letters, top to baseline; empty is text_color
              * @default []
              */
             fill_colors: string[];
             /**
              * Extrude Shade
+             * @description How much a solid shadow (an extrusion) darkens from the front to the back
              * @default 0
              */
             extrude_shade: number;
             /**
              * Extrude Back
+             * @description The colour the back of an extrusion fades to from shadow_color; transparent for none
              * @default #00000000
              */
             extrude_back: string;
             /**
              * Align
+             * @description How the rows sit in the block, and what position_x anchors: the block's centre, or for left and right its edge. justify is a poster: short rows, each scaled to the widest one's width
              * @default center
              * @enum {string}
              */
             align: "center" | "left" | "right" | "justify";
             /**
              * Letter Spacing
+             * @description Extra space after each letter, in font sizes (negative tightens)
              * @default 0
              */
             letter_spacing: number;
             /**
              * Stretch
+             * @description How much wider (or narrower, below 1) the letters are drawn than the face
              * @default 1
              */
             stretch: number;
             /**
              * Variants
+             * @description Looks a word can be given instead of the style's own (a word's variant is an index into this)
              * @default []
              */
             variants: components["schemas"]["WordVariant"][];
@@ -1829,23 +1857,50 @@ export interface components {
          * @description How one word differs from the style's look; what is left out is the style's own.
          */
         WordVariant: {
-            /** Font */
+            /**
+             * Font
+             * @description Font family for the word
+             */
             font?: string | null;
-            /** Scale */
+            /**
+             * Scale
+             * @description A multiple of the style's font size
+             */
             scale?: number | null;
-            /** Italic */
+            /**
+             * Italic
+             * @description Letters leaned to the right
+             */
             italic?: boolean | null;
-            /** Text Case */
+            /**
+             * Text Case
+             * @description 'upper' sets the word in capitals
+             */
             text_case?: ("none" | "upper") | null;
-            /** Text Color */
+            /**
+             * Text Color
+             * @description Colour of the letters
+             */
             text_color?: string | null;
-            /** Letter Spacing */
+            /**
+             * Letter Spacing
+             * @description Extra space after each letter, in font sizes
+             */
             letter_spacing?: number | null;
-            /** Stretch */
+            /**
+             * Stretch
+             * @description Letters drawn wider (above 1) or narrower
+             */
             stretch?: number | null;
-            /** Accent */
+            /**
+             * Accent
+             * @description Set in the style's first highlight colour, so the accent follows it
+             */
             accent?: boolean | null;
-            /** Box Color */
+            /**
+             * Box Color
+             * @description A square box of this colour behind the word: a label
+             */
             box_color?: string | null;
         };
     };

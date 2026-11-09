@@ -140,39 +140,83 @@ class PasswordResetConfirm(BaseModel):
 class WordVariant(BaseModel):
     """How one word differs from the style's look; what is left out is the style's own."""
 
-    font: str | None = None
-    # A multiple of the style's font size.
-    scale: float | None = Field(default=None, ge=0.3, le=3.0)
-    italic: bool | None = None
-    text_case: Literal["none", "upper"] | None = None
-    text_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
-    letter_spacing: float | None = Field(default=None, ge=-0.2, le=1.0)
-    stretch: float | None = Field(default=None, ge=0.5, le=2.0)
-    # Set in the style's first highlight colour, so the accent follows it.
-    accent: bool | None = None
-    # A square box of this colour behind the word: a name's label.
-    box_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    font: str | None = Field(default=None, description="Font family for the word")
+    scale: float | None = Field(
+        default=None, ge=0.3, le=3.0, description="A multiple of the style's font size"
+    )
+    italic: bool | None = Field(default=None, description="Letters leaned to the right")
+    text_case: Literal["none", "upper"] | None = Field(
+        default=None, description="'upper' sets the word in capitals"
+    )
+    text_color: str | None = Field(
+        default=None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Colour of the letters"
+    )
+    letter_spacing: float | None = Field(
+        default=None, ge=-0.2, le=1.0, description="Extra space after each letter, in font sizes"
+    )
+    stretch: float | None = Field(
+        default=None, ge=0.5, le=2.0, description="Letters drawn wider (above 1) or narrower"
+    )
+    accent: bool | None = Field(
+        default=None,
+        description="Set in the style's first highlight colour, so the accent follows it",
+    )
+    box_color: str | None = Field(
+        default=None,
+        pattern=r"^#[0-9A-Fa-f]{6}$",
+        description="A square box of this colour behind the word: a label",
+    )
 
 
 class StyleConfig(BaseModel):
     """Caption styling parameters."""
 
     # The defaults are the first built-in preset, Purple Punch (tests/test_presets.py).
-    font: str = "Poppins"
-    font_size: int = Field(default=64, ge=12, le=300)
-    text_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$")
-    # What the animation paints in; the first is the primary. A look that marks each word takes them
-    # in turn, a single shape (the sliding box, the bar) is the primary, and a sweep runs through all.
-    highlight_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
-        default=["#7C3AED"], min_length=1, max_length=4
+    font: str = Field(
+        default="Poppins", description="Font family: a bundled one, or any Google Fonts family"
     )
-    background: Literal["none", "solid", "pill", "square"] = "none"
-    background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
-    background_opacity: float = Field(default=0.0, ge=0.0, le=1.0)
-    # Normalised centre of the caption block, 0..1 across the frame. Default is
-    # centred horizontally and low (the usual subtitle spot); the editor drags it.
-    position_x: float = Field(default=0.5, ge=0.0, le=1.0)
-    position_y: float = Field(default=0.84, ge=0.0, le=1.0)
+    font_size: int = Field(
+        default=64,
+        ge=12,
+        le=300,
+        description="Letter size in pixels on a 1920-pixel-high frame; scales with the video's "
+        "height",
+    )
+    text_color: str = Field(
+        default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}$", description="Colour of the letters"
+    )
+    highlight_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
+        default=["#7C3AED"],
+        min_length=1,
+        max_length=4,
+        description="What the animation paints in; the first is the primary. A look that marks each "
+        "word takes them in turn, a single shape (the sliding box, the bar) is the primary, and a "
+        "sweep runs through all",
+    )
+    background: Literal["none", "solid", "pill", "square"] = Field(
+        default="none", description="A shape behind each line"
+    )
+    background_color: str = Field(
+        default="#000000",
+        pattern=r"^#[0-9A-Fa-f]{6}$",
+        description="Colour of the background shape",
+    )
+    background_opacity: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Opacity of the background shape"
+    )
+    position_x: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Where the caption block sits across the frame, 0 left to 1 right; what it "
+        "anchors depends on align",
+    )
+    position_y: float = Field(
+        default=0.84,
+        ge=0.0,
+        le=1.0,
+        description="The caption block's centre down the frame, 0 top to 1 bottom",
+    )
     animation: Literal[
         "word_highlight",
         "highlight_box",
@@ -192,46 +236,104 @@ class StyleConfig(BaseModel):
         "word_slam",
         "drift",
         "blur_in",
-    ] = "highlight_slide"
-    words_per_line: int = Field(default=3, ge=1, le=10)
-    # Gap between words, as a fraction of font size, so it scales with the text.
-    word_spacing: float = Field(default=0.0, ge=0.0, le=1.0)
-    stroke_width: float = Field(default=0.0, ge=0.0, le=10.0)
-    stroke_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
-    shadow_blur: float = Field(default=10.0, ge=0.0, le=20.0)
+    ] = Field(
+        default="highlight_slide",
+        description="How words move as they are said. word_highlight: the word takes the highlight "
+        "colour. highlight_box: a box springs in behind it. word_pop: it grows for a moment. "
+        "word_fade: it brightens, then dims. word_sweep: the colour fills it left to right. "
+        "word_underline: an underline is drawn under it. typewriter: typed letter by letter. none: "
+        "nothing moves. word_bounce: it jumps and leans. lyric_focus: the line is dim and the word "
+        "comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under "
+        "the line fills. stickers: each word on a tilted label. word_press: the word lifts off an "
+        "extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words "
+        "fade in from a blur and the line floats. blur_in: words come out of a blur",
+    )
+    words_per_line: int = Field(default=3, ge=1, le=10, description="Words shown at once")
+    word_spacing: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Extra gap between words, in font sizes"
+    )
+    stroke_width: float = Field(
+        default=0.0, ge=0.0, le=10.0, description="Outline around the letters (0 for none)"
+    )
+    stroke_color: str = Field(
+        default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$", description="Colour of the outline"
+    )
+    shadow_blur: float = Field(default=10.0, ge=0.0, le=20.0, description="Softness of the shadow")
     shadow_color: str = Field(
         default="#000000A0",
         pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
-        description="Optional alpha channel for shadow",
+        description="Colour of the shadow, with an optional alpha channel",
     )
-    # Where the shadow falls, in the same units as its blur. With no blur it is solid and drawn as
-    # an extrusion: the outline carried on out to the offset.
-    shadow_offset_x: float = Field(default=0.0, ge=-40.0, le=40.0)
-    shadow_offset_y: float = Field(default=0.0, ge=-40.0, le=40.0)
-    # A halo of glow_color around the letters (0 for none): the neon look.
-    glow_blur: float = Field(default=0.0, ge=0.0, le=40.0)
-    glow_color: str = Field(default="#FFFFFF", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
-    text_case: Literal["none", "upper"] = "none"
-    # Letters leaned to the right: the upright face, sheared.
-    italic: bool = False
-    # A vertical gradient over each word's letters, top to baseline; empty is the text colour.
+    shadow_offset_x: float = Field(
+        default=0.0,
+        ge=-40.0,
+        le=40.0,
+        description="Where the shadow falls across, in the units of its blur. With no blur it is "
+        "solid and drawn as an extrusion: the outline carried on out to the offset",
+    )
+    shadow_offset_y: float = Field(
+        default=0.0,
+        ge=-40.0,
+        le=40.0,
+        description="Where the shadow falls down, as shadow_offset_x",
+    )
+    glow_blur: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=40.0,
+        description="A halo of glow_color around the letters (0 for none): the neon look",
+    )
+    glow_color: str = Field(
+        default="#FFFFFF",
+        pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+        description="Colour of the glow",
+    )
+    text_case: Literal["none", "upper"] = Field(
+        default="none", description="'upper' sets every word in capitals"
+    )
+    italic: bool = Field(default=False, description="Letters leaned to the right")
     fill_colors: list[Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]] = Field(
-        default=[], max_length=4
+        default=[],
+        max_length=4,
+        description="A vertical gradient over each word's letters, top to baseline; empty is "
+        "text_color",
     )
-    # How much a solid shadow (an extrusion) darkens from the front to the back.
-    extrude_shade: float = Field(default=0.0, ge=0.0, le=1.0)
-    # The colour the back of an extrusion fades to from the shadow colour; transparent for none.
-    extrude_back: str = Field(default="#00000000", pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
-    # How the rows sit in the block, and what position_x anchors: the block's centre, or for left and
-    # right its edge. Justify is a poster: short rows, each scaled to the widest one's width.
-    align: Literal["center", "left", "right", "justify"] = "center"
-    # Extra space after each letter, as a fraction of the font size (negative tightens).
-    letter_spacing: float = Field(default=0.0, ge=-0.2, le=1.0)
-    # How much wider (or narrower, below 1) the letters are drawn than the face has them.
-    stretch: float = Field(default=1.0, ge=0.5, le=2.0)
-    # Looks a word can be given instead of the style's own (Word.variant is an index into this);
-    # a preset defines them and the editor only picks.
-    variants: list[WordVariant] = Field(default=[], max_length=6)
+    extrude_shade: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="How much a solid shadow (an extrusion) darkens from the front to the back",
+    )
+    extrude_back: str = Field(
+        default="#00000000",
+        pattern=r"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+        description="The colour the back of an extrusion fades to from shadow_color; transparent "
+        "for none",
+    )
+    align: Literal["center", "left", "right", "justify"] = Field(
+        default="center",
+        description="How the rows sit in the block, and what position_x anchors: the block's "
+        "centre, or for left and right its edge. justify is a poster: short rows, each scaled to "
+        "the widest one's width",
+    )
+    letter_spacing: float = Field(
+        default=0.0,
+        ge=-0.2,
+        le=1.0,
+        description="Extra space after each letter, in font sizes (negative tightens)",
+    )
+    stretch: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="How much wider (or narrower, below 1) the letters are drawn than the face",
+    )
+    variants: list[WordVariant] = Field(
+        default=[],
+        max_length=6,
+        description="Looks a word can be given instead of the style's own (a word's variant is an "
+        "index into this)",
+    )
 
     @model_validator(mode="before")
     @classmethod

@@ -69,6 +69,6 @@ docker run --rm --network host \
   -e BASE_URL="$BASE_URL" -e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/cache/playwright -e npm_config_cache=/cache/npm \
   -e OWNER="$(id -u):$(id -g)" "$NODE_IMAGE" sh -c '
     status=0
-    npm ci --no-audit --no-fund >/dev/null && npx playwright install --with-deps chromium >/dev/null && npm run test:e2e || status=$?
-    chown -R "$OWNER" /w/apps/web /cache 2>/dev/null || true
+    npm ci --no-audit --no-fund >/dev/null && (cd ../agent && npm ci --no-audit --no-fund >/dev/null) && npx playwright install --with-deps chromium >/dev/null && npm run test:e2e || status=$?
+    chown -R "$OWNER" /w/apps/web /w/apps/agent /cache 2>/dev/null || true
     exit $status' || fail "end-to-end tests failed"

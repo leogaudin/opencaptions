@@ -18,7 +18,7 @@ help:                ## Show this help
 
 # The checks, in the order the local gate runs them. Each is a target that runs in its pinned container.
 CI_STATIC_CHECKS := lint-actions check-repo lint-backend test-backend lint-engine test-engine test-engine-wasm \
-	typegen-check lint-frontend typecheck test-web build-web
+	typegen-check lint-frontend typecheck test-web build-web lint-agent test-agent
 CI_HEAVY_CHECKS := build-demo build-docs e2e
 CI_CHECKS := $(CI_STATIC_CHECKS) $(CI_HEAVY_CHECKS)
 
@@ -97,8 +97,8 @@ test-engine-wasm:    ## Hold the WebAssembly build to the frames the native buil
 
 typegen-check:       ## Regenerate the TypeScript API types and fail if the committed file is stale
 	@./scripts/ci-shell.sh tools . '(cd apps/api && $(UV_SYNC)) && (cd apps/web && $(NPM_CI)) && bash scripts/generate-api-types.sh'
-	@git diff --exit-code -- apps/web/src/types/api.generated.ts \
-	 || { echo "apps/web/src/types/api.generated.ts is stale, run 'make generate-types' and commit" >&2; exit 1; }
+	@git diff --exit-code -- apps/web/src/types/api.generated.ts apps/agent/src/generated \
+	 || { echo "the generated API types are stale, run 'make generate-types' and commit" >&2; exit 1; }
 
 lint-frontend:       ## Lint TS/JS (biome)
 	@./scripts/ci-shell.sh node apps/web '$(NPM_CI) && npm run lint'
@@ -108,6 +108,12 @@ typecheck:           ## Typecheck the web project references
 
 test-web:            ## Run the web unit tests
 	@./scripts/ci-shell.sh node apps/web '$(NPM_CI) && npm test'
+
+lint-agent:          ## Lint and typecheck the agent package (MCP server and command line)
+	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm run lint && npm run typecheck && npm run build'
+
+test-agent: agent-engine ## Test the agent package against a stand-in API, with the engine's word edits
+	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm test'
 
 build-web:           ## Build the web app for production
 	@./scripts/ci-shell.sh node apps/web '$(NPM_CI) && npm run build'
@@ -122,6 +128,11 @@ build-docs:          ## Build the documentation into apps/docs/dist (static file
 
 e2e:                 ## Build the images and run the Playwright suite against a disposable stack
 	@./scripts/e2e.sh
+
+agent-engine:        ## Build the engine's WebAssembly into apps/agent/engine, for the agent package's word edits
+	@$(ENGINE) cargo build --release --locked --lib --target wasm32-unknown-unknown -q
+	@mkdir -p apps/agent/engine
+	@cp apps/engine/target/wasm32-unknown-unknown/release/opencaptions_engine.wasm apps/agent/engine/
 
 engine-wasm:         ## Build the engine for the browser into apps/web/public/engine (for npm run dev)
 	@docker build -q --build-context engine=apps/engine --target preview-assets \

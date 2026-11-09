@@ -1,0 +1,50 @@
+{
+  "name": "opencaptions",
+  "version": "1.1.0",
+  "description": "Animated word-by-word captions for your videos, from Claude, Cursor or any MCP client, or the command line. Runs on your own OpenCaptions server.",
+  "mcpName": "io.github.leogaudin/opencaptions",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "homepage": "https://docs.opencaptions.app/guides/agents/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leogaudin/opencaptions.git",
+    "directory": "apps/agent"
+  },
+  "keywords": [
+    "captions",
+    "subtitles",
+    "mcp",
+    "video",
+    "transcription",
+    "self-hosted"
+  ],
+  "bin": {
+    "opencaptions": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "engine/opencaptions_engine.wasm",
+    "server.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "biome check src/ tests/",
+    "format": "biome format --write src/ tests/",
+    "typecheck": "tsc --pretty false",
+    "test": "node --test \"tests/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.3"
+  }
+}
