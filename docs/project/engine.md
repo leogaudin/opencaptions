@@ -56,8 +56,10 @@ The drawing is `src/scene/`:
   `align: left`, the end for `right`, else the middle), then draws a guide at the line returned while snapped, so
   every editor snaps the same way.
 - **Edits.** Cutting captions, retiming a word edge and editing a word live in the engine (`edit.rs`). A word is
-  edited one at a time (renamed, or deleted by clearing it): text of several words is refused, because splitting a
-  word would invent timings. The web calls them through WebAssembly, and the phone calls the same code natively.
+  edited one at a time (renamed, or deleted by clearing it): text with spaces stays one word, timed and drawn as one,
+  because splitting a word would invent timings. `merge_words` joins words heard apart ("fun guys" for "fungi") into
+  one spanning them all; the agent's `fix_words` calls it. The web calls them through WebAssembly, and the phone
+  calls the same code natively.
 
 ## Styles
 

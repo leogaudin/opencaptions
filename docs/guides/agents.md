@@ -77,7 +77,7 @@ Add the server to the client's MCP configuration (`claude_desktop_config.json` f
 | `describe_style` | Every style setting, with its range and meaning. |
 | `set_style` | A look, or any settings over it: "higher up", "yellow", "bigger". |
 | `get_transcript` | The captions as they show, and every word with its index. |
-| `fix_words` | Corrects or removes words, keeping their timing. |
+| `fix_words` | Corrects, removes or joins words, keeping their timing: two words heard for one become one word spoken across both. |
 | `save_video` | Saves again after a change, or in another format, size or frame rate. |
 | `export_subtitles` | SRT, VTT, or the transcript as JSON. |
 

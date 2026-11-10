@@ -25,6 +25,7 @@ import {
   saveVideo,
   setStyle,
   type Ticket,
+  type WordFix,
 } from "./captions.ts";
 import { type Api, api, connectionFromEnv, OpenCaptionsError, type StyleConfig } from "./client.ts";
 import { describeLook, describeStyle, LOOKS, SAVE_SCHEMA, STYLE_SCHEMA } from "./looks.ts";
@@ -115,7 +116,8 @@ const TOOLS: Tool[] = [
     name: "fix_words",
     description:
       "Sets words by the index get_transcript gave them, keeping their timing; empty text removes " +
-      "a word. Then save_video writes the video again.",
+      "a word, and count joins that many words into one spanning them all (two words heard for " +
+      "one). Then save_video writes the video again.",
     inputSchema: {
       type: "object",
       properties: {
@@ -124,7 +126,15 @@ const TOOLS: Tool[] = [
           type: "array",
           items: {
             type: "object",
-            properties: { index: { type: "integer", minimum: 0 }, text: { type: "string" } },
+            properties: {
+              index: { type: "integer", minimum: 0 },
+              text: { type: "string" },
+              count: {
+                type: "integer",
+                minimum: 1,
+                description: "How many words from index the text replaces, as one word (default 1)",
+              },
+            },
             required: ["index", "text"],
           },
         },
@@ -223,7 +233,7 @@ async function call(client: Api, name: string, args: Args, progress: Progress) {
       );
     case "fix_words":
       return said(
-        `Fixed ${await fixWords(client, id, args.fixes as { index: number; text: string }[])} words. Call save_video to write the video again.`,
+        `Fixed ${await fixWords(client, id, args.fixes as WordFix[])} words. Call save_video to write the video again.`,
       );
     case "set_style": {
       const style = await setStyle(

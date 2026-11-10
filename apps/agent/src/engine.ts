@@ -13,6 +13,14 @@ interface Exports {
   oc_result_len(): number;
   oc_caption_lines(ptr: number, len: number, wordsPerLine: number, offsetMs: number): number;
   oc_set_word(ptr: number, len: number, index: number, textPtr: number, textLen: number): number;
+  oc_merge_words(
+    ptr: number,
+    len: number,
+    index: number,
+    count: number,
+    textPtr: number,
+    textLen: number,
+  ): number;
   oc_shuffle_variants(ptr: number, len: number, count: number, seed: number): number;
 }
 
@@ -68,6 +76,18 @@ export async function captionLines(
 export async function setWord(t: Transcript, index: number, text: string): Promise<Transcript> {
   const x = await exports();
   return result(x, x.oc_set_word(...json(x, t), index, ...copyIn(x, encoder.encode(text))));
+}
+
+/** `count` words from `index` replaced by one word `text`, spanning them all. */
+export async function mergeWords(
+  t: Transcript,
+  index: number,
+  count: number,
+  text: string,
+): Promise<Transcript> {
+  const x = await exports();
+  const words = copyIn(x, encoder.encode(text));
+  return result(x, x.oc_merge_words(...json(x, t), index, count, ...words));
 }
 
 /** Deals every word one of `count` looks, or the style's own, as picking such a look does. */

@@ -19,7 +19,7 @@ import {
   type Transcript,
   unwrap,
 } from "./client.ts";
-import { type CaptionLine, captionLines, setWord, shuffleVariants } from "./engine.ts";
+import { type CaptionLine, captionLines, mergeWords, setWord, shuffleVariants } from "./engine.ts";
 import { findLook, LOOKS } from "./looks.ts";
 
 /** How far a job has got, from 0 to 1, and what it is doing. */
@@ -224,17 +224,23 @@ export async function readTranscript(
 }
 
 /** Sets words by their index; empty text removes a word. The indices are the ones read before. */
-export async function fixWords(
-  client: Api,
-  projectId: string,
-  fixes: { index: number; text: string }[],
-): Promise<number> {
+/** Word `index` given `text` (empty removes it), or with `count`, that many words joined into one. */
+export interface WordFix {
+  index: number;
+  text: string;
+  count?: number;
+}
+
+export async function fixWords(client: Api, projectId: string, fixes: WordFix[]): Promise<number> {
   const project = await getProject(client, projectId);
   if (!project.transcript) throw new OpenCaptionsError("This project has no captions yet.");
-  // Last first: removing a word moves the ones after it, never the ones before.
+  // Last first: removing or joining words moves the ones after them, never the ones before.
   let transcript = project.transcript;
   for (const fix of [...fixes].sort((a, b) => b.index - a.index)) {
-    transcript = await setWord(transcript, fix.index, fix.text);
+    transcript =
+      (fix.count ?? 1) > 1
+        ? await mergeWords(transcript, fix.index, fix.count ?? 1, fix.text)
+        : await setWord(transcript, fix.index, fix.text);
   }
   await update(client, projectId, { transcript });
   return fixes.length;

@@ -190,6 +190,26 @@ test("words are read as captioned, and fixed through the engine", async () => {
   );
 });
 
+test("words heard apart are joined into one that spans them", async () => {
+  const result = await captionVideo(client(), { source: video }, quiet);
+  assert.ok(result.done);
+  await fixWords(client(), result.project_id, [
+    { index: 2, text: "threefour", count: 2 },
+    { index: 0, text: "uno" },
+  ]);
+  const transcript = fake.projects.get(result.project_id)?.transcript as {
+    segments: { words: { text: string; start: number; end: number }[] }[];
+  };
+  assert.deepEqual(
+    transcript.segments.flatMap((s) => s.words).map((w) => [w.text, w.start, w.end]),
+    [
+      ["uno", 0.5, 0.9],
+      ["two", 0.9, 1.3],
+      ["threefour", 1.3, 3.0],
+    ],
+  );
+});
+
 test("a look with word looks deals them once there are words", async () => {
   const result = await captionVideo(client(), { source: video, look: "Editorial" }, quiet);
   assert.ok(result.done);

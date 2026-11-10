@@ -20,7 +20,8 @@ transcribes and draws; the video and the captioned file stay on the user's machi
 
 - Pick the look from what the user asked for (`list_looks`); with no preference, leave it out.
 - Names, brands and jargon are where transcription slips. When they matter, read `get_transcript`,
-  fix the words with `fix_words`, then `save_video`.
+  fix the words with `fix_words`, then `save_video`. Two words heard for one ("fun guys" for "fungi")
+  are joined with `count`, so the word keeps the time both were spoken.
 - For a change of style ("higher up", "yellow", "bigger"), use `set_style` with only the settings
   that change (`describe_style` lists them), then `save_video`. `position_y` is 0 at the top and 1
   at the bottom.

@@ -152,13 +152,42 @@ pub fn set_word(t: &Transcript, index: usize, text: &str) -> Result<Transcript, 
     if index >= entries.len() {
         return Err(format!("no word at index {index}"));
     }
-    let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let text = one_word(text);
     if text.is_empty() {
         entries.remove(index);
     } else {
         entries[index].1.text = text;
     }
     Ok(rebuild(t, entries))
+}
+
+/// Replaces `count` words from `index` with one word `text`, timed from the first one's start to
+/// the last one's end: "fun guys" heard for "fungi" becomes one word spoken across both. The word
+/// keeps the first one's look and other fields, and its segment.
+pub fn merge_words(
+    t: &Transcript,
+    index: usize,
+    count: usize,
+    text: &str,
+) -> Result<Transcript, String> {
+    let mut entries = flatten(t);
+    if count == 0 || index >= entries.len() || count > entries.len() - index {
+        return Err(format!("no {count} words from index {index}"));
+    }
+    let text = one_word(text);
+    if text.is_empty() {
+        return Err("the merged word needs text".into());
+    }
+    let end = entries[index + count - 1].1.end;
+    entries.drain(index + 1..index + count);
+    entries[index].1.text = text;
+    entries[index].1.end = end;
+    Ok(rebuild(t, entries))
+}
+
+/// Text as one word: spaces inside stay, collapsed to one.
+fn one_word(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 /// Gives word `index` the look `variant` of the style (None for the style's own), keeping its
@@ -544,6 +573,39 @@ mod tests {
         assert_eq!(t.segments[0].rest["end"], 0.9f32, "span follows the words");
         let gone = (0..4).fold(transcript(), |t, _| set_word(&t, 0, "").unwrap());
         assert!(gone.segments.is_empty());
+    }
+
+    #[test]
+    fn merge_words_spans_every_word_it_replaces() {
+        let t = merge_words(&transcript(), 1, 3, " two  three four ").unwrap();
+        assert_eq!(
+            words(&t),
+            vec![
+                ("one".into(), 0.5, 0.9),
+                ("two three four".into(), 0.9, 3.0)
+            ]
+        );
+        assert_eq!(t.segments.len(), 1, "a segment left with none is dropped");
+        assert_eq!(t.segments[0].rest["end"], 3.0f32, "span follows the words");
+        let v = serde_json::to_value(&t).unwrap();
+        assert_eq!(
+            v["segments"][0]["words"][1]["confidence"], 0.8f32,
+            "the first one's fields"
+        );
+        let one = merge_words(&transcript(), 0, 1, "uno").unwrap();
+        assert_eq!(
+            words(&one)[0],
+            ("uno".into(), 0.5, 0.9),
+            "one word is a rename"
+        );
+    }
+
+    #[test]
+    fn merge_words_refuses_missing_words_and_no_text() {
+        assert!(merge_words(&transcript(), 3, 2, "x").is_err());
+        assert!(merge_words(&transcript(), 4, 1, "x").is_err());
+        assert!(merge_words(&transcript(), 0, 0, "x").is_err());
+        assert!(merge_words(&transcript(), 0, 2, " ").is_err());
     }
 
     #[test]

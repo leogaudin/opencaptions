@@ -333,8 +333,19 @@ jobs:
           cp ../../LICENSE .
           npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
           npm publish --provenance --access public
-          # The official MCP Registry lists it from server.json, signed in with this workflow's identity
-          # (io.github.leogaudin/...), and checks the package's mcpName matches.
+      # The official MCP Registry lists it from server.json, signed in with this workflow's identity
+      # (io.github.leogaudin/...), and checks the package's mcpName matches. A step of its own, so a
+      # rerun after npm took the package still lists it.
+      - name: List it on the MCP Registry
+        if: ${{ env.NPM_CONFIGURED == 'true' }}
+        working-directory: apps/agent
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          # npm serves a new version a little after accepting it, and the registry looks it up there.
+          for _ in $(seq 30); do
+            npm view "opencaptions@$version" version >/dev/null 2>&1 && break
+            sleep 10
+          done
           curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.4/mcp-publisher_linux_amd64.tar.gz \
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc

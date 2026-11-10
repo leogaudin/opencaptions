@@ -444,6 +444,28 @@ mod abi {
         )
     }
 
+    /// Replaces `count` words from `index` with one word, the UTF-8 at `text_ptr`, spanning them
+    /// all; the edited transcript is left as JSON. Returns 0 on failure with the reason.
+    ///
+    /// # Safety
+    /// Both pointers must come from `oc_alloc` with their lengths, filled as described.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_merge_words(
+        ptr: *mut u8,
+        len: usize,
+        index: u32,
+        count: u32,
+        text_ptr: *mut u8,
+        text_len: usize,
+    ) -> u32 {
+        let text = unsafe { take(text_ptr, text_len) };
+        let text = String::from_utf8_lossy(&text);
+        respond(
+            unsafe { read_transcript(ptr, len) }
+                .and_then(|t| edit::merge_words(&t, index as usize, count as usize, &text)),
+        )
+    }
+
     /// Gives word `index` the look `variant` of the style, or the style's own with -1; the edited
     /// transcript is left as JSON. Returns 0 on failure with the reason.
     ///
@@ -599,7 +621,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 28);
+        assert_eq!(exported.len(), 29);
         assert_eq!(exported, declared);
     }
 }
