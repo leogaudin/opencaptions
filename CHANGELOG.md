@@ -1,10 +1,20 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.3.0 (2026-11-10)
+
+### Changes
+- The FFmpeg command and the export formats are shared data the npm package can use: encode::plan in the engine library, render_formats.json in the API
+
+### Features
+- The opencaptions package captions on the computer with no server: Parakeet Ultra through sherpa-onnx, the engine's WebAssembly and encode::plan run by FFmpeg, a project file beside the video
 ## 1.2.1 (2026-11-10)
 
 ### Fixes
 - Words heard apart are joined into one that spans them, from the agent's fix_words, and the MCP Registry listing waits for npm and survives a rerun
+
+### Maintenance
+- Release 1.2.1
 ## 1.2.0 (2026-11-10)
 
 ### Documentation
