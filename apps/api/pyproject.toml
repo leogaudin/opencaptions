@@ -1,6 +1,6 @@
 [project]
 name = "opencaptions-api"
-version = "1.1.0"
+version = "1.2.0"
 description = "OpenCaptions backend. FastAPI + Celery + faster-whisper"
 license = { text = "AGPL-3.0-only" }
 authors = [{ name = "Leo Gaudin" }]

@@ -1,6 +1,14 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.2.0 (2026-11-10)
+
+### Documentation
+- The Mac app is on the App Store, on the site, the docs and the press kit
+- Captioning from Claude and other agents, the Claude Code plugin, and the README's install line
+
+### Features
+- The opencaptions package captions a video from Claude, Cursor or any MCP client, and from the command line
 ## 1.1.0 (2026-11-05)
 
 ### Documentation
@@ -37,6 +45,7 @@ Every change to OpenCaptions, from its commit messages.
 ### Maintenance
 - Edge images are built for arm64 too, so the default compose file runs natively on an Apple-silicon Mac
 - Version 1.1.0, for the App Store update: not tagged yet
+- Release 1.1.0
 
 ### Tests
 - The transcribe sheet's way back is driven by real taps
