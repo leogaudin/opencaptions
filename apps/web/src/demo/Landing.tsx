@@ -15,13 +15,14 @@ import {
   Server,
   Smartphone,
   Sun,
+  Terminal,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { getLanguage, LANGUAGES, rememberLanguage, useT } from "@/lib/i18n";
 import { iconButtonClass } from "@/lib/ui";
 import { useTheme } from "@/lib/useTheme";
 import { FAQ } from "./faq";
-import { APP_STORE_URL, DOCS_URL, GITHUB_URL, PRIVACY_URL } from "./links";
+import { AGENTS_URL, APP_STORE_URL, DOCS_URL, GITHUB_URL, PRIVACY_URL } from "./links";
 import { HREFLANG, pagePath } from "./pages";
 
 const linkClass =
@@ -219,7 +220,7 @@ function Ways() {
   return (
     <section className="mx-auto max-w-5xl px-4 pb-16">
       <h2 className={h2Class}>{t("Use it where you work")}</h2>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
         <article className="flex flex-col gap-3 rounded-2xl bg-muted p-6">
           <IconBadge icon={Smartphone} />
           <h3 className="text-lg font-bold">{t("iPhone, iPad and Mac")}</h3>
@@ -248,6 +249,22 @@ function Ways() {
             className={`${buttonClass} bg-foreground text-background`}
           >
             {t("Read the docs")}
+          </a>
+        </article>
+        <article className="flex min-w-0 flex-col gap-3 rounded-2xl bg-muted p-6">
+          <IconBadge icon={Terminal} />
+          <h3 className="text-lg font-bold">{t("Claude and other agents")}</h3>
+          <p className="flex-1 text-sm text-muted-foreground">
+            {t(
+              "Ask Claude Code, Cursor or a script to caption a video on your computer, no server needed.",
+            )}
+          </p>
+          <a
+            href={AGENTS_URL}
+            {...external}
+            className={`${buttonClass} bg-foreground text-background`}
+          >
+            {t("Set it up")}
           </a>
         </article>
       </div>

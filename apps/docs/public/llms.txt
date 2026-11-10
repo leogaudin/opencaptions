@@ -1,6 +1,6 @@
 # OpenCaptions documentation
 
-> OpenCaptions is free, open-source software (AGPL-3.0) that adds animated, word-by-word captions to videos. It transcribes speech with a model you choose (Whisper, Parakeet or Apple Speech), on an iPhone or on your own server with Docker, lets you style and correct every caption, and exports a captioned video or subtitle files. These are its docs.
+> OpenCaptions is free, open-source software (AGPL-3.0) that adds animated, word-by-word captions to videos. It transcribes speech with a model you choose (Whisper, Parakeet or Apple Speech), on an iPhone, iPad or Mac, on your computer from an agent or the command line, or on your own server with Docker, lets you style and correct every caption, and exports a captioned video or subtitle files. These are its docs.
 
 ## Start
 
@@ -19,6 +19,7 @@
 - [Styling captions](https://docs.opencaptions.app/guides/styling/): the nineteen looks and every style setting
 - [Exporting](https://docs.opencaptions.app/guides/exporting/): MP4, WebM, ProRes, SRT, VTT, JSON and a green screen
 - [The iPhone and iPad app](https://docs.opencaptions.app/guides/iphone-app/): on-device transcription, no account
+- [From Claude and other agents](https://docs.opencaptions.app/guides/agents/): an MCP server and a command line (`npx opencaptions`) that caption a video on your computer, with no server
 
 ## Self-hosting
 

@@ -12,8 +12,8 @@ Everything here may be quoted. The name and the icon may be used to write about 
 
 ## In one line
 
-OpenCaptions adds animated, word-by-word captions to videos: on your iPhone with nothing uploaded, or on your own
-server with one Docker file.
+OpenCaptions adds animated, word-by-word captions to videos: on your iPhone or Mac with nothing uploaded, from
+Claude and other agents, or on your own server with one Docker file.
 
 ## The facts
 
@@ -25,6 +25,7 @@ server with one Docker file.
 | iPhone and iPad | [App Store](https://apps.apple.com/app/id6820548922), iOS 18 or later |
 | Mac | [Mac App Store](https://apps.apple.com/app/id6820548922), macOS 15 or later on Apple silicon, the same purchase |
 | Price | The app is free, up to 1080p at 30 fps with a small mark. Pro is one purchase with no subscription, 14,99 € at launch, and adds 4K, 60 fps, HDR and every look. Self-hosting is free. |
+| Agents and scripts | The [`opencaptions`](https://www.npmjs.com/package/opencaptions) npm package: an MCP server for Claude Code, Claude Desktop, Cursor and other clients, and a command line. It runs on the computer with no server |
 | Try it | [opencaptions.app](https://opencaptions.app), in the browser, with nothing to install |
 | Source | [github.com/leogaudin/opencaptions](https://github.com/leogaudin/opencaptions) |
 | Interface | 13 languages |
@@ -33,8 +34,8 @@ server with one Docker file.
 ## What is different about it
 
 - **All of it is open source**: the app, the web editor, the server and the engine that draws the captions.
-- **One engine draws everything.** A Rust engine runs in the browser as WebAssembly, in the app, and on the render
-  server, so the preview and the export are the same code.
+- **One engine draws everything.** A Rust engine runs in the browser as WebAssembly, in the app, on the render
+  server and in the npm package, so the preview and the export are the same code.
 - **Nothing leaves the phone.** The app transcribes on the device, has no account, no analytics and no tracking. See the
   [privacy policy](https://github.com/leogaudin/opencaptions/blob/main/PRIVACY.md).
 - **You can run it yourself**, on a server or a Raspberry Pi, with amd64 and arm64 images.

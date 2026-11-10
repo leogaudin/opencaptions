@@ -11,7 +11,7 @@ sidebar:
 OpenCaptions adds animated, word-by-word captions to a video. It listens to the speech, writes the
 words with their timing, lets you style and fix them, and saves the captioned video or subtitle
 files. It is free software ([AGPL-3.0](https://github.com/leogaudin/opencaptions/blob/main/LICENSE)),
-has no telemetry, and keeps your videos where you put them: on your phone, or on your own server.
+has no telemetry, and keeps your videos where you put them: on your phone, on your computer, or on your own server.
 
 ![The OpenCaptions editor: a video with word-by-word captions next to the style panel, over the caption timeline](./screenshot.webp)
 
@@ -27,6 +27,10 @@ has no telemetry, and keeps your videos where you put them: on your phone, or on
 The two share one caption engine, written in Rust, so a caption looks the same in the browser, on
 the server and on the phone. What the preview shows is what the export draws.
 
+Claude Code, Cursor and other agents, and scripts, use it through the `opencaptions` package: it
+captions a video on your computer with no server, or on yours. See
+[From Claude and other agents](./guides/agents.md).
+
 ## What you get
 
 - **Word-level transcription** in about 100 languages, with the speech model of your choice.
@@ -37,6 +41,7 @@ the server and on the phone. What the preview shows is what the export draws.
 - **Export** a captioned MP4, WebM or ProRes video, SRT, VTT or JSON subtitles, or only the captions
   on a green screen to key out in your video editor.
 - **An HTTP API** for everything the app does, with API keys, to put it in a pipeline.
+- **From Claude and other agents**: an MCP server and a command line, `npx opencaptions`.
 - **Private by design**: no tracking, accounts are local to your instance, and audio leaves your
   machine only if you pick a hosted provider.
 

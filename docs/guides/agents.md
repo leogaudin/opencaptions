@@ -114,6 +114,8 @@ option.
   open in the web editor.
 - **Long videos:** on a server, transcription runs at the server's speed. A client that gives a tool little
   time gets a ticket back and `check_progress` finishes the job, so nothing is lost.
+- **What it fetches:** on the computer, the speech model from Hugging Face the first time, and a font from
+  Google Fonts when a style uses one that is not built in. The video and its sound are never sent anywhere.
 - **Names and jargon** are where transcription slips. Ask the agent to check the transcript before saving
   when they matter.
 - **The source** is the [`apps/agent`](https://github.com/leogaudin/opencaptions/tree/main/apps/agent) folder
