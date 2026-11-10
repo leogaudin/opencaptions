@@ -1,6 +1,10 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.2.1 (2026-11-10)
+
+### Fixes
+- Words heard apart are joined into one that spans them, from the agent's fix_words, and the MCP Registry listing waits for npm and survives a rerun
 ## 1.2.0 (2026-11-10)
 
 ### Documentation
@@ -9,6 +13,9 @@ Every change to OpenCaptions, from its commit messages.
 
 ### Features
 - The opencaptions package captions a video from Claude, Cursor or any MCP client, and from the command line
+
+### Maintenance
+- Release 1.2.0
 ## 1.1.0 (2026-11-05)
 
 ### Documentation
