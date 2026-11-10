@@ -1,11 +1,14 @@
 {
   "name": "opencaptions",
   "owner": { "name": "Léo Gaudin", "url": "https://github.com/leogaudin" },
+  "metadata": {
+    "description": "OpenCaptions: animated word-by-word captions for videos, from Claude Code"
+  },
   "plugins": [
     {
       "name": "opencaptions",
       "source": "./apps/agent/plugin",
-      "description": "Animated word-by-word captions for your videos, on your own OpenCaptions server"
+      "description": "Animated word-by-word captions for your videos, on your computer or your own OpenCaptions server"
     }
   ]
 }

@@ -4,8 +4,8 @@
       "command": "npx",
       "args": ["-y", "opencaptions", "mcp"],
       "env": {
-        "OPENCAPTIONS_URL": "${OPENCAPTIONS_URL:-http://localhost:5173}",
-        "OPENCAPTIONS_KEY": "${OPENCAPTIONS_KEY}"
+        "OPENCAPTIONS_URL": "${OPENCAPTIONS_URL:-}",
+        "OPENCAPTIONS_KEY": "${OPENCAPTIONS_KEY:-}"
       }
     }
   }

@@ -44,7 +44,7 @@ make ci-checks        # the list: every target below is one of them
 make lint-backend     # ruff + mypy (api)
 make lint-frontend    # biome (web)
 make lint-agent       # biome, tsc and the build (the agent package)
-make test-agent       # the agent package against a stand-in API, with the engine's word edits
+make test-agent       # the agent package: against a stand-in API, and on its own with FFmpeg
 make lint-engine      # rustfmt + clippy (server, WebAssembly, iOS)
 make lint-actions     # actionlint on the workflows
 make test-backend     # pytest
@@ -134,7 +134,7 @@ images, which is what an end user does.
 | `apps/api/` | FastAPI + Celery workers. Pydantic models, Alembic migrations, services, tasks. |
 | `apps/web/` | Vite + React frontend. The preview is the engine's WebAssembly build drawing over a `<video>`. Zustand state. A second entry (`demo.html`, `src/demo/`) is the static public demo site (see `docs/project/architecture.md`). |
 | `apps/engine/` | Rust caption engine. The library draws frames and makes caption edits behind one C ABI (`include/`); the binary serves `POST /render` (FFmpeg decode, composite, encode, presigned upload). Fonts in `fonts/` are discovered, not listed. |
-| `apps/agent/` | The `opencaptions` npm package: an MCP server (`opencaptions mcp`) and a command line over the API, typed against copies of the generated types (`src/generated/`, written by `scripts/generate-api-types.sh`). Word edits go through the engine's WebAssembly (`make agent-engine`), never a reimplementation. `.claude-plugin/` at the root lists its Claude Code plugin (`apps/agent/plugin/`); `server.json` is its MCP Registry entry. |
+| `apps/agent/` | The `opencaptions` npm package: an MCP server (`opencaptions mcp`) and a command line, over the API (typed against copies of the generated types in `src/generated/`, written by `scripts/generate-api-types.sh`) or, with no server set, on the computer (`src/local/`: sherpa-onnx, the engine's WebAssembly and `encode::plan` run by FFmpeg). Word edits go through the engine's WebAssembly (`make agent-engine`), never a reimplementation. `.claude-plugin/` at the root lists its Claude Code plugin (`apps/agent/plugin/`); `server.json` is its MCP Registry entry. |
 | `apps/ios/` | The iPhone/iPad/Mac app (one multiplatform target): SwiftUI views (`OpenCaptions/`) over the `OpenCaptionsKit` Swift package (models, engine actor, storage, editor logic, export). XcodeGen builds the project. macOS only, and outside `make ci`. |
 | `docker-compose.yml` | The whole stack (invariant 11). The GPU worker is a `gpu` profile in it; the acceptance gate adds a small inline override. |
 | `scripts/` | `ci-local.sh` (acceptance gate), `ci-shell.sh` and `engine-shell.sh` (a check's pinned container), `e2e.sh`, `check-compose.sh`, `check-version-sync.sh`, `generate-api-types.sh`, `release.sh`, plus `reset_password.py` (recovery without SMTP) `asc.py` (App Store Connect from the command line; the key stays outside the repository) and `weekly.py` (the store, crashes, the repository and the speech models on one page; it only reads). |

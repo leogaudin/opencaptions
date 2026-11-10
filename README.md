@@ -36,7 +36,8 @@ Nothing leaves your machine unless you say so.
 - **Many scripts and languages**: Latin, Cyrillic, Arabic, Hebrew, Indic, Thai, CJK and more, and
   an interface in 13 languages
 - **From Claude and other agents**: an MCP server and a command line (`npx opencaptions`) that caption
-  a video on your server, for Claude Code, Claude Desktop, Cursor or a video pipeline
+  a video on your computer, with no server, or on yours: for Claude Code, Claude Desktop, Cursor or a
+  video pipeline
 - **Private by design**: no telemetry, no tracking, accounts are local to your instance
 
 ## Quick start
@@ -61,14 +62,16 @@ To build from source instead, clone the repository and run `docker compose up -d
 
 ## From Claude and other agents
 
-With your server running and an API key from its Account page, Claude Code installs the tools in one step:
+No server needed: with Node.js and FFmpeg installed, the speech model and the engine run on your computer.
+Claude Code installs the tools in one step:
 
 ```text
 /plugin install opencaptions --marketplace leogaudin/opencaptions
 ```
 
 Any other MCP client runs `npx -y opencaptions mcp`, and a script runs
-`npx opencaptions caption reel.mp4 --look Bold`. Setup for each is in
+`npx opencaptions caption reel.mp4 --look Bold`. With an API key from your server, the same tools run there
+instead, with every language and the web editor. Setup for each is in
 [From Claude and other agents](https://docs.opencaptions.app/guides/agents/).
 
 ## More

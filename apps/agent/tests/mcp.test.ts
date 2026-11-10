@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { serverCaptioner } from "../src/captioner.ts";
 import { api } from "../src/client.ts";
 import { createServer } from "../src/mcp.ts";
 import { type Fake, KEY, startFake } from "./fake-server.ts";
@@ -21,7 +22,7 @@ before(async () => {
   video = join(folder, "clip.mp4");
   await writeFile(video, "frames");
   const [ours, theirs] = InMemoryTransport.createLinkedPair();
-  await createServer(() => api({ url: fake.url, key: KEY })).connect(ours);
+  await createServer(async () => serverCaptioner(api({ url: fake.url, key: KEY }))).connect(ours);
   client = new Client({ name: "test", version: "1" });
   await client.connect(theirs);
 });

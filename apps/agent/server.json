@@ -16,19 +16,26 @@
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "opencaptions",
       "version": "1.2.1",
-      "transport": { "type": "stdio" },
-      "packageArguments": [{ "type": "positional", "value": "mcp" }],
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
       "environmentVariables": [
         {
           "name": "OPENCAPTIONS_KEY",
-          "description": "An API key from your OpenCaptions server's Account page",
-          "isRequired": true,
+          "description": "An API key from your OpenCaptions server's Account page, to caption there. Without it the package captions on this computer, with FFmpeg.",
+          "isRequired": false,
           "isSecret": true
         },
         {
           "name": "OPENCAPTIONS_URL",
-          "description": "Your OpenCaptions server's web address",
-          "default": "http://localhost:5173"
+          "description": "Your OpenCaptions server's web address (http://localhost:5173 when only the key is set)",
+          "isRequired": false
         }
       ]
     }

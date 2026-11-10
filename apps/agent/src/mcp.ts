@@ -10,24 +10,16 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  type CaptionRequest,
-  captionVideo,
-  defaultOutput,
-  exportSubtitles,
-  fixWords,
-  getProject,
-  type Outcome,
-  type Progress,
-  readTranscript,
-  resume,
-  type SaveOptions,
-  saveVideo,
-  setStyle,
-  type Ticket,
-  type WordFix,
+import { type Captioner, captionerFromEnv } from "./captioner.ts";
+import type {
+  CaptionRequest,
+  Outcome,
+  Progress,
+  SaveOptions,
+  Ticket,
+  WordFix,
 } from "./captions.ts";
-import { type Api, api, connectionFromEnv, OpenCaptionsError, type StyleConfig } from "./client.ts";
+import { OpenCaptionsError, type StyleConfig } from "./client.ts";
 import { describeLook, describeStyle, LOOKS, SAVE_SCHEMA, STYLE_SCHEMA } from "./looks.ts";
 import { VERSION } from "./version.ts";
 
@@ -49,7 +41,10 @@ const saveProperties = {
     description: "Where to write the file. Default: next to the source, named <name>.captioned",
   },
 };
-const project = { type: "string", description: "The project id a caption_video call returned" };
+const project = {
+  type: "string",
+  description: "The project id a caption_video call returned (on this computer, a file's path)",
+};
 
 const TOOLS: Tool[] = [
   {
@@ -77,7 +72,9 @@ const TOOLS: Tool[] = [
         language: { type: "string", description: "ISO 639-1 code, or auto (the default)" },
         model: {
           type: "string",
-          description: "A speech model id the server offers; its default if left out",
+          description:
+            "A speech model id the server offers; its default if left out. Without a server, " +
+            "parakeet-ultra only",
         },
         ...saveProperties,
       },
@@ -207,21 +204,20 @@ function saveArgs(args: Args): SaveOptions {
   };
 }
 
-async function call(client: Api, name: string, args: Args, progress: Progress) {
+async function call(captioner: Captioner, name: string, args: Args, progress: Progress) {
   const deadline = Date.now() + WAIT_S * 1000;
   const id = args.project_id as string;
   switch (name) {
     case "caption_video":
       return outcome(
-        await captionVideo(
-          client,
+        await captioner.caption(
           { ...(args as unknown as CaptionRequest), ...saveArgs(args) },
           progress,
           deadline,
         ),
       );
     case "check_progress":
-      return outcome(await resume(client, args.ticket as Ticket, progress, deadline));
+      return outcome(await captioner.resume(args.ticket as Ticket, progress, deadline));
     case "list_looks":
       return said(LOOKS.map(describeLook).join("\n"));
     case "describe_style":
@@ -229,45 +225,40 @@ async function call(client: Api, name: string, args: Args, progress: Progress) {
     case "get_transcript":
       return said(
         "Captions as shown, then each word with its index:",
-        await readTranscript(client, id),
+        await captioner.readTranscript(id),
       );
     case "fix_words":
       return said(
-        `Fixed ${await fixWords(client, id, args.fixes as WordFix[])} words. Call save_video to write the video again.`,
+        `Fixed ${await captioner.fixWords(id, args.fixes as WordFix[])} words. Call save_video to write the video again.`,
       );
     case "set_style": {
-      const style = await setStyle(
-        client,
+      const style = await captioner.setStyle(
         id,
         args.look as string | undefined,
         args.style as Partial<StyleConfig>,
       );
       return said("The style is set. Call save_video to write the video again.", style);
     }
-    case "save_video": {
-      const options = saveArgs(args);
-      const stem = defaultOutput((await getProject(client, id)).title, options.captions_only);
-      return outcome(await saveVideo(client, id, { ...options, stem }, progress, deadline));
-    }
-    case "export_subtitles": {
-      const kind = args.format as "srt" | "vtt" | "json";
-      const output =
-        (args.output as string | undefined) ?? defaultOutput((await getProject(client, id)).title);
-      return said(`Wrote ${await exportSubtitles(client, id, kind, output)}`);
-    }
+    case "save_video":
+      return outcome(await captioner.save(id, saveArgs(args), progress, deadline));
+    case "export_subtitles":
+      return said(
+        `Wrote ${await captioner.exportSubtitles(id, args.format as "srt" | "vtt" | "json", args.output as string | undefined)}`,
+      );
     default:
       throw new OpenCaptionsError(`There is no tool called ${name}.`);
   }
 }
 
-export function createServer(connect: () => Api = () => api(connectionFromEnv())): Server {
+export function createServer(connect: () => Promise<Captioner> = captionerFromEnv): Server {
   const server = new Server(
     { name: "opencaptions", version: VERSION },
     {
       capabilities: { tools: {} },
       instructions:
-        "OpenCaptions adds animated word-by-word captions to videos, on the user's own OpenCaptions " +
-        "server. caption_video does it in one call; the other tools adjust the result.",
+        "OpenCaptions adds animated word-by-word captions to videos, on this computer or on the " +
+        "user's own OpenCaptions server. caption_video does it in one call; the other tools " +
+        "adjust the result.",
     },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
@@ -281,7 +272,12 @@ export function createServer(connect: () => Api = () => api(connectionFromEnv())
       });
     };
     try {
-      return await call(connect(), request.params.name, request.params.arguments ?? {}, progress);
+      return await call(
+        await connect(),
+        request.params.name,
+        request.params.arguments ?? {},
+        progress,
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return { ...said(message), isError: true };

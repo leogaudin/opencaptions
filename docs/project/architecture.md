@@ -540,9 +540,19 @@ project list, where the project's row shows its progress.
 ## Agents and the command line
 
 `apps/agent` is the `opencaptions` npm package: an MCP server over stdio (`opencaptions mcp`) for Claude Code,
-Claude Desktop, Cursor and other clients, and a command line (`opencaptions caption`) for scripts. It is a
-client of the HTTP API and nothing more: it uploads a video with an API key, starts the transcription,
-sets the style, and asks for the download, so the server stays the one place that transcribes and draws.
+Claude Desktop, Cursor and other clients, and a command line (`opencaptions caption`) for scripts. The same
+actions (`src/captioner.ts`) run in one of two places:
+
+- **On a server**, when `OPENCAPTIONS_KEY` (or `OPENCAPTIONS_URL`) is set: it is a client of the HTTP API and
+  nothing more. It uploads a video with an API key, starts the transcription, sets the style, and asks for the
+  download (`src/captions.ts`).
+- **On the computer** otherwise (`src/local/`). Parakeet Ultra, the server's default model at the same pinned
+  revision, runs through `sherpa-onnx-node`; the audio is cut into windows and the model's pieces made into
+  words as the server does it, held to the shared `Fixtures/token-words.json`. The engine's WebAssembly draws
+  each frame's caption band, and FFmpeg runs the command the engine's `encode::plan` makes, the render server's
+  own, so a file comes out as the server makes it. The size and frame rate are decided as the API decides them,
+  the formats are `render_formats.json`, and the look's font is fetched from Google Fonts as the API fetches
+  it. A project is a file beside the video, `<name>.opencaptions.json`, and its path is the project id.
 
 - **Types.** Its calls go through `openapi-fetch` over a copy of the generated types, and its tools take the
   style and the save options as the API's own JSON schemas (`src/generated/`). `scripts/generate-api-types.sh`
@@ -550,7 +560,7 @@ sets the style, and asks for the download, so the server stays the one place tha
   The style's descriptions in `schemas.py` are what an agent reads, in the tool and from `describe_style`.
 - **Edits.** Fixing a word and dealing a look's word variants are the engine's (`edit.rs`), through the same
   WebAssembly file the editor loads, built into the package by `make agent-engine`.
-- **Long jobs.** A tool waits up to 45 seconds (`OPENCAPTIONS_WAIT_SECONDS`), sending MCP progress, then hands
+- **Long jobs.** On a server, a tool waits up to 45 seconds (`OPENCAPTIONS_WAIT_SECONDS`), sending MCP progress, then hands
   back a ticket holding the project, the job and where the file goes; `check_progress` carries on from it.
   Nothing is kept between calls.
 - **Out.** A tag publishes it to npm with provenance and lists it in the MCP Registry (`server.json`, whose

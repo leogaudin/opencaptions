@@ -237,13 +237,6 @@ mod abi {
         }))
     }
 
-    /// What ffprobe is given before the source to print its transfer function, for
-    /// `oc_encode_plan`'s `source_transfer`, left as a JSON array.
-    #[unsafe(no_mangle)]
-    pub extern "C" fn oc_probe_args() -> u32 {
-        respond(Ok(encode::PROBE_ARGS))
-    }
-
     /// The active caption block as four little-endian f32 (x, y, w, h) in frame
     /// pixels, left in the result buffer. Returns 0 when no caption shows.
     #[unsafe(no_mangle)]
@@ -646,7 +639,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 31);
+        assert_eq!(exported.len(), 30);
         assert_eq!(exported, declared);
     }
 }

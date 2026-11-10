@@ -1,13 +1,18 @@
 # opencaptions
 
 Animated word-by-word captions for your videos, from Claude Code, Claude Desktop, Cursor or any MCP
-client, or from the command line. It runs on your own [OpenCaptions](https://github.com/leogaudin/opencaptions)
-server: your video goes there and back, and nowhere else.
+client, or from the command line. It runs on your computer, with nothing to sign up for: the speech
+model and the caption engine of [OpenCaptions](https://github.com/leogaudin/opencaptions) run locally,
+and your video stays where it is.
 
 ```bash
-export OPENCAPTIONS_KEY=oc_...          # an API key from your server's Account page
 npx opencaptions caption reel.mp4 --look Bold --language fr
 ```
+
+It needs [FFmpeg](https://ffmpeg.org/download.html), and downloads the speech model (about 700 MB)
+the first time. It transcribes 25 European languages. To use an OpenCaptions server instead (other
+languages, Whisper models, a GPU, the web editor), set `OPENCAPTIONS_KEY` to an API key from its
+Account page, and `OPENCAPTIONS_URL` if it is not at `http://localhost:5173`.
 
 As an MCP server:
 
@@ -16,8 +21,7 @@ As an MCP server:
   "mcpServers": {
     "opencaptions": {
       "command": "npx",
-      "args": ["-y", "opencaptions", "mcp"],
-      "env": { "OPENCAPTIONS_KEY": "oc_...", "OPENCAPTIONS_URL": "http://localhost:5173" }
+      "args": ["-y", "opencaptions", "mcp"]
     }
   }
 }
@@ -29,5 +33,4 @@ The tools caption a video, list the looks, change any style setting, read and fi
 again in another format or as captions alone over green, and export SRT or VTT. Setup, every tool and
 every option: [docs.opencaptions.app/guides/agents](https://docs.opencaptions.app/guides/agents/).
 
-Needs Node.js 20.10 or later and a running OpenCaptions server
-([quick start](https://docs.opencaptions.app/getting-started/quick-start/)). AGPL-3.0-only.
+Needs Node.js 20.10 or later. AGPL-3.0-only.

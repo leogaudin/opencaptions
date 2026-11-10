@@ -62,9 +62,10 @@ browser, on the server and on the phone.
 
 ## Can I use it from a script or a pipeline?
 
-Yes. Everything the app does is an [HTTP API](./reference/api.md), with API keys, and the `opencaptions`
-package puts it on the command line and in Claude, Cursor and other agents: see
-[From Claude and other agents](./guides/agents.md).
+Yes. The `opencaptions` package captions a video from the command line and from Claude, Cursor and other
+agents, on your computer with no server, or on your server: see
+[From Claude and other agents](./guides/agents.md). Everything the server does is also an
+[HTTP API](./reference/api.md), with API keys.
 
 ## Can I translate the captions into another language?
 

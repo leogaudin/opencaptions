@@ -1,7 +1,8 @@
 /**
  * What the command line and the MCP server do, over the server's API: open a video as a project,
  * transcribe it, give it a look, fix words, and save the captioned video or its subtitles. The server
- * transcribes and draws; nothing here draws a caption.
+ * transcribes and draws. `local/` does the same on this computer, with the pieces here that do not
+ * depend on where it runs (`styled`, `applyFixes`, `viewTranscript`).
  */
 import { createWriteStream, openAsBlob } from "node:fs";
 import { rename, rm, stat, writeFile } from "node:fs/promises";
@@ -190,9 +191,7 @@ export async function setStyle(
   changes: Partial<StyleConfig> = {},
 ): Promise<StyleConfig> {
   const project = await getProject(client, projectId);
-  // A project never styled draws as the first look, so changes alone go over that.
-  const base = look ? findLook(look).config : (project.style_config ?? LOOKS[0]?.config);
-  const style = { ...base, ...changes } as StyleConfig;
+  const style = styled(project.style_config, look, changes);
   const transcript = look ? await dealt(project.transcript ?? undefined, style) : undefined;
   return (
     (await update(client, projectId, { style_config: style, ...(transcript && { transcript }) }))
@@ -200,30 +199,47 @@ export async function setStyle(
   );
 }
 
-async function dealt(transcript: Transcript | undefined, style: StyleConfig) {
+/** A look with changes over it; without a look the changes go over `current`. */
+export function styled(
+  current: StyleConfig | null | undefined,
+  look: string | undefined,
+  changes: Partial<StyleConfig> = {},
+): StyleConfig {
+  // A project never styled draws as the first look, so changes alone go over that.
+  const base = look ? findLook(look).config : (current ?? LOOKS[0]?.config);
+  return { ...base, ...changes } as StyleConfig;
+}
+
+export async function dealt(transcript: Transcript | undefined, style: StyleConfig) {
   const count = style.variants?.length ?? 0;
   return transcript && count > 0 ? shuffleVariants(transcript, count) : undefined;
 }
 
+/** A transcript's captions as they show, and every word with its index. */
+export interface TranscriptView {
+  lines: CaptionLine[];
+  words: { index: number; text: string; start: number }[];
+}
+
 /** The words with their place in the captions, for checking names and spelling. */
-export async function readTranscript(
-  client: Api,
-  projectId: string,
-): Promise<{ lines: CaptionLine[]; words: { index: number; text: string; start: number }[] }> {
-  const project = await getProject(client, projectId);
-  if (!project.transcript) throw new OpenCaptionsError("This project has no captions yet.");
-  const words = project.transcript.segments
+export async function viewTranscript(
+  transcript: Transcript | null | undefined,
+  style: StyleConfig | null | undefined,
+  offsetMs: number,
+): Promise<TranscriptView> {
+  if (!transcript) throw new OpenCaptionsError("This project has no captions yet.");
+  const words = transcript.segments
     .flatMap((s) => s.words)
     .map((w, index) => ({ index, text: w.text, start: w.start }));
-  const lines = await captionLines(
-    project.transcript,
-    project.style_config?.words_per_line ?? 3,
-    project.caption_offset_ms,
-  );
+  const lines = await captionLines(transcript, style?.words_per_line ?? 3, offsetMs);
   return { lines, words };
 }
 
-/** Sets words by their index; empty text removes a word. The indices are the ones read before. */
+export async function readTranscript(client: Api, projectId: string): Promise<TranscriptView> {
+  const project = await getProject(client, projectId);
+  return viewTranscript(project.transcript, project.style_config, project.caption_offset_ms);
+}
+
 /** Word `index` given `text` (empty removes it), or with `count`, that many words joined into one. */
 export interface WordFix {
   index: number;
@@ -231,18 +247,26 @@ export interface WordFix {
   count?: number;
 }
 
+/** The fixes applied by the engine; the indices are the ones read before. */
+export async function applyFixes(
+  transcript: Transcript | null | undefined,
+  fixes: WordFix[],
+): Promise<Transcript> {
+  if (!transcript) throw new OpenCaptionsError("This project has no captions yet.");
+  // Last first: removing or joining words moves the ones after them, never the ones before.
+  let fixed = transcript;
+  for (const fix of [...fixes].sort((a, b) => b.index - a.index)) {
+    fixed =
+      (fix.count ?? 1) > 1
+        ? await mergeWords(fixed, fix.index, fix.count ?? 1, fix.text)
+        : await setWord(fixed, fix.index, fix.text);
+  }
+  return fixed;
+}
+
 export async function fixWords(client: Api, projectId: string, fixes: WordFix[]): Promise<number> {
   const project = await getProject(client, projectId);
-  if (!project.transcript) throw new OpenCaptionsError("This project has no captions yet.");
-  // Last first: removing or joining words moves the ones after them, never the ones before.
-  let transcript = project.transcript;
-  for (const fix of [...fixes].sort((a, b) => b.index - a.index)) {
-    transcript =
-      (fix.count ?? 1) > 1
-        ? await mergeWords(transcript, fix.index, fix.count ?? 1, fix.text)
-        : await setWord(transcript, fix.index, fix.text);
-  }
-  await update(client, projectId, { transcript });
+  await update(client, projectId, { transcript: await applyFixes(project.transcript, fixes) });
   return fixes.length;
 }
 
@@ -398,7 +422,7 @@ async function afterTranscript(client: Api, projectId: string): Promise<void> {
   if (transcript) await update(client, projectId, { transcript });
 }
 
-function saveOnly(save: Destination): Destination {
+export function saveOnly(save: Destination): Destination {
   const { format, resolution, frame_rate, captions_only, output, stem } = save;
   return { format, resolution, frame_rate, captions_only, output, stem };
 }

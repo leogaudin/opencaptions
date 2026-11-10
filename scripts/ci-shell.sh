@@ -7,6 +7,7 @@
 #   scripts/ci-shell.sh uv    apps/api 'uv run pytest'
 #   scripts/ci-shell.sh node  apps/web 'npm run lint'
 #   scripts/ci-shell.sh tools .        '...'   # Node and uv together (type generation)
+#   scripts/ci-shell.sh media apps/agent '...' # Node and FFmpeg (the agent package on its own)
 #
 # The container runs as the caller, so nothing it writes into the checkout is root-owned. Caches
 # (uv, npm) live in $CI_CACHE, which GitHub restores between runs.
@@ -15,6 +16,7 @@ set -euo pipefail
 NODE_IMAGE="node:26-bookworm"
 UV_IMAGE="ghcr.io/astral-sh/uv:python3.14-bookworm-slim"
 TOOLS_IMAGE="opencaptions-ci-tools:local"
+MEDIA_IMAGE="opencaptions-ci-media:local"
 CI_CACHE="${CI_CACHE:-$HOME/.cache/opencaptions-ci}"
 
 kind="$1" dir="$2" command="$3"
@@ -31,6 +33,16 @@ case "$kind" in
       docker build -q -t "$image" - >/dev/null <<DOCKERFILE
 FROM $NODE_IMAGE
 COPY --from=$UV_IMAGE /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
+DOCKERFILE
+    fi
+    ;;
+  media)
+    # Node with FFmpeg: the agent package captions a video without a server through it.
+    image="$MEDIA_IMAGE"
+    if ! docker image inspect "$image" >/dev/null 2>&1; then
+      docker build -q -t "$image" - >/dev/null <<DOCKERFILE
+FROM $NODE_IMAGE
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 DOCKERFILE
     fi
     ;;

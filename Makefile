@@ -112,8 +112,8 @@ test-web:            ## Run the web unit tests
 lint-agent:          ## Lint and typecheck the agent package (MCP server and command line)
 	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm run lint && npm run typecheck && npm run build'
 
-test-agent: agent-engine ## Test the agent package against a stand-in API, with the engine's word edits
-	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm test'
+test-agent: agent-engine ## Test the agent package: against a stand-in API, and on its own with FFmpeg
+	@./scripts/ci-shell.sh media apps/agent '$(NPM_CI) && npm test'
 
 build-web:           ## Build the web app for production
 	@./scripts/ci-shell.sh node apps/web '$(NPM_CI) && npm run build'
@@ -129,10 +129,11 @@ build-docs:          ## Build the documentation into apps/docs/dist (static file
 e2e:                 ## Build the images and run the Playwright suite against a disposable stack
 	@./scripts/e2e.sh
 
-agent-engine:        ## Build the engine's WebAssembly into apps/agent/engine, for the agent package's word edits
+agent-engine:        ## Build the engine's WebAssembly, with its bundled fonts, into apps/agent/engine
 	@$(ENGINE) cargo build --release --locked --lib --target wasm32-unknown-unknown -q
-	@mkdir -p apps/agent/engine
+	@mkdir -p apps/agent/engine/fonts
 	@cp apps/engine/target/wasm32-unknown-unknown/release/opencaptions_engine.wasm apps/agent/engine/
+	@cp apps/engine/fonts/* apps/agent/engine/fonts/
 
 engine-wasm:         ## Build the engine for the browser into apps/web/public/engine (for npm run dev)
 	@docker build -q --build-context engine=apps/engine --target preview-assets \

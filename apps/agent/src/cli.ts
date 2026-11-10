@@ -5,12 +5,13 @@
  */
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { type CaptionRequest, captionVideo, exportSubtitles, type Progress } from "./captions.ts";
-import { api, connectionFromEnv, OpenCaptionsError, type Transcript } from "./client.ts";
+import { captionerFromEnv } from "./captioner.ts";
+import type { CaptionRequest, Progress } from "./captions.ts";
+import { OpenCaptionsError, type Transcript } from "./client.ts";
 import { describeLook, describeStyle, LOOKS } from "./looks.ts";
 import { VERSION } from "./version.ts";
 
-const HELP = `opencaptions ${VERSION}: animated captions for your videos, on your OpenCaptions server.
+const HELP = `opencaptions ${VERSION}: animated captions for your videos.
 
   opencaptions caption <video or link> [options]   transcribe, style and save the captioned video
   opencaptions looks                                the built-in looks
@@ -22,7 +23,7 @@ Options for caption:
   --look <name>            a built-in look (default: Purple Punch)
   --style <json>           style settings over the look, e.g. '{"position_y":0.7}'
   --language <code>        ISO 639-1, or auto (default)
-  --model <id>             a speech model the server offers
+  --model <id>             a speech model the server offers (without one: parakeet-ultra)
   --transcript <file>      use these captions (the API's Transcript JSON) instead of transcribing
   --format <id>            mp4 (default), mp4-hevc, webm or mov
   --resolution <side>      original (default), 2160, 1080 or 720
@@ -30,8 +31,9 @@ Options for caption:
   --captions-only          the captions alone over green, no sound, to key out
   --subtitles <kinds>      also write subtitles: srt, vtt, json, comma separated
 
-The server: OPENCAPTIONS_URL (default http://localhost:5173) and OPENCAPTIONS_KEY, an API key
-from its Account page.`;
+It runs on this computer, with FFmpeg installed; the speech model (700 MB) is downloaded on first
+use. To use an OpenCaptions server instead, set OPENCAPTIONS_KEY (an API key from its Account
+page) and OPENCAPTIONS_URL (default http://localhost:5173).`;
 
 /** Progress on one line of the terminal, rewritten as it moves. */
 const report: Progress = (fraction, message) => {
@@ -75,8 +77,8 @@ async function caption(args: string[]): Promise<void> {
     frame_rate: values.fps as CaptionRequest["frame_rate"],
     captions_only: values["captions-only"],
   };
-  const client = api(connectionFromEnv());
-  const result = await captionVideo(client, request, report);
+  const captioner = await captionerFromEnv();
+  const result = await captioner.caption(request, report);
   if (process.stderr.isTTY) process.stderr.write("\r\x1b[2K");
   if (!result.done) throw new OpenCaptionsError(result.message);
   console.log(result.output);
@@ -85,7 +87,11 @@ async function caption(args: string[]): Promise<void> {
       throw new OpenCaptionsError(`Subtitles are srt, vtt or json, not ${kind}.`);
     }
     console.log(
-      await exportSubtitles(client, result.project_id, kind, result.output.replace(/\.[^.]+$/, "")),
+      await captioner.exportSubtitles(
+        result.project_id,
+        kind,
+        result.output.replace(/\.[^.]+$/, ""),
+      ),
     );
   }
 }

@@ -25,6 +25,7 @@
   "files": [
     "dist",
     "engine/opencaptions_engine.wasm",
+    "engine/fonts",
     "server.json",
     "README.md"
   ],
@@ -40,7 +41,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
-    "openapi-fetch": "0.17.0"
+    "openapi-fetch": "0.17.0",
+    "sherpa-onnx-node": "2.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

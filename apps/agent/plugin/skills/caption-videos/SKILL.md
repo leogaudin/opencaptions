@@ -5,16 +5,22 @@ description: Add animated word-by-word captions or subtitles to a video with Ope
 
 # Captioning videos with OpenCaptions
 
-The `opencaptions` MCP tools caption videos on the user's own OpenCaptions server. The server
-transcribes and draws; the video and the captioned file stay on the user's machine and server.
+The `opencaptions` MCP tools caption videos on the user's computer, or on their own OpenCaptions
+server when `OPENCAPTIONS_KEY` is set. The video and the captioned file stay on their machine (and
+server).
 
 ## The usual path
 
-1. `caption_video` with the file's path (or a direct link), a `look`, and the `language` when it is
-   known. It saves `<name>.captioned.mp4` next to the source and returns a `project_id`.
+1. `caption_video` with the file's path, a `look`, and the `language` when it is known. It saves
+   `<name>.captioned.mp4` next to the source and returns a `project_id`. A direct link works only
+   with a server; on the computer, download the video first.
 2. If it returns a ticket instead, the server is still working: call `check_progress` with it until
    it says where the file was saved.
 3. Tell the user where the file is.
+
+On the computer, the first call downloads the speech model (about 700 MB), and FFmpeg must be
+installed: if a tool says it is missing, tell the user how to install it rather than working around
+it. The computer's model covers 25 European languages; for another, the user needs a server.
 
 ## Getting it right
 

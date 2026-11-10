@@ -1,7 +1,7 @@
 {
   "name": "opencaptions",
   "version": "1.2.1",
-  "description": "Animated word-by-word captions for your videos, on your own OpenCaptions server: transcribe, style, fix words and save, from Claude Code",
+  "description": "Animated word-by-word captions for your videos, on your computer or your own OpenCaptions server: transcribe, style, fix words and save, from Claude Code",
   "author": { "name": "Léo Gaudin", "url": "https://github.com/leogaudin" },
   "homepage": "https://docs.opencaptions.app/guides/agents/",
   "repository": "https://github.com/leogaudin/opencaptions",
