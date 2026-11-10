@@ -79,7 +79,7 @@ process (`core/events.py`).
      picture, with no sound, to key out in an editor. It is part of the hash, and the engine
      does not use the video at all.
    - **No quality choice.** A download is a second encoding of the source, so each format is
-     made as good as its codec does well (a CRF in `render_formats.py`; ProRes takes a
+     made as good as its codec does well (a CRF in `render_formats.json`; ProRes takes a
      profile). The size is chosen with the resolution and frame rate.
    - The web editor has one Download button that opens a dialog (format, size, frame rate,
      background), as the iOS Save sheet does.

@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
 
 from app.models.schemas import RenderOptions, StyleConfig
@@ -37,53 +38,15 @@ class RenderFormat:
 
 
 # === Format Registry ===
-# The complete set of export formats.
+# The complete set of export formats, in `render_formats.json`: the npm package's own exports read
+# the same file (a copy, written by scripts/generate-api-types.sh). ProRes takes no crf, a profile.
 # Do not hardcode codec/crf/extension at call sites, always go through this registry.
 
 FORMATS: dict[str, RenderFormat] = {}
 
 _FORMAT_DEFS: list[RenderFormat] = [
-    RenderFormat(
-        id="mp4",
-        label="MP4 (H.264)",
-        codec="h264",
-        extension=".mp4",
-        mime="video/mp4",
-        crf=15,
-        pro_res_profile=None,
-        note=None,
-    ),
-    RenderFormat(
-        id="mp4-hevc",
-        label="MP4 (H.265)",
-        codec="h265",
-        extension=".mp4",
-        mime="video/mp4",
-        crf=20,
-        pro_res_profile=None,
-        note=None,
-    ),
-    RenderFormat(
-        id="webm",
-        label="WebM (VP9)",
-        codec="vp9",
-        extension=".webm",
-        mime="video/webm",
-        crf=24,
-        pro_res_profile=None,
-        note="VP9 encoding is very slow, expect 5-10x real-time on a modern CPU.",
-    ),
-    RenderFormat(
-        id="mov",
-        label="MOV (ProRes)",
-        codec="prores",
-        extension=".mov",
-        mime="video/quicktime",
-        # ProRes does NOT accept crf, quality is controlled by proResProfile.
-        crf=None,
-        pro_res_profile="hq",
-        note="ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video).",
-    ),
+    RenderFormat(**entry)
+    for entry in json.loads((Path(__file__).parent / "render_formats.json").read_text())
 ]
 
 for _fmt in _FORMAT_DEFS:

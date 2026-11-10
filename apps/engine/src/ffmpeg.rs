@@ -1,94 +1,15 @@
-//! FFmpeg: the output's encoding by codec, the source's probe, and the frames piped in.
+//! FFmpeg: the source's probe, the process, and the frames piped in. The command itself is the
+//! library's (`encode::plan`).
 
 use std::io::Write;
 use std::process::{Child, Command, ExitStatus};
 use std::sync::mpsc;
 
 use opencaptions_engine::Renderer;
+use opencaptions_engine::encode::PROBE_ARGS;
 use serde_json::json;
 
 use crate::log;
-use crate::render::*;
-
-/// Encoder arguments and the pixel format the composite is converted to.
-#[derive(Debug)]
-pub(crate) struct Encoding {
-    pub(crate) args: Vec<String>,
-    pub(crate) pix_fmt: &'static str,
-    /// The 10-bit format to keep an HDR source HDR in, for codecs that can carry
-    /// it. H.264 cannot in any widely playable profile, so it is tone-mapped.
-    pub(crate) hdr_pix_fmt: Option<&'static str>,
-    pub(crate) content_type: &'static str,
-}
-
-pub(crate) fn encoding(req: &RenderRequest) -> Result<Encoding, String> {
-    let crf = || {
-        req.crf
-            .map(|c| c.to_string())
-            .ok_or(format!("crf is required for {}", req.codec))
-    };
-    let args = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
-    Ok(match req.codec.as_str() {
-        "h264" => Encoding {
-            args: [
-                args(&["-c:v", "libx264", "-preset", "medium", "-crf"]),
-                vec![crf()?],
-            ]
-            .concat(),
-            pix_fmt: "yuv420p",
-            hdr_pix_fmt: None,
-            content_type: "video/mp4",
-        },
-        "h265" => Encoding {
-            args: [
-                args(&[
-                    "-c:v", "libx265", "-preset", "medium", "-tag:v", "hvc1", "-crf",
-                ]),
-                vec![crf()?],
-            ]
-            .concat(),
-            pix_fmt: "yuv420p",
-            hdr_pix_fmt: Some("yuv420p10le"),
-            content_type: "video/mp4",
-        },
-        "vp9" => Encoding {
-            args: [
-                args(&["-c:v", "libvpx-vp9", "-row-mt", "1", "-b:v", "0", "-crf"]),
-                vec![crf()?],
-            ]
-            .concat(),
-            pix_fmt: "yuv420p",
-            hdr_pix_fmt: Some("yuv420p10le"),
-            content_type: "video/webm",
-        },
-        "prores" => {
-            let (profile, pix_fmt) = match req.pro_res_profile.as_deref().unwrap_or("hq") {
-                "proxy" => ("0", "yuv422p10le"),
-                "light" => ("1", "yuv422p10le"),
-                "standard" => ("2", "yuv422p10le"),
-                "hq" => ("3", "yuv422p10le"),
-                "4444" => ("4", "yuv444p10le"),
-                "4444-xq" => ("5", "yuv444p10le"),
-                other => return Err(format!("unknown ProRes profile {other:?}")),
-            };
-            Encoding {
-                args: args(&["-c:v", "prores_ks", "-profile:v", profile]),
-                pix_fmt,
-                hdr_pix_fmt: Some(pix_fmt),
-                content_type: "video/quicktime",
-            }
-        }
-        other => return Err(format!("unsupported codec {other:?}")),
-    })
-}
-
-pub(crate) fn audio_args(codec: &str) -> &'static [&'static str] {
-    match codec {
-        "vp9" => &["-c:a", "libopus", "-b:a", "160k"],
-        "prores" => &["-c:a", "pcm_s16le"],
-        _ => &["-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"],
-    }
-}
 
 /// FFmpeg, killed and reaped if the render ends any way but by waiting for it: an error, a
 /// panic, a closed connection. Left alone it would go on encoding for nobody.
@@ -119,21 +40,12 @@ pub(crate) const SOURCE_STALL: &str = "30000000";
 /// The source's transfer function as ffprobe names it, empty when unknown.
 pub(crate) fn probe_transfer(url: &str) -> String {
     let out = Command::new("ffprobe")
+        .args(PROBE_ARGS)
         .args([
-            "-v",
-            "error",
             "-protocol_whitelist",
             SOURCE_PROTOCOLS,
             "-rw_timeout",
             SOURCE_STALL,
-            "-select_streams",
-            "v:0",
-        ])
-        .args([
-            "-show_entries",
-            "stream=color_transfer",
-            "-of",
-            "default=nw=1:nk=1",
             url,
         ])
         .output();

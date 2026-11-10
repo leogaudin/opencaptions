@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mp4",
+    "label": "MP4 (H.264)",
+    "codec": "h264",
+    "extension": ".mp4",
+    "mime": "video/mp4",
+    "crf": 15,
+    "pro_res_profile": null,
+    "note": null
+  },
+  {
+    "id": "mp4-hevc",
+    "label": "MP4 (H.265)",
+    "codec": "h265",
+    "extension": ".mp4",
+    "mime": "video/mp4",
+    "crf": 20,
+    "pro_res_profile": null,
+    "note": null
+  },
+  {
+    "id": "webm",
+    "label": "WebM (VP9)",
+    "codec": "vp9",
+    "extension": ".webm",
+    "mime": "video/webm",
+    "crf": 24,
+    "pro_res_profile": null,
+    "note": "VP9 encoding is very slow, expect 5-10x real-time on a modern CPU."
+  },
+  {
+    "id": "mov",
+    "label": "MOV (ProRes)",
+    "codec": "prores",
+    "extension": ".mov",
+    "mime": "video/quicktime",
+    "crf": null,
+    "pro_res_profile": "hq",
+    "note": "ProRes files are very large (~220 Mbps, roughly 1 GB per 40 seconds of video)."
+  }
+]

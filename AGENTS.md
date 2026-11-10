@@ -92,7 +92,7 @@ images, which is what an end user does.
 
 4. **Rendered-output cache is content-addressed.** A sha256 hash of (transcript + timing offset + style + format and its encoder settings + dimensions + fps + green screen + the engine's render revision) names the S3 object (`apps/api/app/services/render_formats.py::compute_render_hash`). Readiness is answered by a storage existence check. Do not reintroduce render-state columns on the projects table.
 
-5. **Per-codec encoding facts live only in `apps/api/app/services/render_formats.py`.** Never hardcode a CRF at a call site. CRFs differ per codec (H.264=15, H.265=20, VP9=24; there is no quality choice), and ProRes accepts no CRF at all (uses a profile). Codec and container are coupled: VP9→.webm, ProRes→.mov. The engine maps each codec to its encoder and audio codec.
+5. **Per-codec encoding facts live only in `apps/api/app/services/render_formats.json`** (read by `render_formats.py`, and by the agent package through its generated copy). Never hardcode a CRF at a call site. CRFs differ per codec (H.264=15, H.265=20, VP9=24; there is no quality choice), and ProRes accepts no CRF at all (uses a profile). Codec and container are coupled: VP9→.webm, ProRes→.mov. The engine maps each codec to its encoder and audio codec.
 
 6. **"Rendering" is not a user-facing concept.** The UI has a single Download button. No user-visible string may mention rendering. `render` remains correct in backend code and logs.
 

@@ -114,10 +114,10 @@ pub(crate) fn handle(book: &FontBook<'static>, token: &str, slots: &Slots, mut r
                     Err(e) => error(422, "validation_error", e.to_string()),
                     Ok(req) => match validate(&req) {
                         Err(e) => error(422, "validation_error", e),
-                        Ok(enc) => {
+                        Ok(()) => {
                             // Waits here for a free place; the caller's own timeout is the limit.
                             let _slot = slots.take();
-                            render(book, &req, enc)
+                            render(book, &req)
                         }
                         .map_or_else(
                             |e| {

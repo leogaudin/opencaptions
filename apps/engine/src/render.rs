@@ -7,11 +7,11 @@ use std::process::{Command, Stdio};
 use std::sync::{Condvar, Mutex};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+use opencaptions_engine::encode::{self, Output};
 use opencaptions_engine::{FontBook, Renderer, Scene, SceneInput};
 use serde::Deserialize;
 use serde_json::json;
 
-use crate::colour::*;
 use crate::ffmpeg::*;
 use crate::log;
 use crate::progress::*;
@@ -88,10 +88,8 @@ impl Drop for Slot<'_> {
 pub(crate) fn render(
     book: &FontBook<'static>,
     req: &RenderRequest,
-    enc: Encoding,
 ) -> Result<serde_json::Value, String> {
     let started = Instant::now();
-    let duration = req.scene.transcript.duration.max(1.0 / req.fps as f32);
     // Borrowed for this render only: the bundled faces are shared, the request's
     // own font lives in `font` and is dropped with it.
     let font = match &req.font_url {
@@ -135,11 +133,6 @@ pub(crate) fn render(
         }
     }
     let renderer = Renderer::new(Scene::new(&book, scene));
-    let (w, h) = (renderer.scene().width(), renderer.scene().height());
-    // Only the box the captions can ever be in is sent for each frame, and laid over the
-    // video where it belongs: at 1080x1920 that is a few hundred rows of a frame, not all of it.
-    let (bx, by, bw, bh) = renderer.scene().overlay_bounds();
-    let frames = (duration * req.fps as f32).ceil() as u32;
     let ext = Path::new(&req.output_key)
         .extension()
         .and_then(|e| e.to_str())
@@ -148,46 +141,36 @@ pub(crate) fn render(
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos());
     let out = TempFile(std::env::temp_dir().join(format!("opencaptions-{nonce}.{ext}")));
-
-    // Composited in RGB so the overlay blends at full chroma, then converted once
-    // with an explicit BT.709 matrix rather than FFmpeg's BT.601 default.
-    // Green is plain SDR whatever the video was, so there is nothing to probe or tone-map.
-    let colour = if req.green_screen {
-        Colour::Sdr
-    } else {
-        Colour::of(&probe_transfer(&req.video_url), enc.hdr_pix_fmt)
-    };
-    let filter = colour.filter((w, h, req.fps), (bx, by), enc.pix_fmt, req.green_screen);
+    let plan = encode::plan(
+        renderer.scene(),
+        &Output {
+            source: req.video_url.clone(),
+            output: out.0.to_string_lossy().into_owned(),
+            source_options: [
+                "-protocol_whitelist",
+                SOURCE_PROTOCOLS,
+                "-rw_timeout",
+                SOURCE_STALL,
+            ]
+            .map(String::from)
+            .to_vec(),
+            // Green is plain SDR whatever the video was, so there is nothing to probe.
+            source_transfer: if req.green_screen {
+                String::new()
+            } else {
+                probe_transfer(&req.video_url)
+            },
+            duration: req.scene.transcript.duration,
+            fps: req.fps,
+            codec: req.codec.clone(),
+            crf: req.crf,
+            pro_res_profile: req.pro_res_profile.clone(),
+            green_screen: req.green_screen,
+        },
+    )?;
+    let frames = plan.frames;
     let mut child = Command::new("ffmpeg")
-        .args(["-hide_banner", "-loglevel", "error", "-y"])
-        .args([
-            "-protocol_whitelist",
-            SOURCE_PROTOCOLS,
-            "-rw_timeout",
-            SOURCE_STALL,
-            "-i",
-            &req.video_url,
-        ])
-        .args([
-            "-f",
-            "rawvideo",
-            "-pix_fmt",
-            "rgba",
-            "-s",
-            &format!("{bw}x{bh}"),
-        ])
-        .args(["-framerate", &req.fps.to_string(), "-i", "pipe:0"])
-        .args(["-filter_complex", &filter, "-map", "[v]"])
-        .args(if req.green_screen {
-            vec!["-an"]
-        } else {
-            vec!["-map", "0:a?"]
-        })
-        .args(["-t", &format!("{duration:.3}")])
-        .args(colour.tags())
-        .args(&enc.args)
-        .args(audio_args(&req.codec))
-        .arg(&out.0)
+        .args(&plan.args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -205,7 +188,7 @@ pub(crate) fn render(
     let reporter = Reporter::new(req);
     stream_frames(
         renderer,
-        (bx, by, bw, bh),
+        plan.band,
         frames,
         req.fps,
         &mut stdin,
@@ -226,7 +209,7 @@ pub(crate) fn render(
     }
 
     reporter.send(1.0, "Uploading");
-    let size = upload(&req.output_url, enc.content_type, &out.0)?;
+    let size = upload(&req.output_url, plan.content_type, &out.0)?;
 
     let duration_ms = started.elapsed().as_millis() as u64;
     log(
@@ -238,7 +221,7 @@ pub(crate) fn render(
     )
 }
 
-pub(crate) fn validate(req: &RenderRequest) -> Result<Encoding, String> {
+pub(crate) fn validate(req: &RenderRequest) -> Result<(), String> {
     if !(1..=120).contains(&req.fps) {
         return Err("fps must be between 1 and 120".into());
     }
@@ -258,5 +241,5 @@ pub(crate) fn validate(req: &RenderRequest) -> Result<Encoding, String> {
             return Err("every url must be http or https".into());
         }
     }
-    encoding(req)
+    encode::encoding(&req.codec, req.crf, req.pro_res_profile.as_deref()).map(|_| ())
 }

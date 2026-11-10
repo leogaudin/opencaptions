@@ -48,6 +48,13 @@ void oc_scene_free(uint32_t scene);
 uint32_t oc_render(uint32_t scene, float t);
 /* frame_width x frame_height x 4 bytes of straight-alpha RGBA, valid until the scene is freed. */
 const uint8_t *oc_frame_ptr(uint32_t scene);
+/* The FFmpeg command that makes a file of the scene, from JSON (source, output, source_options,
+ * source_transfer, duration, fps, codec, crf, pro_res_profile, green_screen): leaves {args, frames,
+ * band, content_type}. The caller runs FFmpeg with args and pipes `frames` RGBA pictures of `band`
+ * (x, y, w, h) cut from each frame drawn at i / fps. */
+uint32_t oc_encode_plan(uint32_t scene, uint8_t *json_ptr, size_t json_len);
+/* ffprobe's arguments, before the source, to print its transfer function: a JSON array. */
+uint32_t oc_probe_args(void);
 uint32_t oc_frame_width(uint32_t scene);
 uint32_t oc_frame_height(uint32_t scene);
 /* The rows top..bottom the last changed frame changed (all of them after a new scene). */

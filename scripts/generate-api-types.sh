@@ -60,6 +60,7 @@ echo "✓ Generated $OUTPUT ($(wc -c < "$OUTPUT") bytes)"
 mkdir -p "$AGENT_OUT"
 cp "$OUTPUT" "$AGENT_OUT/api.ts"
 cp "$WEB_DIR/src/lib/presets.json" "$AGENT_OUT/presets.json"
+cp "$REPO_ROOT/apps/api/app/services/render_formats.json" "$AGENT_OUT/render_formats.json"
 # The style and the save options, with what they refer to written in place, as a tool's input schema wants it.
 "${PYTHON[@]}" - "$SCHEMA_TMP" "$AGENT_OUT/schemas.json" <<'PY'
 import json, sys

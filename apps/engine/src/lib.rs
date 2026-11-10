@@ -6,6 +6,7 @@
 //! and same fonts, so the preview is the export.
 
 pub mod edit;
+pub mod encode;
 pub mod fonts;
 pub mod model;
 pub mod scene;
@@ -42,6 +43,7 @@ mod abi {
     use serde::Serialize;
 
     use crate::edit::{self, Edge};
+    use crate::encode;
     use crate::model::Transcript;
     use crate::{FontBook, Renderer, Scene, SceneInput};
 
@@ -217,6 +219,29 @@ mod abi {
     #[unsafe(no_mangle)]
     pub extern "C" fn oc_frame_ptr(scene: u32) -> *const u8 {
         with_scene(scene, |r| r.rgba().as_ptr()).unwrap_or(std::ptr::null())
+    }
+
+    /// The FFmpeg command that makes a file of `scene` (`encode::plan`), from an `encode::Output` as
+    /// JSON: the arguments, the frames to pipe and the band to cut from each, left as JSON. Returns 0
+    /// with the reason when it cannot be encoded.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc` with `len` bytes.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_encode_plan(scene: u32, ptr: *mut u8, len: usize) -> u32 {
+        let json = unsafe { take(ptr, len) };
+        let output = serde_json::from_slice::<encode::Output>(&json).map_err(|e| e.to_string());
+        respond(output.and_then(|o| {
+            with_scene(scene, |r| encode::plan(r.scene(), &o))
+                .unwrap_or(Err("no such scene".into()))
+        }))
+    }
+
+    /// What ffprobe is given before the source to print its transfer function, for
+    /// `oc_encode_plan`'s `source_transfer`, left as a JSON array.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_probe_args() -> u32 {
+        respond(Ok(encode::PROBE_ARGS))
     }
 
     /// The active caption block as four little-endian f32 (x, y, w, h) in frame
@@ -621,7 +646,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 29);
+        assert_eq!(exported.len(), 31);
         assert_eq!(exported, declared);
     }
 }

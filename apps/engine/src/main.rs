@@ -6,9 +6,9 @@
 //! grants exactly one read and one write per job.
 //!
 //! Built with the `server` feature, so the library the phone and the browser use does not carry the
-//! HTTP stack. The pieces: `http` (routes), `render` (a job), `ffmpeg`, `colour`, `upload`, `progress`.
+//! HTTP stack. The pieces: `http` (routes), `render` (a job), `ffmpeg`, `upload`, `progress`; the
+//! FFmpeg command is the library's (`encode`).
 
-mod colour;
 mod ffmpeg;
 mod http;
 mod progress;
@@ -101,7 +101,6 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::colour::*;
     use crate::ffmpeg::*;
     use crate::upload::*;
     use opencaptions_engine::{FontBook, Renderer, Scene, SceneInput};
@@ -189,45 +188,6 @@ mod tests {
         assert!(!token_matches("S3cret", "s3cret"));
         // A server with no token set would otherwise let in every request that sends none.
         assert!(!token_matches("", ""));
-    }
-
-    #[test]
-    fn hdr_is_kept_where_the_codec_can_carry_it_and_tone_mapped_where_not() {
-        assert!(matches!(
-            Colour::of("bt709", Some("yuv420p10le")),
-            Colour::Sdr
-        ));
-        assert!(matches!(Colour::of("", None), Colour::Sdr));
-        assert!(matches!(Colour::of("smpte2084", None), Colour::ToneMapped));
-        let hlg = Colour::of("arib-std-b67", Some("yuv420p10le"));
-        assert_eq!(hlg.tags()[5], "arib-std-b67");
-        assert!(
-            hlg.filter((1080, 1920, 30), (0, 0), "yuv420p", false)
-                .contains("t=arib-std-b67")
-        );
-        assert_eq!(Colour::of("smpte2084", None).tags()[5], "bt709");
-    }
-
-    #[test]
-    fn green_screen_replaces_the_video_with_solid_green() {
-        let green = Colour::Sdr.filter((1080, 1920, 30), (0, 0), "yuv420p", true);
-        assert!(green.starts_with("color=c=0x00FF00:s=1080x1920:r=30"));
-        assert!(!green.contains("[0:v]"), "the video picture is not read");
-        assert!(green.contains("overlay"), "the captions go over it");
-        let plain = Colour::Sdr.filter((1080, 1920, 30), (0, 0), "yuv420p", false);
-        assert!(plain.starts_with("[0:v]") && !plain.contains("0x00FF00"));
-    }
-
-    #[test]
-    fn the_captions_are_laid_over_the_video_where_they_were_cut_from() {
-        for colour in [
-            Colour::Sdr,
-            Colour::ToneMapped,
-            Colour::of("smpte2084", Some("yuv420p10le")),
-        ] {
-            let graph = colour.filter((1080, 1920, 30), (64, 1500), "yuv420p", false);
-            assert!(graph.contains("overlay=x=64:y=1500:"), "{graph}");
-        }
     }
 
     #[test]

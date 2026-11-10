@@ -207,7 +207,9 @@ and the exports in step.
 
 The `opencaptions-engine` binary, built with the crate's `server` feature (`tiny_http`, `ureq`), so the library the
 browser and the apps link does not carry its HTTP stack. Its code is `main.rs` and the modules `http` (routes),
-`render` (a job), `ffmpeg`, `colour`, `upload` and `progress`.
+`render` (a job), `ffmpeg` (the probe and the process), `upload` and `progress`. The FFmpeg command itself, with
+the encoder per codec and the colour handling, is the library's `encode::plan`, so the npm package runs the same
+command over WebAssembly (`oc_encode_plan`).
 
 - **Routes.** `GET /health` (which also reports the engine's render revision), `POST /render` and `POST /subtitles`.
 - **Credentials.** `POST /render` takes a presigned read URL for the source and a presigned write URL for the
