@@ -1,6 +1,6 @@
 {
   "name": "opencaptions",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Animated word-by-word captions for your videos, from Claude, Cursor or any MCP client, or the command line. Runs on your computer, or on your own OpenCaptions server.",
   "mcpName": "io.github.leogaudin/opencaptions",
   "license": "AGPL-3.0-only",

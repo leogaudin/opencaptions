@@ -1,6 +1,13 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.3.1 (2026-11-11)
+
+### Documentation
+- The docs home, both llms.txt, the press kit and the landing page name the agent package and that it runs with no server; the Mac is in the site's llms.txt
+
+### Fixes
+- The npm and MCP Registry descriptions say the package runs on the computer, not only on a server
 ## 1.3.0 (2026-11-10)
 
 ### Changes
@@ -8,6 +15,9 @@ Every change to OpenCaptions, from its commit messages.
 
 ### Features
 - The opencaptions package captions on the computer with no server: Parakeet Ultra through sherpa-onnx, the engine's WebAssembly and encode::plan run by FFmpeg, a project file beside the video
+
+### Maintenance
+- Release 1.3.0
 ## 1.2.1 (2026-11-10)
 
 ### Fixes
