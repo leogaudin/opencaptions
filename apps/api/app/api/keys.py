@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 @router.get("", response_model=list[ApiKeyRead], summary="List API keys")
 async def list_keys(
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> list[ApiKey]:
     rows = await session.scalars(
         select(ApiKey).where(ApiKey.user_id == user.id).order_by(ApiKey.created_at.desc())
@@ -42,7 +42,7 @@ async def list_keys(
 async def create_key(
     body: ApiKeyCreate,
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> ApiKeyCreated:
     """Mint a key. The response is the only time the key itself is ever returned."""
     key, prefix, key_hash = api_keys.mint()
@@ -61,7 +61,7 @@ async def create_key(
 async def revoke_key(
     key_id: Annotated[UUID, Path()],
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     row = await session.get(ApiKey, key_id)
     # Another user's key is answered exactly like a missing one.

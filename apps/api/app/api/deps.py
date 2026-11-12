@@ -65,7 +65,7 @@ def _job_not_found() -> HTTPException:
 
 async def get_session_user(
     request: Request,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> User:
     """Resolve the caller from the session cookie, or raise 401.
 
@@ -98,7 +98,7 @@ _LAST_USED_GRANULARITY = timedelta(minutes=5)
 
 async def get_current_user(
     request: Request,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User:
     """Resolve the caller from an API key when one is sent, else the session.
@@ -129,7 +129,7 @@ async def get_current_user(
 async def get_owned_project(
     project_id: Annotated[UUID, Path()],
     user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Project:
     """Load a project and enforce ownership, else 404.
 
@@ -145,7 +145,7 @@ async def get_owned_project(
 async def get_owned_project_light(
     project_id: Annotated[UUID, Path()],
     user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Project:
     """:func:`get_owned_project` without the transcript, for routes that never read it.
 
@@ -161,7 +161,7 @@ async def get_owned_project_light(
 async def get_owned_job(
     job_id: Annotated[UUID, Path()],
     user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Job:
     """Load a job only if the caller owns it, else 404."""
     job = await session.get(Job, job_id)

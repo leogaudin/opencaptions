@@ -63,7 +63,7 @@ async def _project_with_active_job(session: AsyncSession, proj: Project) -> Proj
 
 @router.get("", response_model=ProjectList, summary="List projects")
 async def list_projects(
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     user: Annotated[User, Depends(get_current_user)],
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -134,7 +134,7 @@ async def list_projects(
     summary="Create project",
 )
 async def create_project(
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     user: Annotated[User, Depends(get_current_user)],
     title: Annotated[str, Form(min_length=1, max_length=255)],
     video: Annotated[UploadFile | None, File()] = None,
@@ -174,7 +174,7 @@ async def create_project(
 )
 async def get_project(
     proj: Annotated[Project, Depends(get_owned_project)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> ProjectStatus:
     """Retrieve a single project with its transcript, style config, and active job (if any)."""
     return await _project_with_active_job(session, proj)
@@ -189,7 +189,7 @@ async def get_project(
 async def update_project(
     proj: Annotated[Project, Depends(get_owned_project)],
     body: ProjectUpdate,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> ProjectStatus:
     """Partial update: set title, transcript, style_config, or caption offset independently."""
     if body.title is not None:
@@ -212,7 +212,7 @@ async def update_project(
 )
 async def delete_project(
     proj: Annotated[Project, Depends(get_owned_project_light)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     """Delete the project, cancel its jobs, remove its objects."""
     # Cancel any in-progress Celery tasks for this project
@@ -253,7 +253,7 @@ async def delete_project(
 async def start_transcription(
     proj: Annotated[Project, Depends(get_owned_project_light)],
     body: TranscribeRequest,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     user: Annotated[User, Depends(get_current_user)],
 ) -> JobStatus:
     """Enqueue a transcription job."""

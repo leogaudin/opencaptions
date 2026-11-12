@@ -72,7 +72,7 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 async def request_download(
     proj: Annotated[Project, Depends(get_owned_project)],
     body: RenderRequest,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     user: Annotated[User, Depends(get_current_user)],
 ) -> DownloadResponse | Response:
     """Request a rendered video in a given format.

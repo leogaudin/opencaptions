@@ -142,7 +142,7 @@ async def _enforce_ip_ceiling(request: Request) -> None:
 
 @router.get("/status", response_model=AuthStatus, summary="Auth bootstrap status")
 async def auth_status(
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> AuthStatus:
     """Public: lets the SPA offer first-run signup without probing a 401."""
     return AuthStatus(
@@ -166,7 +166,7 @@ async def register(
     body: RegisterRequest,
     request: Request,
     response: Response,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> AuthResponse:
     """Create an account.
 
@@ -223,7 +223,7 @@ async def login(
     body: LoginRequest,
     request: Request,
     response: Response,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> AuthResponse:
     # Coarse per-source-IP ceiling first (see _AUTH_IP_SCOPE): a blunt anti-DoS
     # cap on expensive hashing per address, SEPARATE from, and additive to, the
@@ -301,7 +301,7 @@ async def me(
 )
 async def my_usage(
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> UsageRead:
     """Totals from the durable per-job usage records, scoped to this owner."""
     projects = await session.scalar(
@@ -329,7 +329,7 @@ async def my_usage(
 async def change_email(
     body: ChangeEmailRequest,
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> UserRead:
     """Move the account to a new address, confirming the current password first.
 
@@ -363,7 +363,7 @@ async def change_password(
     body: ChangePasswordRequest,
     request: Request,
     user: Annotated[User, Depends(get_session_user)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     """Set a new password, keeping only the session that made the change.
 
@@ -434,7 +434,7 @@ async def request_password_reset(
     body: PasswordResetRequest,
     request: Request,
     background_tasks: BackgroundTasks,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Response:
     """Email a single-use reset link, when SMTP is configured.
 
@@ -469,7 +469,7 @@ async def request_password_reset(
 async def confirm_password_reset(
     body: PasswordResetConfirm,
     request: Request,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Response:
     """Redeem a single-use reset token and set a new password.
 

@@ -56,7 +56,7 @@ async def get_job(
 )
 async def cancel_job(
     job: Annotated[Job, Depends(get_owned_job)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     """Cancel a running or queued job. Idempotent: 204 if already terminal."""
     if job.status in {"completed", "failed", "cancelled"}:
@@ -99,7 +99,7 @@ async def job_font(family: Annotated[str, Path(max_length=100)]) -> Response:
 async def report_progress(
     job_id: Annotated[UUID, Path()],
     body: ProgressUpdate,
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     """Internal endpoint: the engine posts intermediate progress.
 

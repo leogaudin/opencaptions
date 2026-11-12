@@ -176,7 +176,7 @@ async def _stage_upload(audio: UploadFile) -> tuple[str, float | None]:
 )
 async def create_transcription(
     audio: Annotated[UploadFile, File(description="Audio, or video: anything ffmpeg reads")],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
     user: Annotated[User, Depends(get_current_user)],
     language: Annotated[str, Form(description="'auto' or an ISO 639-1 code")] = "auto",
     model: Annotated[str | None, Form()] = None,
@@ -272,7 +272,7 @@ async def create_transcription(
 )
 async def get_transcription(
     job: Annotated[Job, Depends(get_owned_job)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Response:
     """The Transcript JSON (the schema of ``project.transcript``) of a completed job."""
     if not _is_api_job(job):
@@ -325,7 +325,7 @@ async def _delete_everything(job: Job, session: AsyncSession) -> None:
 )
 async def delete_transcription(
     job: Annotated[Job, Depends(get_owned_job)],
-    session: Annotated[AsyncSession, Depends(db_session)],
+    session: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> None:
     if not _is_api_job(job):
         raise ApiError.JOB_NOT_FOUND.exc("Job not found")
