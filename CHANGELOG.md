@@ -1,6 +1,17 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.3.2 (2026-11-12)
+
+### Fixes
+- Known vulnerabilities fixed in the lockfiles: rustls, rustls-webpki and webpki-roots in the engine, filelock and certifi in the API, undici, fast-uri and postcss-selector-parser in the docs, source-map-js in the web
+- A change is committed before its response is sent: the session dependency is function-scoped, so a client never reads the row from before its own write
+
+### Maintenance
+- Glama.json names the maintainer, so the Glama listing can be claimed
+
+### Tests
+- The word looks test deals over 64 words, so it cannot fail by chance (4 words dealt none 1 run in 16)
 ## 1.3.1 (2026-11-11)
 
 ### Documentation
@@ -8,6 +19,9 @@ Every change to OpenCaptions, from its commit messages.
 
 ### Fixes
 - The npm and MCP Registry descriptions say the package runs on the computer, not only on a server
+
+### Maintenance
+- Release 1.3.1
 ## 1.3.0 (2026-11-10)
 
 ### Changes
