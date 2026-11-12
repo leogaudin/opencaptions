@@ -13,7 +13,7 @@ import {
 } from "../src/captions.ts";
 import { api, connectionFromEnv, OpenCaptionsError } from "../src/client.ts";
 import { findLook } from "../src/looks.ts";
-import { type Fake, KEY, startFake } from "./fake-server.ts";
+import { type Fake, KEY, startFake, TRANSCRIPT } from "./fake-server.ts";
 
 process.env.OPENCAPTIONS_POLL_MS = "5";
 
@@ -211,12 +211,36 @@ test("words heard apart are joined into one that spans them", async () => {
 });
 
 test("a look with word looks deals them once there are words", async () => {
-  const result = await captionVideo(client(), { source: video, look: "Editorial" }, quiet);
+  // Each word keeps the style's own look half the time: with 64 words, none dealt is not a chance.
+  const words = Array.from({ length: 64 }, (_, i) => ({
+    text: `w${i}`,
+    start: i / 2,
+    end: i / 2 + 0.4,
+    confidence: 1,
+  }));
+  const transcript = {
+    ...TRANSCRIPT,
+    duration: 32,
+    segments: [
+      {
+        ...TRANSCRIPT.segments[0],
+        start: 0,
+        end: 31.9,
+        text: words.map((w) => w.text).join(" "),
+        words,
+      },
+    ],
+  };
+  const result = await captionVideo(
+    client(),
+    { source: video, look: "Editorial", transcript },
+    quiet,
+  );
   assert.ok(result.done);
-  const transcript = fake.projects.get(result.project_id)?.transcript as {
+  const dealt = fake.projects.get(result.project_id)?.transcript as {
     segments: { words: { variant?: number | null }[] }[];
   };
-  const variants = transcript.segments.flatMap((s) => s.words).map((w) => w.variant);
+  const variants = dealt.segments.flatMap((s) => s.words).map((w) => w.variant);
   assert.ok(
     variants.some((v) => typeof v === "number"),
     "some words were given a look",
