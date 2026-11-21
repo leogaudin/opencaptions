@@ -1,6 +1,10 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.3.3 (2026-11-21)
+
+### Maintenance
+- The npm package is published with Trusted Publishing, signed in as this workflow with no token
 ## 1.3.2 (2026-11-12)
 
 ### Fixes
@@ -9,6 +13,7 @@ Every change to OpenCaptions, from its commit messages.
 
 ### Maintenance
 - Glama.json names the maintainer, so the Glama listing can be claimed
+- Release 1.3.2
 
 ### Tests
 - The word looks test deals over 64 words, so it cannot fail by chance (4 words dealt none 1 run in 16)
