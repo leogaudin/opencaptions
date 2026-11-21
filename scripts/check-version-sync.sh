@@ -51,4 +51,14 @@ if [ "$api_version" != "$web_version" ] || [ "$api_version" != "$engine_version"
   exit 1
 fi
 
-echo "✓ All manifests agree on version $api_version"
+# The docs' pinning examples (`OPENCAPTIONS_VERSION=x.y.z`) name the current release, so a reader who
+# copies one gets images that exist. scripts/release.sh bumps them with the manifests.
+stale="$(cd "$REPO_ROOT" && grep -rnoE 'OPENCAPTIONS_VERSION=[0-9]+\.[0-9]+\.[0-9]+' README.md docker-compose.yml docs \
+  | grep -v "=$api_version\$" || true)"
+if [ -n "$stale" ]; then
+  echo "ERROR: a pinning example names another version than $api_version (scripts/release.sh bumps them):" >&2
+  echo "$stale" >&2
+  exit 1
+fi
+
+echo "✓ All manifests and the docs' pinning examples agree on version $api_version"

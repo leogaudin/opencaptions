@@ -14,6 +14,7 @@ cd "$(cd "$(dirname "$0")/.." && pwd)"
 # Python, not sed: the first match of a pattern is wanted, which BSD and GNU sed spell differently.
 VERSION="$VERSION" python3 - <<'PY'
 import os, re
+from pathlib import Path
 v = os.environ["VERSION"]
 def bump(path, pattern, repl, count=1):
     text = open(path).read()
@@ -34,6 +35,12 @@ bump("apps/ios/project.yml", r'^( *MARKETING_VERSION: *)[0-9][^ \n]*', rf'\g<1>{
 # The lock files name their own package once.
 bump("apps/engine/Cargo.lock", r'(name = "opencaptions-engine"\nversion = )"[^"]*"', rf'\g<1>"{v}"')
 bump("apps/api/uv.lock", r'(name = "opencaptions-api"\nversion = )"[^"]*"', rf'\g<1>"{v}"')
+# The pinning examples in the docs name the latest release (check-version-sync.sh holds them to it).
+for path in ["README.md", "docker-compose.yml", *sorted(map(str, Path("docs").rglob("*.md")))]:
+    text = open(path).read()
+    new = re.sub(r"OPENCAPTIONS_VERSION=[0-9]+\.[0-9]+\.[0-9]+", f"OPENCAPTIONS_VERSION={v}", text)
+    if new != text:
+        open(path, "w").write(new)
 PY
 
 bash scripts/check-version-sync.sh

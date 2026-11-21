@@ -35,10 +35,9 @@ Open <http://localhost:5173>. That is the whole install: the compose file is sel
 other file to copy and no environment file to write. Every application setting has a default that is
 right for this layout; see [Configuration](./configuration.md) for the few you may want to change.
 
-:::note[Before the first release]
-Until v0.1.0 is tagged, the images are the `edge` build of the main branch, which the compose file
-uses by default. After the release they are `latest`, and you can pin a version with
-`OPENCAPTIONS_VERSION=0.1.0 docker compose up -d`.
+:::note[Which version runs]
+The compose file uses the `edge` images, built from the main branch. To stay on a release, pin it
+(this is the latest): `OPENCAPTIONS_VERSION=1.3.3 docker compose up -d`.
 :::
 
 ## What runs

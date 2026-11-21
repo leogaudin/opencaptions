@@ -4,8 +4,8 @@
 #   Develop it:  in a clone, `docker compose up -d --build` builds from source and
 #                `docker compose watch` adds live reload.
 #
-# Images are the latest main (`edge`) until the first release. Pin one with
-# OPENCAPTIONS_VERSION=0.1.0. Settings, scaling, GPU and security notes:
+# Images are the latest main (`edge`). Pin a release with
+# OPENCAPTIONS_VERSION=1.3.3. Settings, scaling, GPU and security notes:
 # https://docs.opencaptions.app/self-hosting/installation/
 
 name: opencaptions

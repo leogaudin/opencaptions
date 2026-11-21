@@ -68,16 +68,16 @@ run, and you should never run one by hand.
 
 Before an upgrade, **make a backup**, and read the release notes on
 [GitHub](https://github.com/leogaudin/opencaptions/releases) for anything that changes how the stack is
-configured. Until v0.1.0, the interface, the API and the data formats may change between builds.
+configured.
 
-To stay on a version, pin it once released:
+To stay on a release, pin it (this is the latest):
 
 ```bash
-OPENCAPTIONS_VERSION=0.1.0 docker compose up -d
+OPENCAPTIONS_VERSION=1.3.3 docker compose up -d
 ```
 
-Export the variable in your shell to keep it in force. The compose file uses `edge` (the latest main
-branch) until the first release.
+Export the variable in your shell to keep it in force. Without it, the compose file uses `edge`, the
+latest main branch.
 
 If an upgrade goes wrong, go back to the previous version the same way, and restore the backup if the
 database was changed.
