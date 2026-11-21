@@ -305,23 +305,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [check]
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    # npm trusts only this repository's ci.yml (Trusted Publishing), so a fork's tag skips it.
+    if: >-
+      ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      && github.repository == 'leogaudin/opencaptions' }}
     permissions:
       contents: read
-      # npm's provenance: the package says which workflow, on which commit, built it.
+      # Signs in to npm with this workflow's identity, with no token, and gives the package its
+      # provenance: which workflow, on which commit, built it.
       id-token: write
-    env:
-      # `secrets` may not appear in a step-level `if`, so decide once here.
-      NPM_CONFIGURED: ${{ secrets.NPM_TOKEN != '' }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-        if: ${{ env.NPM_CONFIGURED == 'true' }}
+      # Trusted Publishing needs npm 11.5.1 or later.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
       - name: Build the engine's WebAssembly
-        if: ${{ env.NPM_CONFIGURED == 'true' }}
         run: make agent-engine
       - name: Publish
-        if: ${{ env.NPM_CONFIGURED == 'true' }}
         working-directory: apps/agent
         run: |
           version="$(node -p 'require("./package.json").version')"
@@ -331,13 +333,11 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
           cp ../../LICENSE .
-          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
           npm publish --provenance --access public
       # The official MCP Registry lists it from server.json, signed in with this workflow's identity
       # (io.github.leogaudin/...), and checks the package's mcpName matches. A step of its own, so a
       # rerun after npm took the package still lists it.
       - name: List it on the MCP Registry
-        if: ${{ env.NPM_CONFIGURED == 'true' }}
         working-directory: apps/agent
         run: |
           version="$(node -p 'require("./package.json").version')"
