@@ -58,9 +58,15 @@ Prepared $VERSION. Review the diff, then:
 
   git add -A && git commit -m "chore: Release $VERSION"
   git tag v$VERSION
-  git push origin main v$VERSION      # the tag publishes the images, multi-arch
+  git push origin v$VERSION           # the tag alone: it publishes npm, the images and the registry
 
-CI then drafts the GitHub Release with the Claude Desktop extension attached. Read it, then publish it:
+The Claude Code plugin on main names this exact version of the npm package, so main follows only once npm
+has it (about 15 minutes), or anyone installing the plugin in between gets a start-up error:
+
+  until [ "\$(npm view opencaptions version 2>/dev/null)" = "$VERSION" ]; do sleep 30; done
+  git push origin main
+
+CI drafts the GitHub Release with the Claude Desktop extension attached. Read it, then publish it:
 
   gh release edit v$VERSION --draft=false
 
