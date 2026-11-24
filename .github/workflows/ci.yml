@@ -310,7 +310,8 @@ jobs:
       ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
       && github.repository == 'leogaudin/opencaptions' }}
     permissions:
-      contents: read
+      # Writing: the draft GitHub Release the Claude Desktop extension is attached to.
+      contents: write
       # Signs in to npm with this workflow's identity, with no token, and gives the package its
       # provenance: which workflow, on which commit, built it.
       id-token: write
@@ -350,3 +351,21 @@ jobs:
             | tar -xz mcp-publisher
           ./mcp-publisher login github-oidc
           ./mcp-publisher publish
+      # The Claude Desktop extension (one file: double-click to install). The release is a draft, for
+      # the maintainer to read and publish (`gh release edit vX.Y.Z --draft=false`); a Release made by
+      # hand before this ran just gets the file.
+      - name: Build the Claude Desktop extension
+        run: make agent-mcpb
+      - name: Draft the GitHub Release with the extension
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          file=apps/agent/opencaptions-macos.mcpb
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$file" --clobber
+          else
+            notes="$(awk -v v="$version" 'index($0, "## " v " ") == 1 { found = 1; next } /^## / { found = 0 } found' CHANGELOG.md)"
+            gh release create "$tag" "$file" --draft --verify-tag --title "OpenCaptions $version" --notes "$notes"
+          fi

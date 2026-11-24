@@ -58,5 +58,9 @@ Prepared $VERSION. Review the diff, then:
   git tag v$VERSION
   git push origin main v$VERSION      # the tag publishes the images, multi-arch
 
+CI then drafts the GitHub Release with the Claude Desktop extension attached. Read it, then publish it:
+
+  gh release edit v$VERSION --draft=false
+
 Then pin the quick start to it: OPENCAPTIONS_VERSION=$VERSION docker compose up -d
 MSG
