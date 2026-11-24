@@ -16,6 +16,10 @@
 - [A self-hosted alternative to caption subscriptions](https://docs.opencaptions.app/use-cases/self-hosted-alternative/): an honest comparison with hosted tools
 - [Self-hosted Whisper captions with Docker](https://docs.opencaptions.app/use-cases/self-hosted-whisper-captions/): run the speech models on your own machine
 - [Green screen captions](https://docs.opencaptions.app/use-cases/green-screen-captions/): a caption layer for your video editor
+- [Add captions on your iPhone](https://docs.opencaptions.app/use-cases/add-captions-on-iphone/): on the device, with no upload
+- [Alternatives to Submagic, Captions, Zeemo and CapCut](https://docs.opencaptions.app/use-cases/caption-app-alternatives/): what each one's pricing page says, and where each is ahead
+- [Burn subtitles into a video](https://docs.opencaptions.app/use-cases/burn-subtitles-into-a-video/): burned-in captions, SRT and VTT
+- [Captions for Reels, TikTok and Shorts](https://docs.opencaptions.app/use-cases/captions-for-reels-tiktok-and-shorts/): looks, size and placement
 - [Styling captions](https://docs.opencaptions.app/guides/styling/): the nineteen looks and every style setting
 - [Exporting](https://docs.opencaptions.app/guides/exporting/): MP4, WebM, ProRes, SRT, VTT, JSON and a green screen
 - [The iPhone and iPad app](https://docs.opencaptions.app/guides/iphone-app/): on-device transcription, no account
