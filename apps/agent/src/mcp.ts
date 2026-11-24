@@ -26,6 +26,12 @@ import { VERSION } from "./version.ts";
 /** How long a tool waits for the server before handing back a ticket, in seconds. */
 const WAIT_S = Number(process.env.OPENCAPTIONS_WAIT_SECONDS) || 45;
 
+/**
+ * The tools that change nothing say so, so a client such as Claude Desktop can let them run without
+ * asking. The others write a video, a subtitle file or the project's words and style.
+ */
+const READ_ONLY = { readOnlyHint: true };
+
 const save = SAVE_SCHEMA.properties;
 const saveProperties = {
   format: { type: "string", description: "mp4 (the default), mp4-hevc, webm or mov (ProRes)" },
@@ -94,6 +100,7 @@ const TOOLS: Tool[] = [
     name: "list_looks",
     description: "The built-in caption looks, each with its animation, font and colours.",
     inputSchema: { type: "object", properties: {} },
+    annotations: READ_ONLY,
   },
   {
     name: "describe_style",
@@ -101,6 +108,7 @@ const TOOLS: Tool[] = [
       "Every style setting with its type, range, default and meaning, for caption_video's and " +
       "set_style's `style`.",
     inputSchema: { type: "object", properties: {} },
+    annotations: READ_ONLY,
   },
   {
     name: "get_transcript",
@@ -108,6 +116,7 @@ const TOOLS: Tool[] = [
       "A project's captions as they show on the video, and every word with its index, to check " +
       "names and spelling before fix_words.",
     inputSchema: { type: "object", properties: { project_id: project }, required: ["project_id"] },
+    annotations: READ_ONLY,
   },
   {
     name: "fix_words",

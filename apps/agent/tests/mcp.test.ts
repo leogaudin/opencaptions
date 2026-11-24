@@ -53,6 +53,12 @@ test("the tools are listed, each with a schema", async () => {
   assert.ok(style && "font_size" in style.properties);
 });
 
+test("only the tools that change nothing say they are read-only", async () => {
+  const { tools } = await client.listTools();
+  const readOnly = tools.filter((t) => t.annotations?.readOnlyHint === true).map((t) => t.name);
+  assert.deepEqual(readOnly.sort(), ["describe_style", "get_transcript", "list_looks"]);
+});
+
 test("caption_video saves the video and reports progress", async () => {
   const progress: number[] = [];
   const result = await client.callTool(
