@@ -1,4 +1,7 @@
 node_modules/
+# The Claude Desktop extension: built by scripts/build-mcpb.sh.
+.mcpb-build/
+*.mcpb
 dist/
 # Built from apps/engine (make agent-engine), with its fonts; the published package carries them.
 engine/*.wasm

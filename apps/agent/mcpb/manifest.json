@@ -1,0 +1,104 @@
+{
+  "manifest_version": "0.3",
+  "name": "opencaptions",
+  "display_name": "OpenCaptions",
+  "version": "1.3.3",
+  "description": "Animated word-by-word captions for your videos, from Claude, Cursor or any MCP client, or the command line. Runs on your computer, or on your own OpenCaptions server.",
+  "long_description": "Ask Claude to caption a video, and it transcribes the speech, styles it with one of the looks, and saves the captioned video next to the original. It can also read the captions back, fix a misheard word, and export SRT or VTT subtitles.\n\nIt runs on your computer: the speech model and the caption engine are local, and the video is never uploaded. The first caption downloads the speech model (about 700 MB, once). It needs [FFmpeg](https://ffmpeg.org/download.html), which reads and writes the video: `brew install ffmpeg`.\n\nTo use your own OpenCaptions server instead (every language, Whisper models, a GPU, the web editor), fill in its address and an API key from its Account page. Leave them empty to work on this computer.",
+  "author": {
+    "name": "Léo Gaudin",
+    "url": "https://github.com/leogaudin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leogaudin/opencaptions"
+  },
+  "homepage": "https://docs.opencaptions.app/guides/agents/",
+  "documentation": "https://docs.opencaptions.app/guides/agents/",
+  "support": "https://github.com/leogaudin/opencaptions/issues",
+  "license": "AGPL-3.0-only",
+  "keywords": ["captions", "subtitles", "video", "transcription", "ffmpeg"],
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/cli.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/cli.js", "mcp"],
+      "env": {
+        "OPENCAPTIONS_URL": "${user_config.server_url}",
+        "OPENCAPTIONS_KEY": "${user_config.api_key}",
+        "OPENCAPTIONS_FFMPEG": "${user_config.ffmpeg_folder}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "caption_video",
+      "description": "Transcribe a video, style it and save it with animated word-by-word captions."
+    },
+    {
+      "name": "check_progress",
+      "description": "Follow a caption job that is still running."
+    },
+    {
+      "name": "list_looks",
+      "description": "The built-in looks."
+    },
+    {
+      "name": "describe_style",
+      "description": "Every style setting, with its range and meaning."
+    },
+    {
+      "name": "get_transcript",
+      "description": "A project's captions and every word, to check them."
+    },
+    {
+      "name": "fix_words",
+      "description": "Correct words by index, keeping their timing."
+    },
+    {
+      "name": "set_style",
+      "description": "Change a project's look or style settings."
+    },
+    {
+      "name": "save_video",
+      "description": "Save the captioned video again, after a fix or a style change."
+    },
+    {
+      "name": "export_subtitles",
+      "description": "Write SRT or VTT subtitles."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "platforms": ["darwin"],
+    "runtimes": {
+      "node": ">=20.10"
+    }
+  },
+  "user_config": {
+    "ffmpeg_folder": {
+      "type": "directory",
+      "title": "FFmpeg folder",
+      "description": "Only if OpenCaptions cannot find FFmpeg: the folder holding ffmpeg and ffprobe.",
+      "required": false,
+      "default": ""
+    },
+    "server_url": {
+      "type": "string",
+      "title": "OpenCaptions server",
+      "description": "Leave empty to caption on this computer. Your own server's address, for example http://localhost:5173.",
+      "required": false,
+      "default": ""
+    },
+    "api_key": {
+      "type": "string",
+      "title": "API key",
+      "description": "Only with a server: a key from its Account page.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    }
+  }
+}

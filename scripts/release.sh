@@ -31,6 +31,8 @@ bump("apps/agent/package-lock.json", r'"version": *"[^"]*"', f'"version": "{v}"'
 # The MCP Registry's entry names the server's version and the npm package's.
 bump("apps/agent/plugin/.claude-plugin/plugin.json", r'"version": *"[^"]*"', f'"version": "{v}"')
 bump("apps/agent/server.json", r'"version": *"[^"]*"', f'"version": "{v}"', count=2)
+# The Claude Desktop extension's manifest (scripts/build-mcpb.sh packs it).
+bump("apps/agent/mcpb/manifest.json", r'"version": *"[^"]*"', f'"version": "{v}"')
 bump("apps/ios/project.yml", r'^( *MARKETING_VERSION: *)[0-9][^ \n]*', rf'\g<1>{v}')
 # The lock files name their own package once.
 bump("apps/engine/Cargo.lock", r'(name = "opencaptions-engine"\nversion = )"[^"]*"', rf'\g<1>"{v}"')

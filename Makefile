@@ -18,7 +18,7 @@ help:                ## Show this help
 
 # The checks, in the order the local gate runs them. Each is a target that runs in its pinned container.
 CI_STATIC_CHECKS := lint-actions check-repo lint-backend test-backend lint-engine test-engine test-engine-wasm \
-	typegen-check lint-frontend typecheck test-web build-web lint-agent test-agent
+	typegen-check lint-frontend typecheck test-web build-web lint-agent test-agent test-agent-mcpb
 CI_HEAVY_CHECKS := build-demo build-docs e2e
 CI_CHECKS := $(CI_STATIC_CHECKS) $(CI_HEAVY_CHECKS)
 
@@ -134,6 +134,13 @@ agent-engine:        ## Build the engine's WebAssembly, with its bundled fonts, 
 	@mkdir -p apps/agent/engine/fonts
 	@cp apps/engine/target/wasm32-unknown-unknown/release/opencaptions_engine.wasm apps/agent/engine/
 	@cp apps/engine/fonts/* apps/agent/engine/fonts/
+
+# The Claude Desktop extension: the package, its dependencies and apps/agent/mcpb/manifest.json in one file.
+agent-mcpb: agent-engine ## Build the Claude Desktop extension for the Mac into apps/agent/opencaptions-macos.mcpb
+	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm run build && bash ../../scripts/build-mcpb.sh opencaptions-macos darwin arm64 x64'
+
+test-agent-mcpb: agent-engine ## The Claude Desktop extension starts: a bundle for this machine, unpacked, lists the tools
+	@./scripts/ci-shell.sh node apps/agent '$(NPM_CI) && npm run build && bash ../../scripts/build-mcpb.sh opencaptions-test linux "$$(node -p process.arch)" && node mcpb/check-bundle.ts opencaptions-test.mcpb'
 
 engine-wasm:         ## Build the engine for the browser into apps/web/public/engine (for npm run dev)
 	@docker build -q --build-context engine=apps/engine --target preview-assets \
