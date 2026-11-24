@@ -565,7 +565,10 @@ actions (`src/captioner.ts`) run in one of two places:
   Nothing is kept between calls.
 - **Out.** A tag publishes it to npm with provenance and lists it in the MCP Registry (`server.json`, whose
   name the package's `mcpName` matches). The Claude Code plugin (`apps/agent/plugin`, listed by
-  `.claude-plugin/marketplace.json`) runs it with `npx` and adds a skill on when to use it.
+  `.claude-plugin/marketplace.json`) runs it with `npx` and adds a skill on when to use it. The Claude Desktop
+  extension (`apps/agent/mcpb`, built by `scripts/build-mcpb.sh`) is the package, its production dependencies and
+  both Mac architectures' speech engine in one `.mcpb` file; a tag's CI attaches it to a draft GitHub Release, and
+  `make test-agent-mcpb` starts a bundle and lists its tools.
 
 ## The documentation site
 

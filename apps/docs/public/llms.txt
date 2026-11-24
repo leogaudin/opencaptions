@@ -19,7 +19,7 @@
 - [Styling captions](https://docs.opencaptions.app/guides/styling/): the nineteen looks and every style setting
 - [Exporting](https://docs.opencaptions.app/guides/exporting/): MP4, WebM, ProRes, SRT, VTT, JSON and a green screen
 - [The iPhone and iPad app](https://docs.opencaptions.app/guides/iphone-app/): on-device transcription, no account
-- [From Claude and other agents](https://docs.opencaptions.app/guides/agents/): an MCP server and a command line (`npx opencaptions`) that caption a video on your computer, with no server
+- [From Claude and other agents](https://docs.opencaptions.app/guides/agents/): an MCP server and a command line (`npx opencaptions`) that caption a video on your computer, with no server; Claude Desktop on a Mac installs it from one file
 
 ## Self-hosting
 

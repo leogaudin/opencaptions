@@ -9,6 +9,8 @@ and your video stays where it is.
 npx opencaptions caption reel.mp4 --look Bold --language fr
 ```
 
+On a Mac, Claude Desktop installs it from one file, [opencaptions-macos.mcpb](https://github.com/leogaudin/opencaptions/releases/latest/download/opencaptions-macos.mcpb).
+
 It needs [FFmpeg](https://ffmpeg.org/download.html) (`OPENCAPTIONS_FFMPEG` names its folder if it is not on the
 `PATH` or in Homebrew's), and downloads the speech model (about 700 MB)
 the first time. It transcribes 25 European languages. To use an OpenCaptions server instead (other

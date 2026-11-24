@@ -6,7 +6,7 @@ Key facts:
 
 - Open source under AGPL-3.0. Self-hosted with Docker Compose: download one `docker-compose.yml` and run `docker compose up -d`. A GPU is optional.
 - An iPhone, iPad and Mac app transcribes on the device, with no account: https://apps.apple.com/app/id6820548922
-- For Claude Code, Cursor and other MCP clients, and scripts: the `opencaptions` npm package, an MCP server (`npx -y opencaptions mcp`) and a command line (`npx opencaptions caption reel.mp4 --look Bold`). It needs Node.js and FFmpeg, and runs on the computer with no server and no account, or against your own server with an API key: https://docs.opencaptions.app/guides/agents/
+- For Claude Code, Cursor and other MCP clients, and scripts: the `opencaptions` npm package, an MCP server (`npx -y opencaptions mcp`; on a Mac, Claude Desktop installs it from one file) and a command line (`npx opencaptions caption reel.mp4 --look Bold`). It needs Node.js and FFmpeg, and runs on the computer with no server and no account, or against your own server with an API key: https://docs.opencaptions.app/guides/agents/
 - No tracking and no analytics. Videos stay on the device or on your own server unless you choose another transcription provider.
 - One Rust engine draws the captions in the browser (WebAssembly), on the server, on the iPhone and in the npm package, so the preview is the export.
 - Speech models: Whisper covers about 100 spoken languages, Parakeet is fast in 25 European languages, and Apple Speech is built into iOS. Captions can be drawn in Latin, Cyrillic, Arabic, Hebrew, Indic, Thai and CJK scripts; the interface is available in 13 languages.

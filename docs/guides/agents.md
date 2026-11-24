@@ -61,7 +61,18 @@ in its settings' `env`. Or add the tools alone, without the plugin:
 claude mcp add opencaptions -- npx -y opencaptions mcp
 ```
 
-### Claude Desktop, Cursor and other clients
+### Claude Desktop on a Mac
+
+Download [opencaptions-macos.mcpb](https://github.com/leogaudin/opencaptions/releases/latest/download/opencaptions-macos.mcpb) and open it: Claude Desktop offers to install the extension. Claude
+Desktop brings its own Node.js, so there is nothing to set up but [FFmpeg](https://ffmpeg.org/download.html)
+(`brew install ffmpeg`). Leave the three settings empty to caption on your computer. For your own server, fill in
+its address and an API key. If OpenCaptions says it cannot find FFmpeg, pick the folder holding `ffmpeg` and
+`ffprobe` in the same settings.
+
+The first caption downloads the speech model (about 700 MB, once), so it takes a few minutes. To update, download
+the file again from the [latest release](https://github.com/leogaudin/opencaptions/releases/latest).
+
+### Cursor, other clients, and Claude Desktop on Windows
 
 Add the server to the client's MCP configuration (`claude_desktop_config.json` for Claude Desktop,
 `.cursor/mcp.json` for Cursor):
