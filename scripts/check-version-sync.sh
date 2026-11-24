@@ -9,6 +9,7 @@
 #   - apps/ios      → project.yml (MARKETING_VERSION), read by XcodeGen
 #   - apps/agent    → package.json, published to npm as `opencaptions`
 #   - apps/agent/mcpb/manifest.json → the Claude Desktop extension, which repeats it
+#   - apps/agent/plugin/.mcp.json → the Claude Code plugin, which runs this exact version from npm
 # So those manifests are the only places a version number lives. Nothing
 # forces them to agree with each other, so this guard is the safety net: run it
 # before cutting a release (CI and `make ci` run it too) to catch a manifest that was
@@ -34,6 +35,7 @@ web_version="$(extract_json_version "$REPO_ROOT/apps/web/package.json")"
 engine_version="$(extract_toml_version "$REPO_ROOT/apps/engine/Cargo.toml")"
 agent_version="$(extract_json_version "$REPO_ROOT/apps/agent/package.json")"
 mcpb_version="$(extract_json_version "$REPO_ROOT/apps/agent/mcpb/manifest.json")"
+plugin_pin="$(sed -n 's/.*opencaptions@\([0-9][0-9.]*\).*/\1/p' "$REPO_ROOT/apps/agent/plugin/.mcp.json" | head -n1)"
 ios_version="$(sed -n 's/^ *MARKETING_VERSION: *\([0-9][^ ]*\).*/\1/p' "$REPO_ROOT/apps/ios/project.yml" | head -n1)"
 
 echo "api      (pyproject.toml): ${api_version:-<none>}"
@@ -42,14 +44,16 @@ echo "engine   (Cargo.toml):     ${engine_version:-<none>}"
 echo "ios      (project.yml):    ${ios_version:-<none>}"
 echo "agent    (package.json):   ${agent_version:-<none>}"
 echo "desktop  (mcpb manifest):  ${mcpb_version:-<none>}"
+echo "plugin   (.mcp.json pin):  ${plugin_pin:-<none>}"
 
-if [ -z "$api_version" ] || [ -z "$web_version" ] || [ -z "$engine_version" ] || [ -z "$ios_version" ] || [ -z "$agent_version" ] || [ -z "$mcpb_version" ]; then
+if [ -z "$api_version" ] || [ -z "$web_version" ] || [ -z "$engine_version" ] || [ -z "$ios_version" ] || [ -z "$agent_version" ] || [ -z "$mcpb_version" ] || [ -z "$plugin_pin" ]; then
   echo "ERROR: could not extract a version from one or more manifests" >&2
   exit 1
 fi
 
 if [ "$api_version" != "$web_version" ] || [ "$api_version" != "$engine_version" ] || [ "$api_version" != "$ios_version" ] \
-  || [ "$api_version" != "$agent_version" ] || [ "$api_version" != "$mcpb_version" ]; then
+  || [ "$api_version" != "$agent_version" ] || [ "$api_version" != "$mcpb_version" ] \
+  || [ "$api_version" != "$plugin_pin" ]; then
   echo "ERROR: manifest versions disagree, bump them all to the same value" >&2
   exit 1
 fi

@@ -2,10 +2,11 @@
   "mcpServers": {
     "opencaptions": {
       "command": "npx",
-      "args": ["-y", "opencaptions", "mcp"],
+      "args": ["-y", "opencaptions@1.3.4", "mcp"],
       "env": {
         "OPENCAPTIONS_URL": "${OPENCAPTIONS_URL:-}",
-        "OPENCAPTIONS_KEY": "${OPENCAPTIONS_KEY:-}"
+        "OPENCAPTIONS_KEY": "${OPENCAPTIONS_KEY:-}",
+        "OPENCAPTIONS_FFMPEG": "${OPENCAPTIONS_FFMPEG:-}"
       }
     }
   }
