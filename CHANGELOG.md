@@ -1,10 +1,24 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.3.4 (2026-11-24)
+
+### Documentation
+- The pinning examples name the latest release (1.3.3, not a 0.1.0 that never existed); release.sh bumps them and the version check fails on a stale one
+- Claude Desktop installs the extension from the release's .mcpb file
+
+### Features
+- FFmpeg is found in the Homebrew folders and in OPENCAPTIONS_FFMPEG, so a desktop app that starts the server with a short PATH still finds it
+- A Claude Desktop extension: the manifest, a build script, and a CI check that the bundle starts
+- The tools that change nothing declare themselves read-only, so a client such as Claude Desktop does not ask before listing looks or reading a transcript
+
+### Maintenance
+- Each release tag creates a draft GitHub Release with the Claude Desktop extension attached
 ## 1.3.3 (2026-11-21)
 
 ### Maintenance
 - The npm package is published with Trusted Publishing, signed in as this workflow with no token
+- Release 1.3.3
 ## 1.3.2 (2026-11-12)
 
 ### Fixes

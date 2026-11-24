@@ -5,7 +5,7 @@
 #                `docker compose watch` adds live reload.
 #
 # Images are the latest main (`edge`). Pin a release with
-# OPENCAPTIONS_VERSION=1.3.3. Settings, scaling, GPU and security notes:
+# OPENCAPTIONS_VERSION=1.3.4. Settings, scaling, GPU and security notes:
 # https://docs.opencaptions.app/self-hosting/installation/
 
 name: opencaptions
