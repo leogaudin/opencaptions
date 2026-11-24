@@ -31,8 +31,8 @@ Options for caption:
   --captions-only          the captions alone over green, no sound, to key out
   --subtitles <kinds>      also write subtitles: srt, vtt, json, comma separated
 
-It runs on this computer, with FFmpeg installed; the speech model (700 MB) is downloaded on first
-use. To use an OpenCaptions server instead, set OPENCAPTIONS_KEY (an API key from its Account
+It runs on this computer, with FFmpeg installed (OPENCAPTIONS_FFMPEG names its folder if it is not
+on the PATH); the speech model (700 MB) is downloaded on first use. To use an OpenCaptions server instead, set OPENCAPTIONS_KEY (an API key from its Account
 page) and OPENCAPTIONS_URL (default http://localhost:5173).`;
 
 /** Progress on one line of the terminal, rewritten as it moves. */

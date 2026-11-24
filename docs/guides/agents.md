@@ -25,6 +25,10 @@ so they look the same.
 The first caption downloads the speech model, Parakeet Ultra, about 700 MB, into `~/.cache/opencaptions`
 (`OPENCAPTIONS_CACHE` moves it). On a recent laptop it transcribes about ten times faster than real time.
 
+The package looks for FFmpeg on the `PATH`, and on a Mac in Homebrew's folders too, because an app such as
+Claude Desktop starts it with a shorter `PATH` than your terminal has. If yours is somewhere else, set
+`OPENCAPTIONS_FFMPEG` to the folder holding `ffmpeg` and `ffprobe`.
+
 ### On your OpenCaptions server instead
 
 On the computer the speech model covers 25 European languages, on the processor. Your

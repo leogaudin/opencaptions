@@ -4,12 +4,65 @@
  * the caption band piped in). The probe reads what `apps/api/app/services/audio.py` reads.
  */
 import { spawn } from "node:child_process";
+import { accessSync, constants } from "node:fs";
+import { delimiter, join, parse } from "node:path";
 import { OpenCaptionsError } from "../client.ts";
 
 const INSTALL =
   "FFmpeg is needed to caption without a server. Install it (macOS: brew install ffmpeg; " +
-  "Debian or Ubuntu: sudo apt install ffmpeg; Windows: winget install ffmpeg), or set " +
-  "OPENCAPTIONS_URL and OPENCAPTIONS_KEY to use an OpenCaptions server.";
+  "Debian or Ubuntu: sudo apt install ffmpeg; Windows: winget install ffmpeg). If it is " +
+  "installed but not found, set OPENCAPTIONS_FFMPEG to the folder holding ffmpeg and ffprobe. " +
+  "Or set OPENCAPTIONS_URL and OPENCAPTIONS_KEY to use an OpenCaptions server.";
+
+/** Where Homebrew puts FFmpeg: Apple silicon, then Intel. */
+const HOMEBREW = ["/opt/homebrew/bin", "/usr/local/bin"];
+
+const isProgram = (folder: string, name: string, platform: NodeJS.Platform): boolean => {
+  try {
+    accessSync(join(folder, platform === "win32" ? `${name}.exe` : name), constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+interface Lookup {
+  env?: NodeJS.ProcessEnv;
+  /** Folders tried when the program is not on PATH. */
+  fallbacks?: string[];
+  platform?: NodeJS.Platform;
+}
+
+/**
+ * The program to start for `name`: in the folder OPENCAPTIONS_FFMPEG names, else by its name on
+ * PATH, else (on a Mac) in Homebrew's folders. A desktop app starts the server with a short PATH
+ * that leaves those out, though FFmpeg is installed.
+ */
+export function ffmpegProgram(
+  name: "ffmpeg" | "ffprobe",
+  {
+    env = process.env,
+    platform = process.platform,
+    fallbacks = platform === "darwin" ? HOMEBREW : [],
+  }: Lookup = {},
+): string {
+  const folder = env.OPENCAPTIONS_FFMPEG?.trim();
+  if (folder) {
+    if (!isProgram(folder, name, platform)) {
+      throw new OpenCaptionsError(
+        `OPENCAPTIONS_FFMPEG is ${folder}, but there is no ${name} in it. Set it to the folder ` +
+          "holding ffmpeg and ffprobe, or empty it to look for them on the PATH.",
+      );
+    }
+    return join(folder, name);
+  }
+  const onPath = (env.PATH ?? "")
+    .split(delimiter)
+    .some((dir) => dir && isProgram(dir, name, platform));
+  if (onPath) return name;
+  const found = fallbacks.find((dir) => isProgram(dir, name, platform));
+  return found ? join(found, name) : name;
+}
 
 /** A program's output, or a clear error when it cannot be started or fails. */
 function run(
@@ -29,7 +82,7 @@ function run(
     child.on("close", (code) => {
       if (code === 0) return done(Buffer.concat(out));
       const why = Buffer.concat(err).toString().trim().split("\n").slice(-3).join(" ");
-      fail(new OpenCaptionsError(`${program} failed: ${why || `exit code ${code}`}`));
+      fail(new OpenCaptionsError(`${parse(program).name} failed: ${why || `exit code ${code}`}`));
     });
     if (input && child.stdin) {
       // FFmpeg closes its input once it has the length it was asked for: that ends the writing.
@@ -73,7 +126,7 @@ interface ProbedStream {
 }
 
 export async function probe(path: string): Promise<VideoInfo> {
-  const raw = await run("ffprobe", [
+  const raw = await run(ffmpegProgram("ffprobe"), [
     "-v",
     "error",
     "-print_format",
@@ -107,7 +160,7 @@ export async function probe(path: string): Promise<VideoInfo> {
 
 /** The sound as 16 kHz mono samples between -1 and 1, what the speech model takes. */
 export async function audioSamples(path: string): Promise<Float32Array> {
-  const raw = await run("ffmpeg", [
+  const raw = await run(ffmpegProgram("ffmpeg"), [
     "-v",
     "error",
     "-i",
@@ -129,5 +182,5 @@ export async function encode(
   args: string[],
   frames: (stdin: NodeJS.WritableStream) => Promise<void>,
 ): Promise<void> {
-  await run("ffmpeg", args, frames);
+  await run(ffmpegProgram("ffmpeg"), args, frames);
 }

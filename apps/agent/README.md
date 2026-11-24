@@ -9,7 +9,8 @@ and your video stays where it is.
 npx opencaptions caption reel.mp4 --look Bold --language fr
 ```
 
-It needs [FFmpeg](https://ffmpeg.org/download.html), and downloads the speech model (about 700 MB)
+It needs [FFmpeg](https://ffmpeg.org/download.html) (`OPENCAPTIONS_FFMPEG` names its folder if it is not on the
+`PATH` or in Homebrew's), and downloads the speech model (about 700 MB)
 the first time. It transcribes 25 European languages. To use an OpenCaptions server instead (other
 languages, Whisper models, a GPU, the web editor), set `OPENCAPTIONS_KEY` to an API key from its
 Account page, and `OPENCAPTIONS_URL` if it is not at `http://localhost:5173`.
