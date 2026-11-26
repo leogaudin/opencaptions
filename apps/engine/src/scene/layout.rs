@@ -223,6 +223,49 @@ impl Scene {
                         }
                     })
                     .collect();
+                // The letters of each word, for the looks that take words apart.
+                let apart = matches!(
+                    style.animation,
+                    Animation::Trailer | Animation::Flap | Animation::Decode | Animation::Count
+                );
+                let letters: Vec<Vec<Shape>> = texts
+                    .iter()
+                    .enumerate()
+                    .map(|(i, text)| {
+                        if !apart {
+                            return vec![];
+                        }
+                        let mut letters = letters(book.face(faces[i]), text, fs, looks[i].tracking);
+                        if leans[i] {
+                            for l in &mut letters {
+                                l.0 = l.0.take().and_then(|p| p.transform(lean));
+                            }
+                        }
+                        letters
+                    })
+                    .collect();
+                // Each word at the Weight look's three weights, when its face has a weight axis.
+                let weighed: Vec<Weighed> = texts
+                    .iter()
+                    .enumerate()
+                    .map(|(i, text)| {
+                        (style.animation == Animation::Weight)
+                            .then(|| book.at_weights(faces[i], &WEIGHTS))
+                            .flatten()
+                            .map(|faces| {
+                                Box::new(faces.map(|face| {
+                                    let (path, advance) =
+                                        shape_tracked(&face, text, fs, looks[i].tracking);
+                                    let path = if leans[i] {
+                                        path.and_then(|p| p.transform(lean))
+                                    } else {
+                                        path
+                                    };
+                                    (path, advance)
+                                }))
+                            })
+                    })
+                    .collect();
                 // A word's own face sets where its baseline sits in its line box.
                 let metrics: Vec<(f32, f32)> = looks
                     .iter()
@@ -248,7 +291,9 @@ impl Scene {
                     .collect();
                 // Rows: words fill a row until the next does not fit (a stack's rows are short).
                 let stack = style.align == Align::Justify;
-                let limit = if stack {
+                let limit = if traits.one_row {
+                    f32::INFINITY
+                } else if stack {
                     STACK_ROW_SHARE * max_row
                 } else {
                     max_row
@@ -346,8 +391,10 @@ impl Scene {
                 let right_to_left = is_right_to_left(chunk.iter().map(|w| w.text.as_str()));
                 let mut top = y0 + pad_by;
                 let mut biggest = 1.0f32;
-                for (((row, row_w), scale), (baseline_in_row, row_h)) in
-                    rows.iter().zip(&scales).zip(&heights)
+                let mut letters = letters;
+                let mut weighed = weighed;
+                for (row_index, (((row, row_w), scale), (baseline_in_row, row_h))) in
+                    rows.iter().zip(&scales).zip(&heights).enumerate()
                 {
                     let spare = inner_w - row_w * scale;
                     let mut x = x0
@@ -392,6 +439,17 @@ impl Scene {
                             size,
                             color: looks[i].color,
                             label: looks[i].label,
+                            row: row_index,
+                            letters: std::mem::take(&mut letters[i])
+                                .into_iter()
+                                .map(|(path, pen, advance, text)| Letter {
+                                    path: path.and_then(|p| p.transform(at)),
+                                    x: x + pads[i].0 * size + pen * size,
+                                    advance: advance * size,
+                                    text,
+                                })
+                                .collect(),
+                            weights: weighed[i].take(),
                         });
                         x += slot_w + sep * size;
                     }
@@ -401,6 +459,12 @@ impl Scene {
                 // Room for the pop to grow a word past its slot.
                 let tallest = heights.iter().map(|h| h.1).fold(0.0, f32::max);
                 let grow = inner_w.max(tallest) * traits.lift;
+                let mut bounds = pixel_bounds(block, margin(biggest) + grow, width, height);
+                if traits.wide {
+                    // Words that come in from the side or stretch past the block: the frame's width.
+                    bounds =
+                        IntRect::from_xywh(0, bounds.y(), width, bounds.height()).unwrap_or(bounds);
+                }
                 Line {
                     first,
                     start: shifted(chunk.first().map_or(0.0, |w| w.start), offset),
@@ -408,7 +472,7 @@ impl Scene {
                     words: placed.into_iter().flatten().collect(),
                     block: (style.background != Background::None).then_some(block),
                     anchor: block,
-                    bounds: pixel_bounds(block, margin(biggest) + grow, width, height),
+                    bounds,
                 }
             })
             .collect();
@@ -417,7 +481,33 @@ impl Scene {
             Background::Square => 0.0,
             _ => 12.0 * k,
         };
+        // The letters a look draws in place of a word's own, in the style's face.
+        let glyphs = if matches!(
+            style.animation,
+            Animation::Flap | Animation::Decode | Animation::Count
+        ) {
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$%&@*+=<>/"
+                .chars()
+                .map(|c| {
+                    let (path, advance) = shape(face, &c.to_string(), fs);
+                    (c, path, advance)
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+        let loudness = (style.animation == Animation::Pulse)
+            .then_some(input.transcript.loudness.as_ref())
+            .flatten()
+            .and_then(|l| {
+                Some(Loudness {
+                    rate: l.rate.max(1) as f32,
+                    values: crate::loudness::decode(&l.values)?,
+                })
+            });
         Self {
+            glyphs,
+            loudness,
             mark: input
                 .watermark
                 .as_deref()

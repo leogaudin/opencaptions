@@ -22,6 +22,9 @@ interface Exports {
     textLen: number,
   ): number;
   oc_shuffle_variants(ptr: number, len: number, count: number, seed: number): number;
+  oc_loudness_new(sampleRate: number): number;
+  oc_loudness_push(meter: number, ptr: number, len: number): number;
+  oc_loudness_finish(meter: number, ptr: number, len: number): number;
   oc_add_font(ptr: number, len: number): number;
   oc_has_font(namePtr: number, nameLen: number): number;
   oc_add_requested_font(namePtr: number, nameLen: number, ptr: number, len: number): number;
@@ -112,6 +115,28 @@ export async function shuffleVariants(t: Transcript, count: number): Promise<Tra
   const x = await exports();
   const seed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
   return result(x, x.oc_shuffle_variants(...json(x, t), count, seed));
+}
+
+/**
+ * How loud the voice is through the audio `samples` (mono, at `sampleRate`), for the pulse look:
+ * the engine's meter, fed a buffer at a time, finished for the transcript of the same audio.
+ */
+export async function loudness(
+  samples: Float32Array,
+  sampleRate: number,
+  t: Transcript,
+): Promise<NonNullable<Transcript["loudness"]>> {
+  const x = await exports();
+  const meter = x.oc_loudness_new(sampleRate);
+  const step = 1 << 20;
+  for (let at = 0; at < samples.length; at += step) {
+    const part = samples.subarray(at, Math.min(samples.length, at + step));
+    x.oc_loudness_push(
+      meter,
+      ...copyIn(x, new Uint8Array(part.buffer, part.byteOffset, part.byteLength)),
+    );
+  }
+  return result(x, x.oc_loudness_finish(meter, ...json(x, t)));
 }
 
 /** The captions as SubRip or WebVTT, cue for cue the caption lines. */

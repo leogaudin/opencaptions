@@ -114,6 +114,14 @@ uint32_t oc_set_variant(uint8_t *json_ptr, size_t json_len, uint32_t index, int3
  * transcript. */
 uint32_t oc_shuffle_variants(uint8_t *json_ptr, size_t json_len, uint32_t count, uint32_t seed);
 
+/* How loud the voice is through a video, for the Pulse look: a meter takes the audio (mono, at
+ * sample_rate) in buffers of little-endian f32 samples, then is finished, and freed, for the
+ * transcript of the same audio, leaving {"rate", "values"} as JSON for the transcript's
+ * `loudness`. */
+uint32_t oc_loudness_new(uint32_t sample_rate);
+uint32_t oc_loudness_push(uint32_t meter, uint8_t *samples_ptr, size_t samples_len);
+uint32_t oc_loudness_finish(uint32_t meter, uint8_t *json_ptr, size_t json_len);
+
 #ifdef __cplusplus
 }
 #endif

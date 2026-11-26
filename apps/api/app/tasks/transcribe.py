@@ -26,6 +26,7 @@ from app.models import Project
 from app.models.schemas import Transcript
 from app.services import progress
 from app.services.audio import AudioExtractionError, extract_audio, probe_duration
+from app.services.loudness import with_loudness
 from app.tasks.common import TaskContext
 from app.tasks.common import sync_session_factory as _sync_session_factory
 from app.transcription import fetch_progress
@@ -166,6 +167,7 @@ def transcribe_video(
             transcript = _transcribe_audio(
                 task, local_audio, provider=provider, model=model, language=language
             )
+            transcript = with_loudness(local_audio, transcript)
 
         # 5. Persist transcript
         with session_local() as session:
@@ -242,6 +244,7 @@ def transcribe_upload(
             transcript = _transcribe_audio(
                 task, local_audio, provider=provider, model=model, language=language
             )
+            transcript = with_loudness(local_audio, transcript)
         s3.put_object_bytes(result_key, transcript.model_dump_json().encode(), "application/json")
         task.set_job_status(
             "completed",

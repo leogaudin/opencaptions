@@ -1129,6 +1129,19 @@ export interface components {
             password: string;
         };
         /**
+         * Loudness
+         * @description How loud the voice is through the video, measured once from its audio for the pulse look.
+         *
+         *     ``rate`` levels a second from the video's start, each a byte (0 silence, 255 its loudest
+         *     words) as base64. The engine's ``loudness.rs`` says how it is measured.
+         */
+        Loudness: {
+            /** Rate */
+            rate: number;
+            /** Values */
+            values: string;
+        };
+        /**
          * ModelOption
          * @description A single selectable local Whisper model size.
          */
@@ -1408,11 +1421,11 @@ export interface components {
             position_y: number;
             /**
              * Animation
-             * @description How words move as they are said. word_highlight: the word takes the highlight colour. highlight_box: a box springs in behind it. word_pop: it grows for a moment. word_fade: it brightens, then dims. word_sweep: the colour fills it left to right. word_underline: an underline is drawn under it. typewriter: typed letter by letter. none: nothing moves. word_bounce: it jumps and leans. lyric_focus: the line is dim and the word comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under the line fills. stickers: each word on a tilted label. word_press: the word lifts off an extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words fade in from a blur and the line floats. blur_in: words come out of a blur
+             * @description How words move as they are said. word_highlight: the word takes the highlight colour. highlight_box: a box springs in behind it. word_pop: it grows for a moment. word_fade: it brightens, then dims. word_sweep: the colour fills it left to right. word_underline: an underline is drawn under it. typewriter: typed letter by letter. none: nothing moves. word_bounce: it jumps and leans. lyric_focus: the line is dim and the word comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under the line fills. stickers: each word on a tilted label. word_press: the word lifts off an extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words fade in from a blur and the line floats. blur_in: words come out of a blur. The composed looks, built from light, motion blur and mattes: glint (snaps in, gold, a light sweep), weight (the type swells from hairline to black), saber (a glowing stroke writes it), signal (a glitch), trailer (a film title card), marker (a highlighter swipe), decode (letters decrypt), rays (light pours out), echo (outlined afterimages), reveal (rises from a rule), depth (a focus pull), liquid (molten metal), elastic (a stretching pill), split (two halves), block (a box reveal), beat (one word at a time), flap (a departures board), count (numbers roll), scroll (the line glides), reel (words roll through a slot), fill (fills like water), snap (snaps in from a streak), pulse (follows the voice's loudness), knockout (cut out of a block), mirror (a reflection), fold (unfolds like paper)
              * @default highlight_slide
              * @enum {string}
              */
-            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift" | "blur_in";
+            animation: "word_highlight" | "highlight_box" | "word_pop" | "word_fade" | "word_sweep" | "word_underline" | "typewriter" | "none" | "word_bounce" | "lyric_focus" | "highlight_slide" | "line_bar" | "stickers" | "word_press" | "letter_rise" | "word_slam" | "drift" | "blur_in" | "glint" | "weight" | "saber" | "signal" | "trailer" | "marker" | "decode" | "rays" | "echo" | "reveal" | "depth" | "liquid" | "elastic" | "split" | "block" | "beat" | "flap" | "count" | "scroll" | "reel" | "fill" | "snap" | "pulse" | "knockout" | "mirror" | "fold";
             /**
              * Words Per Line
              * @description Words shown at once
@@ -1584,6 +1597,8 @@ export interface components {
             duration: number;
             /** Segments */
             segments: components["schemas"]["TranscriptSegment"][];
+            /** @description The voice's loudness, once measured (for the pulse look) */
+            loudness?: components["schemas"]["Loudness"] | null;
         };
         /**
          * TranscriptSegment

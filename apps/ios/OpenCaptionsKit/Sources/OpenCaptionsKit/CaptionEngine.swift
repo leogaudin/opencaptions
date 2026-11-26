@@ -358,6 +358,23 @@ public actor CaptionEngine {
         return try decoded(oc_shuffle_variants(ptr, len, UInt32(count), seed), as: Transcript.self)
     }
 
+    /// How loud the voice is through `samples` (mono, at `sampleRate`), for the Pulse look: the
+    /// engine's meter, fed a buffer at a time and finished for the transcript of the same audio.
+    public func loudness(samples: [Float], sampleRate: Double, for t: Transcript) throws -> Loudness {
+        let meter = oc_loudness_new(UInt32(sampleRate))
+        let step = 1 << 20
+        var at = 0
+        while at < samples.count {
+            let part = samples[at..<min(samples.count, at + step)]
+            let bytes = part.withUnsafeBufferPointer { Array(UnsafeRawBufferPointer($0)) }
+            let (ptr, len) = put(bytes)
+            oc_loudness_push(meter, ptr, len)
+            at += step
+        }
+        let (ptr, len) = try put(json: t)
+        return try decoded(oc_loudness_finish(meter, ptr, len), as: Loudness.self)
+    }
+
 }
 
 extension CaptionEngine {

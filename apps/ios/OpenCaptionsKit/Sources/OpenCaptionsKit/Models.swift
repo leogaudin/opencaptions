@@ -60,19 +60,24 @@ public struct Transcript: Codable, Equatable, Sendable {
     public var languageDetection: LanguageDetection
     public var duration: Double
     public var segments: [TranscriptSegment]
+    /// How loud the voice is through the video, for the Pulse look: measured once from the audio
+    /// (`CaptionEngine.loudness`), absent until it is.
+    public var loudness: Loudness?
 
     public init(
         schemaVersion: Int = 1,
         language: String,
         languageDetection: LanguageDetection,
         duration: Double,
-        segments: [TranscriptSegment]
+        segments: [TranscriptSegment],
+        loudness: Loudness? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.language = language
         self.languageDetection = languageDetection
         self.duration = duration
         self.segments = segments
+        self.loudness = loudness
     }
 
     enum CodingKeys: String, CodingKey {
@@ -81,10 +86,23 @@ public struct Transcript: Codable, Equatable, Sendable {
         case languageDetection = "language_detection"
         case duration
         case segments
+        case loudness
     }
 
     /// Every word in reading order across segments: the sequence captions are cut from.
     public var words: [Word] { segments.flatMap(\.words) }
+}
+
+/// The voice's loudness through a video: `rate` levels a second from its start, each a byte (0
+/// silence, 255 its loudest words), as base64, as the engine measures and keeps it.
+public struct Loudness: Codable, Equatable, Sendable {
+    public var rate: Int
+    public var values: String
+
+    public init(rate: Int, values: String) {
+        self.rate = rate
+        self.values = values
+    }
 }
 
 public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
@@ -109,6 +127,33 @@ public enum CaptionAnimation: String, Codable, CaseIterable, Sendable {
     case drift = "drift"
     /// Each word comes out of a short blur as it is said; nothing moves.
     case blurIn = "blur_in"
+    // The composed looks, built from light, motion blur and mattes (the engine's `fx`).
+    case glint
+    case weight
+    case saber
+    case signal
+    case trailer
+    case marker
+    case decode
+    case rays
+    case echo
+    case reveal
+    case depth
+    case liquid
+    case elastic
+    case split
+    case block
+    case beat
+    case flap
+    case count
+    case scroll
+    case reel
+    case fill
+    case snap
+    case pulse
+    case knockout
+    case mirror
+    case fold
 }
 
 public enum CaptionAlign: String, Codable, CaseIterable, Sendable {

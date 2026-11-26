@@ -126,6 +126,37 @@ pub(super) fn word_state(anim: Animation, w: &Placed, t: f32) -> WordState {
             press: pulse(t, w, MOTION_S, overshoot),
             ..steady
         },
+        // A composed look is drawn from the time itself (`fx`): its state says only which words
+        // have started, which is what changes between its still frames.
+        Animation::Glint
+        | Animation::Weight
+        | Animation::Saber
+        | Animation::Signal
+        | Animation::Trailer
+        | Animation::Marker
+        | Animation::Decode
+        | Animation::Rays
+        | Animation::Echo
+        | Animation::Reveal
+        | Animation::Depth
+        | Animation::Liquid
+        | Animation::Elastic
+        | Animation::Split
+        | Animation::Block
+        | Animation::Beat
+        | Animation::Flap
+        | Animation::Count
+        | Animation::Scroll
+        | Animation::Reel
+        | Animation::Fill
+        | Animation::Snap
+        | Animation::Pulse
+        | Animation::Knockout
+        | Animation::Mirror
+        | Animation::Fold => WordState {
+            enter: if t >= w.start - LEAD_S { 1.0 } else { 0.0 },
+            ..steady
+        },
     }
 }
 
@@ -177,6 +208,12 @@ pub(super) struct AnimTraits {
     pub lift: f32,
     /// Whether the word being said is turned toward the highlight colour.
     pub lights: bool,
+    /// Drawn by `fx` from layers at the time itself, instead of from the words' states.
+    pub composed: bool,
+    /// The line's box spans the frame's width: words that slide in from the side or stretch past it.
+    pub wide: bool,
+    /// The line is one row however long it is (it runs past the frame and glides).
+    pub one_row: bool,
 }
 
 fn reach_none(_fs: f32, _k: f32) -> f32 {
@@ -206,6 +243,45 @@ fn reach_drift(fs: f32, k: f32) -> f32 {
 fn reach_soften(fs: f32, k: f32) -> f32 {
     fs * DRIFT_SOFT * 3.0 * k
 }
+/// A composed look's light, motion and the shapes it draws round the words, as shares of the font size.
+macro_rules! reach_of {
+    ($($name:ident = $share:expr),* $(,)?) => {
+        $(fn $name(fs: f32, k: f32) -> f32 {
+            fs * $share * k
+        })*
+    };
+}
+reach_of!(
+    reach_tight = 0.3,
+    reach_near = 0.45,
+    reach_some = 0.6,
+    reach_mid = 0.9,
+    reach_far = 1.3,
+    reach_beams = 1.6,
+    reach_saber = 1.8,
+    reach_scrim = 2.2,
+);
+
+/// A composed look's traits: how far it reaches and lifts its words.
+const fn fx(reach: fn(f32, f32) -> f32, lift: f32) -> AnimTraits {
+    AnimTraits {
+        boxed: false,
+        reach,
+        lift,
+        lights: false,
+        composed: true,
+        wide: false,
+        one_row: false,
+    }
+}
+
+/// A composed look whose words come in from the side or stretch past the block.
+const fn wide(reach: fn(f32, f32) -> f32, lift: f32) -> AnimTraits {
+    AnimTraits {
+        wide: true,
+        ..fx(reach, lift)
+    }
+}
 
 impl Animation {
     pub(super) const fn traits(self) -> AnimTraits {
@@ -214,7 +290,11 @@ impl Animation {
             reach: reach_none,
             lift: POP,
             lights: false,
+            composed: false,
+            wide: false,
+            one_row: false,
         };
+
         let lit = AnimTraits {
             lights: true,
             ..plain
@@ -264,6 +344,35 @@ impl Animation {
                 reach: reach_soften,
                 ..plain
             },
+            Animation::Glint => fx(reach_far, 0.15),
+            Animation::Weight => fx(reach_tight, 0.15),
+            Animation::Saber => fx(reach_saber, 0.0),
+            Animation::Signal => fx(reach_mid, 0.0),
+            Animation::Trailer => fx(reach_scrim, 0.0),
+            Animation::Marker => fx(reach_some, 0.06),
+            Animation::Decode => fx(reach_mid, 0.0),
+            Animation::Rays => fx(reach_beams, 0.08),
+            Animation::Echo => wide(reach_near, 0.32),
+            Animation::Reveal => fx(reach_near, 0.0),
+            Animation::Depth => fx(reach_some, 0.1),
+            Animation::Liquid => fx(reach_beams, 0.0),
+            Animation::Elastic => fx(reach_near, 0.14),
+            Animation::Split => wide(reach_near, 0.0),
+            Animation::Block => fx(reach_tight, 0.0),
+            Animation::Beat => fx(reach_tight, 0.5),
+            Animation::Flap => fx(reach_near, 0.0),
+            Animation::Count => fx(reach_some, 0.12),
+            Animation::Scroll => AnimTraits {
+                one_row: true,
+                ..wide(reach_near, 0.0)
+            },
+            Animation::Reel => fx(reach_some, 0.0),
+            Animation::Fill => fx(reach_near, 0.0),
+            Animation::Snap => wide(reach_tight, 0.0),
+            Animation::Pulse => fx(reach_beams, 0.14),
+            Animation::Knockout => fx(reach_some, 0.1),
+            Animation::Mirror => fx(reach_mid, 0.04),
+            Animation::Fold => fx(reach_tight, 0.2),
         }
     }
 }
@@ -290,7 +399,11 @@ impl Scene {
             jolt: self.jolt(&self.lines[i], t),
             drift: self.drift(&self.lines[i], t),
         });
-        FrameKey(line, states, guide, motion)
+        let anim = self.style.animation;
+        let clock = line
+            .filter(|&i| anim.traits().composed && fx::moving(anim, &self.lines[i], t))
+            .map_or(0, |_| 1 + t.to_bits());
+        FrameKey(line, states, guide, motion, clock)
     }
 
     /// How the line floats at `t`: (across, down, scale) about the middle of the line. It pushes in

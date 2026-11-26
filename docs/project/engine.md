@@ -67,7 +67,8 @@ All of a style is the engine's, so the preview and the export agree.
 
 ### Animations
 
-There are eighteen. Each is an entry in `Animation::traits` (whether its words sit on a box, how far the effect
+There are forty-four: the eighteen below, drawn from each word's state, and twenty-six composed looks
+(see [Composed looks](#composed-looks)). Each is an entry in `Animation::traits` (whether its words sit on a box, how far the effect
 reaches past the block, how far a word grows past its slot, whether the word being said takes the highlight
 colour) and an arm in `word_state`; the exhaustive matches refuse to compile until a new one has both.
 
@@ -98,6 +99,45 @@ colour) and an arm in `word_state`; the exhaustive matches refuse to compile unt
 - The finished shadow and glow layers are kept while the line's words, jolt and drift are unchanged. A drifting glow
   is laid down three times into its layer once and carried by the line's transform each frame, because rebuilding
   it every frame cost most of the frame.
+
+### Composed looks
+
+Glint, Weight, Saber, Signal, Trailer, Marker, Decode, Rays, Echo, Reveal, Depth, Liquid, Elastic (the
+Stretch preset), Split, Block, Beat, Flap, Count, Scroll, Reel, Fill, Snap, Pulse, Knockout, Mirror and Fold
+are built in `src/scene/fx/` the way a motion designer stacks layers in After Effects, and drawn from the
+time itself rather than from a word's state (`traits().composed`).
+
+- **Building blocks** (`fx/kit.rs`). Light is a bloom: the emission tinted, blurred at a few spreads and
+  added (`BlendMode::Plus`) inside the caption layer, which is then laid over the video. Motion blur is a
+  shutter: the look drawn at several instants a little apart, summed exactly in integers and averaged. A
+  wide blur shrinks the layer, blurs it small with boxes chosen to spread as far as the real blur, and draws
+  it back up. Shadows and lights are worked only round the ink (`cut_out`), which is most of their cost.
+  Easing, sines and 2 to a power are written with plain f32 arithmetic (series and folding, no platform
+  maths), and noise is an integer hash, so every build draws the same bytes; the WebAssembly check holds them.
+- **Colours** come from the style: letters are `text_color`, the highlight colours are what a look paints in,
+  `fill_colors` is a gradient over the letters (Liquid makes a polished metal from its first and last),
+  `glow_color` is the light (`glow_blur` is not needed), and the outline and shadow are the style's own.
+- **Kept frames.** A composed look's key holds the time while the look moves (`fx::moving`: within a span of
+  each word's start that the look sets, or always for Trailer, Rays, Depth, Liquid, Saber and Pulse, whose
+  light, grain or camera never rests) and nothing while it is still, so a still frame is not redrawn. A test
+  draws every composed look frame after frame through a caption and holds each to a fresh scene's.
+- **Layout.** Words keep their slots; the looks that need more get it at layout time: each word's letters
+  with their pens and advances (Trailer's tracking, Flap's tiles, Decode, Count), a variable face shaped at
+  three weights and blended point by point between them (Weight, which then reflows each row every frame),
+  the face's letters and digits for what a word turns through (Flap, Decode, Count), one row however long
+  (Scroll), and a box the frame's width for words that come in from the side (Split, Echo, Snap, Scroll).
+
+### The voice's loudness
+
+Pulse follows how loudly each word is spoken. The loudness is measured once from the video's audio, beside
+the transcript and on its clock, and kept in it (`Transcript.loudness`: 60 levels a second as base64 bytes),
+so the preview and the export read the same values (`src/loudness.rs`): the audio band-passed to the voice
+(250 to 3,500 Hz), its level in decibels every sixtieth of a second, counted only while a word is said (with
+0.03 s either side, so music between words moves nothing), placed against the loudest words (the 95th
+percentile) over 18 dB, with a quick rise and an eased fall. The phone and the `opencaptions` package measure
+with the engine's meter (`oc_loudness_new`, `_push`, `_finish`); the server filters with FFmpeg and holds its
+copy of the last step to the engine's answers (`testdata/loudness.json`). A transcript without it (made
+before, or imported) still draws: the word being said swells on its timing alone.
 
 ### Beside the animation
 

@@ -196,6 +196,23 @@ impl<'a> FontBook<'a> {
     pub fn face(&self, i: usize) -> &Face<'a> {
         &self.faces[i].face
     }
+
+    /// The face at `index` set to each of `weights` on its weight axis, for a look that animates the
+    /// weight; None when it has no such axis.
+    pub fn at_weights(&self, index: usize, weights: &[f32; 3]) -> Option<[Face<'a>; 3]> {
+        let face = self.face(index);
+        let wght = Tag::from_bytes(b"wght");
+        face.variation_axes()
+            .into_iter()
+            .any(|a| a.tag == wght)
+            .then(|| {
+                weights.map(|value| {
+                    let mut f = face.clone();
+                    f.set_variations(&[Variation { tag: wght, value }]);
+                    f
+                })
+            })
+    }
 }
 
 #[cfg(test)]

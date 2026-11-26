@@ -49,7 +49,7 @@ Tap **+** on the Projects screen to pick one from Photos. A video can also come 
    While paused, **drag** the caption to move it (it snaps to the centre lines and the margins, with a small haptic tick),
    **pinch** to change the size, and **double-tap** a word to fix it. Drag the edges of a caption on the
    timeline to retime it, pinch the timeline to zoom, and scrub by dragging it.
-4. **Style.** Open the style controls: the same nineteen looks and the same settings as the web.
+4. **Style.** Open the style controls: the same forty-five looks and the same settings as the web.
 5. **Save.** Choose the size and frame rate. Videos are saved as H.264, or 10-bit HEVC when the video is HDR,
    and HDR videos stay HDR.
 

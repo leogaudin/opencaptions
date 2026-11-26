@@ -159,6 +159,63 @@ pub(super) fn cluster_paths(face: &Face, text: &str, size: f32, tracking: Tracki
         .collect()
 }
 
+/// Each grapheme cluster of `text` as (outline, where its pen starts, its advance, its text), in
+/// reading order, with the pen at the origin on the baseline like `shape`; a space is a letter with
+/// no outline. The pen's start counts the letter spacing before it and the advance does not. A word
+/// of a connected script is one letter.
+pub(super) fn letters(face: &Face, text: &str, size: f32, tracking: Tracking) -> Vec<Shape> {
+    if text.chars().any(is_connected) {
+        let (path, advance) = shape_tracked(face, text, size, tracking);
+        return vec![(path, 0.0, advance, text.to_string())];
+    }
+    let mut buf = UnicodeBuffer::new();
+    buf.push_str(text);
+    buf.guess_segment_properties();
+    let glyphs = rustybuzz::shape(face, &[], buf);
+    let scale = size / face.units_per_em() as f32;
+    let gap = tracking.spacing * size;
+    // (cluster, outline, pen start, advance)
+    let mut groups: Vec<(u32, PathBuilder, f32, f32)> = vec![];
+    let mut pen = 0i32;
+    for (n, (info, pos)) in glyphs
+        .glyph_infos()
+        .iter()
+        .zip(glyphs.glyph_positions())
+        .enumerate()
+    {
+        let x = pen as f32 * scale * tracking.stretch + gap * n as f32;
+        let at = match groups.iter().position(|g| g.0 == info.cluster) {
+            Some(at) => at,
+            None => {
+                groups.push((info.cluster, PathBuilder::new(), x, 0.0));
+                groups.len() - 1
+            }
+        };
+        let mut sink = Sink {
+            pb: std::mem::replace(&mut groups[at].1, PathBuilder::new()),
+            scale,
+            stretch: tracking.stretch,
+            dx: (pen + pos.x_offset) as f32 * scale * tracking.stretch + gap * n as f32,
+            dy: -(pos.y_offset as f32) * scale,
+        };
+        face.outline_glyph(GlyphId(info.glyph_id as u16), &mut sink);
+        groups[at].1 = sink.pb;
+        groups[at].3 += pos.x_advance as f32 * scale * tracking.stretch;
+        pen += pos.x_advance;
+    }
+    groups.sort_by_key(|g| g.0);
+    let starts: Vec<usize> = groups.iter().map(|g| g.0 as usize).collect();
+    groups
+        .into_iter()
+        .enumerate()
+        .map(|(i, (cluster, pb, x, advance))| {
+            let end = starts.get(i + 1).copied().unwrap_or(text.len());
+            let piece = text.get(cluster as usize..end).unwrap_or("").to_string();
+            (pb.finish(), x, advance, piece)
+        })
+        .collect()
+}
+
 /// Whether the words read right to left: most of their letters are Hebrew or Arabic.
 pub(super) fn is_right_to_left<'a>(words: impl Iterator<Item = &'a str>) -> bool {
     let (mut rtl, mut letters) = (0u32, 0u32);

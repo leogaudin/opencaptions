@@ -116,7 +116,12 @@ impl Renderer {
             self.clear_mark();
         }
         if let Some(bounds) = area {
-            if let Some(i) = key.0 {
+            if let Some(i) = key.0
+                && self.scene.style.animation.traits().composed
+            {
+                self.scene
+                    .compose(&mut self.canvas, &self.scene.lines[i], t);
+            } else if let Some(i) = key.0 {
                 let line = &self.scene.lines[i];
                 self.scene.draw(
                     &mut self.canvas,

@@ -16,7 +16,7 @@ on their servers. OpenCaptions is the other kind of answer: open source, on your
 | Cost | Free to self-host; on iPhone, free with an optional one-time Pro | Usually a subscription |
 | Account | None on iPhone; local to your instance when self-hosted | Required |
 | The code | Open source (AGPL-3.0): read it, change it, run it | Closed |
-| Templates | Nineteen looks and a full style panel | Usually more |
+| Templates | Forty-five looks and a full style panel | Usually more |
 | Emoji, B-roll, virality scores | No | Often yes |
 | Android | No | Often yes |
 | Setting it up | One compose file, on hardware you look after | Nothing to run |

@@ -34,7 +34,7 @@ captions a video on your computer with no server, or on yours. See
 ## What you get
 
 - **Word-level transcription** in about 100 languages, with the speech model of your choice.
-- **Animated looks**: nineteen presets, and a style panel for fonts, colours, outline, background,
+- **Animated looks**: forty-five presets, and a style panel for fonts, colours, outline, background,
   animation and position.
 - **A real editor**: fix a misheard word right on the video, retime captions on a timeline, undo
   and redo.

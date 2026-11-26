@@ -15,6 +15,7 @@ use tiny_skia::{
 mod anim;
 mod draw;
 mod ease;
+mod fx;
 mod layout;
 mod pixels;
 mod renderer;
@@ -29,6 +30,7 @@ use crate::model::{
 use anim::*;
 use draw::*;
 use ease::{ease_out_quad, lerp, linear, overshoot, ramp, wave};
+use fx::Loudness;
 use layout::*;
 use pixels::*;
 pub use renderer::Renderer;
@@ -147,7 +149,37 @@ struct Placed {
     color: Option<Rgba>,
     /// A square box of this colour behind it: a name's label.
     label: Option<Rgba>,
+    /// Which row of its line it is on, from the top.
+    row: usize,
+    /// Its letters, for the looks that take a word apart (empty for the others).
+    letters: Vec<Letter>,
+    /// Its outline and advance at the pen's origin at three weights (`WEIGHTS`), for the look that
+    /// moves a variable face's weight; None for the others and for a face with no weight axis.
+    weights: Weighed,
 }
+
+/// One letter of a word (a grapheme cluster; a word of a connected script is one): its outline in
+/// the frame (None for a space), where its pen starts across the frame, how far it advances (in
+/// frame pixels, without the letter spacing after it), and its text.
+struct Letter {
+    path: Option<Path>,
+    x: f32,
+    advance: f32,
+    text: String,
+}
+
+/// An outline at the pen's origin and its advance.
+type Shaped = (Option<Path>, f32);
+
+/// A word shaped at the three `WEIGHTS`, or None.
+type Weighed = Option<Box<[Shaped; 3]>>;
+
+/// A letter as shaped: its outline, where its pen starts, its advance and its text (`text::letters`).
+type Shape = (Option<Path>, f32, f32, String);
+
+/// The weights a variable face is shaped at for the Weight look: its hairline rest, the medium a
+/// word settles to, and the black it swells to.
+const WEIGHTS: [f32; 3] = [200.0, 560.0, 900.0];
 
 struct Line {
     /// Flat index of the line's first word in the transcript.
@@ -177,6 +209,12 @@ pub struct Scene {
     lines: Vec<Line>,
     block_radius: f32,
     word_radius: f32,
+    /// Outlines of the letters a look draws in place of a word's own (a departures board turning, a
+    /// letter decrypting, a counter's digits), at the pen's origin at the style's size, with their
+    /// advances; empty for the other looks.
+    glyphs: Vec<(char, Option<Path>, f32)>,
+    /// The voice's loudness, from the transcript, for the look that follows it.
+    loudness: Option<Loudness>,
 }
 
 /// What one word looks like at a moment: all a frame varies.
@@ -239,6 +277,13 @@ impl LineMotion {
     };
 }
 
-/// The frame's line, its words' states, its guide shape, and how the line moves.
+/// The frame's line, its words' states, its guide shape, how the line moves, and, while a composed
+/// look moves, the time itself (as bits; 0 when nothing moves).
 #[derive(PartialEq)]
-struct FrameKey(Option<usize>, Vec<WordState>, Option<Guide>, LineMotion);
+struct FrameKey(
+    Option<usize>,
+    Vec<WordState>,
+    Option<Guide>,
+    LineMotion,
+    u32,
+);

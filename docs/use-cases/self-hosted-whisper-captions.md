@@ -27,7 +27,7 @@ The [speech models page](../self-hosting/speech-models.md) lists them, and the
 
 ## What you get
 
-Word-level timing, a timeline to correct it, [nineteen looks](../guides/styling.md), and
+Word-level timing, a timeline to correct it, [forty-five looks](../guides/styling.md), and
 [exports](../guides/exporting.md) to MP4, WebM, ProRes, SRT, VTT and JSON.
 
 ## Questions

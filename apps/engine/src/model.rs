@@ -94,11 +94,76 @@ pub enum Animation {
     Drift,
     /// Each word comes out of a short blur as it is said; nothing moves.
     BlurIn,
+    /// Bold letters on a heavy outline and a hard drop; the word being said snaps in with motion blur,
+    /// takes the gradient, and a light sweep crosses it with a star where it catches.
+    Glint,
+    /// The type itself moves: the line waits in a hairline weight, the word being said swells to
+    /// black and stretches, then settles to medium, and the line reflows round it.
+    Weight,
+    /// A glowing stroke writes each letter's outline, then the face fills in over its glow; comets
+    /// run round the word being said.
+    Saber,
+    /// Each word tears in like a broken transmission (split colour channels, sliding bands,
+    /// scanlines), then locks clean.
+    Signal,
+    /// A film title card: wide tracking that slowly pulls in as each word fades out of a blur, a
+    /// warm halo, grain in the letters and a scrim behind.
+    Trailer,
+    /// A streaky highlighter swipe draws itself behind the word being said, which turns dark on it.
+    Marker,
+    /// Each word's letters spin through random characters and lock in one by one, glowing.
+    Decode,
+    /// Light pours out of the letters from a source that sweeps along the line.
+    Rays,
+    /// Each word slides in trailed by outlined afterimages in the highlight colours, and its outline
+    /// ripples out as it lands.
+    Echo,
+    /// A rule draws itself under the line and each word rises out of a slot on it.
+    Reveal,
+    /// A focus pull: the line out of focus, focus racking onto each word as it is said while the
+    /// camera creeps in and drifts.
+    Depth,
+    /// Molten metal poured into the letters: drops run together as each word fills, then it settles
+    /// to polished metal in a dark rim with a rolling highlight.
+    Liquid,
+    /// One pill travels from word to word, its front edge leaping ahead and its back edge catching
+    /// up, so it stretches and snaps into place.
+    Elastic,
+    /// Each word arrives in two halves from opposite sides, motion-blurred, and they lock with a
+    /// flash along the cut.
+    Split,
+    /// A solid block sweeps across where the word will be and leaves it behind as it pulls away.
+    Block,
+    /// One word at a time, filling the caption on its own, punching in with motion blur and a kick
+    /// of the camera.
+    Beat,
+    /// A departures board: each letter on a split-flap tile flips through the alphabet and settles.
+    Flap,
+    /// A number counts up to its value like an odometer as it is said; other words pop in.
+    Count,
+    /// The line runs as one row that glides so the word being said sits in the middle, underlined.
+    Scroll,
+    /// One slot in the middle, the words rolling through it as if printed on a drum.
+    Reel,
+    /// The line waits as outlines; each word fills from the bottom with a moving wave and a bright
+    /// water line.
+    Fill,
+    /// Each word arrives stretched and smeared sideways, then pulls tight with a little overshoot.
+    Snap,
+    /// The captions hear the voice: the word being said swells with how loudly it is spoken, a
+    /// shouted word shakes, and a waveform under the line draws the voice (from `Transcript::loudness`).
+    Pulse,
+    /// The word being said is cut out of a solid block, so the picture shows through its letters.
+    Knockout,
+    /// A serif on a glossy floor: words fade up out of a blur over their own reflection.
+    Mirror,
+    /// Each word unfolds like paper, the bottom half dropping open and the top following over the crease.
+    Fold,
 }
 
 impl Animation {
     /// Every animation, in the order the API and the editors list them.
-    pub const ALL: [Animation; 18] = [
+    pub const ALL: [Animation; 44] = [
         Animation::WordHighlight,
         Animation::HighlightBox,
         Animation::WordPop,
@@ -117,6 +182,32 @@ impl Animation {
         Animation::WordSlam,
         Animation::Drift,
         Animation::BlurIn,
+        Animation::Glint,
+        Animation::Weight,
+        Animation::Saber,
+        Animation::Signal,
+        Animation::Trailer,
+        Animation::Marker,
+        Animation::Decode,
+        Animation::Rays,
+        Animation::Echo,
+        Animation::Reveal,
+        Animation::Depth,
+        Animation::Liquid,
+        Animation::Elastic,
+        Animation::Split,
+        Animation::Block,
+        Animation::Beat,
+        Animation::Flap,
+        Animation::Count,
+        Animation::Scroll,
+        Animation::Reel,
+        Animation::Fill,
+        Animation::Snap,
+        Animation::Pulse,
+        Animation::Knockout,
+        Animation::Mirror,
+        Animation::Fold,
     ];
 }
 
@@ -260,10 +351,22 @@ pub struct Segment {
     pub rest: Map<String, Value>,
 }
 
+/// How loud the voice is through the video, measured once from its audio (`crate::loudness`):
+/// `rate` levels a second from the video's start, each a byte (0 silence, 255 its loudest words),
+/// as base64.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct Loudness {
+    pub rate: u32,
+    pub values: String,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Transcript {
     pub duration: f32,
     pub segments: Vec<Segment>,
+    /// The voice's loudness, for the look that follows it; absent until it is measured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loudness: Option<Loudness>,
     #[serde(flatten)]
     pub rest: Map<String, Value>,
 }
@@ -474,6 +577,32 @@ mod tests {
             Animation::WordSlam => 15,
             Animation::Drift => 16,
             Animation::BlurIn => 17,
+            Animation::Glint => 18,
+            Animation::Weight => 19,
+            Animation::Saber => 20,
+            Animation::Signal => 21,
+            Animation::Trailer => 22,
+            Animation::Marker => 23,
+            Animation::Decode => 24,
+            Animation::Rays => 25,
+            Animation::Echo => 26,
+            Animation::Reveal => 27,
+            Animation::Depth => 28,
+            Animation::Liquid => 29,
+            Animation::Elastic => 30,
+            Animation::Split => 31,
+            Animation::Block => 32,
+            Animation::Beat => 33,
+            Animation::Flap => 34,
+            Animation::Count => 35,
+            Animation::Scroll => 36,
+            Animation::Reel => 37,
+            Animation::Fill => 38,
+            Animation::Snap => 39,
+            Animation::Pulse => 40,
+            Animation::Knockout => 41,
+            Animation::Mirror => 42,
+            Animation::Fold => 43,
         };
         for (i, a) in Animation::ALL.into_iter().enumerate() {
             assert_eq!(place(a), i, "{a:?} is out of place");

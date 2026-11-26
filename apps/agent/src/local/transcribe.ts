@@ -15,6 +15,7 @@ import { pipeline } from "node:stream/promises";
 import type { ReadableStream as WebStream } from "node:stream/web";
 import type { Progress } from "../captions.ts";
 import { OpenCaptionsError, type Transcript } from "../client.ts";
+import { loudness } from "../engine.ts";
 import { cacheDir } from "./cache.ts";
 import { audioSamples } from "./media.ts";
 
@@ -302,11 +303,13 @@ export async function transcribe(
     );
   }
   separate(words);
-  return {
+  const transcript = {
     schema_version: 1,
     language: language === "auto" ? "en" : language,
     language_detection: language === "auto" ? "auto" : "manual",
     duration,
     segments: segments(words),
   } as Transcript;
+  // Measured from the same sound, on the same clock, for the pulse look.
+  return { ...transcript, loudness: await loudness(samples, SAMPLE_RATE, transcript) };
 }

@@ -2065,3 +2065,73 @@ fn blur_in_comes_out_of_a_blur_in_a_few_frames_and_moves_nothing() {
     );
     assert_eq!(state(w.end + 5.0).opacity, 1.0, "and it stays");
 }
+
+/// The composed looks are drawn from the time itself and a frame is kept only while nothing in the
+/// look moves (`fx::moving`): drawn frame after frame through a whole caption, each frame must be
+/// what a fresh scene draws at that time.
+#[test]
+fn a_composed_look_kept_between_frames_is_what_it_draws_fresh() {
+    let book = book();
+    for anim in Animation::ALL.into_iter().filter(|a| a.traits().composed) {
+        let name = serde_json::to_value(anim)
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_string();
+        let mut json = styled_json(
+            &name,
+            WORDS,
+            serde_json::json!({
+                "stroke_width": 3, "shadow_blur": 8, "shadow_color": "#000000A0",
+                "shadow_offset_y": 4, "fill_colors": ["#FFEEAA", "#CC8800"]
+            }),
+        );
+        json["width"] = 270.into();
+        json["height"] = 480.into();
+        let input: SceneInput = serde_json::from_value(json).unwrap();
+        let mut kept = Renderer::new(Scene::new(&book, input.clone()));
+        for i in 0..64 {
+            let t = i as f32 / 16.0;
+            kept.render(t);
+            let mut fresh = Renderer::new(Scene::new(&book, input.clone()));
+            fresh.render(t);
+            assert!(
+                kept.rgba() == fresh.rgba(),
+                "{name} at {t} s: the kept frame is stale"
+            );
+        }
+    }
+}
+
+/// Pulse draws the voice's waveform from the transcript's loudness, and only with one.
+#[test]
+fn pulse_draws_the_voice_only_when_it_was_measured() {
+    let loud = crate::loudness::encode(&[200; 600]);
+    let ink = |loudness: Option<&str>| {
+        let mut json = styled_json("pulse", WORDS, serde_json::json!({}));
+        if let Some(values) = loudness {
+            json["transcript"]["loudness"] = serde_json::json!({ "rate": 60, "values": values });
+        }
+        let mut r = Renderer::new(Scene::new(&book(), serde_json::from_value(json).unwrap()));
+        r.render(0.7);
+        extent(&r, 1080).unwrap()
+    };
+    let (with, without) = (ink(Some(&loud)), ink(None));
+    assert!(
+        with.3 > without.3 + 20,
+        "the bars hang under the line: {with:?} {without:?}"
+    );
+}
+
+/// Weight shapes a variable face at its three weights, and the heavy one is wider.
+#[test]
+fn weight_shapes_a_variable_face_at_three_weights() {
+    let scene = Scene::new(&book(), styled("weight", WORDS, serde_json::json!({})));
+    let w = &scene.lines[0].words[0];
+    let shapes = w.weights.as_deref().expect("Inter has a weight axis");
+    assert!(shapes.iter().all(|s| s.0.is_some()));
+    assert!(
+        shapes[0].1 < shapes[1].1 && shapes[1].1 < shapes[2].1,
+        "heavier is wider"
+    );
+}

@@ -54,7 +54,8 @@ process (`core/events.py`).
    resolved address must be public).
 2. **Transcribe.** A job on the transcription queue. Progress goes to the
    project's WebSocket. The result is a `Transcript`: segments of words, each with
-   `start`, `end` and `confidence`.
+   `start`, `end` and `confidence`, and the voice's loudness measured from the same audio for the
+   Pulse look (`app/services/loudness.py`; see [the engine](./engine.md#the-voices-loudness)).
 3. **Edit.** The SPA edits the transcript and the style and autosaves them with
    `PATCH /projects/{id}`. The preview is drawn by the engine in the browser, and
    every transcript edit is one of the engine's (see below). Words are edited on
@@ -84,7 +85,7 @@ process (`core/events.py`).
    - The web editor has one Download button that opens a dialog (format, size, frame rate,
      background), as the iOS Save sheet does.
 5. **Download.** `GET /projects/{id}/download/{format}?resolution=…&frame_rate=…&green_screen=…`.
-   Subtitles are not rendered: the API asks the engine (`POST /subtitles`, behind the same token) for SRT and VTT, whose cues are the caption lines (`edit::lines`) with the caption offset applied (`engine/src/subtitles.rs`, also `oc_subtitles` for the apps), and JSON is the transcript as stored.
+   Subtitles are not rendered: the API asks the engine (`POST /subtitles`, behind the same token) for SRT and VTT, whose cues are the caption lines (`edit::lines`) with the caption offset applied (`engine/src/subtitles.rs`, also `oc_subtitles` for the apps), and JSON is the transcript as stored, without its loudness.
 
 ## The caption engine
 
@@ -97,7 +98,7 @@ the iOS app.
 captions. The engine also owns the caption edits (cutting lines, retiming, editing a word, a word's look), the
 subtitle files, and the render server.
 
-Everything about it is on [its own page](./engine.md): scenes and lines, the eighteen animations, word looks,
+Everything about it is on [its own page](./engine.md): scenes and lines, the forty-four animations, word looks,
 fonts, colour, the C ABI and the render server.
 
 ## The editor

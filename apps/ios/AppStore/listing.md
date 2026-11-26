@@ -16,7 +16,7 @@ The privacy policy is `PRIVACY.md` in the repository root, at <https://github.co
 
 **Keywords:** transcribe,reels,tiktok,shorts,speech to text,offline,whisper,video,animated,karaoke,srt,podcast
 
-**What's new:** Open a video straight from Files or another app, and use the new Caption a Video action in Shortcuts. Plus fixes.
+**What's new:** 26 new cinematic caption styles, built like motion-design titles: light sweeps and glows, motion blur, glitches, liquid gold, a film title card, a departures board and more. Pulse follows how loudly each word is spoken. Plus fixes.
 
 **Description:**
 
@@ -50,7 +50,7 @@ OpenCaptions is open source (AGPL-3.0). Read the code, build it yourself, or hos
 
 **Keywords:** légendes,transcription,reels,tiktok,shorts,parole en texte,hors ligne,whisper,vidéo,animés,captions
 
-**What's new:** Ouvrez une vidéo directement depuis Fichiers ou une autre app, et utilisez la nouvelle action Sous-titrer une vidéo dans Raccourcis. Et quelques corrections.
+**What's new:** 26 nouveaux styles de sous-titres cinématographiques, construits comme des titres de motion design : balayages de lumière et halos, flou de mouvement, glitchs, or liquide, carton de titre de film, tableau des départs et plus encore. Pulsation suit l'intensité de chaque mot prononcé. Et quelques corrections.
 
 **Description:**
 
@@ -84,7 +84,7 @@ OpenCaptions est open source (AGPL-3.0). Lisez le code, compilez-le vous-même o
 
 **Keywords:** transcribir,reels,tiktok,shorts,voz a texto,sin conexión,whisper,vídeo,animados,karaoke,srt,captions
 
-**What's new:** Abre un vídeo directamente desde Archivos u otra app, y usa la nueva acción Subtitular un vídeo en Atajos. Además de correcciones.
+**What's new:** 26 nuevos estilos de subtítulos cinematográficos, hechos como títulos de motion design: barridos de luz y resplandores, desenfoque de movimiento, glitches, oro líquido, un rótulo de película, un panel de salidas y más. Pulso sigue la fuerza con que se dice cada palabra. Además de correcciones.
 
 **Description:**
 
@@ -118,7 +118,7 @@ OpenCaptions es de código abierto (AGPL-3.0). Lee el código, compílalo tú mi
 
 **Keywords:** Transkription,Reels,TikTok,Shorts,Sprache zu Text,offline,Whisper,Video,animiert,SRT,Captions
 
-**What's new:** Öffne ein Video direkt aus „Dateien“ oder einer anderen App und nutze die neue Aktion „Video untertiteln“ in Kurzbefehle. Dazu Fehlerbehebungen.
+**What's new:** 26 neue filmreife Untertitel-Stile, gebaut wie Motion-Design-Titel: Lichtstreifen und Leuchten, Bewegungsunschärfe, Glitches, flüssiges Gold, eine Filmtitelkarte, eine Abflugtafel und mehr. Puls folgt, wie laut jedes Wort gesprochen wird. Dazu Fehlerbehebungen.
 
 **Description:**
 
@@ -152,7 +152,7 @@ OpenCaptions ist Open Source (AGPL-3.0). Lies den Code, baue ihn selbst oder hos
 
 **Keywords:** transkrypcja,reels,tiktok,shorts,mowa na tekst,offline,whisper,wideo,animowane,karaoke,srt,captions
 
-**What's new:** Otwórz wideo prosto z aplikacji Pliki lub innej aplikacji i użyj nowej czynności Dodaj napisy do wideo w Skrótach. Oraz poprawki.
+**What's new:** 26 nowych kinowych stylów napisów, zrobionych jak tytuły z motion designu: smugi światła i poświaty, rozmycie ruchu, glitche, płynne złoto, plansza tytułowa filmu, tablica odlotów i więcej. Puls podąża za tym, jak głośno pada każde słowo. Oraz poprawki.
 
 **Description:**
 
@@ -186,7 +186,7 @@ OpenCaptions jest open source (AGPL-3.0). Czytaj kod, zbuduj go sam albo uruchom
 
 **Keywords:** transcrever,reels,tiktok,shorts,fala para texto,offline,whisper,vídeo,animadas,karaoke,srt,captions
 
-**What's new:** Abra um vídeo direto do app Arquivos ou de outro app e use a nova ação Legendar um vídeo nos Atalhos. Além de correções.
+**What's new:** 26 novos estilos de legenda cinematográficos, feitos como títulos de motion design: varreduras de luz e brilhos, desfoque de movimento, glitches, ouro líquido, um letreiro de filme, um painel de embarque e mais. Pulso acompanha a força com que cada palavra é dita. Além de correções.
 
 **Description:**
 
@@ -220,7 +220,7 @@ O OpenCaptions é código aberto (AGPL-3.0). Leia o código, compile você mesmo
 
 **Keywords:** trascrizione,reels,tiktok,shorts,voce in testo,offline,whisper,video,animati,karaoke,srt,captions
 
-**What's new:** Apri un video direttamente da File o da un'altra app e usa la nuova azione Sottotitola un video in Comandi Rapidi. Più varie correzioni.
+**What's new:** 26 nuovi stili di sottotitoli cinematografici, costruiti come titoli di motion design: scie di luce e bagliori, sfocatura di movimento, glitch, oro liquido, un titolo da film, un tabellone delle partenze e altro. Pulsazione segue quanto forte viene detta ogni parola. Più varie correzioni.
 
 **Description:**
 
@@ -254,7 +254,7 @@ OpenCaptions è open source (AGPL-3.0). Leggi il codice, compilalo da solo o osp
 
 **Keywords:** транскрибация,reels,tiktok,shorts,речь в текст,офлайн,whisper,видео,анимация,караоке,srt,captions
 
-**What's new:** Открывайте видео прямо из «Файлов» или другого приложения и используйте новое действие «Добавить субтитры к видео» в «Командах». А также исправления.
+**What's new:** 26 новых кинематографичных стилей субтитров, сделанных как титры в моушн-дизайне: блики и свечение, размытие движения, глитч, жидкое золото, титр фильма, табло вылетов и многое другое. «Пульс» следует за тем, насколько громко произнесено каждое слово. А также исправления.
 
 **Description:**
 
@@ -288,7 +288,7 @@ OpenCaptions — проект с открытым кодом (AGPL-3.0). Чит�
 
 **Keywords:** deşifre,reels,tiktok,shorts,konuşmayı metne,çevrimdışı,whisper,video,animasyonlu,srt,captions,metin
 
-**What's new:** Bir videoyu doğrudan Dosyalar'dan veya başka bir uygulamadan açın ve Kestirmeler'deki yeni Videoya altyazı ekle eylemini kullanın. Ayrıca düzeltmeler.
+**What's new:** Hareketli tasarım başlıkları gibi yapılmış 26 yeni sinematik altyazı stili: ışık süpürmeleri ve parıltılar, hareket bulanıklığı, glitch, sıvı altın, film başlık kartı, kalkış panosu ve daha fazlası. Nabız, her kelimenin ne kadar yüksek sesle söylendiğini izler. Ayrıca düzeltmeler.
 
 **Description:**
 
@@ -322,7 +322,7 @@ OpenCaptions açık kaynaklıdır (AGPL-3.0). Kodu okuyun, kendiniz derleyin vey
 
 **Keywords:** 文字起こし,テロップ,リール,tiktok,ショート,音声認識,オフライン,whisper,動画,キャプション,アニメーション,カラオケ,srt,ポッドキャスト,動画編集
 
-**What's new:** 「ファイル」や他のアプリから動画を直接開けるようになり、ショートカットに新しいアクション「動画に字幕を付ける」を追加しました。不具合も修正しました。
+**What's new:** モーショングラフィックスのタイトルのように作った、映画的な字幕スタイルを26種類追加:光のスイープとグロー、モーションブラー、グリッチ、溶けた金、映画のタイトルカード、空港の発着案内板など。「パルス」は一語一語の声の大きさに合わせて動きます。そのほか不具合の修正。
 
 **Description:**
 
@@ -356,7 +356,7 @@ OpenCaptionsはオープンソース（AGPL-3.0）です。コードを読む、
 
 **Keywords:** 받아쓰기,릴스,틱톡,쇼츠,음성 텍스트,오프라인,whisper,동영상,캡션,애니메이션,노래방,srt,팟캐스트,영상 편집,자막 생성
 
-**What's new:** 파일 앱이나 다른 앱에서 동영상을 바로 열고, 단축어의 새 동작 ‘동영상에 자막 넣기’를 사용해 보세요. 버그도 수정했습니다.
+**What's new:** 모션 그래픽 타이틀처럼 만든 영화 같은 자막 스타일 26가지: 빛 스윕과 글로, 모션 블러, 글리치, 녹은 금, 영화 타이틀 카드, 공항 출발 안내판 등. 펄스는 단어마다 얼마나 크게 말했는지를 따라 움직입니다. 그리고 버그 수정.
 
 **Description:**
 
@@ -390,7 +390,7 @@ OpenCaptions는 오픈 소스(AGPL-3.0)입니다. 코드를 읽고, 직접 빌�
 
 **Keywords:** 转录,短视频,tiktok,reels,语音转文字,离线,whisper,视频,captions,动画,卡拉OK,srt,播客,视频编辑,加字幕,语音识别
 
-**What's new:** 现在可以直接从“文件”或其他 App 打开视频，并在“快捷指令”中使用新的“为视频添加字幕”操作。另有问题修复。
+**What's new:** 新增 26 种电影感字幕样式,像动态设计片头一样制作:光扫与辉光、运动模糊、故障效果、液态黄金、电影片名卡、航班信息翻牌等。“脉动”会随每个词说出的音量而变化。另有问题修复。
 
 **Description:**
 
@@ -424,7 +424,7 @@ OpenCaptions 是开源软件（AGPL-3.0）。你可以阅读代码、自行构�
 
 **Keywords:** teks,transkripsi,reels,tiktok,shorts,ucapan ke teks,offline,whisper,video,animasi,karaoke,caption
 
-**What's new:** Buka video langsung dari File atau app lain, dan gunakan tindakan baru Beri teks pada video di Pintasan. Plus perbaikan.
+**What's new:** 26 gaya teks film baru, dibuat seperti judul motion design: sapuan cahaya dan pendar, blur gerak, glitch, emas cair, kartu judul film, papan keberangkatan, dan lainnya. Denyut mengikuti seberapa keras setiap kata diucapkan. Plus perbaikan.
 
 **Description:**
 

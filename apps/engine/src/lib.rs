@@ -8,6 +8,7 @@
 pub mod edit;
 pub mod encode;
 pub mod fonts;
+pub mod loudness;
 pub mod model;
 pub mod scene;
 pub mod scripts;
@@ -52,6 +53,9 @@ mod abi {
     static SCENES: Mutex<BTreeMap<u32, Renderer>> = Mutex::new(BTreeMap::new());
     static NEXT_SCENE: AtomicU32 = AtomicU32::new(1);
     static RESULT: Mutex<Vec<u8>> = Mutex::new(Vec::new());
+    /// The loudness meters taking audio and not yet finished, by handle (from 1, like scenes).
+    static METERS: Mutex<BTreeMap<u32, crate::loudness::Meter>> = Mutex::new(BTreeMap::new());
+    static NEXT_METER: AtomicU32 = AtomicU32::new(1);
 
     /// No call holds two locks at once, so they cannot deadlock. A poisoned lock
     /// means an earlier call panicked; the state is still usable.
@@ -338,6 +342,50 @@ mod abi {
                 0
             }
         }
+    }
+
+    /// Starts measuring how loud the voice is through a video (`loudness`), whose audio comes in
+    /// mono at `sample_rate`. Returns the meter's handle.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn oc_loudness_new(sample_rate: u32) -> u32 {
+        let handle = NEXT_METER.fetch_add(1, Ordering::Relaxed);
+        lock(&METERS).insert(handle, crate::loudness::Meter::new(sample_rate));
+        handle
+    }
+
+    /// Feeds the meter the next samples: `len` bytes of little-endian f32, -1 to 1. Returns 0 for a
+    /// handle nothing holds.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)`.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_loudness_push(meter: u32, ptr: *mut u8, len: usize) -> u32 {
+        let bytes = unsafe { take(ptr, len) };
+        let samples: Vec<f32> = bytes
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|b| f32::from_le_bytes(*b))
+            .collect();
+        lock(&METERS).get_mut(&meter).map_or(0, |m| {
+            m.push(&samples);
+            1
+        })
+    }
+
+    /// Finishes the meter (and frees it) for a transcript (JSON) of the same audio, leaving the
+    /// loudness as the transcript keeps it (`{"rate", "values"}`) as JSON. Returns 0 on failure
+    /// with the reason.
+    ///
+    /// # Safety
+    /// `ptr` must come from `oc_alloc(len)` and be filled with UTF-8 JSON.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn oc_loudness_finish(meter: u32, ptr: *mut u8, len: usize) -> u32 {
+        let transcript = unsafe { read_transcript(ptr, len) };
+        let Some(m) = lock(&METERS).remove(&meter) else {
+            return respond(Err::<(), _>("no such meter".to_string()));
+        };
+        respond(transcript.map(|t| crate::loudness::measure(&m.finish(), &t)))
     }
 
     /// The font families a transcript (JSON) needs that are not bundled (Chinese, Japanese,
@@ -627,6 +675,34 @@ mod tests {
         }
     }
 
+    /// A meter takes the audio in buffers and leaves the loudness the transcript keeps.
+    #[test]
+    fn a_meter_measures_through_the_abi() {
+        use super::abi::*;
+        let result =
+            || unsafe { std::slice::from_raw_parts(oc_result_ptr(), oc_result_len()).to_vec() };
+        let meter = oc_loudness_new(16_000);
+        for _ in 0..4 {
+            let samples: Vec<u8> = (0..8000)
+                .flat_map(|i| (0.3 * (i as f32 * 0.4).sin()).to_le_bytes())
+                .collect();
+            let (ptr, len) = put(&samples);
+            assert_eq!(unsafe { oc_loudness_push(meter, ptr, len) }, 1);
+        }
+        let transcript = br#"{"duration": 2.0, "segments": [{"words": [{"text": "a", "start": 0.2, "end": 1.6}]}]}"#;
+        let (ptr, len) = put(transcript);
+        assert_eq!(unsafe { oc_loudness_finish(meter, ptr, len) }, 1);
+        let out: crate::model::Loudness = serde_json::from_slice(&result()).unwrap();
+        assert_eq!(out.rate, 60);
+        assert_eq!(crate::loudness::decode(&out.values).unwrap().len(), 120);
+        let (ptr, len) = put(transcript);
+        assert_eq!(
+            unsafe { oc_loudness_finish(meter, ptr, len) },
+            0,
+            "a meter finishes once"
+        );
+    }
+
     /// The markers are escaped, so this test's own source never matches them; the
     /// count is a tripwire to update by hand when an export is added.
     #[test]
@@ -639,7 +715,7 @@ mod tests {
             ))
             .cloned()
             .collect::<BTreeSet<_>>();
-        assert_eq!(exported.len(), 30);
+        assert_eq!(exported.len(), 33);
         assert_eq!(exported, declared);
     }
 }

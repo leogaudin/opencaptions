@@ -9,7 +9,7 @@ test("a look is found by its name or id, in any case", () => {
 });
 
 test("every look has a line, and every setting a meaning", () => {
-  assert.equal(LOOKS.length, 19);
+  assert.equal(LOOKS.length, 45);
   for (const look of LOOKS) assert.match(describeLook(look), new RegExp(`^${look.name}: `));
   const lines = describeStyle().split("\n");
   assert.equal(

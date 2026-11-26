@@ -37,6 +37,19 @@ extension EngineSuites {
             #expect(before.width == 270)
         }
 
+        @Test func theVoicesLoudnessIsMeasuredAndKeptWithTheTranscript() async throws {
+            let transcript = try Repo.transcript()
+            // Two seconds of a spoken-pitch tone at 16 kHz.
+            let samples = (0..<32_000).map { Float(0.3 * sin(Double($0) * 2 * .pi * 300 / 16_000)) }
+            let loudness = try await engine.loudness(samples: samples, sampleRate: 16_000, for: transcript)
+            #expect(loudness.rate == 60)
+            #expect(Data(base64Encoded: loudness.values)?.count == 120)
+            var measured = transcript
+            measured.loudness = loudness
+            let back = try JSONDecoder().decode(Transcript.self, from: JSONEncoder().encode(measured))
+            #expect(back.loudness == loudness, "it survives saving the project")
+        }
+
         @Test func aSampleOfALeftAlignedLookIsDrawnCentredInItsFrame() async throws {
             let centred = try Repo.defaultStyle()
             var left = centred

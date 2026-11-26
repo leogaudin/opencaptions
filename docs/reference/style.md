@@ -65,6 +65,37 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `drift` | Drift | Each word hidden until said, then coming into focus out of a blur; the whole line pushes in a little over its life and floats, and the glow of the word being said is brighter than the rest (it needs a `glow_blur`). |
 | `blur_in` | Blur In | Each word hidden until said, then coming out of a short blur (about four frames); nothing moves and nothing glows. |
 | `none` | None | Nothing: plain captions. |
+| `glint` | Glint | Snapping it in with motion blur and turning it to the gradient (`fill_colors`), with a light sweep and a star where it catches; the letters sit on the outline and a hard drop. |
+| `weight` | Weight | Swelling it from a hairline to black and stretching it, then settling it to medium, the line reflowing round it. It needs a variable face (Inter is one); other faces only stretch. |
+| `saber` | Saber | Writing its outline with a glowing stroke, then filling it in over its glow, with comets running round it while it is said. The glow is `glow_color`, the outer light the highlight colour. |
+| `signal` | Signal | Tearing it in like a broken transmission: split colour channels, sliding bands, scanlines and stray blocks in the highlight colours, then a faint chromatic edge. |
+| `trailer` | Trailer | A film title card: wide tracking that slowly pulls in as each word fades out of a blur, a halo of `glow_color`, grain in the letters, and a scrim of `shadow_color` behind the line. |
+| `marker` | Marker | A streaky highlighter swipe in the highlight colour drawn behind it, the word turning dark on it. |
+| `decode` | Decode | Its letters spinning through random characters and locking in one by one, glowing in `glow_color`. |
+| `rays` | Rays | Light pouring out of the letters in `glow_color`, from a source that sweeps along the line. |
+| `echo` | Echo | Sliding it in trailed by outlined afterimages in the four highlight colours; its outline ripples out as it lands. |
+| `reveal` | Reveal | Raising it out of a slot on a thin rule that draws itself under the line. |
+| `depth` | Depth | A focus pull: the line out of focus, focus racking onto each word while the camera creeps in and drifts. |
+| `liquid` | Liquid | Pouring molten metal into it: drops run together as it fills, then it settles to polished metal (`fill_colors`, light then dark) in a dark rim, with a rolling highlight. |
+| `elastic` | Stretch | One pill in the highlight colour that travels from word to word, its front edge leaping ahead and its back catching up. |
+| `split` | Split | Bringing it in as two halves from opposite sides, motion-blurred, locking with a flash of `glow_color` along the cut. |
+| `block` | Block | A solid block in the highlight colour that sweeps across and leaves the word behind. |
+| `beat` | Beat | Showing it alone in the middle of the caption, punching in with motion blur and a kick, in the highlight colours in turn. |
+| `flap` | Flap | A departures board: each letter on a tile (the highlight colour) flips through the alphabet and settles. Suits a monospaced face and some `letter_spacing`. |
+| `count` | Count | Counting a number up to its value like an odometer as it is said; other words pop in. |
+| `scroll` | Scroll | Gliding the whole line, one row, so the word being said sits in the middle, underlined in the highlight colour, the rest fading toward the frame's edges. |
+| `reel` | Reel | Rolling it into a single slot in the middle as if printed on a drum, in the highlight colours in turn. |
+| `fill` | Fill | Filling it from the bottom with a moving wave in the highlight colour and a bright water line of `glow_color`; the rest of the line waits as outlines. |
+| `snap` | Snap | Bringing it in stretched and smeared sideways, then pulling it tight with a little overshoot. |
+| `pulse` | Pulse | Swelling it with how loudly it is spoken; a shouted word shakes and takes the highlight colour, and a waveform under the line draws the voice. It follows the transcript's `loudness`, which a transcription made on the server or the phone measures; without it the word swells on its timing alone. |
+| `knockout` | Knockout | Cutting it out of a solid block in the highlight colour, so the picture shows through its letters. |
+| `mirror` | Mirror | Fading it up out of a blur over its own reflection on a glossy floor, with a soft light of `glow_color` crossing it. |
+| `fold` | Fold | Unfolding it like paper, the bottom half dropping open and the top following over the crease. |
+
+The animations from `glint` on are drawn from layers, as a motion designer builds them: light, motion blur
+and mattes. They take their colours from the style: the letters are `text_color`, the highlight colours are
+what the look paints in, `fill_colors` is a gradient over the letters, `glow_color` is its light (whatever
+`glow_blur` is), and the outline and shadow are the style's own.
 
 ## Word looks
 
@@ -97,7 +128,7 @@ change the transcript.
 
 ## Presets
 
-The nineteen built-in looks are plain data in
+The forty-five built-in looks are plain data in
 [`apps/web/src/lib/presets.json`](https://github.com/leogaudin/opencaptions/blob/main/apps/web/src/lib/presets.json),
 each a name and a complete style in this shape. They are shared by the web app, the API's tests and the iPhone
 app.

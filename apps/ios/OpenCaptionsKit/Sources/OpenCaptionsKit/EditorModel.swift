@@ -334,8 +334,12 @@ public final class EditorModel {
         }
         transcriptionTask = Task { [weak self] in
             do {
-                let transcript = try await transcriber.transcribe(
+                var transcript = try await transcriber.transcribe(
                     source: source, language: language, model: model, progress: report)
+                try Task.checkCancellation()
+                if transcript.loudness == nil, let engine = self?.engine {
+                    transcript.loudness = await Self.loudness(of: source, for: transcript, engine: engine)
+                }
                 try Task.checkCancellation()
                 if let self { self.record(self.step()) }
                 self?.project.transcript = transcript
@@ -348,6 +352,14 @@ public final class EditorModel {
                 self?.transcription = .failed(error.localizedDescription)
             }
         }
+    }
+
+    /// The voice's loudness for the Pulse look, measured from the audio the transcript was made from
+    /// (a server's transcription comes with it). None if the audio cannot be read: Pulse then swells
+    /// on the words' timing alone.
+    private static func loudness(of source: URL, for t: Transcript, engine: CaptionEngine) async -> Loudness? {
+        guard let samples = try? await AudioExtractor.samples(from: source) else { return nil }
+        return try? await engine.loudness(samples: samples, sampleRate: AudioExtractor.sampleRate, for: t)
     }
 
     /// Clears a failure once the user has seen it.

@@ -31,6 +31,17 @@ class TranscriptSegment(BaseModel):
     text: str
 
 
+class Loudness(BaseModel):
+    """How loud the voice is through the video, measured once from its audio for the pulse look.
+
+    ``rate`` levels a second from the video's start, each a byte (0 silence, 255 its loudest
+    words) as base64. The engine's ``loudness.rs`` says how it is measured.
+    """
+
+    rate: int = Field(ge=1, le=240)
+    values: str = Field(max_length=24 * 3600 * 240 * 4 // 3 + 4)
+
+
 class Transcript(BaseModel):
     """A full transcript stored as JSONB on Project.transcript."""
 
@@ -39,6 +50,12 @@ class Transcript(BaseModel):
     language_detection: Literal["auto", "manual"] = "auto"
     duration: float = Field(ge=0.0)
     segments: list[TranscriptSegment]
+    # Left out while absent, so a transcript stored before it existed is stored the same.
+    loudness: Loudness | None = Field(
+        default=None,
+        exclude_if=lambda v: v is None,
+        description="The voice's loudness, once measured (for the pulse look)",
+    )
 
 
 # Auth & users
@@ -236,6 +253,32 @@ class StyleConfig(BaseModel):
         "word_slam",
         "drift",
         "blur_in",
+        "glint",
+        "weight",
+        "saber",
+        "signal",
+        "trailer",
+        "marker",
+        "decode",
+        "rays",
+        "echo",
+        "reveal",
+        "depth",
+        "liquid",
+        "elastic",
+        "split",
+        "block",
+        "beat",
+        "flap",
+        "count",
+        "scroll",
+        "reel",
+        "fill",
+        "snap",
+        "pulse",
+        "knockout",
+        "mirror",
+        "fold",
     ] = Field(
         default="highlight_slide",
         description="How words move as they are said. word_highlight: the word takes the highlight "
@@ -246,7 +289,17 @@ class StyleConfig(BaseModel):
         "comes into focus. highlight_slide: one box slides from word to word. line_bar: a bar under "
         "the line fills. stickers: each word on a tilted label. word_press: the word lifts off an "
         "extrusion. letter_rise: letters rise into place. word_slam: words slam in. drift: words "
-        "fade in from a blur and the line floats. blur_in: words come out of a blur",
+        "fade in from a blur and the line floats. blur_in: words come out of a blur. The composed "
+        "looks, built from light, motion blur and mattes: glint (snaps in, gold, a light sweep), "
+        "weight (the type swells from hairline to black), saber (a glowing stroke writes it), "
+        "signal (a glitch), trailer (a film title card), marker (a highlighter swipe), decode "
+        "(letters decrypt), rays (light pours out), echo (outlined afterimages), reveal (rises from "
+        "a rule), depth (a focus pull), liquid (molten metal), elastic (a stretching pill), split "
+        "(two halves), block (a box reveal), beat (one word at a time), flap (a departures "
+        "board), count (numbers roll), scroll (the line glides), reel (words roll through a slot), "
+        "fill (fills like water), snap (snaps in from a streak), pulse (follows the voice's "
+        "loudness), knockout (cut out of a block), mirror (a reflection), fold (unfolds like "
+        "paper)",
     )
     words_per_line: int = Field(default=3, ge=1, le=10, description="Words shown at once")
     word_spacing: float = Field(

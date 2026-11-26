@@ -375,7 +375,10 @@ async def export_json(
 ) -> Response:
     """Download the full transcript as a structured JSON file."""
     transcript = _require_transcript(proj)
-    body = json.dumps(transcript.model_dump(), indent=2, ensure_ascii=False) + "\n"
+    # The loudness is for drawing, not for reading.
+    body = (
+        json.dumps(transcript.model_dump(exclude={"loudness"}), indent=2, ensure_ascii=False) + "\n"
+    )
     return Response(
         content=body,
         media_type="application/json",
