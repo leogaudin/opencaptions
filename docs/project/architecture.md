@@ -604,10 +604,10 @@ the same engine (WebAssembly) as in the editor and the download; nothing is draw
   `disableSaving()` in the editor store keeps edits in the page.
 - The clips are data: `demo-public/demo/clips.json` names each clip's video, transcript (the
   API's `Transcript` shape) and credit (shown in the footer; CC BY asks for it). `scripts/make-demo-clip.sh`
-  cuts one from a long film (9:16 crop, H.264 + AAC; the current one is 720x1280, 14 s, about 1.4 MB, which Cloudflare serves with range requests like any CDN, so it is not worth a separate bucket). Replacing a clip is replacing its files and the manifest entry; with more than one, the page shows a chip for each.
+  cuts one from a long film (9:16 crop, H.264 + AAC; the current one is 720x1280, 14 s, about 1.4 MB, small enough to serve from the site itself). Safari plays a video only from a server that answers Range requests, and Cloudflare's static assets answer them with the whole file, so the clips go through a Worker (`apps/web/demo-worker.ts`, `run_worker_first` for `/demo/clips/*` in `apps/web/wrangler.jsonc`) that returns the bytes asked for (206). Replacing a clip is replacing its files and the manifest entry; with more than one, the page shows a chip for each.
 - The engine's `.wasm` and fonts are not committed: the web Dockerfile's `demo-site` stage builds
   them and the site (`make demo` writes `apps/web/dist-demo`). CI builds that stage on every run and
-  `publish-demo` deploys it with `wrangler deploy --assets` on `main`, only when `CLOUDFLARE_API_TOKEN`
+  `publish-demo` deploys it with `wrangler deploy` from `apps/web` (`wrangler.jsonc`) on `main`, only when `CLOUDFLARE_API_TOKEN`
   and `CLOUDFLARE_ACCOUNT_ID` are set (the Worker is named `opencaptions`).
 - The page is found by what it says, without running script: `src/demo/Landing.tsx` holds its words
   and has no browser-only code, so the build renders it to HTML (`scripts/demo-prerender.ts`, a plugin

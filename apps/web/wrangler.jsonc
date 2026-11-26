@@ -1,0 +1,14 @@
+{
+  // The public demo (opencaptions.app) as a Cloudflare Worker serving the files `make build-demo`
+  // writes to ./dist-demo (see publish-demo in .github/workflows/ci.yml); the domain is attached in
+  // the dashboard. Static assets answer a Range request with the whole file, which Safari refuses
+  // for a video, so the clips go through demo-worker.ts first; every other file is served as is.
+  "name": "opencaptions",
+  "compatibility_date": "2026-10-01",
+  "main": "demo-worker.ts",
+  "assets": {
+    "directory": "./dist-demo",
+    "binding": "ASSETS",
+    "run_worker_first": ["/demo/clips/*"]
+  }
+}

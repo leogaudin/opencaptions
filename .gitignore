@@ -29,6 +29,7 @@ node_modules/
 apps/web/dist/
 apps/web/public/engine/
 apps/web/dist-demo/
+apps/web/.wrangler/
 apps/web/demo-public/engine/
 apps/engine/target/
 

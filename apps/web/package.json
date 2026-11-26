@@ -13,7 +13,7 @@
     "dev:demo": "vite -c vite.demo.config.ts",
     "build:demo": "tsc -b && vite build -c vite.demo.config.ts && mv dist-demo/demo.html dist-demo/index.html",
     "preview:demo": "vite preview -c vite.demo.config.ts --port 5174",
-    "lint": "biome check src/ tests/",
+    "lint": "biome check src/ tests/ demo-worker.ts",
     "format": "biome format --write src/ tests/",
     "typecheck": "tsc -b --pretty false",
     "test": "node --test \"tests/unit/**/*.test.ts\"",

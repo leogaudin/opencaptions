@@ -24,6 +24,7 @@
     "scripts/demo-prerender.ts",
     "playwright.config.ts",
     "tests/**/*.ts",
+    "demo-worker.ts",
     "src/demo/links.ts",
     "src/lib/api.ts",
     "src/lib/autosave.ts",
