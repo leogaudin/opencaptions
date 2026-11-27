@@ -89,6 +89,9 @@ function Player() {
   );
 }
 
+/** The look the demo opens on: the presets lead with the most striking looks after the plain default. */
+const OPENING = BUILTIN_PRESETS[1];
+
 function Demo() {
   const t = useT();
   const [clips, setClips] = useState<Clip[]>([]);
@@ -98,6 +101,11 @@ function Demo() {
   const { apply } = useApplyPreset();
   const loaded = useEditorStore((s) => s.project !== null);
   const active = BUILTIN_PRESETS.find((p) => presetMatches(p.config, style));
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, as the page opens.
+  useEffect(() => {
+    if (OPENING) apply(OPENING.config);
+  }, []);
 
   useEffect(() => {
     loadManifest()

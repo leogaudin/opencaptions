@@ -77,7 +77,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `reveal` | Reveal | Raising it out of a slot on a thin rule that draws itself under the line. |
 | `depth` | Depth | A focus pull: the line out of focus, focus racking onto each word while the camera creeps in and drifts. |
 | `liquid` | Liquid | Pouring molten metal into it: drops run together as it fills, then it settles to polished metal (`fill_colors`, light then dark) in a dark rim, with a rolling highlight. |
-| `elastic` | Stretch | One pill in the highlight colour that travels from word to word, its front edge leaping ahead and its back catching up. |
+| `elastic` | Elastic | One pill in the highlight colour that travels from word to word, its front edge leaping ahead and its back catching up. |
 | `split` | Split | Bringing it in as two halves from opposite sides, motion-blurred, locking with a flash of `glow_color` along the cut. |
 | `block` | Block | A solid block in the highlight colour that sweeps across and leaves the word behind. |
 | `beat` | Beat | Showing it alone in the middle of the caption, punching in with motion blur and a kick, in the highlight colours in turn. |

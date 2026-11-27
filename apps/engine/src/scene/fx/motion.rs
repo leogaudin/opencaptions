@@ -3,7 +3,7 @@
 
 use super::*;
 
-/// Stretch: one pill travels from word to word. Its front edge leaps ahead and its back edge
+/// Elastic: one pill travels from word to word. Its front edge leaps ahead and its back edge
 /// catches up, so it stretches, thins and snaps into place like something elastic.
 pub(in crate::scene) fn elastic(fx: &Fx, canvas: &mut Pixmap) {
     let Some(mut ink) = fx.layer() else { return };

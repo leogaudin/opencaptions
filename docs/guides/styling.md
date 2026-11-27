@@ -32,7 +32,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Reveal** | A thin rule draws itself under the line, then each word rises out of a slot on it. |
 | **Depth** | A focus pull: focus racks onto each word as it is said while the camera creeps in. |
 | **Liquid** | Molten gold poured into the letters, settling to polished metal with a rolling highlight. |
-| **Stretch** | One pill travels from word to word, stretching like something elastic. |
+| **Elastic** | One pill travels from word to word, stretching like something elastic. |
 | **Split** | Each word arrives in two halves from opposite sides and locks with a flash along the cut. |
 | **Block** | A solid coral block sweeps across and leaves the word behind. |
 | **Beat** | One big word at a time, punching in on the beat with a kick of the camera. |
@@ -93,8 +93,8 @@ The box behind the caption: **None**, **Solid** or **Pill**, with its **color** 
 Choose how the words are marked as they are said: **Highlight**, **Box**, **Pop**, **Fade**, **Karaoke**,
 **Underline**, **Typewriter**, **Bounce**, **Focus**, **Slide**, **Progress**, **Stickers**, **Press**, **Rise**, **Slam**, **Drift**,
 **Blur In**, or **None**, or one of the looks built from light and motion: **Glint**, **Weight**, **Saber**, **Signal**,
-**Trailer**, **Marker**, **Decode**, **Rays**, **Echo**, **Reveal**, **Depth**, **Liquid**, **Elastic** (the Stretch
-look's), **Split**, **Block**, **Beat**, **Flap**, **Count**, **Scroll**, **Reel**, **Fill**, **Snap**, **Pulse**,
+**Trailer**, **Marker**, **Decode**, **Rays**, **Echo**, **Reveal**, **Depth**, **Liquid**, **Elastic**,
+**Split**, **Block**, **Beat**, **Flap**, **Count**, **Scroll**, **Reel**, **Fill**, **Snap**, **Pulse**,
 **Knockout**, **Mirror** and **Fold**. These paint with your colours: the highlight colours are what they draw in
 (a pill, a block, a swipe, echoes), the fill gradient is their gold or metal, and the glow colour is their light.
 Each tile shows the animation on your own caption.

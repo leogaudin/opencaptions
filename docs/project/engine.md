@@ -102,8 +102,8 @@ colour) and an arm in `word_state`; the exhaustive matches refuse to compile unt
 
 ### Composed looks
 
-Glint, Weight, Saber, Signal, Trailer, Marker, Decode, Rays, Echo, Reveal, Depth, Liquid, Elastic (the
-Stretch preset), Split, Block, Beat, Flap, Count, Scroll, Reel, Fill, Snap, Pulse, Knockout, Mirror and Fold
+Glint, Weight, Saber, Signal, Trailer, Marker, Decode, Rays, Echo, Reveal, Depth, Liquid, Elastic,
+Split, Block, Beat, Flap, Count, Scroll, Reel, Fill, Snap, Pulse, Knockout, Mirror and Fold
 are built in `src/scene/fx/` the way a motion designer stacks layers in After Effects, and drawn from the
 time itself rather than from a word's state (`traits().composed`).
 
