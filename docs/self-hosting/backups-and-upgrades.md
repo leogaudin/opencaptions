@@ -73,7 +73,7 @@ configured.
 To stay on a release, pin it (this is the latest):
 
 ```bash
-OPENCAPTIONS_VERSION=1.3.4 docker compose up -d
+OPENCAPTIONS_VERSION=1.4.0 docker compose up -d
 ```
 
 Export the variable in your shell to keep it in force. Without it, the compose file uses `edge`, the

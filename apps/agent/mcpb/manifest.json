@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "opencaptions",
   "display_name": "OpenCaptions",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "description": "Animated word-by-word captions for your videos, from Claude, Cursor or any MCP client, or the command line. Runs on your computer, or on your own OpenCaptions server.",
   "long_description": "Ask Claude to caption a video, and it transcribes the speech, styles it with one of the looks, and saves the captioned video next to the original. It can also read the captions back, fix a misheard word, and export SRT or VTT subtitles.\n\nIt runs on your computer: the speech model and the caption engine are local, and the video is never uploaded. The first caption downloads the speech model (about 700 MB, once). It needs [FFmpeg](https://ffmpeg.org/download.html), which reads and writes the video: `brew install ffmpeg`.\n\nTo use your own OpenCaptions server instead (every language, Whisper models, a GPU, the web editor), fill in its address and an API key from its Account page. Leave them empty to work on this computer.",
   "author": {

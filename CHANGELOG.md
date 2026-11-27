@@ -1,6 +1,21 @@
 # Changelog
 
 Every change to OpenCaptions, from its commit messages.
+## 1.4.0 (2026-11-27)
+
+### Documentation
+- Four use-case pages for what people search for: captions on an iPhone, alternatives to the hosted tools (from their pricing pages), burning subtitles in or exporting SRT and VTT, and captions for Reels, TikTok and Shorts
+
+### Features
+- The Claude Code plugin meets the Claude directory's checklist: a pinned launcher, a README that says what it runs and fetches, an icon; release.sh bumps the pin and the version check holds it
+- Twenty-six cinematic looks, built like motion-design titles, and Pulse follows the voice's loudness
+- The most striking looks lead the presets and the demo, which opens on Rays and carries its clip's loudness for Pulse; the Stretch look is Elastic everywhere, as its animation is named
+
+### Fixes
+- The demo's video plays on an iPhone again: a Worker answers the clips' Range requests, which Safari needs and Cloudflare's static assets answer with the whole file
+
+### Maintenance
+- The release steps push the tag first and main once npm has the version, since the plugin on main pins it
 ## 1.3.4 (2026-11-24)
 
 ### Documentation
@@ -14,6 +29,7 @@ Every change to OpenCaptions, from its commit messages.
 
 ### Maintenance
 - Each release tag creates a draft GitHub Release with the Claude Desktop extension attached
+- Release 1.3.4
 ## 1.3.3 (2026-11-21)
 
 ### Maintenance

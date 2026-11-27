@@ -37,7 +37,7 @@ right for this layout; see [Configuration](./configuration.md) for the few you m
 
 :::note[Which version runs]
 The compose file uses the `edge` images, built from the main branch. To stay on a release, pin it
-(this is the latest): `OPENCAPTIONS_VERSION=1.3.4 docker compose up -d`.
+(this is the latest): `OPENCAPTIONS_VERSION=1.4.0 docker compose up -d`.
 :::
 
 ## What runs

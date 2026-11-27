@@ -2,7 +2,7 @@
   "mcpServers": {
     "opencaptions": {
       "command": "npx",
-      "args": ["-y", "opencaptions@1.3.4", "mcp"],
+      "args": ["-y", "opencaptions@1.4.0", "mcp"],
       "env": {
         "OPENCAPTIONS_URL": "${OPENCAPTIONS_URL:-}",
         "OPENCAPTIONS_KEY": "${OPENCAPTIONS_KEY:-}",
