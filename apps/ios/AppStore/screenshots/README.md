@@ -34,13 +34,14 @@ in `$OUT/work`.
 
 | # | Screen | Headline (`|` ends a line, `[ ]` boxes the words) | Background |
 |---|---|---|---|
-| 1 | The editor with the style sheet open, a man mid-sentence | Captions that\|[stop the scroll] | yellow |
+| 1 | The editor with the style sheet open, a man mid-sentence, in Glint | Captions that\|[stop the scroll] | yellow |
 | 2 | The transcribe sheet | [Nothing] leaves\|your phone | dark |
-| 3 | A Polish clip captioned (cooking, "Złóż ciasto nad farszem...") | About [100 languages].\|One tap. | yellow |
-| 4 | The Save sheet, a cat | Up to [4K].\|HDR stays HDR. | dark |
-| 5 | The finished caption on the cat | [Open source].\|Pay once.\|No subscription. | yellow |
+| 3 | A Polish clip captioned in Liquid (cooking, "Złóż ciasto nad farszem...") | About [100 languages].\|One tap. | yellow |
+| 4 | The Save sheet, a cat, in Fill | Up to [4K].\|HDR stays HDR. | dark |
+| 5 | The finished caption on the cat, in Depth | [Open source].\|Pay once.\|No subscription. | yellow |
 
-To change a headline or a screen, edit the table in `make-slides.sh` (the `cap` and `c` lines).
+To change a headline or a screen, edit the table in `make-slides.sh` (the `cap` and `c` lines); `OC_SEED_PRESET` on a
+`cap` line is the look the project opens in. The looks are the presets that lead the list.
 
 ## Sizes and where they go in App Store Connect
 

@@ -61,12 +61,24 @@ def make(name, lang, lines, t0=0.6, step=0.40, gap=0.5):
     json.dump({"schema_version": 1, "language": lang, "language_detection": "manual", "duration": 12.0, "segments": segs},
               open(f"{work}/{name}", "w"), ensure_ascii=False)
     return segs[-1]["words"][-1]["start"]
+def built(name, per_line=3, after=1.5):
+    # The first slide stops on the second word of a line that has had time to come in: a line just
+    # starting is still drawing itself. Lines are the segment's words three at a time (Glint's).
+    for seg in json.load(open(f"{work}/{name}"))["segments"]:
+        for i in range(0, len(seg["words"]), per_line):
+            line = seg["words"][i : i + per_line]
+            if len(line) > 1 and line[0]["start"] >= after:
+                return round(line[1]["start"] + 0.25, 3)
+    return 2.3
 for lang, text in slides.items():
     make(f"man-{lang}.json", lang, text["man"])
-    # The last slide stops on the last word: a translation can be over sooner than the English.
+    with open(f"{work}/seek-man-{lang}.txt", "w") as out:
+        out.write(str(built(f"man-{lang}.json")))
+    # The last slide stops on the last word once Depth has brought it into focus: a translation can be
+    # over sooner than the English.
     last_word = make(f"cat-{lang}.json", lang, text["cat"])
     with open(f"{work}/seek-{lang}.txt", "w") as out:
-        out.write(str(last_word + 0.05))
+        out.write(str(round(last_word + 0.35, 3)))
     headlines = text["headlines"]
     if platform == "mac":
         # The second slide names the device, and a wide slide has room for two lines at most.
@@ -98,7 +110,7 @@ cap() {
 for lang in "${LANGS[@]}"; do
   echo "==> five captures, $lang"
   export UI_LANG=$lang
-  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_SEED_PRESET=builtin:glint OC_OPEN_FIRST=1 OC_SEEK=2.3 ${STYLE[@]+"${STYLE[@]}"}
+  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_SEED_PRESET=builtin:glint OC_OPEN_FIRST=1 "OC_SEEK=$(cat "$WORK/seek-man-$lang.txt")" ${STYLE[@]+"${STYLE[@]}"}
   cap h2 pierogi.mp4 OC_OPEN_FIRST=1 OC_SHOW_TRANSCRIBE=1
   cap h3 pierogi.mp4 "OC_SEED_TRANSCRIPT=$WORK/pierogi_pl.json" OC_SEED_PRESET=builtin:liquid OC_OPEN_FIRST=1 OC_SEEK=1.8
   cap h4 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_SEED_PRESET=builtin:fill OC_OPEN_FIRST=1 OC_SEEK=1.6 OC_SHOW_SAVE=1
