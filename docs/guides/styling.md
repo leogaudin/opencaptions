@@ -20,7 +20,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Plain** | Clean captions with no animation. |
 | **Karaoke** | The colour sweeps across each word as it is spoken. |
 | **Paper** | The word being said is highlighted. |
-| **Glint** | Bold white capitals on a heavy outline; the word being said snaps in with motion blur, turns gold and catches a light sweep with a star. |
+| **Glint** | Bold white capitals on a heavy outline; the word being said snaps in with motion blur, turns gold and catches a light sweep. |
 | **Signal** | Each word tears in like a broken transmission, its colour channels split and its bands sliding apart, then locks clean. |
 | **Trailer** | A film title card: a serif whose wide tracking slowly pulls in as each word comes out of a blur, with a warm halo, grain and a soft scrim. |
 | **Weight** | The type itself moves: the line waits in a hairline weight and the word being said swells to black, then settles. |
@@ -50,7 +50,6 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Lyric** | The line is soft and dim until each word is reached, then sharp. Nothing moves. |
 | **Stickers** | Each word on its own coloured label. |
 | **Cinema** | A serif face with words fading in. |
-| **Terminal** | A monospaced, highlighted look. |
 | **Neon** | A glowing neon face. |
 | **Typewriter** | Words typed out one at a time. |
 | **Handwritten** | A handwriting face with a marker stroke drawn under each word. |

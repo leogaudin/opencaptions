@@ -143,8 +143,8 @@ pub(in crate::scene) fn block(fx: &Fx, canvas: &mut Pixmap) {
         let (top, h) = (w.w.baseline - 0.84 * w.fs, 1.08 * w.fs);
         let x0 = w.w.ink_x - 0.17 * w.fs;
         let x1 = w.w.ink_x + w.w.ink_w + 0.17 * w.fs;
-        let right = lerp(x0, x1, expo_out(w.into(0.22)));
-        let left = lerp(x0, x1, cubic_in_out((w.a - 0.2) / 0.3));
+        let right = lerp(x0, x1, expo_out(w.into(0.16)));
+        let left = lerp(x0, x1, cubic_in_out((w.a - 0.1) / 0.2));
         if right > left + 0.5
             && let Some(r) = Rect::from_ltrb(left, top, right, top + h)
         {
@@ -152,7 +152,7 @@ pub(in crate::scene) fn block(fx: &Fx, canvas: &mut Pixmap) {
             blocks.fill_rect(r, &p, fx.local(Transform::identity()), None);
         }
         // The word is there behind the block's trailing edge.
-        if w.a >= 0.2
+        if w.a >= 0.1
             && let Some(m) = Rect::from_ltrb(b.x() as f32, b.y() as f32, left, b.bottom() as f32)
                 .and_then(|r| fx.clip(r))
         {

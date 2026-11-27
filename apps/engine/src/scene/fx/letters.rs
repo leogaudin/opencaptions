@@ -104,7 +104,7 @@ pub(in crate::scene) fn weight(fx: &Fx, canvas: &mut Pixmap) {
         .zip(&shapes)
         .map(|((w, st), shape)| shape.as_ref().map_or(w.w.ink_w, |s| s.1 * w.w.size) * st.2)
         .collect();
-    let starts = reflow(fx, &widths);
+    let starts = reflow(fx, &widths, &vec![0.0; fx.words.len()]);
     let Some(mut ink) = fx.layer() else { return };
     for ((w, st), shape) in fx.words.iter().zip(&states).zip(&shapes) {
         let c = if fx.is_act(w) {

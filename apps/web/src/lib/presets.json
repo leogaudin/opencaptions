@@ -1255,42 +1255,6 @@
     }
   },
   {
-    "id": "builtin:terminal",
-    "name": "Terminal",
-    "pro": true,
-    "config": {
-      "font": "JetBrains Mono",
-      "font_size": 56,
-      "text_color": "#D9FFD9",
-      "highlight_colors": ["#39FF14"],
-      "background": "solid",
-      "background_color": "#050805",
-      "background_opacity": 0.88,
-      "position_x": 0.5,
-      "position_y": 0.84,
-      "animation": "word_highlight",
-      "words_per_line": 4,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 0,
-      "shadow_color": "#00000000",
-      "shadow_offset_x": 0,
-      "shadow_offset_y": 0,
-      "glow_blur": 0,
-      "glow_color": "#FFFFFF",
-      "text_case": "none",
-      "italic": false,
-      "fill_colors": [],
-      "extrude_shade": 0,
-      "extrude_back": "#00000000",
-      "align": "center",
-      "letter_spacing": 0,
-      "stretch": 1,
-      "variants": []
-    }
-  },
-  {
     "id": "builtin:neon",
     "name": "Neon",
     "config": {

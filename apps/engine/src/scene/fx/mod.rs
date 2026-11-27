@@ -422,7 +422,7 @@ fn span(anim: Animation, w: &Placed) -> Option<f32> {
         Animation::Reveal => 0.62,
         Animation::Elastic => 0.42,
         Animation::Split => 0.72,
-        Animation::Block => 0.52,
+        Animation::Block => 0.32,
         Animation::Beat => 0.34,
         Animation::Scroll => 0.38,
         Animation::Reel => 0.34,

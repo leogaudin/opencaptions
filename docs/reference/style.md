@@ -65,7 +65,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `drift` | Drift | Each word hidden until said, then coming into focus out of a blur; the whole line pushes in a little over its life and floats, and the glow of the word being said is brighter than the rest (it needs a `glow_blur`). |
 | `blur_in` | Blur In | Each word hidden until said, then coming out of a short blur (about four frames); nothing moves and nothing glows. |
 | `none` | None | Nothing: plain captions. |
-| `glint` | Glint | Snapping it in with motion blur and turning it to the gradient (`fill_colors`), with a light sweep and a star where it catches; the letters sit on the outline and a hard drop. |
+| `glint` | Glint | Snapping it in with motion blur and turning it to the gradient (`fill_colors`), with a light sweep across it; the letters sit on the outline and a hard drop. |
 | `weight` | Weight | Swelling it from a hairline to black and stretching it, then settling it to medium, the line reflowing round it. It needs a variable face (Inter is one); other faces only stretch. |
 | `saber` | Saber | Writing its outline with a glowing stroke, then filling it in over its glow, with comets running round it while it is said. The glow is `glow_color`, the outer light the highlight colour. |
 | `signal` | Signal | Tearing it in like a broken transmission: split colour channels, sliding bands, scanlines and stray blocks in the highlight colours, then a faint chromatic edge. |

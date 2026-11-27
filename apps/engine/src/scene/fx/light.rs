@@ -9,21 +9,8 @@ fn middle(fx: &Fx) -> (f32, f32) {
     (a.x() + a.width() / 2.0, a.y() + a.height() / 2.0)
 }
 
-/// A four-pointed star of radius `r` at (`x`, `y`), with a bright dot in its heart.
-fn star(x: f32, y: f32, r: f32) -> Option<Path> {
-    let mut pb = PathBuilder::new();
-    pb.move_to(x, y - r);
-    pb.quad_to(x, y, x + 0.9 * r, y);
-    pb.quad_to(x, y, x, y + r);
-    pb.quad_to(x, y, x - 0.9 * r, y);
-    pb.quad_to(x, y, x, y - r);
-    pb.close();
-    pb.push_circle(x, y, r * 0.16);
-    pb.finish()
-}
-
 /// Glint: bold letters on a heavy outline and a hard drop. The word being said snaps in with real
-/// motion blur, takes the gradient (gold), and a light sweep crosses it with a star where it catches.
+/// motion blur, takes the gradient (gold), and a light sweep crosses it.
 pub(in crate::scene) fn glint(fx: &Fx, canvas: &mut Pixmap) {
     let pose = |w: &Said, a: f32| {
         let p = (a / 0.36).clamp(0.0, 1.0);
@@ -106,27 +93,6 @@ pub(in crate::scene) fn glint(fx: &Fx, canvas: &mut Pixmap) {
         }
         fx.put(canvas, &shine, 1.0, BlendMode::Plus, (0.0, 0.0));
     }
-    let r = 0.54 * w.fs * sine(gp / 2.0);
-    if let (Some(path), Some(mut spark)) = (
-        star(x + 0.2 * w.fs, w.w.baseline - 0.74 * w.fs, r),
-        fx.layer(),
-    ) {
-        fx.fill(
-            &mut spark,
-            &path,
-            &paint(Color::WHITE),
-            Transform::identity(),
-        );
-        fx.bloom(
-            canvas,
-            &spark,
-            &[
-                (0.054, Some(WHITE), 1.0),
-                (0.21, Some(mix(g, WHITE, 0.7)), 0.9),
-            ],
-        );
-        fx.over(canvas, &spark);
-    }
 }
 
 /// Saber: a glowing stroke writes each letter's outline, then the face fills in over its own glow.
@@ -150,7 +116,9 @@ pub(in crate::scene) fn saber(fx: &Fx, canvas: &mut Pixmap) {
     for w in fx.started() {
         let Some(path) = &w.w.glyphs else { continue };
         let (lit, writing) = (fx.is_act(w), w.a < 0.6);
-        let strong = lit || writing;
+        // Full while the outline is written, then the glow settles back within half a second,
+        // whether or not the word is still being said.
+        let glow = 1.0 - ((w.a - 0.6) / 0.5).clamp(0.0, 1.0);
         // The write-on: each outline drawn from its start as far as the stroke has reached.
         let reach = 12.2 * w.fs * cubic_in_out(w.a / 0.6);
         let dash = || {
@@ -162,11 +130,11 @@ pub(in crate::scene) fn saber(fx: &Fx, canvas: &mut Pixmap) {
             stroke(
                 &mut light,
                 path,
-                colour(WHITE, if strong { 1.0 } else { 0.25 }),
+                colour(WHITE, lerp(0.25, 1.0, glow)),
                 0.095 * w.fs,
                 dash(),
             );
-            let c = colour(mix(WHITE, g, 0.1), if strong { 1.0 } else { 0.5 });
+            let c = colour(mix(WHITE, g, 0.1), lerp(0.5, 1.0, glow));
             stroke(&mut core, path, c, 0.024 * w.fs, dash());
         }
         if lit && w.a > 0.45 {
@@ -289,8 +257,9 @@ pub(in crate::scene) fn signal(fx: &Fx, canvas: &mut Pixmap) {
 }
 
 /// Lays a line's rows out again with each word `widths[i]` wide, every row held where the layout
-/// put it (its middle, or its left or right edge), and returns where each word now starts.
-pub(in crate::scene) fn reflow(fx: &Fx, widths: &[f32]) -> Vec<f32> {
+/// put it (its middle, or its left or right edge), and returns where each word now starts. The
+/// space after word `i` is its own width plus `after[i]`.
+pub(in crate::scene) fn reflow(fx: &Fx, widths: &[f32], after: &[f32]) -> Vec<f32> {
     let mut starts: Vec<f32> = fx.words.iter().map(|w| w.w.ink_x).collect();
     let rows = fx.words.iter().map(|w| w.w.row).max().map_or(0, |r| r + 1);
     for row in 0..rows {
@@ -302,7 +271,7 @@ pub(in crate::scene) fn reflow(fx: &Fx, widths: &[f32]) -> Vec<f32> {
         let (left, right) = (first.w.ink_x, last.w.ink_x + last.w.ink_w);
         let gaps: f32 = order
             .windows(2)
-            .map(|p| p[1].w.ink_x - (p[0].w.ink_x + p[0].w.ink_w))
+            .map(|p| p[1].w.ink_x - (p[0].w.ink_x + p[0].w.ink_w) + after[p[0].i])
             .sum();
         let total = order.iter().map(|w| widths[w.i]).sum::<f32>() + gaps;
         let mut x = match fx.s.align {
@@ -314,7 +283,7 @@ pub(in crate::scene) fn reflow(fx: &Fx, widths: &[f32]) -> Vec<f32> {
             starts[w.i] = x;
             x += widths[w.i];
             if let Some(next) = order.get(k + 1) {
-                x += next.w.ink_x - (w.w.ink_x + w.w.ink_w);
+                x += next.w.ink_x - (w.w.ink_x + w.w.ink_w) + after[w.i];
             }
         }
     }
@@ -334,7 +303,9 @@ pub(in crate::scene) fn trailer(fx: &Fx, canvas: &mut Pixmap) {
         .iter()
         .map(|w| w.w.ink_w + w.w.letters.len().saturating_sub(1) as f32 * tracks[w.i])
         .collect();
-    let starts = reflow(fx, &widths);
+    // The letters are tracked wide, so the space between words opens up with them.
+    let spaces: Vec<f32> = tracks.iter().map(|t| 2.5 * t).collect();
+    let starts = reflow(fx, &widths, &spaces);
     // The scrim: a dark ellipse behind the line that fades to nothing before the box's edge.
     let (cx, cy) = middle(fx);
     let b = fx.line.bounds;
