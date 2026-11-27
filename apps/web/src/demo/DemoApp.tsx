@@ -89,7 +89,7 @@ function Player() {
   );
 }
 
-/** The look the demo opens on: the presets lead with the most striking looks after the plain default. */
+/** The look the demo opens on (Glint): the presets lead with the most striking looks after the plain default. */
 const OPENING = BUILTIN_PRESETS[1];
 
 function Demo() {

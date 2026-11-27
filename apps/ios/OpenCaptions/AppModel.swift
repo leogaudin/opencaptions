@@ -189,8 +189,8 @@ final class AppModel {
 
     #if DEBUG
         /// For screenshots on a simulator: `SIMCTL_CHILD_OC_SEED_VIDEO=<clip>` (and
-        /// `OC_SEED_TRANSCRIPT=<json>`) makes a project from host files on first launch (`OC_RESET`
-        /// first removes any others); the UI tests start the app this way.
+        /// `OC_SEED_TRANSCRIPT=<json>`, and `OC_SEED_PRESET=<id>` for its look) makes a project from host
+        /// files on first launch (`OC_RESET` first removes any others); the UI tests start the app this way.
         private func seedForScreenshots() async {
             let env = ProcessInfo.processInfo.environment
             // OC_RESET: start from no projects, so a UI test always begins from the same place.
@@ -206,9 +206,12 @@ final class AppModel {
                 let transcript = try? JSONDecoder().decode(Transcript.self, from: data)
             {
                 project.transcript = transcript
-                _ = try? store.save(project)
-                reload()
             }
+            if let id = env["OC_SEED_PRESET"], let preset = presets.first(where: { $0.id == id }) {
+                project.styleConfig = preset.config
+            }
+            _ = try? store.save(project)
+            reload()
         }
     #endif
 }

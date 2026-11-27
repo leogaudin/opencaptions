@@ -98,11 +98,11 @@ cap() {
 for lang in "${LANGS[@]}"; do
   echo "==> five captures, $lang"
   export UI_LANG=$lang
-  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_OPEN_FIRST=1 OC_SEEK=2.3 ${STYLE[@]+"${STYLE[@]}"}
+  cap h1 man.mp4 "OC_SEED_TRANSCRIPT=$WORK/man-$lang.json" OC_SEED_PRESET=builtin:glint OC_OPEN_FIRST=1 OC_SEEK=2.3 ${STYLE[@]+"${STYLE[@]}"}
   cap h2 pierogi.mp4 OC_OPEN_FIRST=1 OC_SHOW_TRANSCRIBE=1
-  cap h3 pierogi.mp4 "OC_SEED_TRANSCRIPT=$WORK/pierogi_pl.json" OC_OPEN_FIRST=1 OC_SEEK=1.8
-  cap h4 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_OPEN_FIRST=1 OC_SEEK=1.6 OC_SHOW_SAVE=1
-  cap h5 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_OPEN_FIRST=1 "OC_SEEK=$(cat "$WORK/seek-$lang.txt")"
+  cap h3 pierogi.mp4 "OC_SEED_TRANSCRIPT=$WORK/pierogi_pl.json" OC_SEED_PRESET=builtin:liquid OC_OPEN_FIRST=1 OC_SEEK=1.8
+  cap h4 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_SEED_PRESET=builtin:fill OC_OPEN_FIRST=1 OC_SEEK=1.6 OC_SHOW_SAVE=1
+  cap h5 cat.mp4 "OC_SEED_TRANSCRIPT=$WORK/cat-$lang.json" OC_SEED_PRESET=builtin:depth OC_OPEN_FIRST=1 "OC_SEEK=$(cat "$WORK/seek-$lang.txt")"
 
   echo "==> the slides, $lang, at every size"
   face=$(cat "$WORK/font-$lang.txt")
