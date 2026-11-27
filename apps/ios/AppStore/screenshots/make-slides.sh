@@ -33,11 +33,13 @@ else
     read -r -a SIZES <<< "${SIZES:-2064x2752}"
     # A wider device: a smaller corner and headline, and it sits higher.
     SHAPE=(0.035 0.072 0.29)
+    # The iPad's editor shows the presets beside the video; the style sheet would cover the caption.
+    STYLE=()
   else
     read -r -a SIZES <<< "${SIZES:-1320x2868 1290x2796 1284x2778 1242x2688 1206x2622 1179x2556}"
     SHAPE=()
+    STYLE=(OC_SHOW_STYLE=1)
   fi
-  STYLE=(OC_SHOW_STYLE=1)
   echo "==> the debug app, on $SIM"
   (cd "$IOS/../.." && make ios-build)
   APP=$(find "$IOS/Build/DerivedData/Build/Products/Debug-iphonesimulator" -name OpenCaptions.app -maxdepth 1 | head -1)
