@@ -87,5 +87,5 @@ test("a failure comes back as the tool's error, in words", async () => {
 
 test("list_looks names every look", async () => {
   const result = await client.callTool({ name: "list_looks", arguments: {} });
-  assert.equal(text(result).split("\n").length, 44);
+  assert.equal(text(result).split("\n").length, 43);
 });

@@ -69,7 +69,7 @@ Colours are `#RRGGBB` hex strings. A few can carry an alpha channel as `#RRGGBBA
 | `weight` | Weight | Swelling it from a hairline to black and stretching it, then settling it to medium, the line reflowing round it. It needs a variable face (Inter is one); other faces only stretch. |
 | `saber` | Saber | Writing its outline with a glowing stroke, then filling it in over its glow, with comets running round it while it is said. The glow is `glow_color`, the outer light the highlight colour. |
 | `signal` | Signal | Tearing it in like a broken transmission: split colour channels, sliding bands, scanlines and stray blocks in the highlight colours, then a faint chromatic edge. |
-| `trailer` | Trailer | A film title card: wide tracking that slowly pulls in as each word fades out of a blur, a halo of `glow_color`, grain in the letters, and a scrim of `shadow_color` behind the line. |
+| `trailer` | Trailer | A film title card: wide tracking that slowly pulls in as each word fades out of a blur, a halo of `glow_color`, and grain in the letters. |
 | `marker` | Marker | A streaky highlighter swipe in the highlight colour drawn behind it, the word turning dark on it. |
 | `decode` | Decode | Its letters spinning through random characters and locking in one by one, glowing in `glow_color`. |
 | `rays` | Rays | Light pouring out of the letters in `glow_color`, from a source that sweeps along the line. |

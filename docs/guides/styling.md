@@ -22,7 +22,7 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Paper** | The word being said is highlighted. |
 | **Glint** | Bold white capitals on a heavy outline; the word being said snaps in with motion blur, turns gold and catches a light sweep. |
 | **Signal** | Each word tears in like a broken transmission, its colour channels split and its bands sliding apart, then locks clean. |
-| **Trailer** | A film title card: a serif whose wide tracking slowly pulls in as each word comes out of a blur, with a warm halo, grain and a soft scrim. |
+| **Trailer** | A film title card: a serif whose wide tracking slowly pulls in as each word comes out of a blur, with a warm halo and grain. |
 | **Weight** | The type itself moves: the line waits in a hairline weight and the word being said swells to black, then settles. |
 | **Saber** | A glowing stroke writes each letter's outline, then the face fills in over its own glow, with comets running round the word being said. |
 | **Marker** | A streaky highlighter swipe draws itself behind the word being said. |
@@ -31,7 +31,6 @@ redraws as you move a control, and the export uses exactly the same drawing.
 | **Echo** | Each word slides in trailed by coloured outlined afterimages, and its outline ripples out as it lands. |
 | **Reveal** | A thin rule draws itself under the line, then each word rises out of a slot on it. |
 | **Depth** | A focus pull: focus racks onto each word as it is said while the camera creeps in. |
-| **Liquid** | Molten gold poured into the letters, settling to polished metal with a rolling highlight. |
 | **Elastic** | One pill travels from word to word, stretching like something elastic. |
 | **Split** | Each word arrives in two halves from opposite sides and locks with a flash along the cut. |
 | **Block** | A solid coral block sweeps across and leaves the word behind. |

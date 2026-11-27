@@ -291,7 +291,7 @@ pub(in crate::scene) fn reflow(fx: &Fx, widths: &[f32], after: &[f32]) -> Vec<f3
 }
 
 /// Trailer: a film title card. A serif whose wide tracking slowly pulls in as each word fades out
-/// of a blur, a warm halo, grain inside the letters, and a soft scrim behind to keep it legible.
+/// of a blur, a warm halo and grain inside the letters.
 pub(in crate::scene) fn trailer(fx: &Fx, canvas: &mut Pixmap) {
     let tracks: Vec<f32> = fx
         .words
@@ -303,50 +303,14 @@ pub(in crate::scene) fn trailer(fx: &Fx, canvas: &mut Pixmap) {
         .iter()
         .map(|w| w.w.ink_w + w.w.letters.len().saturating_sub(1) as f32 * tracks[w.i])
         .collect();
-    // The letters are tracked wide, so the space between words opens up with them.
-    let spaces: Vec<f32> = tracks.iter().map(|t| 2.5 * t).collect();
+    // A title card's words stand well apart, and wider still while the letters are tracked wide.
+    let spaces: Vec<f32> = fx
+        .words
+        .iter()
+        .zip(&tracks)
+        .map(|(w, t)| 0.45 * w.fs + 3.0 * t)
+        .collect();
     let starts = reflow(fx, &widths, &spaces);
-    // The scrim: a dark ellipse behind the line that fades to nothing before the box's edge.
-    let (cx, cy) = middle(fx);
-    let b = fx.line.bounds;
-    let rx = (0.48 * fx.scene.width as f32).min(
-        (b.width() as f32 / 2.0)
-            .min(cx - b.x() as f32)
-            .min(b.right() as f32 - cx),
-    );
-    let ry = (rx * 0.32).min((cy - b.y() as f32).min(b.bottom() as f32 - cy));
-    let shade = fx.s.shadow_color;
-    if rx > 1.0 && ry > 1.0 && opacity(shade) > 0.0 {
-        let clear = Rgba([shade.0[0], shade.0[1], shade.0[2], 0]);
-        let stops = vec![
-            GradientStop::new(0.0, colour(shade, 1.0)),
-            GradientStop::new(1.0, colour(clear, 1.0)),
-        ];
-        let squash = Transform::from_translate(-cx, -cy)
-            .post_scale(1.0, ry / rx)
-            .post_translate(cx, cy);
-        if let Some(shader) = RadialGradient::new(
-            Point::from_xy(cx, cy),
-            0.0,
-            Point::from_xy(cx, cy),
-            rx,
-            stops,
-            SpreadMode::Pad,
-            squash,
-        ) && let Some(r) = Rect::from_xywh(
-            b.x() as f32,
-            b.y() as f32,
-            b.width() as f32,
-            b.height() as f32,
-        ) {
-            let p = Paint {
-                shader,
-                anti_alias: true,
-                ..Paint::default()
-            };
-            canvas.fill_rect(r, &p, Transform::identity(), None);
-        }
-    }
     let Some(mut ink) = fx.layer() else { return };
     for w in fx.started() {
         let shift = starts[w.i] - w.w.ink_x;

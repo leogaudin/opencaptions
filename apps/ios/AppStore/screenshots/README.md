@@ -36,7 +36,7 @@ in `$OUT/work`.
 |---|---|---|---|
 | 1 | The editor with the style sheet open, a man mid-sentence, in Glint | Captions that\|[stop the scroll] | yellow |
 | 2 | The transcribe sheet | [Nothing] leaves\|your phone | dark |
-| 3 | A Polish clip captioned in Liquid (cooking, "Złóż ciasto nad farszem...") | About [100 languages].\|One tap. | yellow |
+| 3 | A Polish clip captioned in Weight (cooking, "Złóż ciasto nad farszem...") | About [100 languages].\|One tap. | yellow |
 | 4 | The Save sheet, a cat, in Fill | Up to [4K].\|HDR stays HDR. | dark |
 | 5 | The finished caption on the cat, in Depth | [Open source].\|Pay once.\|No subscription. | yellow |
 

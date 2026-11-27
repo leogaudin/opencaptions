@@ -107,7 +107,7 @@ pub enum Animation {
     /// scanlines), then locks clean.
     Signal,
     /// A film title card: wide tracking that slowly pulls in as each word fades out of a blur, a
-    /// warm halo, grain in the letters and a scrim behind.
+    /// warm halo and grain in the letters.
     Trailer,
     /// A streaky highlighter swipe draws itself behind the word being said, which turns dark on it.
     Marker,

@@ -10,7 +10,7 @@
 //! preset is a starting point and every colour can be changed.
 
 use super::*;
-use tiny_skia::{BlendMode, MaskType, RadialGradient, StrokeDash};
+use tiny_skia::{BlendMode, MaskType, StrokeDash};
 
 mod kit;
 mod letters;

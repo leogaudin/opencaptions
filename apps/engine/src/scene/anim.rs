@@ -259,7 +259,7 @@ reach_of!(
     reach_far = 1.3,
     reach_beams = 1.6,
     reach_saber = 1.8,
-    reach_scrim = 2.2,
+    reach_title = 2.2,
 );
 
 /// A composed look's traits: how far it reaches and lifts its words.
@@ -348,7 +348,7 @@ impl Animation {
             Animation::Weight => fx(reach_tight, 0.15),
             Animation::Saber => fx(reach_saber, 0.0),
             Animation::Signal => fx(reach_mid, 0.0),
-            Animation::Trailer => fx(reach_scrim, 0.0),
+            Animation::Trailer => fx(reach_title, 0.0),
             Animation::Marker => fx(reach_some, 0.06),
             Animation::Decode => fx(reach_mid, 0.0),
             Animation::Rays => fx(reach_beams, 0.08),

@@ -70,43 +70,7 @@
     },
     "pro": true
   },
-  {
-    "id": "builtin:liquid",
-    "name": "Liquid",
-    "config": {
-      "font": "Montserrat",
-      "font_size": 84,
-      "text_color": "#FFD86A",
-      "highlight_colors": ["#FFD86A"],
-      "background": "none",
-      "background_color": "#000000",
-      "background_opacity": 0,
-      "position_x": 0.5,
-      "position_y": 0.8,
-      "animation": "liquid",
-      "words_per_line": 3,
-      "word_spacing": 0,
-      "stroke_width": 0,
-      "stroke_color": "#000000",
-      "shadow_blur": 20,
-      "shadow_color": "#00000099",
-      "shadow_offset_x": 0,
-      "shadow_offset_y": 9,
-      "glow_blur": 0,
-      "glow_color": "#FFB300",
-      "text_case": "none",
-      "italic": false,
-      "fill_colors": ["#FFD86A", "#C98A1E"],
-      "extrude_shade": 0,
-      "extrude_back": "#00000000",
-      "align": "center",
-      "letter_spacing": 0,
-      "stretch": 1,
-      "variants": []
-    },
-    "pro": true
-  },
-  {
+ {
     "id": "builtin:depth",
     "name": "Depth",
     "config": {
